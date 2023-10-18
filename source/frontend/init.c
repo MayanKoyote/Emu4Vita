@@ -128,13 +128,6 @@ int AppInit(int argc, char *const argv[])
     sceIoRemove(CORE_LOG_PATH);
     CreateFolder(APP_DATA_DIR);
 
-    LoadAppConfig(TYPE_CONFIG_MAIN);
-    SetCurrentLang(app_config.language);
-
-    BootCheckParams(argc, argv);
-
-    AppLog("[INIT] Init app...\n");
-
     scePowerSetArmClockFrequency(444);
     scePowerSetBusClockFrequency(222);
     scePowerSetGpuClockFrequency(222);
@@ -150,6 +143,17 @@ int AppInit(int argc, char *const argv[])
     sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
     sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
 
+    LoadAppConfig(TYPE_CONFIG_MAIN);
+    LoadControlConfig(TYPE_CONFIG_MAIN);
+    LoadHotkeyConfig(TYPE_CONFIG_MAIN);
+    LoadMiscConfig(TYPE_CONFIG_MAIN);
+    LoadGraphicsConfig(TYPE_CONFIG_MAIN);
+
+    AppLog("[INIT] Init app...\n");
+
+    SetCurrentLang(app_config.language);
+
+    BootCheckParams(argc, argv);
     checkVitatvModel();
     checkSafeMode();
 
@@ -163,11 +167,6 @@ int AppInit(int argc, char *const argv[])
 
     Retro_InitLib();
     Setting_Init();
-
-    LoadControlConfig(TYPE_CONFIG_MAIN);
-    LoadHotkeyConfig(TYPE_CONFIG_MAIN);
-    LoadMiscConfig(TYPE_CONFIG_MAIN);
-    LoadGraphicsConfig(TYPE_CONFIG_MAIN);
 
     // Lock USB connection and PS button
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_USB_CONNECTION | SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN_2);

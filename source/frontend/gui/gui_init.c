@@ -24,7 +24,7 @@ static int ImagesThreadFunc(SceSize args, void *argp)
         snprintf(path, MAX_PATH_LENGTH, "%s/%s", private_assets_dir, WALLPAPER_PNG_NAME);
         texture = GUI_LoadPNGFile(path);
     }
-    if (!texture)
+    if (!texture && public_assets_dir)
     {
         snprintf(path, MAX_PATH_LENGTH, "%s/%s", public_assets_dir, WALLPAPER_PNG_NAME);
         texture = GUI_LoadPNGFile(path);
@@ -40,14 +40,13 @@ static int ImagesThreadFunc(SceSize args, void *argp)
         snprintf(path, MAX_PATH_LENGTH, "%s/%s", private_assets_dir, SPLASH_PNG_NAME);
         texture = GUI_LoadPNGFile(path);
     }
-    if (!texture)
+    if (!texture && public_assets_dir)
     {
         snprintf(path, MAX_PATH_LENGTH, "%s/%s", public_assets_dir, SPLASH_PNG_NAME);
         texture = GUI_LoadPNGFile(path);
     }
     if (texture)
     {
-
         GUI_SetSplashTexture(texture);
     }
 
@@ -74,27 +73,6 @@ static void GUI_DeinitImages()
     GUI_SetWallpaperTexture(NULL);
 }
 
-static void Gui_InitLang()
-{
-    int i;
-    for (i = 0; i < GetLangsLength(); i++)
-    {
-        if (lang_entries[i].container)
-        {
-            if (enter_button == SCE_SYSTEM_PARAM_ENTER_BUTTON_CIRCLE)
-            {
-                lang_entries[i].container[BUTTON_ENTER] = lang_entries[i].container[BUTTON_CIRCLE];
-                lang_entries[i].container[BUTTON_CANCEL] = lang_entries[i].container[BUTTON_CROSS];
-            }
-            else
-            {
-                lang_entries[i].container[BUTTON_ENTER] = lang_entries[i].container[BUTTON_CROSS];
-                lang_entries[i].container[BUTTON_CANCEL] = lang_entries[i].container[BUTTON_CIRCLE];
-            }
-        }
-    }
-}
-
 void GUI_WaitInitEnd()
 {
     if (gui_images_thid >= 0)
@@ -110,7 +88,6 @@ void GUI_Init()
     GUI_InitLib();
     GUI_InitImages();
     GUI_InitShaders();
-    Gui_InitLang();
 }
 
 void GUI_Deinit()

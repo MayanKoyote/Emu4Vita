@@ -137,12 +137,12 @@ enum LanguageContainer
     LABEL_DISK,
     CURRENT,
 
-    // Menu grahics
+    // Menu graphics
     LABEL_DISPLAY_SIZE,
     LABEL_ASPECT_RATIO,
     LABEL_DISPLAY_ROTATE,
-    LABEL_GRAHICS_SHADER,
-    LABEL_GRAHICS_SMOOTH,
+    LABEL_GRAPHICS_SHADER,
+    LABEL_GRAPHICS_SMOOTH,
     LABEL_OVERLAY_SELECT,
     LABEL_OVERLAY_MODE,
     LABEL_SHOW_FPS,
@@ -176,8 +176,6 @@ enum LanguageContainer
     LABEL_FRONT_TOUCH_TO_BUTTON,
     LABEL_BACK_TOUCH_TO_BUTTON,
     LABEL_TURBO_DELAY,
-
-    FOLLOW_DPAD,
 
     // Menu misc
     LABEL_AUTO_SAVE_LOAD_STATE,
@@ -226,15 +224,18 @@ typedef struct
 {
     char *name;
     char **container;
+    int retro_lang;
 } LangEntry;
 
 extern LangEntry lang_entries[];
 extern char **cur_lang;
 
 int GetLangsLength();
-int ConvertLangValueConfigToRetro(int config_value);
-int ConvertLangValueRetroToConfig(int retro_value);
-int SetCurrentLang(int retro_value);
+int GetLangIndexByLocalLang(int local_lang);
+int GetLangIndexByConfigValue(int config_value);
+int GetConfigValueByLangIndex(int lang_index);
+int GetRetroLangByLangIndex(int lang_index);
+int SetCurrentLang(int lang_index);
 
 char *GetLangString(LangString *lang_s);
 

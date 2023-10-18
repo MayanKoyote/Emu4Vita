@@ -410,11 +410,11 @@ int Setting_SetLangOption()
     language_option.names = names;
     language_option.n_names = n_names;
 
-    config_app_language = ConvertLangValueRetroToConfig(app_config.language);
+    config_app_language = GetConfigValueByLangIndex(app_config.language);
     if (config_app_language > n_names - 1)
     {
         config_app_language = 0;
-        app_config.language = ConvertLangValueConfigToRetro(config_app_language);
+        app_config.language = GetLangIndexByConfigValue(config_app_language);
     }
     SetCurrentLang(app_config.language);
 
@@ -423,7 +423,11 @@ int Setting_SetLangOption()
 
 void Setting_UpdataLangOption()
 {
-    app_config.language = ConvertLangValueConfigToRetro(config_app_language);
+    if (config_app_language > language_option.n_names - 1)
+    {
+        config_app_language = 0;
+        app_config.language = GetLangIndexByConfigValue(config_app_language);
+    }
     SetCurrentLang(app_config.language);
     Setting_UpdateKeyMapperMenu(INDEX_MENU_CONTROL);
     Setting_UpdateKeyMapperMenu(INDEX_MENU_HOTKEY);

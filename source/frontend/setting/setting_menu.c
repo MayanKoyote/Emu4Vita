@@ -155,8 +155,8 @@ static SettingMenuItem graphics_menu_items[] = {
 #if defined(WANT_DISPLAY_ROTATE)
     {{LABEL_DISPLAY_ROTATE, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &display_rotate_option},
 #endif
-    {{LABEL_GRAHICS_SHADER, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &graphics_shader_option},
-    {{LABEL_GRAHICS_SMOOTH, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &graphics_smooth_option},
+    {{LABEL_GRAPHICS_SHADER, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &graphics_shader_option},
+    {{LABEL_GRAPHICS_SMOOTH, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &graphics_smooth_option},
     {{LABEL_OVERLAY_SELECT, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &overlay_select_option},
     {{LABEL_OVERLAY_MODE, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &overlay_mode_option},
     {{LABEL_SHOW_FPS, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &show_fps_option},

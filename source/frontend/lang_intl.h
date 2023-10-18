@@ -3,6 +3,7 @@
 
 #include "lang.h"
 
+/* English */
 char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     // Null
     NULL,
@@ -242,17 +243,17 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     // CURRENT
     "current",
 
-    /**************  Menu grahics  *****************/
+    /**************  Menu graphics  *****************/
     // LABEL_DISPLAY_SIZE
     "Display size",
     // LABEL_ASPECT_RATIO
     "Aspect ratio",
     // LABEL_DISPLAY_ROTATE
     "Display rotate",
-    // LABEL_GRAHICS_SHADER
-    "Grahics shader",
-    // LABEL_GRAHICS_SMOOTH
-    "Grahics smooth",
+    // LABEL_GRAPHICS_SHADER
+    "Graphics shader",
+    // LABEL_GRAPHICS_SMOOTH
+    "Graphics smooth",
     // LABEL_OVERLAY_SELECT
     "Overlay select",
     // LABEL_OVERLAY_MODE
@@ -313,9 +314,6 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     // LABEL_TURBO_DELAY
     "Turbo delay (frame)",
 
-    // FOLLOW_DPAD
-    "follow d-pad",
-
     /**************  Menu misc  *****************/
     // LABEL_AUTO_SAVE_LOAD_STATE
     "Auto save/load state",
@@ -323,6 +321,8 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "Save screenshot",
     // LABEL_SAVE_PREVIEW
     "Save screenshot for preview",
+
+    /**************  Menu hot key  *****************/
     // LABEL_HK_SAVESTATE
     "Save state (hot key)",
     // LABEL_HK_LOADSTATE
@@ -376,6 +376,7 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "delete",
 };
 
+/* 简体中文 */
 char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     // Null
     NULL,
@@ -615,16 +616,16 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     // CURRENT
     "当前",
 
-    /**************  Menu grahics  *****************/
+    /**************  Menu graphics  *****************/
     // LABEL_DISPLAY_SIZE
     "画面尺寸",
     // LABEL_ASPECT_RATIO
     "画面比例",
     // LABEL_DISPLAY_ROTATE
     "画面旋转",
-    // LABEL_GRAHICS_SHADER
+    // LABEL_GRAPHICS_SHADER
     "图像滤境",
-    // LABEL_GRAHICS_SMOOTH
+    // LABEL_GRAPHICS_SMOOTH
     "平滑图像",
     // LABEL_OVERLAY_SELECT
     "遮罩图选择",
@@ -686,9 +687,6 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     // LABEL_TURBO_DELAY
     "连发间隔 (帧)",
 
-    // FOLLOW_DPAD
-    "跟随十字键",
-
     /**************  Menu misc  *****************/
     // LABEL_AUTO_SAVE_LOAD_STATE
     "自动存读档",
@@ -696,6 +694,9 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "保存截图",
     // LABEL_SAVE_PREVIEW
     "保存截图为预览图",
+
+
+    /**************  Menu hot key  *****************/
     // LABEL_HK_SAVESTATE
     "保存存档 (快捷键)",
     // LABEL_HK_LOADSTATE
@@ -747,6 +748,380 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "保存",
     // DELETE
     "删除",
+};
+
+/* 繁體中文 */
+char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
+    // Null
+    NULL,
+
+    /**************  General  *****************/
+    // YES
+    "是",
+    // NO
+    "否",
+    // CONFIRM
+    "確定",
+    // CANCEL
+    "取消",
+    // BACK
+    "返回",
+    // EXIT
+    "退出",
+
+    /**************  Dialog  *****************/
+    // TITLE_TIP
+    "提示",
+    // TITLE_MENU
+    "菜單",
+    // COLSE
+    "關閉",
+
+    /**************  Safe mode  *****************/
+    // MESSAGE_SAFE_MODE
+    "當前處於安全模式，請先在HENkaku設置裏開啟啟用不安全自製軟件，"
+    "然後才能正常使用本程序。",
+
+    /**************  Button string  *****************/
+    // BUTTON_ENTER
+    NULL,
+    // BUTTON_CANCEL
+    NULL,
+    // BUTTON_LEFT
+    "←",
+    // BUTTON_UP
+    "↑",
+    // BUTTON_RIGHT
+    "→",
+    // BUTTON_DOWN
+    "↓",
+    // BUTTON_CROSS
+    "×",
+    // BUTTON_CIRCLE
+    "○",
+    // BUTTON_SQUARE
+    "□",
+    // BUTTON_TRIANGLE
+    "△",
+    // BUTTON_L
+    "L",
+    // BUTTON_R
+    "R",
+    // BUTTON_L2
+    "L2",
+    // BUTTON_R2
+    "R2",
+    // BUTTON_L3
+    "L3",
+    // BUTTON_R3
+    "R3",
+    // BUTTON_SELECT
+    "Select",
+    // BUTTON_START
+    "Start",
+    // BUTTON_PSBUTTON
+    "Home",
+    // BUTTON_LEFT_ANALOG
+    "左搖桿",
+    // BUTTON_LEFT_ANALOG_LEFT
+    "左搖桿←",
+    // BUTTON_LEFT_ANALOG_UP
+    "左搖桿↑",
+    // BUTTON_LEFT_ANALOG_RIGHT
+    "左搖桿→",
+    // BUTTON_LEFT_ANALOG_DOWN
+    "左搖桿↓",
+    // BUTTON_RIGHT_ANALOG
+    "右搖桿",
+    // BUTTON_RIGHT_ANALOG_LEFT
+    "右搖桿←",
+    // BUTTON_RIGHT_ANALOG_UP
+    "右搖桿↑",
+    // BUTTON_RIGHT_ANALOG_RIGHT
+    "右搖桿→",
+    // BUTTON_RIGHT_ANALOG_DOWN
+    "右搖桿↓",
+
+    /**************  Button string 2  *****************/
+    // BUTTON_A
+    "A",
+    // BUTTON_B
+    "B",
+    // BUTTON_C
+    "C",
+    // BUTTON_D
+    "D",
+    // BUTTON_E
+    "E",
+    // BUTTON_F
+    "F",
+    // BUTTON_G
+    "G",
+    // BUTTON_H
+    "H",
+    // BUTTON_X
+    "X",
+    // BUTTON_Y
+    "Y",
+    // BUTTON_Z
+    "Z",
+
+    // BUTTON_X1
+    "X1",
+    // BUTTON_X2
+    "X2",
+    // BUTTON_X3
+    "X3",
+    // BUTTON_X4
+    "X4",
+    // BUTTON_Y1
+    "Y1",
+    // BUTTON_Y2
+    "Y2",
+    // BUTTON_Y3
+    "Y3",
+    // BUTTON_Y4
+    "Y4",
+
+    // LABEL_SWICTH_MODE
+    "模式切換",
+    // LABEL_COIN
+    "投幣",
+    // LABEL_SELECT
+    "選擇",
+    // LABEL_START
+    "開始",
+    // LABEL_TURBO
+    "連發",
+    // LABEL_FDS_DISK_SIDE_CHANGE
+    "(FDS) 更換磁盤面",
+    // LABEL_FDS_INSERT_EJECT_DISK
+    "(FDS) 插入/彈出磁盤",
+
+    /**************  Browser  *****************/
+    // APP_TITLE
+    APP_NAME_STR " v" APP_VER_STR,
+
+    // PARENT_DIRECTORY
+    "上層目錄",
+    // OPEN_DIR
+    "打開目錄",
+    // START_GAME
+    "啟動遊戲",
+    // OPTION_MENU
+    "選項菜單",
+    // SETTING_MENU
+    "設置菜單",
+    // ABOUT
+    "關於",
+    // CHANGE_DIR
+    "跳轉目錄",
+
+    // LABEL_START_GAME
+    "啟動遊戲",
+    // LABEL_DELETE_GAME
+    "刪除遊戲",
+    // LABEL_DELETE_AUTO_STATE
+    "刪除自動存檔",
+    // LABEL_DELETE_SAVEFILE
+    "刪除模擬存檔",
+
+    // MESSAGE_ASK_DELETE_GAME
+    "確認要刪除這個遊戲？",
+    // MESSAGE_ASK_DELETE_AUTO_STATE
+    "確認要刪除這個遊戲的自動存檔？",
+    // MESSAGE_ASK_DELETE_SAVEFILE
+    "確認要刪除這個遊戲的模擬存檔？",
+    // MESSAGE_START_GAME_FAILED
+    "啟動遊戲失敗！",
+
+    /**************  About  *****************/
+    // ABOUT_TITLE
+    "關於",
+
+    /**************  Setting tab  *****************/
+    // TAB_MAIN
+    "主菜單",
+    // TAB_STATE
+    "即時存檔",
+    // TAB_GRAPHICS
+    "圖形",
+    // TAB_CONTROL
+    "控製",
+    // TAB_HOTKEY
+    "熱鍵",
+    // TAB_CORE
+    "核心",
+    // TAB_MISC
+    "雜項",
+    // TAB_APP
+    "程序",
+
+    /**************  Menu general  *****************/
+    // DISABLE
+    "禁用",
+    // DEFAULT
+    "默認",
+    // AUTO
+    "自動",
+    // NONE
+    "無",
+    // LABEL_RESET_CONFIGS
+    "恢復默認設置",
+
+    /**************  Menu main  *****************/
+    // LABEL_RESUME_GAME
+    "繼續遊戲",
+    // LABEL_RESET_GAME
+    "重置遊戲",
+    // LABEL_EXIT_GAME
+    "退出遊戲",
+    // LABEL_DISK_CONTROL
+    "光盤控製",
+    // LABEL_EXIT_TO_ARCH
+    "返回前端",
+    // LABEL_EXIT_APP
+    "退出程序",
+
+    // TITLE_SWITCH_DISK
+    "更換光盤",
+    // LABEL_DISK
+    "光盤",
+    // CURRENT
+    "當前",
+
+    /**************  Menu graphics  *****************/
+    // LABEL_DISPLAY_SIZE
+    "畫面尺寸",
+    // LABEL_ASPECT_RATIO
+    "畫面比例",
+    // LABEL_DISPLAY_ROTATE
+    "畫面旋轉",
+    // LABEL_GRAPHICS_SHADER
+    "圖像濾境",
+    // LABEL_GRAPHICS_SMOOTH
+    "平滑圖像",
+    // LABEL_OVERLAY_SELECT
+    "遮罩圖選擇",
+    // LABEL_OVERLAY_MODE
+    "遮罩圖顯示模式",
+    // LABEL_SHOW_FPS
+    "顯示幀數",
+
+    // DISPLAY_SIZE_1X
+    "1倍大小",
+    // DISPLAY_SIZE_2X
+    "2倍大小",
+    // DISPLAY_SIZE_3X
+    "3倍大小",
+    // DISPLAY_SIZE_FULL
+    "鋪滿屏幕",
+
+    // ASPECT_RATIO_BY_GAME_RESOLUTION
+    "由遊戲分辨率",
+    // ASPECT_RATIO_BY_DEV_SCREEN
+    "由設備屏幕",
+    // ASPECT_RATIO_8_7
+    "8:7",
+    // ASPECT_RATIO_4_3
+    "4:3",
+    // ASPECT_RATIO_3_2
+    "3:2",
+    // ASPECT_RATIO_16_9
+    "16:9",
+
+    // DISPLAY_ROTATE_CW_90
+    "旋轉90度(順時針)",
+    // DISPLAY_ROTATE_CW_180
+    "旋轉180度(順時針)",
+    // DISPLAY_ROTATE_CW_270
+    "旋轉270度(順時針)",
+
+    // SHADER_LCD3X
+    "LCD3x",
+    // SHADER_SHARP_BILINEAR_SIMPLE
+    "銳利雙線性",
+    // SHADER_SHARP_BILINEAR
+    "銳利雙線性+掃描線",
+    // SHADER_ADVANCED_AA
+    "高級AA",
+
+    // OVERLAY_MODE_OVERLAY
+    "覆層模式",
+    // OVERLAY_MODE_BACKGROUND
+    "背景模式",
+
+    /**************  Menu control  *****************/
+    // LABEL_CTRL_PLAYER
+    "玩家控製",
+    // LABEL_FRONT_TOUCH_TO_BUTTON
+    "前觸摸映射按鍵",
+    // LABEL_BACK_TOUCH_TO_BUTTON
+    "背觸摸映射按鍵",
+    // LABEL_TURBO_DELAY
+    "連發間隔 (幀)",
+
+    /**************  Menu misc  *****************/
+    // LABEL_AUTO_SAVE_LOAD_STATE
+    "自動存讀檔",
+    // LABEL_SAVE_SCREENSHOT
+    "保存截圖",
+    // LABEL_SAVE_PREVIEW
+    "保存截圖為預覽圖",
+
+
+    /**************  Menu hot key  *****************/
+    // LABEL_HK_SAVESTATE
+    "保存存檔 (快捷鍵)",
+    // LABEL_HK_LOADSTATE
+    "讀取存檔 (快捷鍵)",
+    // LABEL_HK_SPEED_UP
+    "加速遊戲 (快捷鍵)",
+    // LABEL_HK_SPEED_DOWN
+    "減速遊戲 (快捷鍵)",
+    // LABEL_HK_PLAYER_UP
+    "切換玩家+ (快捷鍵)",
+    // LABEL_HK_PLAYER_DOWN
+    "切換玩家- (快捷鍵)",
+    // LABEL_HK_EXIT_GAME
+    "退出遊戲 (快捷鍵)",
+
+    /**************  Menu app  *****************/
+    // LABEL_PREVIEW_PATH
+    "預覽圖路徑",
+    // LABEL_PREVIEW_STYLE
+    "預覽圖樣式",
+    // LABEL_APP_LOG
+    "程序日誌",
+    // LABEL_CORE_LOG
+    "核心日誌",
+    // LABEL_SHOW_LOG
+    "顯示日誌 (加載遊戲時)",
+    // LABEL_LANGUAGE
+    "語言",
+
+    // FROM_AUTO_STATE
+    "從自動存檔",
+
+    // FULL_PRESERVE
+    "等比鋪滿",
+    // FULL_STRETCH
+    "拉伸鋪滿",
+    // FULL_CROP,
+    "裁剪鋪滿",
+
+    /**************  Menu state  *****************/
+    // LABEL_EXISTENT_STATE
+    "已存檔",
+    // LABEL_NON_EXISTENT_STATE
+    "未存檔",
+
+    // LOAD
+    "讀取",
+    // SAVE
+    "保存",
+    // DELETE
+    "刪除",
 };
 
 #endif

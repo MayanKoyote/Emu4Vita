@@ -270,6 +270,7 @@ static void previewOptionUpdateCallback(StrArrayOption *option)
 
 static void langOptionUpdateCallback(StrArrayOption *option)
 {
+    app_config.language = GetLangIndexByConfigValue(config_app_language);
     Setting_UpdataLangOption();
     app_option_changed = 1;
 }
@@ -278,6 +279,8 @@ static void resetAppConfigCallback()
 {
     ResetAppConfig();
     app_option_changed = 1;
+
+    config_app_language = GetConfigValueByLangIndex(app_config.language);
     Setting_UpdataLangOption();
     Browser_RequestRefreshPreview(1);
 }

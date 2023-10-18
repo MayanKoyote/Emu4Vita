@@ -17,17 +17,26 @@ static int OverlayThreadFunc(SceSize args, void *argp)
     int ret;
     char path[MAX_PATH_LENGTH];
 
+    snprintf(path, MAX_PATH_LENGTH, "%s/%s", APP_DATA_DIR, OVERLAYS_DIR_NAME);
+    CreateFolder(path);
+
     if (graphics_overlay_list)
         LinkedListDestroy(graphics_overlay_list);
     graphics_overlay_list = NewOverlayList();
 
-    ret = -1;
-    if (private_assets_dir)
+    // Try load overlay list from app data overlays dir
+    snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s", APP_DATA_DIR, OVERLAYS_DIR_NAME, OVERLAYS_CONFIG_NAME);
+    ret = OverlayListGetEntries(graphics_overlay_list, path);
+
+    // Try load overlay list from private assets dir
+    if (ret < 0 && private_assets_dir)
     {
         snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s", private_assets_dir, OVERLAYS_DIR_NAME, OVERLAYS_CONFIG_NAME);
         ret = OverlayListGetEntries(graphics_overlay_list, path);
     }
-    if (ret < 0)
+
+    // Try load overlay list from public assets dir
+    if (ret < 0 && public_assets_dir)
     {
         snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s", public_assets_dir, OVERLAYS_DIR_NAME, OVERLAYS_CONFIG_NAME);
         ret = OverlayListGetEntries(graphics_overlay_list, path);

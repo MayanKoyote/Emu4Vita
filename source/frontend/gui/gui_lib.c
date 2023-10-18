@@ -39,7 +39,7 @@ static int initFont()
         snprintf(path, MAX_PATH_LENGTH, "%s/%s", private_assets_dir, FONT_PGF_NAME);
         gui_font = vita2d_load_custom_pgf(path);
     }
-    if (!gui_font)
+    if (!gui_font && public_assets_dir)
     {
         snprintf(path, MAX_PATH_LENGTH, "%s/%s", public_assets_dir, FONT_PGF_NAME);
         gui_font = vita2d_load_custom_pgf(path);

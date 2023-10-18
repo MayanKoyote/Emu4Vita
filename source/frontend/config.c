@@ -13,6 +13,8 @@
 #include "config.h"
 #include "file.h"
 #include "utils.h"
+#include "init.h"
+#include "lang.h"
 
 AppConfig app_config;
 GraphicsConfig graphics_config;
@@ -199,7 +201,7 @@ int ResetAppConfig()
 #else
     app_config.show_log = 0;
 #endif
-    app_config.language = 12; // default set to chinese
+    app_config.language = GetLangIndexByLocalLang(language);
 
     return 0;
 }

@@ -14,12 +14,13 @@
 
 #define MICROS_PER_SECOND 1000000llu
 #define SHOW_PLAYER_DURATION_MICROS (MICROS_PER_SECOND * 2)
+#define MAX_TEXTURE_BUFS 2
 
 static int video_okay = 0, video_pause = 1;
 static int video_display_need_update = 1;
 
 static int video_texture_index = 0;
-static GUI_Texture *video_texture_bufs[2] = {0};
+static GUI_Texture *video_texture_bufs[MAX_TEXTURE_BUFS] = {0};
 static GUI_Texture *video_texture = NULL;
 static GUI_Texture *overlay_texture = NULL;
 static GUI_Shader *video_shader = NULL;
@@ -385,7 +386,7 @@ GUI_Texture *Emu_CreateVideoTexture(int width, int height)
     video_display_need_update = 1;
 
     int i;
-    for (i = 0; i < 2; i++)
+    for (i = 0; i < MAX_TEXTURE_BUFS; i++)
     {
         video_texture_bufs[i] = GUI_CreateTextureFormat(width, height, core_video_pixel_format);
     }
@@ -428,12 +429,20 @@ static GUI_Texture *createOverlayTexture()
         return NULL;
 
     char path[MAX_PATH_LENGTH];
-    if (private_assets_dir) // Try load image from private assets dir
+
+    // Try load image from app data overlays dir
+    snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s", APP_DATA_DIR, OVERLAYS_DIR_NAME, overlay_data->image_name);
+    overlay_texture = GUI_LoadPNGFile(path);
+
+    // Try load image from private assets dir
+    if (!overlay_texture && private_assets_dir) 
     {
         snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s", private_assets_dir, OVERLAYS_DIR_NAME, overlay_data->image_name);
         overlay_texture = GUI_LoadPNGFile(path);
     }
-    if (!overlay_texture) // Try load image from public assets dir
+
+    // Try load image from public assets dir
+    if (!overlay_texture && public_assets_dir) 
     {
         snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s", public_assets_dir, OVERLAYS_DIR_NAME, overlay_data->image_name);
         overlay_texture = GUI_LoadPNGFile(path);
@@ -512,10 +521,17 @@ static int updateVideoDisplay()
         video_shader = NULL;
 
     // Filters
-    if (graphics_config.graphics_smooth)
-        GUI_SetTextureFilter(video_texture, GUI_TEXTURE_FILTER_LINEAR, GUI_TEXTURE_FILTER_LINEAR);
-    else
-        GUI_SetTextureFilter(video_texture, GUI_TEXTURE_FILTER_POINT, GUI_TEXTURE_FILTER_POINT);
+    int i;
+    for (i = 0; i < MAX_TEXTURE_BUFS; i++)
+    {
+        if (video_texture_bufs[i])
+        {
+            if (graphics_config.graphics_smooth)
+                GUI_SetTextureFilter(video_texture_bufs[i], GUI_TEXTURE_FILTER_LINEAR, GUI_TEXTURE_FILTER_LINEAR);
+            else
+                GUI_SetTextureFilter(video_texture_bufs[i], GUI_TEXTURE_FILTER_POINT, GUI_TEXTURE_FILTER_POINT);
+        }
+    }
 
     return 0;
 }
@@ -632,7 +648,7 @@ void Retro_VideoRefreshCallback(const void *data, unsigned width, unsigned heigh
         Emu_CreateVideoTexture(width, height);
     }
 
-    video_texture_index = (video_texture_index + 1) % 2;
+    video_texture_index = (video_texture_index + 1) % MAX_TEXTURE_BUFS;
     video_texture = video_texture_bufs[video_texture_index];
 
     if (video_texture)
