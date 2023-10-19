@@ -236,7 +236,7 @@ void Emu_GetVideoDisplayWH(uint32_t *width, uint32_t *height)
     *height = new_height;
 }
 
-uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t *size, int rotate)
+uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t *size, int rotate, int use_shader)
 {
     if (!video_texture)
         return NULL;
@@ -286,7 +286,7 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
 
     GUI_SetRendertarget(rendert_tex);
     GUI_StartDrawing();
-    if (video_shader)
+    if (video_shader && use_shader)
         GUI_DrawTextureShaderPartScalRotate(video_texture, video_shader, conver_width / 2, conver_height / 2, 0, 0,
                                             video_width, video_height, x_scale, y_scale, rotate_rad);
     else
@@ -351,7 +351,7 @@ int Emu_SaveVideoScreenshot(char *path)
     }
 
     uint64_t screenshot_size = 0;
-    uint32_t *screenshot_buf = Emu_GetVideoScreenshotData(&screenshot_width, &screenshot_height, &screenshot_size, rotate);
+    uint32_t *screenshot_buf = Emu_GetVideoScreenshotData(&screenshot_width, &screenshot_height, &screenshot_size, rotate, 1);
     if (!screenshot_buf)
         return -1;
 

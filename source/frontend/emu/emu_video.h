@@ -25,7 +25,7 @@ int Emu_GetVideoDisplayRotate();
 void Emu_GetVideoBaseWH(uint32_t *width, uint32_t *height);
 void Emu_GetVideoDisplayWH(uint32_t *width, uint32_t *height);
 
-uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t *size, int rotate);
+uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t *size, int rotate, int use_shader);
 int Emu_SaveVideoScreenshot(char *path);
 
 #endif

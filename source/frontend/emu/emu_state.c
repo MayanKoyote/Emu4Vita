@@ -231,7 +231,7 @@ int Emu_SaveState(int num)
 
     screenshot_size = 0;
     screenshot_offset = sizeof(EmuStateHeader);
-    screenshot_buf = Emu_GetVideoScreenshotData(&screenshot_width, &screenshot_height, &screenshot_size, rotate);
+    screenshot_buf = Emu_GetVideoScreenshotData(&screenshot_width, &screenshot_height, &screenshot_size, rotate, 1);
     if (!screenshot_buf)
     {
         AppLog("[STATE] Save state: make screenshot failed!\n");
@@ -243,7 +243,7 @@ int Emu_SaveState(int num)
     preview_width = Setting_GetStatePreviewWidth();
     preview_height = Setting_GetStatePreviewHeight();
     preview_size = 0;
-    preview_buf = Emu_GetVideoScreenshotData(&preview_width, &preview_height, &preview_size, rotate);
+    preview_buf = Emu_GetVideoScreenshotData(&preview_width, &preview_height, &preview_size, rotate, 0);
     if (!preview_buf)
     {
         AppLog("[STATE] Save state: make preview failed!\n");
