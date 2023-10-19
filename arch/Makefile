@@ -88,6 +88,8 @@ DEFINES := \
 	-DAPP_DIR_NAME=\"$(APP_DIR_NAME)\" \
 	-DBUILD_DATE=\"$(BUILD_DATE)\"
 
+DEFINES += -DVITA
+
 WARNINGS := \
 	-Wall \
 	-Wno-format-truncation
