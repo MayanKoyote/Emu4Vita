@@ -461,24 +461,25 @@ static int drawBrowserEntries()
 {
     refreshBrowserScroll();
 
-    float sx = icon_sx;
-    float sy = icon_unfocus_sy;
-    float inverted_sy;
+    int sx, sy;
+    int width, height, margin;
     float scale;
-    float width, height, margin;
-
+    int inverted_sy;
     int i;
-    for (i = browser_top_pos; i < N_BROWSER_ENTRIES; i++)
+
+    sx = icon_focus_scroll_sx;
+
+    for (i = browser_focus_pos; i < N_BROWSER_ENTRIES; i++)
     {
         if (sx >= MAIN_FREE_DRAW_DX)
             break;
 
         if (i == browser_focus_pos)
         {
-            sx = icon_focus_scroll_sx;
             sy = icon_focus_scroll_sy;
             width = icon_focus_width;
             height = icon_focus_height;
+            margin = icon_focus_margin;
             scale = ICON_FOCUS_SCALE;
         }
         else
@@ -486,6 +487,7 @@ static int drawBrowserEntries()
             sy = icon_unfocus_sy;
             width = icon_unfocus_width;
             height = icon_unfocus_height;
+            margin = icon_unfocus_margin;
             scale = ICON_UNFOCUS_SCALE;
         }
         inverted_sy = icon_middle_y + (icon_middle_y - sy - height);
@@ -503,12 +505,38 @@ static int drawBrowserEntries()
             vita2d_draw_rectangle(sx, inverted_sy, width, height, ICON_INVERTED_COLOR_NONE);
         }
 
-        sx += width;
-        if (i == browser_focus_pos || i + 1 == browser_focus_pos)
-            sx += icon_focus_margin;
-        else
-            sx += icon_unfocus_margin;
+        sx += (width + margin);
     }
+
+    sx = icon_focus_scroll_sx - icon_focus_margin - icon_unfocus_width;
+    sy = icon_unfocus_sy;
+    width = icon_unfocus_width;
+    height = icon_unfocus_height;
+    scale = ICON_UNFOCUS_SCALE;
+    margin = icon_unfocus_margin;
+    inverted_sy = icon_middle_y + (icon_middle_y - sy - height);
+
+    for (i = browser_focus_pos - 1; i >= 0; i--)
+    {
+        if (sx + width <= MAIN_FREE_DRAW_SX)
+            break;
+
+        BrowserEntry *entry = &browser_entries[i];
+        if (entry->icon)
+        {
+            vita2d_draw_texture_scale(entry->icon, sx, sy, scale, scale);
+            vita2d_draw_texture_tint_scale_rotate(entry->icon, sx + width / 2, inverted_sy + height / 2,
+                                                  scale, scale, M_PI_2 * 2, ICON_INVERTED_COLOR);
+        }
+        else
+        {
+            vita2d_draw_rectangle(sx, sy, width, height, ICON_COLOR_NONE);
+            vita2d_draw_rectangle(sx, inverted_sy, width, height, ICON_INVERTED_COLOR_NONE);
+        }
+
+        sx -= (width + margin);
+    }
+
     char *title = browser_entries[browser_focus_pos].software;
     UiDrawText(core_title_text_scroll_sx, core_title_text_sy, CORE_TITLE_COLOR, title);
 

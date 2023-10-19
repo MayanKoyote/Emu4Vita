@@ -97,7 +97,7 @@ int createFolder(const char *path)
         return 0;
 
     int ret;
-    int i, len;
+    int len;
     char str[MAX_PATH_LENGTH];
     strcpy(str, path);
     removeEndSlash(str);

@@ -90,8 +90,6 @@ DEFINES := \
 
 WARNINGS := \
 	-Wall \
-	-Wno-unused-variable \
-	-Wno-unused-but-set-variable \
 	-Wno-format-truncation
 
 CFLAGS   := -O3 $(WARNINGS) $(INCDIRS) $(DEFINES)
