@@ -404,7 +404,7 @@ static void moveSoftwareEntriesPos(int type)
         icon_selview_w = ICON_SELVIEW_WIDTH(ICON_UNFOCUS_WIDTH);
         icon_selview_h = ICON_SELVIEW_HEIGHT(ICON_UNFOCUS_HIEGHT);
         if (new_focus_pos < old_focus_pos)
-            icon_selview_current_x = icon_focus_x + (ICON_FOCUS_WIDTH - ICON_UNFOCUS_WIDTH) / 2;
+            icon_selview_current_x = icon_focus_x + (ICON_FOCUS_WIDTH - ICON_UNFOCUS_WIDTH);
         if (icon_selview_target_x > icon_selview_current_x)
             icon_selview_scroll_step = (float)(icon_selview_target_x - icon_selview_current_x) / (float)ICON_MAX_STEP_COUNT;
         else
