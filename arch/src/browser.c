@@ -9,215 +9,132 @@
 #include <vita2d.h>
 
 #include "browser.h"
-#include "ui.h"
+#include "gui.h"
 #include "main.h"
 #include "utils.h"
 #include "file.h"
 #include "config.h"
-#include "lang.h"
 #include "boot.h"
 
-#define VIEW_MARGIN 10.0f
+#define VIEW_MARGIN 10
 
-#define ICON_WIDTH 128.0f
-#define ICON_HEIGHT 128.0f
+#define ICON_SHORT_NAME_PADDING 4
+#define ICON_SHORT_NAME_HEIGHT (GUI_getLineHeight() + ICON_SHORT_NAME_PADDING * 2)
+#define ICON_SHORT_NAME_COLOR 0xFFFFFFFF
+#define ICON_LONG_NAME_COLOR 0xFFFFFFFF
 
-#define ICON_INVERTED_ALPHA 0x2F
-#define ICON_INVERTED_COLOR COLOR_ALPHA(WHITE, ICON_INVERTED_ALPHA)
+#define ICON_MARGIN 2
+#define ICON_UNFOCUS_WIDTH 120
+#define ICON_UNFOCUS_HIEGHT 120
+#define ICON_FOCUS_WIDTH 160
+#define ICON_FOCUS_HIEGHT 160
+
+#define ICON_MAX_STEP_COUNT 10
 
 #define ICON_COLOR_NONE WHITE
-#define ICON_INVERTED_COLOR_NONE COLOR_ALPHA(WHITE, ICON_INVERTED_ALPHA)
+#define ICON_TINT_COLOR 0xFFFFFFFF
 
-#define ICON_UNFOCUS_SCALE 0.9f
-#define ICON_FOCUS_SCALE 1.05f
+#define ICON_SELVIEW_WIDTH(w) w
+#define ICON_SELVIEW_HEIGHT(h) (h + ICON_SHORT_NAME_HEIGHT * (float)ICON_UNFOCUS_WIDTH / (float)ICON_UNFOCUS_HIEGHT)
+#define ICON_SELVIEW_BORDER_SIZE 2
+#define ICON_SELVIEW_BORDER_COLOR 0xF0FFFFFF
+#define ICON_SELVIEW_BG_COLOR 0xAF1F1F1F
 
-#define CORE_VIEW_PADDING_L 30.0f
-#define CORE_VIEW_PADDING_T 40.0f
-
-#define CORE_TITLE_PADDING_L 10.0f
-#define CORE_TITLE_PADDING_T 10.0f
-
-#define CORE_ENTRIES_PADDING_L 10.0f
-#define CORE_ENTRIES_PADDING_T 10.0f
-#define CORE_ENTRIES_MARGIN_L 60.0f
-#define CORE_ENTRIES_LINE_SPACE 2.0f
-
-#define CORE_TITLE_COLOR SPRING_GREEN
+#define CORE_ITEM_PADDING 4
+#define CORE_ITEM_WIDTH 400
+#define CORE_ITEM_HEIGHT (GUI_getLineHeight() + CORE_ITEM_PADDING * 2)
+#define CORE_ITEM_NAME_COLOR 0xFFFFFFFF
+#define CORE_ITEM_SEL_NAME_COLOR SPRING_GREEN
+#define CORE_ITEM_BG_COLOR 0xAF1F1F1F
+#define CORE_ITEM_SEL_BG_COLOR 0xAFFF7F00
 
 CoreEntry nes_entries[] = {
-    {"FCEUmm", "fceumm"},
-    {"Nestopia", "nestopia"},
+    {"FCEUmm", "fceumm", "FC"},
+    {"Nestopia", "nestopia", "FC"},
 };
 
 CoreEntry snes_entries[] = {
-    {"Snes9x 2002", "snes9x2002"},
-    {"Snes9x 2005", "snes9x2005"},
-    {"Snes9x 2005 Plus", "snes9x2005_plus"},
+    {"Snes9x 2002", "snes9x2002", "SFC"},
+    {"Snes9x 2005", "snes9x2005", "SFC"},
+    {"Snes9x 2005 Plus", "snes9x2005_plus", "SFC"},
 };
 
 CoreEntry md_entries[] = {
-    {"Genesis Plus GX", "genesis_plus_gx"},
-    {"PicoDrive", "picodrive"},
+    {"Genesis Plus GX", "genesis_plus_gx", "MD"},
+    {"PicoDrive", "picodrive", "MD"},
 };
 
 CoreEntry gba_entries[] = {
-    {"gpSP", "gpsp"},
-    {"VBA Next", "vba_next"},
+    {"gpSP", "gpsp", "GBA"},
+    {"VBA Next", "vba_next", "GBA"},
 };
 
 CoreEntry gbc_entries[] = {
-    {"Gambatte", "gambatte"},
+    {"Gambatte", "gambatte", "GBC"},
 };
 
 CoreEntry pce_entries[] = {
-    {"Mednafen PCE Fast", "mednafen_pce_fast"},
-    {"Mednafen SuperGrafx", "mednafen_supergrafx"},
+    {"Mednafen PCE Fast", "mednafen_pce_fast", "PCE"},
+    {"Mednafen SuperGrafx", "mednafen_supergrafx", "PCE"},
 };
 
 CoreEntry ps_entries[] = {
-    {"PCSX ReARMed", "pcsx_rearmed"},
+    {"PCSX ReARMed", "pcsx_rearmed", "PS1"},
 };
 
 CoreEntry wsc_entries[] = {
-    {"Mednafen Wswan", "mednafen_wswan"},
+    {"Mednafen Wswan", "mednafen_wswan", "WSC"},
 };
 
 CoreEntry ngp_entries[] = {
-    {"Mednafen NeoPop", "mednafen_ngp"},
+    {"Mednafen NeoPop", "mednafen_ngp", "NGP"},
 };
 
 CoreEntry fba_entries[] = {
-    {"FBA Lite", "fba_lite"},
+    {"FBA Lite", "fba_lite", "FBA"},
 };
 
-BrowserEntry browser_entries[] = {
-    {"NES", NULL, nes_entries, sizeof(nes_entries) / sizeof(CoreEntry)},
-    {"SNES", NULL, snes_entries, sizeof(snes_entries) / sizeof(CoreEntry)},
-    {"MD", NULL, md_entries, sizeof(md_entries) / sizeof(CoreEntry)},
-    {"GBA", NULL, gba_entries, sizeof(gba_entries) / sizeof(CoreEntry)},
-    {"GBC", NULL, gbc_entries, sizeof(gbc_entries) / sizeof(CoreEntry)},
-    {"PCE", NULL, pce_entries, sizeof(pce_entries) / sizeof(CoreEntry)},
-    {"PS1", NULL, ps_entries, sizeof(ps_entries) / sizeof(CoreEntry)},
-    {"WSC", NULL, wsc_entries, sizeof(wsc_entries) / sizeof(CoreEntry)},
-    {"NGP", NULL, ngp_entries, sizeof(ngp_entries) / sizeof(CoreEntry)},
-    {"FBA", NULL, fba_entries, sizeof(ngp_entries) / sizeof(CoreEntry)},
+SoftwareEntry software_entries[] = {
+    {"NES", NULL, nes_entries, sizeof(nes_entries) / sizeof(CoreEntry), &g_config.nes_pos, {0}},
+    {"SNES", NULL, snes_entries, sizeof(snes_entries) / sizeof(CoreEntry), &g_config.snes_pos, {0}},
+    {"MD", NULL, md_entries, sizeof(md_entries) / sizeof(CoreEntry), &g_config.md_pos, {0}},
+    {"GBA", NULL, gba_entries, sizeof(gba_entries) / sizeof(CoreEntry), &g_config.gba_pos, {0}},
+    {"GBC", NULL, gbc_entries, sizeof(gbc_entries) / sizeof(CoreEntry), &g_config.gbc_pos, {0}},
+    {"PCE", NULL, pce_entries, sizeof(pce_entries) / sizeof(CoreEntry), &g_config.pce_pos, {0}},
+    {"PS1", NULL, ps_entries, sizeof(ps_entries) / sizeof(CoreEntry), &g_config.ps1_pos, {0}},
+    {"WSC", NULL, wsc_entries, sizeof(wsc_entries) / sizeof(CoreEntry), &g_config.wsc_pos, {0}},
+    {"NGP", NULL, ngp_entries, sizeof(ngp_entries) / sizeof(CoreEntry), &g_config.ngp_pos, {0}},
+    {"FBA", NULL, fba_entries, sizeof(fba_entries) / sizeof(CoreEntry), &g_config.arc_pos, {0}},
 };
-#define N_BROWSER_ENTRIES (sizeof(browser_entries) / sizeof(BrowserEntry))
+#define N_SOFTWARE_ENTRIES (sizeof(software_entries) / sizeof(SoftwareEntry))
 
-CoreEntry *core_entries = NULL;
+static int core_entries_open = 0;
 
-static float icon_sx, icon_middle_y;
+static int icon_focus_x = 0, icon_focus_y = 0;
 
-static float icon_focus_sx, icon_focus_scroll_sx, icon_focus_scroll_sy;
-static float icon_focus_min_sy, icon_focus_max_sy;
-static float icon_focus_width, icon_focus_height, icon_focus_margin;
+static int icon_selview_target_x = 0, icon_selview_target_y = 0;
+static int icon_selview_current_x = 0, icon_selview_current_y = 0;
+static float icon_selview_scroll_step = 0;
 
-static float icon_unfocus_sy;
-static float icon_unfocus_width, icon_unfocus_height, icon_unfocus_margin;
+static int icon_target_sx = 0, icon_target_sy = 0;
+static int icon_current_sx = 0, icon_current_sy = 0;
+static float icon_scroll_step = 0;
 
-static float core_title_view_sx, core_title_view_sy, core_title_view_dx, core_title_view_scroll_sx;
-static float core_title_view_width, core_title_view_height;
-static float core_title_text_sx, core_title_text_sy, core_title_text_dx, core_title_text_scroll_sx;
-static float core_title_text_width, core_title_text_height;
+static uint32_t icon_sel_border_color = 0;
+static uint32_t icon_sel_bg_color = 0;
+static int icon_selview_w = 0;
+static int icon_selview_h = 0;
 
-static float core_entries_view_sx, core_entries_view_sy, core_entries_view_dx, core_entries_view_scroll_sx;
-static float core_entries_view_width, core_entries_view_height;
-static float core_entries_text_sx, core_entries_text_sy, core_entries_text_dx, core_entries_text_scroll_sx;
-static float core_entries_text_width, core_entries_text_height;
+static uint32_t icon_tint_color = ICON_TINT_COLOR;
+static uint32_t icon_short_name_color = 0;
+static uint32_t icon_long_name_color = 0;
 
-static float core_entries_full_height;
-static float core_entries_y_space;
-
-static float core_open_icon_sx, core_open_icon_sy;
-static float core_open_title_view_sx, core_open_title_view_sy;
-static float core_open_title_text_sx, core_open_title_text_sy;
-static float core_open_entries_view_sx, core_open_entries_view_sy;
-static float core_open_entries_text_sx, core_open_entries_text_sy;
-
-static int core_enties_lines;
-
-static int browser_top_pos = 0, browser_focus_pos = 0;
-static int core_top_pos = 0, core_focus_pos = 0;
-static int core_open = 0;
-
-void initBrowserDrawInfo()
-{
-    icon_unfocus_width = ICON_WIDTH * ICON_UNFOCUS_SCALE;
-    icon_unfocus_height = ICON_HEIGHT * ICON_UNFOCUS_SCALE;
-    icon_unfocus_margin = VIEW_MARGIN * ICON_UNFOCUS_SCALE;
-
-    icon_focus_width = ICON_WIDTH * ICON_FOCUS_SCALE;
-    icon_focus_height = ICON_HEIGHT * ICON_FOCUS_SCALE;
-    icon_focus_margin = VIEW_MARGIN * ICON_FOCUS_SCALE;
-
-    float icon_focus_margin_b = icon_unfocus_height / 3;
-
-    icon_sx = 0 - icon_unfocus_width / 4;
-    icon_focus_sx = icon_sx + (icon_unfocus_width + icon_focus_margin);
-
-    float icon_focus_max_inverted_dy = MAIN_FREE_DRAW_DY - icon_focus_margin;
-    float icon_focus_max_inverted_sy = icon_focus_max_inverted_dy - icon_focus_height;
-
-    icon_middle_y = icon_focus_max_inverted_sy - icon_focus_margin_b - icon_focus_margin / 2;
-
-    float icon_focus_min_dy = icon_middle_y - icon_focus_margin / 2;
-    float icon_focus_max_dy = icon_focus_min_dy - icon_focus_margin_b;
-    icon_focus_min_sy = icon_focus_min_dy - icon_focus_height;
-    icon_focus_max_sy = icon_focus_max_dy - icon_focus_height;
-
-    icon_focus_scroll_sx = icon_focus_sx;
-    icon_focus_scroll_sy = icon_focus_min_sy;
-
-    float icon_unfocus_dy = icon_middle_y - icon_unfocus_margin / 2;
-    icon_unfocus_sy = icon_unfocus_dy - icon_unfocus_height;
-
-    core_title_view_height = UiGetLineHeight() + CORE_TITLE_PADDING_T * 2;
-    core_title_view_sx = icon_focus_sx + icon_focus_width + icon_focus_margin;
-    core_title_view_sy = icon_unfocus_sy - VIEW_MARGIN - core_title_view_height;
-    core_title_view_dx = MAIN_FREE_DRAW_DX - CORE_VIEW_PADDING_L;
-    core_title_view_scroll_sx = core_title_view_sx;
-    core_title_view_width = core_title_view_dx - core_title_view_sx;
-
-    core_title_text_sx = core_title_view_sx + CORE_TITLE_PADDING_L;
-    core_title_text_sy = core_title_view_sy + CORE_TITLE_PADDING_T;
-    core_title_text_dx = core_title_view_dx - CORE_TITLE_PADDING_L;
-    core_title_text_scroll_sx = core_title_text_sx;
-    core_title_text_width = core_title_view_width - CORE_TITLE_PADDING_L * 2;
-    core_title_text_height = UiGetLineHeight();
-
-    core_entries_view_sx = core_title_view_sx + CORE_ENTRIES_MARGIN_L + 4;
-    core_entries_view_sy = core_title_view_sy + core_title_view_height;
-    core_entries_view_dx = core_title_view_dx;
-    core_entries_view_scroll_sx = core_entries_view_sx;
-    core_entries_view_width = core_entries_view_dx - core_entries_view_sx;
-    core_entries_view_height = UiGetLineHeight() * CORE_ENTRIES_PADDING_T * 2;
-
-    core_entries_text_sx = core_entries_view_sx + CORE_ENTRIES_PADDING_L;
-    core_entries_text_sy = core_entries_view_sy + CORE_ENTRIES_PADDING_T;
-    core_entries_text_dx = core_title_text_dx;
-    core_entries_text_scroll_sx = core_entries_text_sx;
-    core_entries_text_width = core_entries_text_dx - core_entries_text_sx;
-    core_entries_text_height = UiGetLineHeight();
-
-    core_entries_y_space = UiGetLineHeight() + CORE_ENTRIES_PADDING_T + CORE_ENTRIES_LINE_SPACE;
-    core_entries_full_height = MAIN_FREE_DRAW_DY - CORE_VIEW_PADDING_T - core_entries_text_sy;
-    core_enties_lines = (core_entries_full_height + CORE_ENTRIES_LINE_SPACE) / core_entries_y_space;
-
-    core_open_icon_sx = CORE_VIEW_PADDING_L;
-    core_open_icon_sy = icon_focus_min_sy;
-
-    core_open_title_view_sx = core_open_icon_sx + icon_focus_width + icon_focus_margin;
-    core_open_title_view_sy = core_title_view_sy;
-
-    core_open_title_text_sx = core_open_title_view_sx + CORE_TITLE_PADDING_L;
-    core_open_title_text_sy = core_title_text_sy;
-
-    core_open_entries_view_sx = core_open_title_view_sx + CORE_ENTRIES_MARGIN_L;
-    core_open_entries_view_sy = core_entries_view_sy;
-
-    core_open_entries_text_sx = core_open_entries_view_sx + CORE_ENTRIES_PADDING_L;
-    core_open_entries_text_sy = core_entries_text_sy;
-}
+static int core_current_x = 0, core_target_x = 0;
+static float core_scroll_step = 0;
+static uint32_t core_name_color = 0;
+static uint32_t core_sel_name_color = 0;
+static uint32_t core_bg_color = 0;
+static uint32_t core_sel_color = 0;
 
 static void makeCorePath(char *path, char *name)
 {
@@ -229,7 +146,26 @@ static void makeIconPath(char *path, char *name)
     snprintf(path, MAX_PATH_LENGTH, "%s/%s/icon0.png", CORE_DATA_DIR, name);
 }
 
-static void setIconTexture(BrowserEntry *entry, vita2d_texture *texture)
+static uint32_t makeAlphaColor(uint32_t cur, uint32_t target, float step_alpha)
+{
+    int cur_alpha = COLOR_GET_ALPHA(cur);
+    int target_alpha = COLOR_GET_ALPHA(target);
+    if (cur_alpha < target_alpha)
+    {
+        cur_alpha += step_alpha;
+        if (cur_alpha > target_alpha)
+            cur_alpha = target_alpha;
+    }
+    else if (cur_alpha > target_alpha)
+    {
+        cur_alpha -= step_alpha;
+        if (cur_alpha < target_alpha)
+            cur_alpha = target_alpha;
+    }
+    return COLOR_SET_ALPHA(target, cur_alpha);
+}
+
+static void setIconTexture(SoftwareEntry *entry, vita2d_texture *texture)
 {
     if (entry->icon)
     {
@@ -244,190 +180,381 @@ static int loadCoreEboot(CoreEntry *entry)
     if (!entry)
         return -1;
 
-    char path[MAX_PATH_LENGTH];
-    char *name = entry->core_name;
-    makeCorePath(path, name);
-    char *software = browser_entries[browser_focus_pos].software;
-    WriteFile(LASTFILE_PATH, software, strlen(software) + 1);
-    int ret = loadCoreWithBootParams(path, software);
+    SaveConfig();
+
+    char core_path[MAX_PATH_LENGTH];
+    makeCorePath(core_path, entry->core_name);
+    char assets_dir[MAX_PATH_LENGTH];
+    snprintf(assets_dir, MAX_CONFIG_LINE_LENGTH, "%s/%s", CORE_DATA_DIR, entry->assets_name);
+
+    int ret = loadCoreWithBootParams(core_path, assets_dir);
 
     return ret;
 }
 
-static void refreshBrowserEntriesPos(int type, int pos)
+static void refreshIconScroll()
 {
-    int tmp_focus_pos = pos;
-    if (type == LIST_CONTROL_UP)
-        tmp_focus_pos--;
-    else if (type == LIST_CONTROL_DOWN)
-        tmp_focus_pos++;
+    if (g_config.software_pos == 0)
+        icon_target_sx = icon_focus_x;
+    else
+        icon_target_sx = icon_focus_x - (g_config.software_pos * (ICON_UNFOCUS_WIDTH + ICON_MARGIN) + ICON_SELVIEW_BORDER_SIZE);
 
-    if (tmp_focus_pos < 0)
-        tmp_focus_pos = 0;
-    if (tmp_focus_pos > N_BROWSER_ENTRIES - 1)
-        tmp_focus_pos = N_BROWSER_ENTRIES - 1;
+    if (icon_target_sx > icon_current_sx)
+        icon_scroll_step = (icon_target_sx - icon_current_sx) / (float)ICON_MAX_STEP_COUNT;
+    else
+        icon_scroll_step = (icon_current_sx - icon_target_sx) / (float)ICON_MAX_STEP_COUNT;
+}
 
-    if (browser_focus_pos != tmp_focus_pos)
+static void initSoftwareEntriesLayout()
+{
+    icon_selview_w = ICON_SELVIEW_WIDTH(ICON_UNFOCUS_WIDTH);
+    icon_selview_h = ICON_SELVIEW_HEIGHT(ICON_UNFOCUS_WIDTH);
+    icon_sel_border_color = ICON_SELVIEW_BORDER_COLOR;
+    icon_sel_bg_color = ICON_SELVIEW_BG_COLOR;
+    icon_short_name_color = 0;
+    icon_long_name_color = 0;
+
+    icon_focus_x = MAIN_FREE_DRAW_SX + ICON_UNFOCUS_WIDTH * 0.8f + ICON_MARGIN;
+    icon_focus_y = MAIN_FREE_DRAW_SY + (MAIN_FREE_DRAW_HEIGHT - ICON_FOCUS_HIEGHT) / 5;
+
+    icon_selview_current_x = icon_selview_target_x = icon_focus_x;
+    icon_selview_current_y = icon_selview_target_y = icon_focus_y;
+
+    icon_current_sx = icon_target_sx = icon_focus_x;
+    icon_current_sy = icon_target_sy = icon_focus_y;
+
+    // Set icon layout
+    int i;
+    for (i = 0; i < N_SOFTWARE_ENTRIES; i++)
     {
-        browser_focus_pos = tmp_focus_pos;
-        int tmp_top_pos = browser_focus_pos - 1;
-        if (tmp_top_pos < 0)
-            tmp_top_pos = 0;
-        browser_top_pos = tmp_top_pos;
-        icon_focus_scroll_sy = icon_focus_min_sy;
+        IconLayout *layout = &software_entries[i].layout;
+        layout->w = ICON_UNFOCUS_WIDTH;
+        layout->h = ICON_UNFOCUS_HIEGHT;
+        layout->margin_r = ICON_MARGIN;
+    }
+
+    refreshIconScroll();
+}
+
+static void updateSoftwareEntriesLayout()
+{
+    if (icon_current_sx < icon_target_sx)
+    {
+        icon_current_sx += icon_scroll_step;
+        if (icon_current_sx > icon_target_sx)
+            icon_current_sx = icon_target_sx;
+    }
+    else if (icon_current_sx > icon_target_sx)
+    {
+        icon_current_sx -= icon_scroll_step;
+        if (icon_current_sx < icon_target_sx)
+            icon_current_sx = icon_target_sx;
+    }
+
+    if (icon_selview_current_x < icon_selview_target_x)
+    {
+        icon_selview_current_x += icon_selview_scroll_step;
+        if (icon_selview_current_x > icon_selview_target_x)
+            icon_selview_current_x = icon_selview_target_x;
+    }
+    else if (icon_selview_current_x > icon_selview_target_x)
+    {
+        icon_selview_current_x -= icon_selview_scroll_step;
+        if (icon_selview_current_x < icon_selview_target_x)
+            icon_selview_current_x = icon_selview_target_x;
+    }
+
+    int target_w, target_h;
+    float icon_w_scale_step = (ICON_FOCUS_WIDTH - ICON_UNFOCUS_WIDTH) / (float)ICON_MAX_STEP_COUNT;
+    float icon_h_scale_step = (ICON_FOCUS_HIEGHT - ICON_UNFOCUS_HIEGHT) / (float)ICON_MAX_STEP_COUNT;
+    float icon_margin_scale_step = ICON_SELVIEW_BORDER_SIZE / (float)ICON_MAX_STEP_COUNT;
+
+    int i;
+    for (i = 0; i < N_SOFTWARE_ENTRIES; i++)
+    {
+        IconLayout *layout = &software_entries[i].layout;
+
+        target_w = ICON_UNFOCUS_WIDTH;
+        target_h = ICON_UNFOCUS_HIEGHT;
+
+        if (i == g_config.software_pos)
+        {
+            target_w = ICON_FOCUS_WIDTH;
+            target_h = ICON_FOCUS_HIEGHT;
+        }
+
+        // Scale icon width
+        if (layout->w < target_w)
+        {
+            layout->w += icon_w_scale_step;
+            if (layout->w > target_w)
+                layout->w = target_w;
+        }
+        else if (layout->w > target_w)
+        {
+            layout->w -= icon_w_scale_step;
+            if (layout->w < target_w)
+                layout->w = target_w;
+        }
+
+        // Scale icon height
+        if (layout->h < target_h)
+        {
+            layout->h += icon_h_scale_step;
+            if (layout->h > target_h)
+                layout->h = target_h;
+        }
+        else if (layout->h > target_h)
+        {
+            layout->h -= icon_h_scale_step;
+            if (layout->h < target_h)
+                layout->h = target_h;
+        }
+
+        // Scale icon margin right
+        int target_margin_r = ICON_MARGIN;
+        if (i == g_config.software_pos || i == g_config.software_pos - 1)
+            target_margin_r += ICON_SELVIEW_BORDER_SIZE;
+
+        if (layout->margin_r < target_margin_r)
+        {
+            layout->margin_r += icon_margin_scale_step;
+            if (layout->margin_r > target_margin_r)
+                layout->margin_r = target_margin_r;
+        }
+        else if (layout->margin_r > target_margin_r)
+        {
+            layout->margin_r -= icon_margin_scale_step;
+            if (layout->margin_r < target_margin_r)
+                layout->margin_r = target_margin_r;
+        }
+    }
+
+    IconLayout *focus_layout = &software_entries[g_config.software_pos].layout;
+
+    target_w = ICON_SELVIEW_WIDTH(focus_layout->w);
+    target_h = ICON_SELVIEW_HEIGHT(focus_layout->h);
+
+    // Scale selview width
+    if (icon_selview_w < target_w)
+    {
+        icon_selview_w += icon_w_scale_step;
+        if (icon_selview_w > target_w)
+            icon_selview_w = target_w;
+    }
+    else if (icon_selview_w > target_w)
+    {
+        icon_selview_w -= icon_w_scale_step;
+        if (icon_selview_w < target_w)
+            icon_selview_w = target_w;
+    }
+    // Scale selview height
+    if (icon_selview_h < target_h)
+    {
+        icon_selview_h += icon_h_scale_step;
+        if (icon_selview_h > target_h)
+            icon_selview_h = target_h;
+    }
+    else if (icon_selview_h > target_h)
+    {
+        icon_selview_h -= icon_h_scale_step;
+        if (icon_selview_h < target_h)
+            icon_selview_h = target_h;
+    }
+
+    if (focus_layout->h == ICON_FOCUS_HIEGHT)
+    {
+        icon_short_name_color = makeAlphaColor(icon_short_name_color, ICON_SHORT_NAME_COLOR, COLOR_GET_ALPHA(ICON_SHORT_NAME_COLOR) / (float)ICON_MAX_STEP_COUNT);
+        icon_long_name_color = makeAlphaColor(icon_long_name_color, ICON_LONG_NAME_COLOR, COLOR_GET_ALPHA(ICON_LONG_NAME_COLOR) / (float)ICON_MAX_STEP_COUNT);
+    }
+
+    if (core_entries_open)
+        icon_tint_color = makeAlphaColor(icon_tint_color, COLOR_SET_ALPHA(ICON_TINT_COLOR, 0), COLOR_GET_ALPHA(ICON_TINT_COLOR) / (float)ICON_MAX_STEP_COUNT);
+    else
+        icon_tint_color = makeAlphaColor(icon_tint_color, ICON_TINT_COLOR, COLOR_GET_ALPHA(ICON_TINT_COLOR) / (float)ICON_MAX_STEP_COUNT);
+}
+
+static void moveSoftwareEntriesPos(int type)
+{
+    int new_focus_pos = g_config.software_pos;
+
+    if (type == TYPE_MOVE_LEFT)
+        new_focus_pos--;
+    else if (type == TYPE_MOVE_RIGHT)
+        new_focus_pos++;
+    if (new_focus_pos < 0)
+        new_focus_pos = 0;
+    if (new_focus_pos > N_SOFTWARE_ENTRIES - 1)
+        new_focus_pos = N_SOFTWARE_ENTRIES - 1;
+
+    if (g_config.software_pos != new_focus_pos)
+    {
+        g_config.software_pos = new_focus_pos;
+        refreshIconScroll();
+
+        // icon_sel_border_color = 0;
+        // icon_sel_bg_color = 0;
+        icon_short_name_color = 0;
+        icon_long_name_color = 0;
     }
 }
-
-static void refreshCoreEntriesPos(int type, int pos)
-{
-    int length = browser_entries[browser_focus_pos].n_entries;
-    controlRefreshListPos(type, &core_top_pos, &pos, length, core_enties_lines);
-    if (core_focus_pos != pos)
-    {
-        core_focus_pos = pos;
-    }
-}
-
-static void refreshBrowserScroll()
-{
-    if (icon_focus_scroll_sx < icon_focus_sx)
-        icon_focus_scroll_sx += 4;
-    if (icon_focus_scroll_sx > icon_focus_sx)
-        icon_focus_scroll_sx = icon_focus_sx;
-
-    if (icon_focus_scroll_sy > icon_focus_max_sy)
-        icon_focus_scroll_sy -= 4;
-    if (icon_focus_scroll_sy < icon_focus_max_sy)
-        icon_focus_scroll_sy = icon_focus_max_sy;
-
-    if (core_title_view_scroll_sx < core_title_view_sx)
-        core_title_view_scroll_sx += 4;
-    if (core_title_view_scroll_sx > core_title_view_sx)
-        core_title_view_scroll_sx = core_title_view_sx;
-
-    if (core_title_text_scroll_sx < core_title_text_sx)
-        core_title_text_scroll_sx += 4;
-    if (core_title_text_scroll_sx > core_title_text_sx)
-        core_title_text_scroll_sx = core_title_text_sx;
-
-    if (core_entries_view_scroll_sx < core_entries_view_sx)
-        core_entries_view_scroll_sx += 4;
-    if (core_entries_view_scroll_sx > core_entries_view_sx)
-        core_entries_view_scroll_sx = core_entries_view_sx;
-
-    if (core_entries_text_scroll_sx < core_entries_text_sx)
-        core_entries_text_scroll_sx += 4;
-    if (core_entries_text_scroll_sx > core_entries_text_sx)
-        core_entries_text_scroll_sx = core_entries_text_sx;
-}
-
-static void refreshCoreScroll()
-{
-    if (icon_focus_scroll_sx > core_open_icon_sx)
-        icon_focus_scroll_sx -= 4;
-    if (icon_focus_scroll_sx < core_open_icon_sx)
-        icon_focus_scroll_sx = core_open_icon_sx;
-
-    if (icon_focus_scroll_sy < core_open_icon_sy)
-        icon_focus_scroll_sy += 4;
-    if (icon_focus_scroll_sy > core_open_icon_sy)
-        icon_focus_scroll_sy = core_open_icon_sy;
-
-    if (core_title_view_scroll_sx > core_open_title_view_sx)
-        core_title_view_scroll_sx -= 4;
-    if (core_title_view_scroll_sx < core_open_title_view_sx)
-        core_title_view_scroll_sx = core_open_title_view_sx;
-
-    if (core_title_text_scroll_sx > core_open_title_text_sx)
-        core_title_text_scroll_sx -= 4;
-    if (core_title_text_scroll_sx < core_open_title_text_sx)
-        core_title_text_scroll_sx = core_open_title_text_sx;
-
-    if (core_entries_view_scroll_sx > core_open_entries_view_sx)
-        core_entries_view_scroll_sx -= 4;
-    if (core_entries_view_scroll_sx < core_open_entries_view_sx)
-        core_entries_view_scroll_sx = core_open_entries_view_sx;
-
-    if (core_entries_text_scroll_sx > core_open_entries_text_sx)
-        core_entries_text_scroll_sx -= 4;
-    if (core_entries_text_scroll_sx < core_open_entries_text_sx)
-        core_entries_text_scroll_sx = core_open_entries_text_sx;
-}
-
-static void setBrowserFocusOnName(char *name)
+/*
+static void setSoftwareFocusByName(char *name)
 {
     int i;
-    for (i = 0; i < N_BROWSER_ENTRIES; i++)
+    for (i = 0; i < N_SOFTWARE_ENTRIES; i++)
     {
-        if (strcmp(name, browser_entries[i].software) == 0)
+        if (strcmp(name, software_entries[i].short_name) == 0)
         {
-            if (i != browser_focus_pos)
+            if (i != g_config.software_pos)
             {
-                refreshBrowserEntriesPos(LIST_CONTROL_NONE, i);
+                g_config.software_pos = i;
+                moveSoftwareEntriesPos(TYPE_MOVE_NONE);
             }
             break;
         }
     }
 }
 
-static int setBrowserFocusOnNameFromFile(char *path)
+static int setSoftwareFocusByNameFromFile(char *path)
 {
     char name[MAX_NAME_LENGTH];
     if (ReadFile((path), name, sizeof(name)) <= 0)
         return -1;
-    setBrowserFocusOnName(name);
+    setSoftwareFocusByName(name);
 
     return 0;
+}
+*/
+static void updateCoreEntriesLayout()
+{
+    if (core_current_x < core_target_x)
+    {
+        core_current_x += core_scroll_step;
+        if (core_current_x > core_target_x)
+            core_current_x = core_target_x;
+    }
+    else if (core_current_x > core_target_x)
+    {
+        core_current_x -= core_scroll_step;
+        if (core_current_x < core_target_x)
+            core_current_x = core_target_x;
+    }
+
+    uint32_t target_name_color;
+    uint32_t target_sel_name_color;
+    uint32_t target_bg_color;
+    uint32_t target_sel_bg_color;
+    if (core_entries_open)
+    {
+        target_name_color = CORE_ITEM_NAME_COLOR;
+        target_sel_name_color = CORE_ITEM_SEL_NAME_COLOR;
+        target_bg_color = CORE_ITEM_BG_COLOR;
+        target_sel_bg_color = CORE_ITEM_SEL_BG_COLOR;
+    }
+    else
+    {
+        target_name_color = COLOR_SET_ALPHA(CORE_ITEM_NAME_COLOR, 0);
+        target_sel_name_color = COLOR_SET_ALPHA(CORE_ITEM_SEL_NAME_COLOR, 0);
+        target_bg_color = COLOR_SET_ALPHA(CORE_ITEM_BG_COLOR, 0);
+        target_sel_bg_color = COLOR_SET_ALPHA(CORE_ITEM_SEL_BG_COLOR, 0);
+    }
+    core_name_color = makeAlphaColor(core_name_color, target_name_color, COLOR_GET_ALPHA(CORE_ITEM_NAME_COLOR) / (float)ICON_MAX_STEP_COUNT);
+    core_sel_name_color = makeAlphaColor(core_sel_name_color, target_sel_name_color, COLOR_GET_ALPHA(CORE_ITEM_NAME_COLOR) / (float)ICON_MAX_STEP_COUNT);
+    core_bg_color = makeAlphaColor(core_bg_color, target_bg_color, COLOR_GET_ALPHA(CORE_ITEM_BG_COLOR) / (float)ICON_MAX_STEP_COUNT);
+    core_sel_color = makeAlphaColor(core_sel_color, target_sel_bg_color, COLOR_GET_ALPHA(CORE_ITEM_SEL_BG_COLOR) / (float)ICON_MAX_STEP_COUNT);
+}
+
+static void moveCoreEntriesPos(int type)
+{
+    SoftwareEntry *software_entry = &software_entries[g_config.software_pos];
+    int new_focus_pos = *software_entry->entries_pos;
+
+    if (type == TYPE_MOVE_UP)
+        new_focus_pos--;
+    else if (type == TYPE_MOVE_DOWN)
+        new_focus_pos++;
+    if (new_focus_pos < 0)
+        new_focus_pos = 0;
+    if (new_focus_pos > software_entry->n_entries - 1)
+        new_focus_pos = software_entry->n_entries - 1;
+
+    *software_entry->entries_pos = new_focus_pos;
 }
 
 static void openCoreEntries()
 {
-    core_open = 1;
-    core_entries = browser_entries[browser_focus_pos].entry;
-    core_focus_pos = 0;
-    refreshCoreEntriesPos(LIST_CONTROL_NONE, core_focus_pos);
+    moveCoreEntriesPos(TYPE_MOVE_NONE);
+    refreshIconScroll();
+
+    int x_scroll_size = ICON_UNFOCUS_WIDTH * 0.5f;
+
+    icon_selview_target_x = icon_focus_x - x_scroll_size;
+    if (icon_selview_target_x > icon_selview_current_x)
+        icon_selview_scroll_step = (icon_selview_target_x - icon_selview_current_x) / (float)ICON_MAX_STEP_COUNT;
+    else
+        icon_selview_scroll_step = (icon_selview_current_x - icon_selview_target_x) / (float)ICON_MAX_STEP_COUNT;
+
+    icon_target_sx -= x_scroll_size;
+    if (icon_target_sx > icon_current_sx)
+        icon_scroll_step = (icon_target_sx - icon_current_sx) / (float)ICON_MAX_STEP_COUNT;
+    else
+        icon_scroll_step = (icon_current_sx - icon_target_sx) / (float)ICON_MAX_STEP_COUNT;
+
+    core_target_x = icon_selview_target_x + ICON_FOCUS_WIDTH + 20;
+    core_current_x = icon_focus_x + ICON_FOCUS_WIDTH + 40;
+    core_scroll_step = (core_current_x - core_target_x) / (float)ICON_MAX_STEP_COUNT;
+
+    core_name_color = 0;
+    core_bg_color = 0;
+    core_sel_color = 0;
+
+    core_entries_open = 1;
 }
 
 static void closeCoreEntries()
 {
-    core_open = 0;
-    core_entries = NULL;
+    refreshIconScroll();
+    icon_selview_target_x = icon_focus_x;
+    if (icon_selview_target_x > icon_selview_current_x)
+        icon_selview_scroll_step = (icon_selview_target_x - icon_selview_current_x) / (float)ICON_MAX_STEP_COUNT;
+    else
+        icon_selview_scroll_step = (icon_selview_current_x - icon_selview_target_x) / (float)ICON_MAX_STEP_COUNT;
+
+    core_entries_open = 0;
+    core_target_x = icon_focus_x + ICON_FOCUS_WIDTH + 40;
+    core_scroll_step = (core_target_x - core_current_x) / (float)ICON_MAX_STEP_COUNT;
 }
 
 static int drawCoreEntries()
 {
-    refreshCoreScroll();
+    if (!core_entries_open && core_current_x == core_target_x)
+        return 0;
 
-    BrowserEntry *b_entry = &browser_entries[browser_focus_pos];
+    updateCoreEntriesLayout();
 
-    int inverted_sy = icon_middle_y + (icon_middle_y - icon_focus_scroll_sy - icon_focus_height);
-    if (b_entry->icon)
-    {
-        vita2d_draw_texture_scale(b_entry->icon, icon_focus_scroll_sx, icon_focus_scroll_sy, ICON_FOCUS_SCALE, ICON_FOCUS_SCALE);
-        vita2d_draw_texture_tint_scale_rotate(b_entry->icon, icon_focus_scroll_sx + icon_focus_width / 2, inverted_sy + icon_focus_height / 2,
-                                              ICON_FOCUS_SCALE, ICON_FOCUS_SCALE, M_PI_2 * 2, ICON_INVERTED_COLOR);
-    }
-    else
-    {
-        vita2d_draw_rectangle(icon_focus_scroll_sx, icon_focus_scroll_sy, icon_focus_width, icon_focus_height, ICON_COLOR_NONE);
-        vita2d_draw_rectangle(icon_focus_scroll_sx, inverted_sy, icon_focus_width, icon_focus_height, ICON_INVERTED_COLOR_NONE);
-    }
-    char *title = browser_entries[browser_focus_pos].software;
-    UiDrawText(core_title_text_scroll_sx, core_title_text_sy, CORE_TITLE_COLOR, title);
+    SoftwareEntry *software_entry = &software_entries[g_config.software_pos];
+    CoreEntry *core_entries = software_entry->entries;
 
-    int sx = core_entries_text_scroll_sx;
-    int sy = core_entries_text_sy;
-    uint32_t color;
+    int x = core_current_x;
+    int y = icon_focus_y;
+    uint32_t name_color;
 
     int i;
-    for (i = 0; i < b_entry->n_entries; i++)
+    for (i = 0; i < software_entry->n_entries; i++)
     {
-        if (i == core_focus_pos)
-            color = CORE_TITLE_COLOR;
-        else
-            color = WHITE;
-        UiDrawText(sx, sy, color, core_entries[i].desc);
-        sy += core_entries_y_space;
+        vita2d_draw_rectangle(x, y, CORE_ITEM_WIDTH, CORE_ITEM_HEIGHT, CORE_ITEM_BG_COLOR);
+        name_color = core_name_color;
+
+        if (i == *software_entry->entries_pos)
+        {
+            name_color = core_sel_name_color;
+            vita2d_draw_rectangle(x, y, CORE_ITEM_WIDTH, CORE_ITEM_HEIGHT, CORE_ITEM_SEL_BG_COLOR);
+        }
+
+        GUI_drawText(x + CORE_ITEM_PADDING, y + CORE_ITEM_PADDING, name_color, core_entries[i].desc);
+
+        y += (CORE_ITEM_HEIGHT + 2);
     }
 
     return 0;
@@ -437,11 +564,11 @@ static int ctrlCoreEntries()
 {
     if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
     {
-        refreshCoreEntriesPos(LIST_CONTROL_UP, core_focus_pos);
+        moveCoreEntriesPos(TYPE_MOVE_UP);
     }
     else if (hold_pad[PAD_DOWN] || hold2_pad[PAD_LEFT_ANALOG_DOWN])
     {
-        refreshCoreEntriesPos(LIST_CONTROL_DOWN, core_focus_pos);
+        moveCoreEntriesPos(TYPE_MOVE_DOWN);
     }
 
     if (pressed_pad[PAD_CANCEL])
@@ -451,112 +578,93 @@ static int ctrlCoreEntries()
 
     if (pressed_pad[PAD_ENTER])
     {
-        loadCoreEboot(&core_entries[core_focus_pos]);
+        SoftwareEntry *software_entry = &software_entries[g_config.software_pos];
+        CoreEntry *core_entry = &software_entry->entries[*software_entry->entries_pos];
+        loadCoreEboot(core_entry);
     }
 
     return 0;
 }
 
-static int drawBrowserEntries()
+static int drawSoftwareEntries()
 {
-    refreshBrowserScroll();
+    updateSoftwareEntriesLayout();
 
-    int sx, sy;
-    int width, height, margin;
-    float scale;
-    int inverted_sy;
+    SoftwareEntry *entry;
+    IconLayout *layout;
+
+    SoftwareEntry *focus_entry = &software_entries[g_config.software_pos];
+
+    // Draw selview bg
+    vita2d_draw_rectangle(icon_selview_current_x, icon_selview_current_y, icon_selview_w, icon_selview_h, icon_sel_bg_color);
+
+    // Draw icon
+    int x = icon_current_sx;
+    int y = icon_current_sy;
+    float x_scale, y_scale;
+
     int i;
-
-    sx = icon_focus_scroll_sx;
-
-    for (i = browser_focus_pos; i < N_BROWSER_ENTRIES; i++)
+    for (i = 0; i < N_SOFTWARE_ENTRIES; i++)
     {
-        if (sx >= MAIN_FREE_DRAW_DX)
+        entry = &software_entries[i];
+        layout = &entry->layout;
+
+        if (x > MAIN_FREE_DRAW_DX)
             break;
+        if (x + layout->w < 0)
+            goto NEXT;
 
-        if (i == browser_focus_pos)
-        {
-            sy = icon_focus_scroll_sy;
-            width = icon_focus_width;
-            height = icon_focus_height;
-            margin = icon_focus_margin;
-            scale = ICON_FOCUS_SCALE;
-        }
-        else
-        {
-            sy = icon_unfocus_sy;
-            width = icon_unfocus_width;
-            height = icon_unfocus_height;
-            margin = icon_unfocus_margin;
-            scale = ICON_UNFOCUS_SCALE;
-        }
-        inverted_sy = icon_middle_y + (icon_middle_y - sy - height);
+        uint32_t tint_color = icon_tint_color;
+        if (i == g_config.software_pos)
+            tint_color = ICON_TINT_COLOR;
 
-        BrowserEntry *entry = &browser_entries[i];
+        if (COLOR_GET_ALPHA(tint_color) == 0)
+            goto NEXT;
+
         if (entry->icon)
         {
-            vita2d_draw_texture_scale(entry->icon, sx, sy, scale, scale);
-            vita2d_draw_texture_tint_scale_rotate(entry->icon, sx + width / 2, inverted_sy + height / 2,
-                                                  scale, scale, M_PI_2 * 2, ICON_INVERTED_COLOR);
+            x_scale = (float)layout->w / (float)vita2d_texture_get_width(entry->icon);
+            y_scale = (float)layout->h / (float)vita2d_texture_get_height(entry->icon);
+            vita2d_draw_texture_tint_scale(entry->icon, x, y, x_scale, y_scale, tint_color);
         }
         else
         {
-            vita2d_draw_rectangle(sx, sy, width, height, ICON_COLOR_NONE);
-            vita2d_draw_rectangle(sx, inverted_sy, width, height, ICON_INVERTED_COLOR_NONE);
+            vita2d_draw_rectangle(x, y, layout->w, layout->h, ICON_COLOR_NONE & tint_color);
         }
 
-        sx += (width + margin);
+    NEXT:
+        x += (layout->w + layout->margin_r);
     }
 
-    sx = icon_focus_scroll_sx - icon_focus_margin - icon_unfocus_width;
-    sy = icon_unfocus_sy;
-    width = icon_unfocus_width;
-    height = icon_unfocus_height;
-    scale = ICON_UNFOCUS_SCALE;
-    margin = icon_unfocus_margin;
-    inverted_sy = icon_middle_y + (icon_middle_y - sy - height);
-
-    for (i = browser_focus_pos - 1; i >= 0; i--)
-    {
-        if (sx + width <= MAIN_FREE_DRAW_SX)
-            break;
-
-        BrowserEntry *entry = &browser_entries[i];
-        if (entry->icon)
-        {
-            vita2d_draw_texture_scale(entry->icon, sx, sy, scale, scale);
-            vita2d_draw_texture_tint_scale_rotate(entry->icon, sx + width / 2, inverted_sy + height / 2,
-                                                  scale, scale, M_PI_2 * 2, ICON_INVERTED_COLOR);
-        }
-        else
-        {
-            vita2d_draw_rectangle(sx, sy, width, height, ICON_COLOR_NONE);
-            vita2d_draw_rectangle(sx, inverted_sy, width, height, ICON_INVERTED_COLOR_NONE);
-        }
-
-        sx -= (width + margin);
-    }
-
-    char *title = browser_entries[browser_focus_pos].software;
-    UiDrawText(core_title_text_scroll_sx, core_title_text_sy, CORE_TITLE_COLOR, title);
+    // Draw selview border
+    vita2d_draw_empty_rectangle(icon_selview_current_x - ICON_SELVIEW_BORDER_SIZE, icon_selview_current_y - ICON_SELVIEW_BORDER_SIZE,
+                                icon_selview_w + ICON_SELVIEW_BORDER_SIZE * 2, icon_selview_h + ICON_SELVIEW_BORDER_SIZE * 2,
+                                ICON_SELVIEW_BORDER_SIZE, icon_sel_border_color);
+    // Draw icon short name
+    int short_name_x = icon_selview_current_x + (ICON_FOCUS_WIDTH - GUI_getTextWidth(focus_entry->short_name)) / 2;
+    int short_name_y = icon_selview_current_y + ICON_FOCUS_HIEGHT + ICON_SHORT_NAME_PADDING;
+    GUI_drawText(short_name_x, short_name_y, icon_short_name_color, focus_entry->short_name);
 
     return 0;
 }
 
-static int ctrlBrowserEntries()
+static int ctrlSoftwareEntries()
 {
     if (hold_pad[PAD_LEFT] || hold2_pad[PAD_LEFT_ANALOG_LEFT])
     {
-        refreshBrowserEntriesPos(LIST_CONTROL_UP, browser_focus_pos);
+        moveSoftwareEntriesPos(TYPE_MOVE_LEFT);
     }
     else if (hold_pad[PAD_RIGHT] || hold2_pad[PAD_LEFT_ANALOG_RIGHT])
     {
-        refreshBrowserEntriesPos(LIST_CONTROL_DOWN, browser_focus_pos);
+        moveSoftwareEntriesPos(TYPE_MOVE_RIGHT);
     }
 
     if (pressed_pad[PAD_ENTER])
     {
-        openCoreEntries();
+        SoftwareEntry *focus_entry = &software_entries[g_config.software_pos];
+        IconLayout *focus_layout = &focus_entry->layout;
+        if (focus_layout->h == ICON_FOCUS_HIEGHT)
+            openCoreEntries();
     }
 
     return 0;
@@ -564,51 +672,52 @@ static int ctrlBrowserEntries()
 
 int drawBrowser()
 {
-    if (core_open)
-        drawCoreEntries();
-    else
-        drawBrowserEntries();
+    drawSoftwareEntries();
+    drawCoreEntries();
 
     return 0;
 }
 
 int ctrlBrowser()
 {
-    if (core_open)
+    if (core_entries_open)
         ctrlCoreEntries();
     else
-        ctrlBrowserEntries();
+        ctrlSoftwareEntries();
 
     return 0;
 }
 
-static int InitIconsThreadCallback(SceSize args, void *argp)
+static int iconsThreadCallback(SceSize args, void *argp)
 {
     vita2d_texture *texture;
     char path[MAX_PATH_LENGTH];
 
     int i;
-    for (i = 0; i < N_BROWSER_ENTRIES; i++)
+    for (i = 0; i < N_SOFTWARE_ENTRIES; i++)
     {
-        makeIconPath(path, browser_entries[i].software);
+        makeIconPath(path, software_entries[i].short_name);
         texture = vita2d_load_PNG_file(path);
-        setIconTexture(&browser_entries[i], texture);
+        setIconTexture(&software_entries[i], texture);
     }
 
     sceKernelExitDeleteThread(0);
     return 0;
 }
 
-void initIconsThread()
+static void initIconsThread()
 {
-    SceUID thid = sceKernelCreateThread("init_icons_thread", InitIconsThreadCallback, 0x10000100, 0x10000, 0, 0, NULL);
+    SceUID thid = sceKernelCreateThread("init_icons_thread", iconsThreadCallback, 0x10000100, 0x10000, 0, 0, NULL);
     if (thid >= 0)
         sceKernelStartThread(thid, 0, NULL);
 }
 
 int initBrowser()
 {
-    setBrowserFocusOnNameFromFile(LASTFILE_PATH);
+    LoadConfig();
+    initIconsThread();
+    initSoftwareEntriesLayout();
+    moveSoftwareEntriesPos(TYPE_MOVE_NONE);
 
     return 0;
 }

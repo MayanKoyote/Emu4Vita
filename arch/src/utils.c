@@ -16,10 +16,10 @@
 #include <psp2/kernel/processmgr.h>
 
 #include "utils.h"
-#include "ui.h"
+#include "gui.h"
 #include "init.h"
 #include "browser.h"
-#include "ui.h"
+#include "gui.h"
 #include "config.h"
 #include "file.h"
 
@@ -377,16 +377,16 @@ void refreshListPos(int *top_pos, int *focus_pos, int length, int lines)
     *focus_pos = temp_focus_pos;
 }
 
-void controlRefreshListPos(int type, int *top_pos, int *focus_pos, int length, int lines)
+void moveListPos(int type, int *top_pos, int *focus_pos, int length, int lines)
 {
     int temp_focus_pos = *focus_pos;
-    if (type == LIST_CONTROL_UP)
+    if (type == TYPE_MOVE_UP)
         temp_focus_pos--;
-    else if (type == LIST_CONTROL_DOWN)
+    else if (type == TYPE_MOVE_DOWN)
         temp_focus_pos++;
-    if (type == LIST_CONTROL_SKIP_UP)
+    if (type == TYPE_MOVE_LEFT)
         temp_focus_pos -= lines;
-    else if (type == LIST_CONTROL_SKIP_DOWN)
+    else if (type == TYPE_MOVE_RIGHT)
         temp_focus_pos += lines;
 
     refreshListPos(top_pos, &temp_focus_pos, length, lines);

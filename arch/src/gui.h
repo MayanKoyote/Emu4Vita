@@ -29,7 +29,8 @@ enum Colors
 };
 
 #define NOALPHA 0xFF
-#define COLOR_ALPHA(color, alpha) (color & 0x00FFFFFF) | ((alpha & 0xFF) << 24)
+#define COLOR_GET_ALPHA(color) ((color >> 24) & 0xFF)
+#define COLOR_SET_ALPHA(color, alpha) ((color & 0x00FFFFFF) | ((alpha & 0xFF) << 24))
 
 #define SCREEN_WIDTH 960.0f
 #define SCREEN_HEIGHT 544.0f
@@ -39,7 +40,7 @@ enum Colors
 #define DEFAULT_FONT_SCALE 1.0f
 #define DEFALUT_FONT_COLOR WHITE
 
-#define DEFALUT_BG_COLOR COLOR_ALPHA(0x1F1F1F, 0xAF)
+#define DEFALUT_BG_COLOR COLOR_SET_ALPHA(0x1F1F1F, 0xAF)
 
 #define SCROLL_BAR_WIDTH 6.0f
 
@@ -49,12 +50,11 @@ typedef struct
     char *instruction;
 } InstructionsEntry;
 
-void initUi();
-void finishUi();
-void UiMain();
+void GUI_init();
+void GUI_deinit();
+void GUI_main();
 
-void drawScrollBar(float sx, float sy, float full_height, int max_lines, int list_len, int top_pos);
-void printSafeMode();
+void GUI_drawScrollBar(float sx, float sy, float full_height, int max_lines, int list_len, int top_pos);
 
 extern char STR_BUTTON_ENTER[4], STR_BUTTON_CANCEL[4];
 

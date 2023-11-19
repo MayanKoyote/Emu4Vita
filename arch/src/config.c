@@ -4,10 +4,14 @@
 #include <stdlib.h>
 
 #include "config.h"
+#include "file.h"
+
 /*
 char *private_assets_dir = NULL;
 char *public_assetss_dir = NULL;
 */
+Config g_config;
+
 void trimString(char *str)
 {
     int len = strlen(str);
@@ -192,4 +196,40 @@ end:
         free(_line);
 
     return ret;
+}
+
+int ResetConfig()
+{
+    memset(&g_config, 0, sizeof(Config));
+    g_config.version = CONFIG_VERSION;
+
+    return 0;
+}
+
+int LoadConfig()
+{
+    Config config;
+    memset(&config, 0, sizeof(Config));
+
+    int ret = ReadFile(CONFIG_PATH, &config, sizeof(Config));
+    if (ret < 0 || ret != sizeof(Config) || config.version != CONFIG_VERSION)
+    {
+        ResetConfig();
+        return -1;
+    }
+
+    memcpy(&g_config, &config, sizeof(Config));
+
+    return 0;
+}
+
+int SaveConfig()
+{
+    char *parent_dir = getBaseDirectory(CONFIG_PATH);
+    if (!parent_dir)
+        return -1;
+    createFolder(parent_dir);
+    free(parent_dir);
+
+    return WriteFile(CONFIG_PATH, &g_config, sizeof(Config));
 }

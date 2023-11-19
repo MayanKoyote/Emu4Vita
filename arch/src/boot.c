@@ -22,7 +22,7 @@ int sendBootParams(char *app_path, char *argv[])
     return ret;
 }
 
-int loadGameWithBootParams(char *app_path, char *game_path, char *software)
+int loadGameWithBootParams(char *app_path, char *game_path, char *assets_dir)
 {
     if (!checkFileExist(app_path))
         return -1;
@@ -34,7 +34,7 @@ int loadGameWithBootParams(char *app_path, char *game_path, char *software)
     snprintf(game_path_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", BOOT_GAME_PATH_CASE_STR, game_path);
 
     char private_assets_param[MAX_CONFIG_LINE_LENGTH];
-    snprintf(private_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s/%s\"", PRIVATE_ASSETS_CASE_STR, CORE_DATA_DIR, software);
+    snprintf(private_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", PRIVATE_ASSETS_CASE_STR, assets_dir);
 
     char public_assets_param[MAX_CONFIG_LINE_LENGTH];
     snprintf(public_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", PUBLIC_ASSETS_CASE_STR, APP_ASSETS_DIR);
@@ -51,7 +51,7 @@ int loadGameWithBootParams(char *app_path, char *game_path, char *software)
     return ret;
 }
 
-int loadCoreWithBootParams(char *app_path, char *software)
+int loadCoreWithBootParams(char *app_path, char *assets_dir)
 {
     if (!checkFileExist(app_path))
         return -1;
@@ -60,7 +60,7 @@ int loadCoreWithBootParams(char *app_path, char *software)
     snprintf(boot_mode_param, MAX_CONFIG_LINE_LENGTH, "%s=%d", EXEC_BOOT_MODE_CASE_STR, BOOT_MODE_ARCH);
 
     char private_assets_param[MAX_CONFIG_LINE_LENGTH];
-    snprintf(private_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s/%s\"", PRIVATE_ASSETS_CASE_STR, CORE_DATA_DIR, software);
+    snprintf(private_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", PRIVATE_ASSETS_CASE_STR, assets_dir);
 
     char public_assets_param[MAX_CONFIG_LINE_LENGTH];
     snprintf(public_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", PUBLIC_ASSETS_CASE_STR, APP_ASSETS_DIR);

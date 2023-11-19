@@ -5,21 +5,28 @@
 
 typedef struct
 {
+	float w, h;
+	float margin_r;
+} IconLayout;
+
+typedef struct
+{
 	char *desc;
-    char *core_name;
+	char *core_name;
+	char *assets_name;
 } CoreEntry;
 
 typedef struct
 {
-	char *software;
+	char *short_name;
+	// char *long_name;
 	vita2d_texture *icon;
-	CoreEntry *entry;
-    int n_entries;
-} BrowserEntry;
+	CoreEntry *entries;
+	int n_entries;
+	uint32_t *entries_pos;
+	IconLayout layout;
+} SoftwareEntry;
 
-void initIconsThread();
-
-void initBrowserDrawInfo();
 int initBrowser();
 int drawBrowser();
 int ctrlBrowser();

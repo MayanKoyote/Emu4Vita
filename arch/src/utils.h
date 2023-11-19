@@ -22,13 +22,13 @@
 
 #define SKIP_PRESSED_PSBUTTON_COUNT 30
 
-enum ControlTypes
+enum MoveTypes
 {
-    LIST_CONTROL_NONE,
-    LIST_CONTROL_UP,
-    LIST_CONTROL_DOWN,
-    LIST_CONTROL_SKIP_UP,
-    LIST_CONTROL_SKIP_DOWN,
+    TYPE_MOVE_NONE,
+    TYPE_MOVE_UP,
+    TYPE_MOVE_DOWN,
+    TYPE_MOVE_LEFT,
+    TYPE_MOVE_RIGHT,
 };
 
 enum PadButtons
@@ -97,7 +97,7 @@ void getDateString(char string[24], int date_format, SceDateTime *time);
 void getTimeString(char string[16], int time_format, SceDateTime *time);
 
 void refreshListPos(int *top_pos, int *focus_pos, int length, int lines);
-void controlRefreshListPos(int type, int *top_pos, int *focus_pos, int length, int lines);
+void moveListPos(int type, int *top_pos, int *focus_pos, int length, int lines);
 
 void initPowerTickThread();
 

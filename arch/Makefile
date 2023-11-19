@@ -1,5 +1,5 @@
 TARGET     := Emu4VitaArch
-TARGET_VER := 1.07
+TARGET_VER := 1.08
 
 SFO_TITLE_ID      := EMUARCH01
 SFO_TITLE_NAME    := Emu4Vita Arch
@@ -52,7 +52,7 @@ SRC_C := \
 	graphics.c \
 	init.c \
 	main.c \
-	ui.c \
+	gui.c \
 	utils.c \
 	boot.c
 

@@ -7,7 +7,7 @@
 
 #include "main.h"
 #include "init.h"
-#include "ui.h"
+#include "gui.h"
 #include "boot.h"
 
 static int vita_run = 1;
@@ -16,7 +16,7 @@ int loopMain()
 {
     while (vita_run)
     {
-        UiMain();
+        GUI_main();
     }
 
     return 0;

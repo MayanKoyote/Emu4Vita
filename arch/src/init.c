@@ -23,7 +23,7 @@
 #include "init.h"
 #include "utils.h"
 #include "file.h"
-#include "ui.h"
+#include "gui.h"
 #include "config.h"
 
 int is_safe_mode = 0;
@@ -113,14 +113,10 @@ int initMain()
     sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG);
 
     checkVitatvModel();
+    checkSafeMode();
 
     initVita2dLib();
-    initUi();
-
-    if (checkSafeMode())
-    {
-        printSafeMode();
-    }
+    GUI_init();
 
     lockUsbConnection();
 
@@ -129,7 +125,7 @@ int initMain()
 
 int finishMain()
 {
-    finishUi();
+    GUI_deinit();
     finishVita2dLib();
     finishSceAppUtil();
 

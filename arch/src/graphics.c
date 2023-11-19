@@ -8,7 +8,7 @@
 
 #include <vita2d.h>
 
-#include "ui.h"
+#include "gui.h"
 #include "config.h"
 
 #define DEFAULT_FONT_HEIGHT 17.402f
@@ -18,7 +18,7 @@ static vita2d_pgf *font = NULL;
 static float font_height = DEFAULT_FONT_HEIGHT;
 static float font_scale = DEFAULT_FONT_SCALE;
 
-int initUiFonts()
+int GUI_initFonts()
 {
     font = vita2d_load_custom_pgf(FONT_PGF_PATH);
     if (!font)
@@ -28,24 +28,25 @@ int initUiFonts()
             return -1;
     }
 
-    font_height = UiGetFontHeight();
+    font_height = DEFAULT_FONT_HEIGHT;
+    font_scale = DEFAULT_FONT_SCALE;
 
     return 0;
 }
 
-void finishUiFonts()
+void GUI_deinitFonts()
 {
     if (font)
         vita2d_free_pgf(font);
     font = NULL;
 }
 
-int UiDrawText(int x, int y, unsigned int color, const char *text)
+int GUI_drawText(int x, int y, unsigned int color, const char *text)
 {
     return vita2d_pgf_draw_text(font, x, y + font_height, color, font_scale, text);
 }
 
-int UiDrawTextf(int x, int y, unsigned int color, const char *text, ...)
+int GUI_drawTextf(int x, int y, unsigned int color, const char *text, ...)
 {
     char buf[1024];
     va_list argptr;
@@ -56,43 +57,39 @@ int UiDrawTextf(int x, int y, unsigned int color, const char *text, ...)
     return vita2d_pgf_draw_text(font, x, y + font_height, color, font_scale, buf);
 }
 
-float UiGetFontScale()
+float GUI_getFontScale()
 {
     return font_scale;
 }
 
-void UiSetFontScale(float scale)
+void GUI_setFontScale(float scale)
 {
     font_scale = scale;
+    font_height = DEFAULT_FONT_HEIGHT * font_scale;
 }
 
-float UiGetFontHeight()
-{
-    return vita2d_pgf_font_height(font, font_scale);
-}
-
-float UiGetLineHeight()
+float GUI_getLineHeight()
 {
     return DEFAULT_LINE_HEIGHT * font_scale;
 }
 
-int UiGetTextWidth(const char *text)
+int GUI_getTextWidth(const char *text)
 {
     return vita2d_pgf_text_width(font, font_scale, text);
 }
 
-int UiGetTextHeight(const char *text)
+int GUI_getTextHeight(const char *text)
 {
     return vita2d_pgf_text_height(font, font_scale, text);
 }
 
-void UiStartDrawing()
+void GUI_startDrawing()
 {
     vita2d_start_drawing();
     vita2d_clear_screen();
 }
 
-void UiEndDrawing()
+void GUI_endDrawing()
 {
     vita2d_end_drawing();
     // vita2d_common_dialog_update();

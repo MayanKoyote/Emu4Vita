@@ -100,7 +100,7 @@ int createFolder(const char *path)
     char str[MAX_PATH_LENGTH];
     strcpy(str, path);
     removeEndSlash(str);
-    
+
     char *parent_path = getBaseDirectory(str);
     if (parent_path)
     {
