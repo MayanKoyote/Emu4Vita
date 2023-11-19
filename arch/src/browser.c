@@ -35,7 +35,7 @@
 #define ICON_TINT_COLOR 0xFFFFFFFF
 
 #define ICON_SELVIEW_WIDTH(w) w
-#define ICON_SELVIEW_HEIGHT(h) (h + ICON_SHORT_NAME_HEIGHT * (float)ICON_UNFOCUS_WIDTH / (float)ICON_UNFOCUS_HIEGHT)
+#define ICON_SELVIEW_HEIGHT(h) (h + ICON_SHORT_NAME_HEIGHT * (float)h / (float)ICON_FOCUS_HIEGHT)
 #define ICON_SELVIEW_BORDER_SIZE 2
 #define ICON_SELVIEW_BORDER_COLOR 0xF0FFFFFF
 #define ICON_SELVIEW_BG_COLOR 0xAF1F1F1F
@@ -110,26 +110,26 @@ SoftwareEntry software_entries[] = {
 
 static int core_entries_open = 0;
 
-static int icon_focus_x = 0, icon_focus_y = 0;
+static float icon_focus_x = 0, icon_focus_y = 0;
 
-static int icon_selview_target_x = 0, icon_selview_target_y = 0;
-static int icon_selview_current_x = 0, icon_selview_current_y = 0;
+static float icon_selview_target_x = 0, icon_selview_target_y = 0;
+static float icon_selview_current_x = 0, icon_selview_current_y = 0;
 static float icon_selview_scroll_step = 0;
 
-static int icon_target_sx = 0, icon_target_sy = 0;
-static int icon_current_sx = 0, icon_current_sy = 0;
+static float icon_target_sx = 0, icon_target_sy = 0;
+static float icon_current_sx = 0, icon_current_sy = 0;
 static float icon_scroll_step = 0;
 
-static uint32_t icon_sel_border_color = 0;
-static uint32_t icon_sel_bg_color = 0;
-static int icon_selview_w = 0;
-static int icon_selview_h = 0;
+static uint32_t icon_selview_border_color = 0;
+static uint32_t icon_selview_bg_color = 0;
+static float icon_selview_w = 0;
+static float icon_selview_h = 0;
 
 static uint32_t icon_tint_color = ICON_TINT_COLOR;
 static uint32_t icon_short_name_color = 0;
 static uint32_t icon_long_name_color = 0;
 
-static int core_current_x = 0, core_target_x = 0;
+static float core_current_x = 0, core_target_x = 0;
 static float core_scroll_step = 0;
 static uint32_t core_name_color = 0;
 static uint32_t core_sel_name_color = 0;
@@ -150,6 +150,10 @@ static uint32_t makeAlphaColor(uint32_t cur, uint32_t target, float step_alpha)
 {
     int cur_alpha = COLOR_GET_ALPHA(cur);
     int target_alpha = COLOR_GET_ALPHA(target);
+
+    if (step_alpha < 1)
+        step_alpha = 1;
+
     if (cur_alpha < target_alpha)
     {
         cur_alpha += step_alpha;
@@ -200,17 +204,17 @@ static void refreshIconScroll()
         icon_target_sx = icon_focus_x - (g_config.software_pos * (ICON_UNFOCUS_WIDTH + ICON_MARGIN) + ICON_SELVIEW_BORDER_SIZE);
 
     if (icon_target_sx > icon_current_sx)
-        icon_scroll_step = (icon_target_sx - icon_current_sx) / (float)ICON_MAX_STEP_COUNT;
+        icon_scroll_step = (float)(icon_target_sx - icon_current_sx) / (float)ICON_MAX_STEP_COUNT;
     else
-        icon_scroll_step = (icon_current_sx - icon_target_sx) / (float)ICON_MAX_STEP_COUNT;
+        icon_scroll_step = (float)(icon_current_sx - icon_target_sx) / (float)ICON_MAX_STEP_COUNT;
 }
 
 static void initSoftwareEntriesLayout()
 {
     icon_selview_w = ICON_SELVIEW_WIDTH(ICON_UNFOCUS_WIDTH);
     icon_selview_h = ICON_SELVIEW_HEIGHT(ICON_UNFOCUS_WIDTH);
-    icon_sel_border_color = ICON_SELVIEW_BORDER_COLOR;
-    icon_sel_bg_color = ICON_SELVIEW_BG_COLOR;
+    icon_selview_border_color = 0;
+    icon_selview_bg_color = 0;
     icon_short_name_color = 0;
     icon_long_name_color = 0;
 
@@ -265,9 +269,9 @@ static void updateSoftwareEntriesLayout()
     }
 
     int target_w, target_h;
-    float icon_w_scale_step = (ICON_FOCUS_WIDTH - ICON_UNFOCUS_WIDTH) / (float)ICON_MAX_STEP_COUNT;
-    float icon_h_scale_step = (ICON_FOCUS_HIEGHT - ICON_UNFOCUS_HIEGHT) / (float)ICON_MAX_STEP_COUNT;
-    float icon_margin_scale_step = ICON_SELVIEW_BORDER_SIZE / (float)ICON_MAX_STEP_COUNT;
+    float icon_w_scale_step = (float)(ICON_FOCUS_WIDTH - ICON_UNFOCUS_WIDTH) / (float)ICON_MAX_STEP_COUNT;
+    float icon_h_scale_step = (float)(ICON_FOCUS_HIEGHT - ICON_UNFOCUS_HIEGHT) / (float)ICON_MAX_STEP_COUNT;
+    float icon_margin_scale_step = (float)ICON_SELVIEW_BORDER_SIZE / (float)ICON_MAX_STEP_COUNT;
 
     int i;
     for (i = 0; i < N_SOFTWARE_ENTRIES; i++)
@@ -334,6 +338,7 @@ static void updateSoftwareEntriesLayout()
 
     target_w = ICON_SELVIEW_WIDTH(focus_layout->w);
     target_h = ICON_SELVIEW_HEIGHT(focus_layout->h);
+    icon_h_scale_step = (float)(ICON_SELVIEW_HEIGHT(ICON_FOCUS_HIEGHT) - ICON_SELVIEW_HEIGHT(ICON_UNFOCUS_HIEGHT)) / (float)ICON_MAX_STEP_COUNT;
 
     // Scale selview width
     if (icon_selview_w < target_w)
@@ -372,10 +377,14 @@ static void updateSoftwareEntriesLayout()
         icon_tint_color = makeAlphaColor(icon_tint_color, COLOR_SET_ALPHA(ICON_TINT_COLOR, 0), COLOR_GET_ALPHA(ICON_TINT_COLOR) / (float)ICON_MAX_STEP_COUNT);
     else
         icon_tint_color = makeAlphaColor(icon_tint_color, ICON_TINT_COLOR, COLOR_GET_ALPHA(ICON_TINT_COLOR) / (float)ICON_MAX_STEP_COUNT);
+
+    icon_selview_border_color = makeAlphaColor(icon_selview_border_color, ICON_SELVIEW_BORDER_COLOR, COLOR_GET_ALPHA(ICON_SELVIEW_BORDER_COLOR) / (float)ICON_MAX_STEP_COUNT);
+    icon_selview_bg_color = makeAlphaColor(icon_selview_bg_color, ICON_SELVIEW_BG_COLOR, COLOR_GET_ALPHA(ICON_SELVIEW_BG_COLOR) / (float)ICON_MAX_STEP_COUNT);
 }
 
 static void moveSoftwareEntriesPos(int type)
 {
+    int old_focus_pos = g_config.software_pos;
     int new_focus_pos = g_config.software_pos;
 
     if (type == TYPE_MOVE_LEFT)
@@ -392,8 +401,17 @@ static void moveSoftwareEntriesPos(int type)
         g_config.software_pos = new_focus_pos;
         refreshIconScroll();
 
-        // icon_sel_border_color = 0;
-        // icon_sel_bg_color = 0;
+        icon_selview_w = ICON_SELVIEW_WIDTH(ICON_UNFOCUS_WIDTH);
+        icon_selview_h = ICON_SELVIEW_HEIGHT(ICON_UNFOCUS_HIEGHT);
+        if (new_focus_pos < old_focus_pos)
+            icon_selview_current_x = icon_focus_x + (ICON_FOCUS_WIDTH - ICON_UNFOCUS_WIDTH) / 2;
+        if (icon_selview_target_x > icon_selview_current_x)
+            icon_selview_scroll_step = (float)(icon_selview_target_x - icon_selview_current_x) / (float)ICON_MAX_STEP_COUNT;
+        else
+            icon_selview_scroll_step = (float)(icon_selview_current_x - icon_selview_target_x) / (float)ICON_MAX_STEP_COUNT;
+
+        icon_selview_border_color = 0;
+        icon_selview_bg_color = 0;
         icon_short_name_color = 0;
         icon_long_name_color = 0;
     }
@@ -491,19 +509,19 @@ static void openCoreEntries()
 
     icon_selview_target_x = icon_focus_x - x_scroll_size;
     if (icon_selview_target_x > icon_selview_current_x)
-        icon_selview_scroll_step = (icon_selview_target_x - icon_selview_current_x) / (float)ICON_MAX_STEP_COUNT;
+        icon_selview_scroll_step = (float)(icon_selview_target_x - icon_selview_current_x) / (float)ICON_MAX_STEP_COUNT;
     else
-        icon_selview_scroll_step = (icon_selview_current_x - icon_selview_target_x) / (float)ICON_MAX_STEP_COUNT;
+        icon_selview_scroll_step = (float)(icon_selview_current_x - icon_selview_target_x) / (float)ICON_MAX_STEP_COUNT;
 
     icon_target_sx -= x_scroll_size;
     if (icon_target_sx > icon_current_sx)
-        icon_scroll_step = (icon_target_sx - icon_current_sx) / (float)ICON_MAX_STEP_COUNT;
+        icon_scroll_step = (float)(icon_target_sx - icon_current_sx) / (float)ICON_MAX_STEP_COUNT;
     else
-        icon_scroll_step = (icon_current_sx - icon_target_sx) / (float)ICON_MAX_STEP_COUNT;
+        icon_scroll_step = (float)(icon_current_sx - icon_target_sx) / (float)ICON_MAX_STEP_COUNT;
 
     core_target_x = icon_selview_target_x + ICON_FOCUS_WIDTH + 20;
     core_current_x = icon_focus_x + ICON_FOCUS_WIDTH + 40;
-    core_scroll_step = (core_current_x - core_target_x) / (float)ICON_MAX_STEP_COUNT;
+    core_scroll_step = (float)(core_current_x - core_target_x) / (float)ICON_MAX_STEP_COUNT;
 
     core_name_color = 0;
     core_bg_color = 0;
@@ -517,13 +535,13 @@ static void closeCoreEntries()
     refreshIconScroll();
     icon_selview_target_x = icon_focus_x;
     if (icon_selview_target_x > icon_selview_current_x)
-        icon_selview_scroll_step = (icon_selview_target_x - icon_selview_current_x) / (float)ICON_MAX_STEP_COUNT;
+        icon_selview_scroll_step = (float)(icon_selview_target_x - icon_selview_current_x) / (float)ICON_MAX_STEP_COUNT;
     else
-        icon_selview_scroll_step = (icon_selview_current_x - icon_selview_target_x) / (float)ICON_MAX_STEP_COUNT;
+        icon_selview_scroll_step = (float)(icon_selview_current_x - icon_selview_target_x) / (float)ICON_MAX_STEP_COUNT;
 
     core_entries_open = 0;
     core_target_x = icon_focus_x + ICON_FOCUS_WIDTH + 40;
-    core_scroll_step = (core_target_x - core_current_x) / (float)ICON_MAX_STEP_COUNT;
+    core_scroll_step = (float)(core_target_x - core_current_x) / (float)ICON_MAX_STEP_COUNT;
 }
 
 static int drawCoreEntries()
@@ -596,7 +614,7 @@ static int drawSoftwareEntries()
     SoftwareEntry *focus_entry = &software_entries[g_config.software_pos];
 
     // Draw selview bg
-    vita2d_draw_rectangle(icon_selview_current_x, icon_selview_current_y, icon_selview_w, icon_selview_h, icon_sel_bg_color);
+    vita2d_draw_rectangle(icon_selview_current_x, icon_selview_current_y, icon_selview_w, icon_selview_h, icon_selview_bg_color);
 
     // Draw icon
     int x = icon_current_sx;
@@ -639,7 +657,7 @@ static int drawSoftwareEntries()
     // Draw selview border
     vita2d_draw_empty_rectangle(icon_selview_current_x - ICON_SELVIEW_BORDER_SIZE, icon_selview_current_y - ICON_SELVIEW_BORDER_SIZE,
                                 icon_selview_w + ICON_SELVIEW_BORDER_SIZE * 2, icon_selview_h + ICON_SELVIEW_BORDER_SIZE * 2,
-                                ICON_SELVIEW_BORDER_SIZE, icon_sel_border_color);
+                                ICON_SELVIEW_BORDER_SIZE, icon_selview_border_color);
     // Draw icon short name
     int short_name_x = icon_selview_current_x + (ICON_FOCUS_WIDTH - GUI_getTextWidth(focus_entry->short_name)) / 2;
     int short_name_y = icon_selview_current_y + ICON_FOCUS_HIEGHT + ICON_SHORT_NAME_PADDING;
@@ -661,9 +679,7 @@ static int ctrlSoftwareEntries()
 
     if (pressed_pad[PAD_ENTER])
     {
-        SoftwareEntry *focus_entry = &software_entries[g_config.software_pos];
-        IconLayout *focus_layout = &focus_entry->layout;
-        if (focus_layout->h == ICON_FOCUS_HIEGHT)
+        if (icon_current_sx == icon_target_sx)
             openCoreEntries();
     }
 
@@ -672,8 +688,13 @@ static int ctrlSoftwareEntries()
 
 int drawBrowser()
 {
+    if (!core_entries_open)
+        drawCoreEntries();
+
     drawSoftwareEntries();
-    drawCoreEntries();
+
+    if (core_entries_open)
+        drawCoreEntries();
 
     return 0;
 }
