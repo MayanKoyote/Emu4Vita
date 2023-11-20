@@ -69,8 +69,6 @@ void GUI_setFontScale(float scale)
     font_scale = scale;
     font_height = DEFAULT_FONT_HEIGHT * font_scale;
     line_height = DEFAULT_LINE_HEIGHT * font_scale;
-
-    printf("font_scale: %f, font_hieght: %d, line_height: %d\n", scale, font_height, line_height);
 }
 
 int GUI_getLineHeight()
