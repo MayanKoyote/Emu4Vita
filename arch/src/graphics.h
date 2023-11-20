@@ -4,10 +4,13 @@
 int GUI_initFonts();
 void GUI_deinitFonts();
 
+float GUI_getFontScale();
+void GUI_setFontScale(float scale);
+
 int GUI_drawText(int x, int y, unsigned int color, const char *text);
 int GUI_drawTextf(int x, int y, unsigned int color, const char *text, ...);
 
-float GUI_getLineHeight();
+int GUI_getLineHeight();
 
 int GUI_getTextWidth(const char *text);
 int GUI_getTextHeight(const char *text);

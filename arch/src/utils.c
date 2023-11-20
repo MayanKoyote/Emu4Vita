@@ -23,16 +23,12 @@
 #include "config.h"
 #include "file.h"
 
-PadList pad_list[4];
-Pad old_pads[4], current_pads[4];
-Pad hold_counts[4];
+#define N_CTRL_PORTS 4
+
 Pad old_pad, current_pad, pressed_pad, released_pad, hold_pad, hold2_pad;
 Pad hold_count, hold2_count;
 
-static int home_locked = 0;
-static int usb_connection_locked = 0;
-static int quick_menu_locked = 0;
-static int skip_pressed_psbutton = 0;
+static int home_locked = 0, usb_connection_locked = 0, quick_menu_locked = 0;
 
 static int app_log_inited = 0;
 static SceKernelLwMutexWork app_log_mutex;
@@ -75,97 +71,78 @@ int APP_LOG(char *text, ...)
 
 void readPad()
 {
+    SceCtrlData ctrlData;
     int port, i;
 
-    memcpy(&old_pad, current_pad, sizeof(Pad));
-    memset(&current_pad, 0, sizeof(Pad));
+    memcpy(old_pad, current_pad, sizeof(Pad));
+    memset(current_pad, 0, sizeof(Pad));
 
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < N_CTRL_PORTS; i++)
     {
         if (i > 0)
             port = i + 1;
         else
-            port = i;
+            port = 0;
 
-        memset(&current_pads[i], 0, sizeof(Pad));
-        memset(&pad_list[i].pad, 0, sizeof(SceCtrlData));
-        int ret = sceCtrlPeekBufferPositiveExt2(port, &pad_list[i].pad, 1);
+        memset(&ctrlData, 0, sizeof(SceCtrlData));
+        int ret = sceCtrlPeekBufferPositiveExt2(port, &ctrlData, 1);
         if (ret < 0)
-        {
-            pad_list[i].error = 1;
             continue;
-        }
 
-        // if (CHECK_EXIT_APP(pad_list[i].pad.buttons))
-        // exitApp();
-
-        if (pad_list[i].pad.buttons & SCE_CTRL_UP)
+        if (ctrlData.buttons & SCE_CTRL_UP)
             current_pad[PAD_UP] = 1;
-        if (pad_list[i].pad.buttons & SCE_CTRL_DOWN)
+        if (ctrlData.buttons & SCE_CTRL_DOWN)
             current_pad[PAD_DOWN] = 1;
-        if (pad_list[i].pad.buttons & SCE_CTRL_LEFT)
+        if (ctrlData.buttons & SCE_CTRL_LEFT)
             current_pad[PAD_LEFT] = 1;
-        if (pad_list[i].pad.buttons & SCE_CTRL_RIGHT)
+        if (ctrlData.buttons & SCE_CTRL_RIGHT)
             current_pad[PAD_RIGHT] = 1;
-        if (pad_list[i].pad.buttons & SCE_CTRL_TRIANGLE)
+        if (ctrlData.buttons & SCE_CTRL_TRIANGLE)
             current_pad[PAD_TRIANGLE] = 1;
-        if (pad_list[i].pad.buttons & SCE_CTRL_CIRCLE)
+        if (ctrlData.buttons & SCE_CTRL_CIRCLE)
             current_pad[PAD_CIRCLE] = 1;
-        if (pad_list[i].pad.buttons & SCE_CTRL_CROSS)
+        if (ctrlData.buttons & SCE_CTRL_CROSS)
             current_pad[PAD_CROSS] = 1;
-        if (pad_list[i].pad.buttons & SCE_CTRL_SQUARE)
+        if (ctrlData.buttons & SCE_CTRL_SQUARE)
             current_pad[PAD_SQUARE] = 1;
-        if (pad_list[i].pad.buttons & SCE_CTRL_L1)
+        if (ctrlData.buttons & SCE_CTRL_L1)
             current_pad[PAD_L1] = 1;
-        if (pad_list[i].pad.buttons & SCE_CTRL_R1)
+        if (ctrlData.buttons & SCE_CTRL_R1)
             current_pad[PAD_R1] = 1;
-        if (pad_list[i].pad.buttons & SCE_CTRL_L2)
+        if (ctrlData.buttons & SCE_CTRL_L2)
             current_pad[PAD_L2] = 1;
-        if (pad_list[i].pad.buttons & SCE_CTRL_R2)
+        if (ctrlData.buttons & SCE_CTRL_R2)
             current_pad[PAD_R2] = 1;
-        if (pad_list[i].pad.buttons & SCE_CTRL_L3)
+        if (ctrlData.buttons & SCE_CTRL_L3)
             current_pad[PAD_L3] = 1;
-        if (pad_list[i].pad.buttons & SCE_CTRL_R3)
+        if (ctrlData.buttons & SCE_CTRL_R3)
             current_pad[PAD_R3] = 1;
-        if (pad_list[i].pad.buttons & SCE_CTRL_START)
+        if (ctrlData.buttons & SCE_CTRL_START)
             current_pad[PAD_START] = 1;
-        if (pad_list[i].pad.buttons & SCE_CTRL_SELECT)
+        if (ctrlData.buttons & SCE_CTRL_SELECT)
             current_pad[PAD_SELECT] = 1;
-        if (pad_list[i].pad.buttons & SCE_CTRL_PSBUTTON)
+        if (ctrlData.buttons & SCE_CTRL_PSBUTTON)
             current_pad[PAD_PSBUTTON] = 1;
 
-        if (pad_list[i].pad.lx < ANALOG_CENTER - ANALOG_THRESHOLD)
+        if (ctrlData.lx < ANALOG_CENTER - ANALOG_THRESHOLD)
             current_pad[PAD_LEFT_ANALOG_LEFT] = 1;
-        else if (pad_list[i].pad.lx > ANALOG_CENTER + ANALOG_THRESHOLD)
+        else if (ctrlData.lx > ANALOG_CENTER + ANALOG_THRESHOLD)
             current_pad[PAD_LEFT_ANALOG_RIGHT] = 1;
 
-        if (pad_list[i].pad.ly < ANALOG_CENTER - ANALOG_THRESHOLD)
+        if (ctrlData.ly < ANALOG_CENTER - ANALOG_THRESHOLD)
             current_pad[PAD_LEFT_ANALOG_UP] = 1;
-        else if (pad_list[i].pad.ly > ANALOG_CENTER + ANALOG_THRESHOLD)
+        else if (ctrlData.ly > ANALOG_CENTER + ANALOG_THRESHOLD)
             current_pad[PAD_LEFT_ANALOG_DOWN] = 1;
 
-        if (pad_list[i].pad.rx < ANALOG_CENTER - ANALOG_THRESHOLD)
+        if (ctrlData.rx < ANALOG_CENTER - ANALOG_THRESHOLD)
             current_pad[PAD_RIGHT_ANALOG_LEFT] = 1;
-        else if (pad_list[i].pad.rx > ANALOG_CENTER + ANALOG_THRESHOLD)
+        else if (ctrlData.rx > ANALOG_CENTER + ANALOG_THRESHOLD)
             current_pad[PAD_RIGHT_ANALOG_RIGHT] = 1;
 
-        if (pad_list[i].pad.ry < ANALOG_CENTER - ANALOG_THRESHOLD)
+        if (ctrlData.ry < ANALOG_CENTER - ANALOG_THRESHOLD)
             current_pad[PAD_RIGHT_ANALOG_UP] = 1;
-        else if (pad_list[i].pad.ry > ANALOG_CENTER + ANALOG_THRESHOLD)
+        else if (ctrlData.ry > ANALOG_CENTER + ANALOG_THRESHOLD)
             current_pad[PAD_RIGHT_ANALOG_DOWN] = 1;
-
-        if (current_pad[PAD_PSBUTTON])
-        {
-            hold_counts[i][PAD_PSBUTTON]++;
-            if (hold_counts[i][PAD_PSBUTTON] >= SKIP_PRESSED_PSBUTTON_COUNT)
-                skipPressedPsbutton();
-        }
-        else
-        {
-            hold_counts[i][PAD_PSBUTTON] = 0;
-            if (!old_pad[PAD_PSBUTTON])
-                unskipPressedPsbutton();
-        }
     }
 
     for (i = 0; i < PAD_N_BUTTONS; i++)
@@ -354,24 +331,16 @@ void refreshListPos(int *top_pos, int *focus_pos, int length, int lines)
     int temp_focus_pos = *focus_pos;
 
     if (temp_focus_pos > length - 1)
-    {
         temp_focus_pos = length - 1;
-    }
     if (temp_focus_pos < 0)
-    {
         temp_focus_pos = 0;
-    }
 
     int lines_center = (int)((float)lines / 2 + 0.5f);
     temp_top_pos = temp_focus_pos - lines_center + 1;
     if (temp_top_pos > length - lines)
-    {
         temp_top_pos = length - lines;
-    }
     if (temp_top_pos < 0)
-    {
         temp_top_pos = 0;
-    }
 
     *top_pos = temp_top_pos;
     *focus_pos = temp_focus_pos;
@@ -468,19 +437,4 @@ void unlockQuickMenu()
         sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_QUICK_MENU);
         quick_menu_locked = 0;
     }
-}
-
-void skipPressedPsbutton()
-{
-    skip_pressed_psbutton = 1;
-}
-
-void unskipPressedPsbutton()
-{
-    skip_pressed_psbutton = 0;
-}
-
-int isSkipPressedPsbutton()
-{
-    return skip_pressed_psbutton;
 }

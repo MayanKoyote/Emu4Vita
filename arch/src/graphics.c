@@ -15,8 +15,9 @@
 #define DEFAULT_LINE_HEIGHT 21.0f
 
 static vita2d_pgf *font = NULL;
-static float font_height = DEFAULT_FONT_HEIGHT;
 static float font_scale = DEFAULT_FONT_SCALE;
+static int font_height = DEFAULT_FONT_HEIGHT;
+static int line_height = DEFAULT_LINE_HEIGHT;
 
 int GUI_initFonts()
 {
@@ -28,8 +29,9 @@ int GUI_initFonts()
             return -1;
     }
 
-    font_height = DEFAULT_FONT_HEIGHT;
     font_scale = DEFAULT_FONT_SCALE;
+    font_height = DEFAULT_FONT_HEIGHT;
+    line_height = DEFAULT_LINE_HEIGHT;
 
     return 0;
 }
@@ -66,11 +68,14 @@ void GUI_setFontScale(float scale)
 {
     font_scale = scale;
     font_height = DEFAULT_FONT_HEIGHT * font_scale;
+    line_height = DEFAULT_LINE_HEIGHT * font_scale;
+
+    printf("font_scale: %f, font_hieght: %d, line_height: %d\n", scale, font_height, line_height);
 }
 
-float GUI_getLineHeight()
+int GUI_getLineHeight()
 {
-    return DEFAULT_LINE_HEIGHT * font_scale;
+    return line_height;
 }
 
 int GUI_getTextWidth(const char *text)

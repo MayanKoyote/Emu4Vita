@@ -13,6 +13,8 @@
 #include "file.h"
 #include "utils.h"
 
+#define SCE_ERROR_ERRNO_EEXIST 0x80010011
+
 int ReadFile(const char *file, void *buf, int size)
 {
     SceUID fd = sceIoOpen(file, SCE_O_RDONLY, 0);
@@ -93,102 +95,122 @@ int checkFolderExist(const char *folder)
 
 int createFolder(const char *path)
 {
-    if (checkFolderExist(path))
-        return 0;
-
-    int ret;
+    int ret = -1;
+    char ch;
     char str[MAX_PATH_LENGTH];
-    strcpy(str, path);
-    removeEndSlash(str);
 
-    char *parent_path = getBaseDirectory(str);
-    if (parent_path)
+    if (strlen(path) > MAX_PATH_LENGTH)
+        return -1;
+
+    strcpy(str, path);
+    addEndSlash(str);
+
+    int i;
+    for (i = 0; i < MAX_PATH_LENGTH; i++)
     {
-        ret = createFolder(parent_path);
-        free(parent_path);
-        if (ret < 0)
-            return ret;
+        if (str[i] == '/')
+        {
+            ch = str[i];
+            str[i] = '\0';
+            ret = sceIoMkdir(str, 0777);
+            str[i] = ch;
+        }
     }
 
-    ret = sceIoMkdir(str, 0777);
-    if (ret < 0)
-        return ret;
-
-    return 0;
+    if (ret == SCE_ERROR_ERRNO_EEXIST)
+        ret = 0;
+    return ret;
 }
 
 char *getBaseDirectory(const char *path)
 {
-    int i;
-    int sep_ind = -1;
     int len = strlen(path);
-    if (len > MAX_PATH_LENGTH - 1 || len <= 0)
+    int sep_start = 0;
+    int sep_end = len;
+
+    if (len <= 0)
         return NULL;
-    for (i = len - 1; i >= 0; i--)
+    if (path[len - 1] == '/' || path[len - 1] == ':')
+        return NULL;
+
+    int i;
+    for (i = sep_end - 1; i >= 0; i--)
     {
         if (path[i] == '/' || path[i] == ':')
         {
-            sep_ind = i;
+            sep_end = i;
             break;
         }
     }
-    if (sep_ind == -1)
+
+    if (sep_end == len)
         return NULL;
 
-    char *res = (char *)malloc(MAX_PATH_LENGTH);
+    int new_len = sep_end - sep_start;
+    if (new_len <= 0)
+        return NULL;
+
+    char *res = (char *)malloc(new_len + 1);
     if (!res)
         return NULL;
 
-    strncpy(res, path, MAX_PATH_LENGTH);
-    res[sep_ind + 1] = '\0';
+    strncpy(res, path + sep_start, new_len);
+    res[new_len] = '\0';
+
     return res;
 }
 
 char *getFilename(const char *path)
 {
-    int i;
-    int sep_ind = -1;
     int len = strlen(path);
-    if (len > MAX_PATH_LENGTH || len <= 0)
+    int sep_start = 0;
+    int sep_end = len;
+
+    if (len <= 0)
         return NULL;
     if (path[len - 1] == '/' || path[len - 1] == ':')
         return NULL; // no file
 
-    for (i = len - 1; i >= 0; i--)
+    int i;
+    for (i = sep_end - 1; i >= 0; i--)
     {
         if (path[i] == '/' || path[i] == ':')
         {
-            sep_ind = i;
+            sep_start = i + 1;
             break;
         }
     }
-    if (sep_ind == -1)
+
+    if (sep_start == 0)
         return NULL;
-    char *res = (char *)malloc(MAX_PATH_LENGTH);
+
+    int new_len = sep_end - sep_start;
+    if (new_len <= 0)
+        return NULL;
+
+    char *res = (char *)malloc(new_len + 1);
     if (!res)
         return NULL;
 
-    int new_len = len - (sep_ind + 1);
-    strncpy(res, path + (sep_ind + 1), new_len); // dont copy separation char
-    if (new_len + 1 < MAX_PATH_LENGTH)
-        res[new_len] = '\0';
-    else
-        res[MAX_PATH_LENGTH - 1] = '\0';
+    strncpy(res, path + sep_start, new_len);
+    res[new_len] = '\0';
+
     return res;
 }
 
 char *getBaseFilename(const char *path)
 {
     int len = strlen(path);
-    if (len > MAX_PATH_LENGTH || len <= 0)
+    int sep_start = 0;
+    int sep_end = len;
+
+    if (len <= 0)
         return NULL;
     if (path[len - 1] == '/' || path[len - 1] == ':')
         return NULL; // no file
 
-    int sep_start = 0;
-    int sep_end = len - 1;
     int i;
-    for (i = len - 1; i >= 0; i--)
+    for (i = sep_end - 1; i >= 0; i--)
     {
         if (path[i] == '/' || path[i] == ':')
         {
@@ -197,19 +219,20 @@ char *getBaseFilename(const char *path)
         }
         else if ((path[i] == '.') && (sep_end == len - 1))
         {
-            sep_end = i - 1;
+            sep_end = i;
         }
     }
-    int new_len = sep_end - sep_start + 1;
+
+    int new_len = sep_end - sep_start;
     if (new_len <= 0)
         return NULL;
-    char *res = (char *)malloc(MAX_PATH_LENGTH);
+
+    char *res = (char *)malloc(new_len + 1);
     if (!res)
         return NULL;
+
     strncpy(res, path + sep_start, new_len);
-    if (new_len + 1 < MAX_PATH_LENGTH)
-        res[new_len] = '\0';
-    else
-        res[MAX_PATH_LENGTH - 1] = '\0';
+    res[new_len] = '\0';
+
     return res;
 }

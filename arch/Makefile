@@ -108,6 +108,7 @@ STRIP   := $(PREFIX)-strip
 NM      := $(PREFIX)-nm
 LD      := $(CXX)
 
+#all: clean_files create_dirs build-vita
 all: clean_files create_dirs build-cores build-vita
 
 clean_files:

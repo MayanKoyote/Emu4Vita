@@ -19,7 +19,6 @@ typedef struct
 typedef struct
 {
 	char *short_name;
-	// char *long_name;
 	vita2d_texture *icon;
 	CoreEntry *entries;
 	int n_entries;

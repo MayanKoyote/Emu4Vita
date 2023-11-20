@@ -20,8 +20,6 @@
 #define ANALOG_THRESHOLD 64
 #define ANALOG_SENSITIVITY 16
 
-#define SKIP_PRESSED_PSBUTTON_COUNT 30
-
 enum MoveTypes
 {
     TYPE_MOVE_NONE,
@@ -62,21 +60,9 @@ enum PadButtons
     PAD_RIGHT_ANALOG_RIGHT,
     PAD_N_BUTTONS
 };
-#define N_LOCAL_BUTTONS PAD_PSBUTTON
-
-typedef struct
-{
-    SceCtrlData pad;
-    int error;
-} PadList;
 
 typedef uint8_t Pad[PAD_N_BUTTONS];
 
-extern uint32_t vita_buttons[];
-
-extern PadList pad_list[4];
-extern Pad old_pads[4], current_pads[4];
-extern Pad hold_counts[4];
 extern Pad old_pad, current_pad, pressed_pad, released_pad, hold_pad, hold2_pad;
 extern Pad hold_count, hold2_count;
 
@@ -108,9 +94,5 @@ void lockUsbConnection();
 void unlockUsbConnection();
 void lockQuickMenu();
 void unlockQuickMenu();
-
-void skipPressedPsbutton();
-void unskipPressedPsbutton();
-int isSkipPressedPsbutton();
 
 #endif
