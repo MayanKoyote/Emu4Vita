@@ -40,7 +40,7 @@
 #define ICON_SELVIEW_BORDER_COLOR 0xF0FFFFFF
 #define ICON_SELVIEW_BG_COLOR 0x9F1F1F1F
 
-#define CORE_ITEM_PADDING 4
+#define CORE_ITEM_PADDING 6
 #define CORE_ITEM_WIDTH 400
 #define CORE_ITEM_HEIGHT (GUI_getLineHeight() + CORE_ITEM_PADDING * 2)
 #define CORE_ITEM_NAME_COLOR 0xFFFFFFFF
@@ -49,14 +49,14 @@
 #define CORE_ITEM_SEL_BG_COLOR 0xAFFF7F00
 
 CoreEntry nes_entries[] = {
-    {"FCEUmm", "fceumm", "FC"},
-    {"Nestopia", "nestopia", "FC"},
+    {"FCEUmm", "fceumm", "NES"},
+    {"Nestopia", "nestopia", "NES"},
 };
 
 CoreEntry snes_entries[] = {
-    {"Snes9x 2002", "snes9x2002", "SFC"},
-    {"Snes9x 2005", "snes9x2005", "SFC"},
-    {"Snes9x 2005 Plus", "snes9x2005_plus", "SFC"},
+    {"Snes9x 2002", "snes9x2002", "SNES"},
+    {"Snes9x 2005", "snes9x2005", "SNES"},
+    {"Snes9x 2005 Plus", "snes9x2005_plus", "SNES"},
 };
 
 CoreEntry md_entries[] = {
