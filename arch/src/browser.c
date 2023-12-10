@@ -211,7 +211,7 @@ static void refreshIconScroll()
 static void initSoftwareEntriesLayout()
 {
     icon_selview_w = ICON_SELVIEW_WIDTH(ICON_UNFOCUS_WIDTH);
-    icon_selview_h = ICON_SELVIEW_HEIGHT(ICON_UNFOCUS_WIDTH);
+    icon_selview_h = ICON_SELVIEW_HEIGHT(ICON_UNFOCUS_HIEGHT);
     icon_selview_border_color = 0;
     icon_selview_bg_color = 0;
     icon_short_name_color = 0;
@@ -336,6 +336,7 @@ static void updateSoftwareEntriesLayout()
 
     target_w = ICON_SELVIEW_WIDTH(focus_layout->w);
     target_h = ICON_SELVIEW_HEIGHT(focus_layout->h);
+    icon_w_scale_step = (float)(ICON_SELVIEW_WIDTH(ICON_FOCUS_WIDTH) - ICON_SELVIEW_WIDTH(ICON_UNFOCUS_WIDTH)) / (float)ICON_MAX_STEP_COUNT;
     icon_h_scale_step = (float)(ICON_SELVIEW_HEIGHT(ICON_FOCUS_HIEGHT) - ICON_SELVIEW_HEIGHT(ICON_UNFOCUS_HIEGHT)) / (float)ICON_MAX_STEP_COUNT;
 
     // Scale selview width
@@ -393,7 +394,7 @@ static void moveSoftwareEntriesPos(int type)
     if (new_focus_pos > N_SOFTWARE_ENTRIES - 1)
         new_focus_pos = N_SOFTWARE_ENTRIES - 1;
 
-    if (g_config.software_pos != new_focus_pos)
+    if (old_focus_pos != new_focus_pos)
     {
         g_config.software_pos = new_focus_pos;
         refreshIconScroll();
@@ -630,7 +631,7 @@ static int drawSoftwareEntries()
                                 ICON_SELVIEW_BORDER_SIZE, icon_selview_border_color);
     // Draw icon short name
     int short_name_x = icon_selview_current_x + (icon_selview_w - GUI_getTextWidth(focus_entry->short_name)) / 2;
-    int short_name_y = icon_selview_current_y + ICON_FOCUS_HIEGHT + ICON_SHORT_NAME_PADDING;
+    int short_name_y = icon_selview_current_y + focus_entry->layout.h + (icon_selview_h - focus_entry->layout.h - GUI_getLineHeight()) / 2;
     GUI_drawText(short_name_x, short_name_y, icon_short_name_color, focus_entry->short_name);
 
     return 0;
