@@ -15,6 +15,7 @@
 #include "boot.h"
 #include "utils.h"
 #include "lang.h"
+#include "zip_cache.h"
 
 extern GUI_Activity loading_activity;
 extern GUI_Dialog setting_dialog;
@@ -176,6 +177,14 @@ static int loadGame(const char *path)
 
     core_display_rotate = 0;
     retro_init();
+
+    char *ext = strrchr(path, '.');
+    if (ext && strcasecmp(ext, ".zip") == 0)
+    {
+        path = GetZipCacheRom(path);
+        if (!path)
+            return -1;
+    }
 
     if (core_system_info.need_fullpath)
         ret = loadGameFromFile(path);

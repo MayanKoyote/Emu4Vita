@@ -24,7 +24,7 @@ enum TypeMove
 
 #define lerp(value, from_max, to_max) ((((value * 10) * (to_max * 10)) / (from_max * 10)) / 10)
 
-int AppLog(char *text, ...);
+int AppLog(const char *text, ...);
 
 int HasEndSlash(const char *path);
 int RemoveEndSlash(char *path);

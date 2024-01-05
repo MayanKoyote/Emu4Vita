@@ -18,7 +18,7 @@
 
 char **file_valid_exts = NULL;
 
-int IsValidFile(char *path)
+int IsValidFile(const char *path)
 {
     if (!file_valid_exts)
         return 0;
