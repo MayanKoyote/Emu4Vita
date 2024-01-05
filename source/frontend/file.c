@@ -27,6 +27,9 @@ int IsValidFile(char *path)
     if (!ext++)
         return 0;
 
+    if (strcasecmp(ext, "zip") == 0)
+        return 1;
+
     int i = 0;
     while (file_valid_exts[i])
     {

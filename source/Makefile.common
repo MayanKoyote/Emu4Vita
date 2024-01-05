@@ -95,6 +95,9 @@ SRC_C += \
 	setting/setting.c
 
 SRC_C += \
+    zip/zip.c
+
+SRC_C += \
 	boot.c \
 	config.c \
 	file.c \
