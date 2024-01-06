@@ -42,6 +42,7 @@
 #define CORE_SAVEFILES_DIR APP_DATA_DIR "/savefiles"
 #define CORE_SAVESTATES_DIR APP_DATA_DIR "/savestates"
 #define CORE_SCREENSHOTS_DIR APP_DATA_DIR "/screenshots"
+#define CORE_ZIPCACHE_DIR APP_DATA_DIR "/zipcache"
 
 #define APP_LOG_PATH APP_DATA_DIR "/app_log.txt"
 #define CORE_LOG_PATH APP_DATA_DIR "/core_log.txt"

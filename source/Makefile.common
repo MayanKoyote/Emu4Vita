@@ -107,7 +107,8 @@ SRC_C += \
 	sbrk.c \
 	strnatcmp.c \
 	utils_string.c \
-	utils.c
+	utils.c \
+	zip_cache.c
 
 OBJS := $(SRC_C:.c=.o)
 OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))

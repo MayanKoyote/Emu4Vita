@@ -28,6 +28,7 @@
 #include "config.h"
 #include "boot.h"
 #include "lang.h"
+#include "zip_cache.h"
 
 #ifdef SCE_LIBC_SIZE
 unsigned int sceLibcHeapSize = SCE_LIBC_SIZE;
@@ -156,6 +157,8 @@ int AppInit(int argc, char *const argv[])
     BootCheckParams(argc, argv);
     checkVitatvModel();
     checkSafeMode();
+
+    InitZipCache();
 
     GUI_Init();
 

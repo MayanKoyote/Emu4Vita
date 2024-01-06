@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
-#define CACHE_NUM 5
+void InitZipCache();
+void RefreshZipCache();
 
 #endif
