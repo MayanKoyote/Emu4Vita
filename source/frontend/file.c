@@ -18,7 +18,7 @@
 
 char **file_valid_exts = NULL;
 
-int IsValidFile(char *path)
+int IsValidFile(const char *path)
 {
     if (!file_valid_exts)
         return 0;
@@ -26,9 +26,6 @@ int IsValidFile(char *path)
     char *ext = strrchr(path, '.');
     if (!ext++)
         return 0;
-
-    if (strcasecmp(ext, "zip") == 0)
-        return 1;
 
     int i = 0;
     while (file_valid_exts[i])

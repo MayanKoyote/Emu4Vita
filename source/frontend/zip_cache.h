@@ -3,7 +3,17 @@
 
 #include <stdint.h>
 
-void InitZipCache();
-void RefreshZipCache();
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+    void InitZipCache();
+    void RefreshZipCache();
+    const char *GetZipCacheRom(const char *name);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

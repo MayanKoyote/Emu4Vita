@@ -158,8 +158,6 @@ int AppInit(int argc, char *const argv[])
     checkVitatvModel();
     checkSafeMode();
 
-    InitZipCache();
-
     GUI_Init();
 
     if (is_safe_mode)
@@ -170,6 +168,8 @@ int AppInit(int argc, char *const argv[])
 
     Retro_InitLib();
     Setting_Init();
+
+    InitZipCache();
 
     // Lock USB connection and PS button
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_USB_CONNECTION | SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN_2);

@@ -15,7 +15,7 @@
 #include "boot.h"
 #include "utils.h"
 #include "lang.h"
-#include "zip/zip.h"
+#include "zip_cache.h"
 
 extern GUI_Activity loading_activity;
 extern GUI_Dialog setting_dialog;
@@ -179,30 +179,11 @@ static int loadGame(const char *path)
     retro_init();
 
     char *ext = strrchr(path, '.');
-    if (ext)
+    if (ext && strcasecmp(ext, ".zip") == 0)
     {
-        if (strcasecmp(ext, ".zip") == 0)
-        {
-            struct zip_t *zip = zip_open(path, 0, 'r');
-            if (zip)
-            {
-                size_t num = zip_entries_total(zip);
-                for (size_t i = 0; i < num; i++)
-                {
-                    if (zip_entry_openbyindex(zip, i) == 0)
-                    {
-                        const char *name = zip_entry_name(zip);
-                        AppLog("%d) %s\n", i, name);
-                    }
-                }
-                zip_close(zip);
-            }
-            else
-            {
-                AppLog("failed to open zip file: %s\n", path);
-            }
-        }
-        return -1;
+        path = GetZipCacheRom(path);
+        if (!path)
+            return -1;
     }
 
     if (core_system_info.need_fullpath)

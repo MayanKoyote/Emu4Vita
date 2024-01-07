@@ -182,7 +182,11 @@ int FileListGetDirectoryEntries(LinkedList *list, const char *path, int sort)
                 continue;
 
             if (!is_folder && !IsValidFile(dir.d_name))
-                continue;
+            {
+                char *ext = strrchr(dir.d_name, '.');
+                if (!(ext && strcasecmp(ext, ".zip") == 0))
+                    continue;
+            }
 
             FileListEntryData *e_data = malloc(sizeof(FileListEntryData));
             if (!e_data)
