@@ -64,6 +64,8 @@ void RefreshZipCache()
             }
         }
     } while (res > 0);
+
+    sceIoDclose(dfd);
 }
 
 uint32_t GetZipRomCrc32(const char *name)
