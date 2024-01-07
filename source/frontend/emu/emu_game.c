@@ -181,9 +181,15 @@ static int loadGame(const char *path)
     char *ext = strrchr(path, '.');
     if (ext && strcasecmp(ext, ".zip") == 0)
     {
-        path = GetZipCacheRom(path);
-        if (!path)
+        const char *new_path = GetZipCacheRom(path);
+        if (new_path)
+        {
+            path = new_path;
+        }
+        else if (!IsValidFile(path))
+        {
             return -1;
+        }
     }
 
     if (core_system_info.need_fullpath)

@@ -7,10 +7,12 @@ extern "C"
 #include <stdlib.h>
 #include <psp2/io/dirent.h>
 #include <psp2/io/stat.h>
+#include <psp2/io/fcntl.h>
 #include "config.h"
+#include "file.h"
+#include "utils.h"
 #include "zip_cache.h"
 #include "zip/zip.h"
-#include "utils.h"
 }
 
 #define CACHE_NUM 5
@@ -18,23 +20,45 @@ extern "C"
 
 struct CachedItem
 {
-    SceDateTime time;
+    time_t time;
     std::string name;
 };
 
 std::unordered_map<uint32_t, CachedItem> zip_cache;
+
+void CheckZipCacheSize()
+{
+    if (zip_cache.size() <= CACHE_NUM)
+    {
+        return;
+    }
+
+    uint32_t earliest_crc32 = zip_cache.begin()->first;
+    time_t earliest_time = zip_cache.begin()->second.time;
+    for (const auto &iter : zip_cache)
+    {
+        if (iter.second.time < earliest_time)
+        {
+            earliest_crc32 = iter.first;
+        }
+    }
+
+    sceIoRemove(zip_cache[earliest_crc32].name.c_str());
+    zip_cache.erase(earliest_crc32);
+}
 
 void InitZipCache()
 {
     SceUID dfd = sceIoDopen(CORE_ZIPCACHE_DIR);
     if (dfd < 0)
     {
-        sceIoMkdir(CORE_ZIPCACHE_DIR, SCE_S_IFDIR | SCE_S_IWUSR);
+        CreateFolder(CORE_ZIPCACHE_DIR);
         return;
     }
     else
     {
         RefreshZipCache();
+        CheckZipCacheSize();
     }
 }
 
@@ -49,16 +73,16 @@ void RefreshZipCache()
     {
         SceIoDirent dir = {0};
         res = sceIoDread(dfd, &dir);
-        AppLog("%s %d\n", dir.d_name, IsValidFile(dir.d_name));
         if (res > 0 && (!SCE_S_ISDIR(dir.d_stat.st_mode)) && IsValidFile(dir.d_name))
         {
             char *end;
             int crc32 = strtol(dir.d_name, &end, 16);
             if (crc32 != 0 && *end == '.')
             {
-                AppLog(" %s %08x %c\n", dir.d_name, crc32, *end);
+                time_t time;
+                sceRtcGetTime_t(&dir.d_stat.st_mtime, &time);
                 zip_cache[crc32] = {
-                    dir.d_stat.st_mtime,
+                    time,
                     std::string(CORE_ZIPCACHE_DIR) + "/" + dir.d_name,
                 };
             }
@@ -122,17 +146,17 @@ const char *GetZipCacheRom(const char *name)
 
                 char crc32_name[sizeof(CORE_ZIPCACHE_DIR) + 0x20];
                 sprintf(crc32_name, "%s/%08X%s", CORE_ZIPCACHE_DIR, crc32, ext);
-
-                FILE *fp = fopen(crc32_name, "wb");
-                fwrite(buf, size, 1, fp);
-                fclose(fp);
-
+                WriteFile(crc32_name, buf, size);
                 free(buf);
-
-                SceDateTime time;
-                sceRtcGetCurrentClockLocalTime(&time);
-                zip_cache[crc32] = {time, crc32_name};
                 extracted = true;
+
+                SceDateTime sce_time;
+                time_t time;
+                sceRtcGetCurrentClockLocalTime(&sce_time);
+                sceRtcGetTime_t(&sce_time, &time);
+                zip_cache[crc32] = {time, crc32_name};
+
+                CheckZipCacheSize();
             }
         }
         zip_entry_close(zip);
