@@ -40,6 +40,7 @@ void CheckZipCacheSize()
         if (iter.second.time < earliest_time)
         {
             earliest_crc32 = iter.first;
+            earliest_time = iter.second.time;
         }
     }
 
@@ -73,11 +74,12 @@ void RefreshZipCache()
     {
         SceIoDirent dir = {0};
         res = sceIoDread(dfd, &dir);
-        if (res > 0 && (!SCE_S_ISDIR(dir.d_stat.st_mode)) && IsValidFile(dir.d_name))
+        if (res > 0 && (!SCE_S_ISDIR(dir.d_stat.st_mode)) && dir.d_name[8] == '.' && IsValidFile(dir.d_name))
         {
-            char *end;
-            int crc32 = strtol(dir.d_name, &end, 16);
-            if (crc32 != 0 && *end == '.')
+            dir.d_name[8] = '\x00';
+            uint32_t crc32 = strtoul(dir.d_name, NULL, 16);
+            dir.d_name[8] = '.';
+            if (crc32 != LONG_MAX)
             {
                 time_t time;
                 sceRtcGetTime_t(&dir.d_stat.st_mtime, &time);

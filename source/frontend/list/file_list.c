@@ -13,6 +13,7 @@
 #include "init.h"
 #include "utils.h"
 #include "strnatcmp.h"
+#include "emu/emu_retro.h"
 
 static char *devices[] = {
     "imc0:",

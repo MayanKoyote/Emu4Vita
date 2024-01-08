@@ -92,7 +92,7 @@ static int loadGameFromFile(const char *path)
     return 0;
 }
 
-static int loadGameFromMemory(const char *path)
+static int loadGameFromMemory(const char *path, const char *zip_path)
 {
     SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
     if (fd < 0)
@@ -143,7 +143,7 @@ static int loadGameFromMemory(const char *path)
     sceIoClose(fd);
 
     struct retro_game_info game_info;
-    game_info.path = path;
+    game_info.path = zip_path ? zip_path : path;
     game_info.data = game_rom_data;
     game_info.size = size;
     game_info.meta = NULL;
@@ -161,7 +161,12 @@ static int loadGameFromMemory(const char *path)
 
 static int loadGameFromZipFile(const char *path)
 {
-    return 0;
+    const char *new_path = GetZipCacheRom(path);
+    if (new_path)
+    {
+        return loadGameFromMemory(new_path, path);
+    }
+    return -1;
 }
 
 static int loadGame(const char *path)
@@ -183,33 +188,15 @@ static int loadGame(const char *path)
     core_display_rotate = 0;
     retro_init();
 
-    char *ext = strrchr(path, '.');
-    if (ext && strcasecmp(ext, ".zip") == 0)
-    {
-        const char *new_path = GetZipCacheRom(path);
-        if (new_path)
-        {
-            path = new_path;
-        }
-        else if (!IsValidFile(path))
-        {
-            return -1;
-        }
-    }
-
     if (core_system_info.need_fullpath)
         ret = loadGameFromFile(path);
     else
     {
         char *ext = strrchr(path, '.');
         if (ext && strcasecmp(ext, ".zip") == 0)
-        {
             ret = loadGameFromZipFile(path);
-        }
         else
-        {
-            ret = loadGameFromMemory(path);
-        }
+            ret = loadGameFromMemory(path, NULL);
     }
     if (ret < 0)
     {
