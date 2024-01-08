@@ -159,6 +159,11 @@ static int loadGameFromMemory(const char *path)
     return 0;
 }
 
+static int loadGameFromZipFile(const char *path)
+{
+    return 0;
+}
+
 static int loadGame(const char *path)
 {
     int ret;
@@ -195,8 +200,17 @@ static int loadGame(const char *path)
     if (core_system_info.need_fullpath)
         ret = loadGameFromFile(path);
     else
-        ret = loadGameFromMemory(path);
-
+    {
+        char *ext = strrchr(path, '.');
+        if (ext && strcasecmp(ext, ".zip") == 0)
+        {
+            ret = loadGameFromZipFile(path);
+        }
+        else
+        {
+            ret = loadGameFromMemory(path);
+        }
+    }
     if (ret < 0)
     {
         AppLog("[GAME] Load game failed!\n");
