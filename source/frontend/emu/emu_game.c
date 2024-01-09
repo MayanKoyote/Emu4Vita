@@ -16,6 +16,9 @@
 #include "utils.h"
 #include "lang.h"
 
+#define MAX_GAME_RUN_SPEED 2.0f
+#define STEP_GAME_RUN_SPEED 0.5f
+
 extern GUI_Activity loading_activity;
 extern GUI_Dialog setting_dialog;
 
@@ -60,8 +63,8 @@ void Emu_SetRunSpeed(float speed)
 void Emu_SpeedUpGame()
 {
     float speed = Emu_GetCurrentRunSpeed();
-    if (speed < 2.0f)
-        speed += 0.5f;
+    if (speed < MAX_GAME_RUN_SPEED)
+        speed += STEP_GAME_RUN_SPEED;
     else
         speed = 1.0f;
     Emu_SetRunSpeed(speed);
@@ -71,9 +74,9 @@ void Emu_SpeedDownGame()
 {
     float speed = Emu_GetCurrentRunSpeed();
     if (speed > 1.0f)
-        speed -= 0.5f;
+        speed -= STEP_GAME_RUN_SPEED;
     else
-        speed = 2.0f;
+        speed = MAX_GAME_RUN_SPEED;
     Emu_SetRunSpeed(speed);
 }
 
