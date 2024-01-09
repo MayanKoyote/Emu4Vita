@@ -193,6 +193,7 @@ bool ExtractByCrc32(const char *name, uint32_t crc32)
 
                 zip_cache.CheckSize();
                 zip_cache.Save();
+                AppLog("[ZIP] Extract: %08x = \"%s\"\n", crc32, cache_name);
             }
         }
         zip_entry_close(zip);
