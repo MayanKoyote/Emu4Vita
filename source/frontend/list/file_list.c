@@ -13,7 +13,6 @@
 #include "init.h"
 #include "utils.h"
 #include "strnatcmp.h"
-#include "emu/emu_retro.h"
 
 static char *devices[] = {
     "imc0:",
@@ -183,18 +182,7 @@ int FileListGetDirectoryEntries(LinkedList *list, const char *path, int sort)
                 continue;
 
             if (!is_folder && !IsValidFile(dir.d_name))
-            {
-                if (!core_system_info.need_fullpath)
-                {
-                    char *ext = strrchr(dir.d_name, '.');
-                    if (!(ext && strcasecmp(ext, ".zip") == 0))
-                        continue;
-                }
-                else
-                {
-                    continue;
-                }
-            }
+                continue;
 
             FileListEntryData *e_data = malloc(sizeof(FileListEntryData));
             if (!e_data)

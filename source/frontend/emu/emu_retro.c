@@ -51,9 +51,7 @@ static void freeValidFileExts()
 {
     if (file_valid_exts)
     {
-        int i;
-        for (i = 0; file_valid_exts[i]; i++)
-            free(file_valid_exts[i]);
+        free(*file_valid_exts);
         free(file_valid_exts);
         file_valid_exts = NULL;
     }
@@ -82,6 +80,12 @@ static int creatValidFileExts()
         if (exts[i] == '|')
             n_exts++;
     }
+
+    int with_zip = strstr(exts, "zip");
+    if (!with_zip)
+    {
+        n_ext++;
+    }
     // printf("n_exts: %d\n", n_exts);
 
     if (file_valid_exts)
@@ -89,6 +93,14 @@ static int creatValidFileExts()
     file_valid_exts = (char **)calloc((n_exts + 1), sizeof(char *));
     if (!file_valid_exts)
         return -1;
+
+    *file_valid_exts = (char *)malloc(exts_len+with_zip?0, 4);
+    if (!*file_valid_exts)
+        return -1;
+
+    strcpy(file_valid_exts[0], exts);
+
+    // TODO
 
     const char *p = exts;
     const char *sep;
