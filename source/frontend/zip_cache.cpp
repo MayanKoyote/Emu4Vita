@@ -8,6 +8,7 @@ extern "C"
 #include <psp2/io/dirent.h>
 #include <psp2/io/stat.h>
 #include <psp2/io/fcntl.h>
+#include <psp2/kernel/threadmgr.h>
 #include "config.h"
 #include "file.h"
 #include "utils.h"
@@ -26,15 +27,21 @@ struct CachedItem
     std::string name;
 };
 
+struct ExtractArgs
+{
+    char name[256];
+    uint32_t crc32;
+};
+
 class ZipCache : public std::unordered_map<uint32_t, CachedItem>
 {
 public:
     // Config 文件格式：
     // 每行： 【8位16进制crc32】=【rom文件完整路径】
     // 例:    ABCD1234=ux0:data/EMU4VITA/【core】/zipcache/xxxx.gba
-    void Load();
-    void Save();
-    void CheckZipCacheSize();
+    void Load();      // 从 ZIP_CACHE_CONFIG_PATH 读取 cache 信息
+    void Save();      // 把 cache 信息，写入 ZIP_CACHE_CONFIG_PATH
+    void CheckSize(); // 如超过 CACHE_NUM，则删除最老的 cache rom
 };
 
 ZipCache zip_cache;
@@ -63,7 +70,7 @@ void ZipCache::Load()
         time_t time;
         sceRtcGetTime_t(&stat.st_mtime, &time);
         (*this)[crc32] = {time, name};
-        AppLog("Load zip cache: %08x = \"%s\"\n", crc32, name);
+        AppLog("[ZIP] Load zip cache: %08x = \"%s\"\n", crc32, name);
     }
 
     fclose(fp);
@@ -83,7 +90,7 @@ void ZipCache::Save()
     fclose(fp);
 };
 
-void ZipCache::CheckZipCacheSize()
+void ZipCache::CheckSize()
 {
     if (this->size() <= CACHE_NUM)
     {
@@ -116,7 +123,7 @@ void InitZipCache()
     else
     {
         zip_cache.Load();
-        zip_cache.CheckZipCacheSize();
+        zip_cache.CheckSize();
     }
 }
 
@@ -145,18 +152,11 @@ uint32_t GetZipRomCrc32(const char *name)
     return crc32;
 }
 
-const char *GetZipCacheRom(const char *name)
+bool ExtractByCrc32(const char *name, uint32_t crc32)
 {
-    uint32_t crc32 = GetZipRomCrc32(name);
-    auto iter = zip_cache.find(crc32);
-    if (iter != zip_cache.end())
-    {
-        AppLog("Hit zip cache: %08x %s\n", crc32, iter->second.name.c_str());
-        return iter->second.name.c_str();
-    }
     struct zip_t *zip = zip_open(name, 0, 'r');
     if (!zip)
-        return NULL;
+        return false;
 
     bool extracted = false;
     size_t num = zip_entries_total(zip);
@@ -167,24 +167,22 @@ const char *GetZipCacheRom(const char *name)
 
         if (zip_entry_crc32(zip) == crc32)
         {
-            void *buf;
-            int size = zip_entry_read(zip, &buf, NULL);
-            if (size > 0)
+            const char *entry_name = zip_entry_name(zip);
+            const char *ext = strrchr(entry_name, '.');
+
+            char cache_name[256];
+            strcpy(cache_name, CORE_ZIPCACHE_DIR "/");
+
+            const char *pure_path = strchr(name, ':');
+            pure_path = pure_path ? pure_path + 1 : name;
+            const char *pure_zip_name = strrchr(pure_path, '/');
+            pure_zip_name = pure_zip_name ? pure_zip_name + 1 : pure_path;
+            strcat(cache_name, pure_zip_name);
+            *strrchr(cache_name, '.') = '\x00';
+            strcat(cache_name, ext);
+
+            if (zip_entry_fread(zip, cache_name) == 0)
             {
-                const char *entry_name = zip_entry_name(zip);
-                const char *ext = strrchr(entry_name, '.');
-
-                char cache_name[256];
-                strcpy(cache_name, CORE_ZIPCACHE_DIR "/");
-
-                const char *pure_zip_name = strrchr(name + 4, '/'); // +4 for skip "ux0:"
-                pure_zip_name = pure_zip_name ? pure_zip_name + 1 : name + 4;
-                strcat(cache_name, pure_zip_name);
-                *strrchr(cache_name, '.') = '\x00';
-                strcat(cache_name, ext);
-
-                WriteFile(cache_name, buf, size);
-                free(buf);
                 extracted = true;
 
                 SceDateTime sce_time;
@@ -193,13 +191,92 @@ const char *GetZipCacheRom(const char *name)
                 sceRtcGetTime_t(&sce_time, &time);
                 zip_cache[crc32] = {time, cache_name};
 
-                zip_cache.CheckZipCacheSize();
+                zip_cache.CheckSize();
                 zip_cache.Save();
             }
         }
         zip_entry_close(zip);
     }
     zip_close(zip);
+    return extracted;
+}
 
-    return extracted ? zip_cache[crc32].name.c_str() : NULL;
+int ExtractThread(SceSize args, void *argp)
+{
+    ExtractArgs *arg = (ExtractArgs *)argp;
+    ExtractByCrc32(arg->name, arg->crc32);
+    sceKernelExitDeleteThread(0);
+    return 0;
+}
+
+const char *GetZipCacheRomPath(const char *name)
+{
+    uint32_t crc32 = GetZipRomCrc32(name);
+
+    auto iter = zip_cache.find(crc32);
+    if (iter != zip_cache.end())
+    {
+        AppLog("[ZIP] Hit zip cache: %08x %s\n", crc32, iter->second.name.c_str());
+        return iter->second.name.c_str();
+    }
+
+    return ExtractByCrc32(name, crc32) ? zip_cache[crc32].name.c_str() : NULL;
+}
+
+int64_t GetZipCacheRomMemory(const char *name, void **rom)
+{
+    *rom = NULL;
+    int64_t size = 0;
+    uint32_t crc32 = GetZipRomCrc32(name);
+
+    auto iter = zip_cache.find(crc32);
+    if (iter != zip_cache.end())
+    {
+        const char *cache_name = iter->second.name.c_str();
+        AppLog("[ZIP] Hit zip cache: %08x %s\n", crc32, cache_name);
+        size = GetFileSize(cache_name);
+        if (size > 0)
+        {
+            *rom = (char *)malloc(size);
+            if (!*rom)
+                return -1;
+            ReadFile(cache_name, *rom, size);
+        }
+        return size;
+    }
+
+    struct zip_t *zip = zip_open(name, 0, 'r');
+    if (!zip)
+        return false;
+
+    size_t num = zip_entries_total(zip);
+    for (size_t i = 0; i < num && *rom == NULL; i++)
+    {
+        if (zip_entry_openbyindex(zip, i) != 0)
+            continue;
+
+        if (zip_entry_crc32(zip) == crc32)
+        {
+            size = zip_entry_size(zip);
+            *rom = (char *)malloc(size);
+            if (!*rom)
+                return -1;
+
+            if (zip_entry_noallocread(zip, *rom, size) != size)
+                return -1;
+        }
+        zip_entry_close(zip);
+    }
+    zip_close(zip);
+
+    int extract_thread = sceKernelCreateThread("extract_thread", ExtractThread, 0x10000100, 0x10000, 0, 0, NULL);
+    if (extract_thread >= 0)
+    {
+        ExtractArgs args;
+        strcpy(args.name, name);
+        args.crc32 = crc32;
+        sceKernelStartThread(extract_thread, sizeof(args), &args);
+    }
+
+    return size;
 }

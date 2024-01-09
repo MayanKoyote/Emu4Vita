@@ -159,20 +159,32 @@ static int loadGameFromMemory(const char *path)
     return 0;
 }
 
+static int loadGameFromZipMemory(const char *path)
+{
+    int64_t size = GetZipCacheRomMemory(path, &game_rom_data);
+    if (size <= 0)
+        return -1;
+
+    struct retro_game_info game_info;
+    game_info.path = path;
+    game_info.data = game_rom_data;
+    game_info.size = size;
+    game_info.meta = NULL;
+    if (!retro_load_game(&game_info))
+    {
+        free(game_rom_data);
+        game_rom_data = NULL;
+        return -1;
+    }
+    return 0;
+}
+
 static int loadGame(const char *path)
 {
     int ret;
 
     AppLog("[GAME] Load game...\n");
     AppLog("[GAME] Rom path: %s\n", path);
-
-    char *ext = strrchr(path, '.');
-    if (ext && strcasecmp(ext, ".zip") == 0)
-    {
-        path = GetZipCacheRom(path);
-        if (!path)
-            return -1;
-    }
 
     if (!game_reloading)
     {
@@ -186,10 +198,28 @@ static int loadGame(const char *path)
     core_display_rotate = 0;
     retro_init();
 
-    if (core_system_info.need_fullpath)
-        ret = loadGameFromFile(path);
+    char *ext = strrchr(path, '.');
+    int is_zip = ext && strcasecmp(ext, ".zip") == 0;
+
+    if (core_support_zip || !is_zip)
+    {
+        if (core_system_info.need_fullpath)
+            ret = loadGameFromFile(path);
+        else
+            ret = loadGameFromMemory(path);
+    }
     else
-        ret = loadGameFromMemory(path);
+    {
+        if (core_system_info.need_fullpath)
+        {
+            path = GetZipCacheRomPath(path);
+            ret = path ? loadGameFromFile(path) : -1;
+        }
+        else
+        {
+            ret = loadGameFromZipMemory(path);
+        }
+    }
 
     if (ret < 0)
     {

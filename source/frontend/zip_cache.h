@@ -9,7 +9,8 @@ extern "C"
 #endif
 
     void InitZipCache();
-    const char *GetZipCacheRom(const char *name);
+    const char *GetZipCacheRomPath(const char *name);
+    int64_t GetZipCacheRomMemory(const char *name, void **rom);
 
 #ifdef __cplusplus
 }

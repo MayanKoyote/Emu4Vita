@@ -35,7 +35,7 @@ int IsValidFile(const char *path)
         i++;
     }
 
-    return 0;
+    return strcasecmp(ext, "zip") == 0;
 }
 
 int MakeBaseDirectoryEx(char *base, int base_size, const char *path, int path_len)

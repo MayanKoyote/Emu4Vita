@@ -32,6 +32,7 @@ enum retro_pixel_format core_pixel_format = RETRO_PIXEL_FORMAT_RGB565;
 GuiPixelFormat core_video_pixel_format = GUI_PIXEL_FORMAT_U5U6U5_RGB;
 int core_input_supports_bitmasks = 0;
 int core_display_rotate = 0;
+int core_support_zip = 0;
 
 static unsigned int emu_device_type = RETRO_DEVICE_JOYPAD;
 
@@ -82,6 +83,7 @@ static int creatValidFileExts()
     }
 
     // printf("n_exts: %d\n", n_exts);
+    core_support_zip = strstr(exts, "zip") ? 1 : 0;
 
     if (file_valid_exts)
         freeValidFileExts();
