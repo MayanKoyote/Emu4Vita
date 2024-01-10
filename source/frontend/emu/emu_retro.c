@@ -94,24 +94,28 @@ static int creatValidFileExts()
 
     *file_valid_exts = (char *)malloc(exts_len + 1);
     if (!*file_valid_exts)
+    {
+        freeValidFileExts();
         return -1;
+    }
 
     strcpy(*file_valid_exts, exts);
 
-    int count = 1;
-    for (i = 0; i < exts_len; i++)
+    char *p = *file_valid_exts;
+    for (i = 1; i < n_exts; i++)
     {
-        if ((*file_valid_exts)[i] == '|')
-        {
-            (*file_valid_exts)[i] = '\x00';
-            file_valid_exts[count++] = *file_valid_exts + i + 1;
-        }
+        p = strchr(p, '|');
+        if (!p)
+            break;
+        *p = '\x00';
+        p++;
+        file_valid_exts[i] = p;
     }
 
     file_valid_exts[n_exts] = NULL;
 
-    // for (i = 0; i < n_exts; i++)
-    //     printf("exts[%d]: %s\n", i, file_valid_exts[i]);
+    for (i = 0; i < n_exts; i++)
+        printf("exts[%d]: %s\n", i, file_valid_exts[i]);
 
     return ret;
 }
