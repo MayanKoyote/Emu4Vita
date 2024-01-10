@@ -246,7 +246,7 @@ int Setting_LoadState(int num)
         info.state_num = num;
         return Emu_StartGame(&info);
     }
-    
+
     return Emu_LoadState(num);
 }
 

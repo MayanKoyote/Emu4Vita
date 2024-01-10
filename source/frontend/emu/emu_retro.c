@@ -85,6 +85,11 @@ static int creatValidFileExts()
 
     // printf("n_exts: %d\n", n_exts);
     core_support_zip = strstr(exts, "zip") ? 1 : 0;
+    if (!core_support_zip)
+    {
+        n_exts++;
+        exts_len += 4;
+    }
 
     if (file_valid_exts)
         freeValidFileExts();
@@ -100,6 +105,10 @@ static int creatValidFileExts()
     }
 
     strcpy(*file_valid_exts, exts);
+    if (!core_support_zip)
+    {
+        strcat(*file_valid_exts, "|zip");
+    }
 
     char *p = *file_valid_exts;
     for (i = 1; i < n_exts; i++)
