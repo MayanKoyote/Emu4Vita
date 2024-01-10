@@ -321,7 +321,7 @@ int64_t GetZipCacheRomMemory(const char *name, void **rom)
 
     if (size > 0)
     {
-        int extract_thread = sceKernelCreateThread("extract_thread", ExtractThread, 0x10000100, 0x10000, 0, 0, NULL);
+        int extract_thread = sceKernelCreateThread("extract_thread", ExtractThread, 0x10000100 + 20, 0x10000, 0, 0, NULL);
         if (extract_thread >= 0)
         {
             ExtractArgs args;
