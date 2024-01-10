@@ -52,7 +52,8 @@ static void freeValidFileExts()
 {
     if (file_valid_exts)
     {
-        free(*file_valid_exts);
+        if (*file_valid_exts)
+            free(*file_valid_exts);
         free(file_valid_exts);
         file_valid_exts = NULL;
     }
