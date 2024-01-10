@@ -114,8 +114,8 @@ static int creatValidFileExts()
 
     file_valid_exts[n_exts] = NULL;
 
-    for (i = 0; i < n_exts; i++)
-        printf("exts[%d]: %s\n", i, file_valid_exts[i]);
+    // for (i = 0; i < n_exts; i++)
+    //     printf("exts[%d]: %s\n", i, file_valid_exts[i]);
 
     return ret;
 }
