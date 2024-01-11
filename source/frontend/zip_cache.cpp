@@ -44,7 +44,7 @@ public:
     // 例:    ABCD1234=ux0:data/EMU4VITA/【core】/zipcache/xxxx.gba
     void Load();      // 从 ZIP_CACHE_CONFIG_PATH 读取 cache 信息
     void Save();      // 把 cache 信息，写入 ZIP_CACHE_CONFIG_PATH
-    bool CheckSize(); // 如超过 CACHE_NUM，则删除最老的 cache rom, 返回 false；如不超过，返回 true
+    bool CheckSize(); // 如超过 __max_size，则删除最老的 cache rom, 返回 false；如不超过，返回 true
 
     const CachedItem *Find(uint32_t crc32)
     {
@@ -92,14 +92,14 @@ void ZipCache::Load()
     {
         char *key = strtok(line, "=\r\n");
         if (!key)
-            break;
+            continue;
         uint32_t crc32 = strtoul(key, NULL, 16);
         if (crc32 == LONG_MAX)
             continue;
 
         char *name = strtok(NULL, "=\r\n");
         if (!name)
-            break;
+            continue;
         SceIoStat stat = {0};
         if (sceIoGetstat(name, &stat) < 0)
             continue;
@@ -213,13 +213,7 @@ bool ExtractByCrc32(const char *name, uint32_t crc32)
 
             char cache_name[256];
             strcpy(cache_name, CORE_ZIPCACHE_DIR "/");
-
-            const char *pure_path = strchr(name, ':');
-            pure_path = pure_path ? pure_path + 1 : name;
-            const char *pure_zip_name = strrchr(pure_path, '/');
-            pure_zip_name = pure_zip_name ? pure_zip_name + 1 : pure_path;
-            strcat(cache_name, pure_zip_name);
-            *strrchr(cache_name, '.') = '\x00';
+            MakeBaseName(cache_name + sizeof(CORE_ZIPCACHE_DIR), name, strlen(name));
             strcat(cache_name, ext);
 
             if (zip_entry_fread(zip, cache_name) == 0)
