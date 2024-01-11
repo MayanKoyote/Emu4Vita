@@ -13,7 +13,7 @@ extern "C"
 #include "file.h"
 #include "utils.h"
 #include "zip_cache.h"
-#include "zip/zip.h"
+#include "zip.h"
 }
 
 #define DEFAULT_CACHE_SIZE 5

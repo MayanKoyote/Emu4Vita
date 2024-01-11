@@ -15,7 +15,7 @@
 #include "boot.h"
 #include "utils.h"
 #include "lang.h"
-#include "zip_cache.h"
+#include "zip/zip_cache.h"
 
 #define MAX_GAME_RUN_SPEED 2.0f
 #define STEP_GAME_RUN_SPEED 0.5f
