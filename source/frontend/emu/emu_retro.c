@@ -52,8 +52,9 @@ static void freeValidFileExts()
 {
     if (file_valid_exts)
     {
-        if (*file_valid_exts)
-            free(*file_valid_exts);
+        int i;
+        for (i = 0; file_valid_exts[i]; i++)
+            free(file_valid_exts[i]);
         free(file_valid_exts);
         file_valid_exts = NULL;
     }
@@ -66,6 +67,7 @@ static int creatValidFileExts()
     int exts_len;
     int n_exts;
     int i;
+    const char *zip_ext = "zip";
 
     if (!exts)
         return -1;
@@ -82,46 +84,43 @@ static int creatValidFileExts()
         if (exts[i] == '|')
             n_exts++;
     }
-
     // printf("n_exts: %d\n", n_exts);
-    core_support_zip = strstr(exts, "zip") ? 1 : 0;
-    if (!core_support_zip)
-    {
-        n_exts++;
-        exts_len += 4;
-    }
 
     if (file_valid_exts)
         freeValidFileExts();
-    file_valid_exts = (char **)calloc((n_exts + 1), sizeof(char *));
+    file_valid_exts = (char **)calloc((n_exts + 2), sizeof(char *));
     if (!file_valid_exts)
         return -1;
 
-    *file_valid_exts = (char *)malloc(exts_len + 1);
-    if (!*file_valid_exts)
+    const char *p = exts;
+    const char *sep;
+    int len;
+    for (i = 0; i < n_exts; i++)
     {
-        freeValidFileExts();
-        return -1;
+        sep = strchr(p, '|');
+        if (!sep)
+            sep = exts + exts_len;
+        len = sep - p;
+        file_valid_exts[i] = (char *)malloc(len + 1);
+        if (file_valid_exts[i])
+        {
+            strncpy(file_valid_exts[i], p, len);
+            file_valid_exts[i][len] = '\0';
+
+            if (!core_support_zip && strcasecmp(file_valid_exts[i], zip_ext) == 0)
+                core_support_zip = 1;
+        }
+        p = sep + 1;
     }
 
-    strcpy(*file_valid_exts, exts);
     if (!core_support_zip)
     {
-        strcat(*file_valid_exts, "|zip");
+        file_valid_exts[i] = (char *)malloc(strlen(zip_ext) + 1);
+        strcpy(file_valid_exts[i], zip_ext);
+        i++;
     }
 
-    char *p = *file_valid_exts;
-    for (i = 1; i < n_exts; i++)
-    {
-        p = strchr(p, '|');
-        if (!p)
-            break;
-        *p = '\x00';
-        p++;
-        file_valid_exts[i] = p;
-    }
-
-    file_valid_exts[n_exts] = NULL;
+    file_valid_exts[i] = NULL;
 
     // for (i = 0; i < n_exts; i++)
     //     printf("exts[%d]: %s\n", i, file_valid_exts[i]);
