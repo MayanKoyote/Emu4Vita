@@ -28,6 +28,7 @@
 #include "config.h"
 #include "boot.h"
 #include "lang.h"
+#include "zip_cache.h"
 
 #ifdef SCE_LIBC_SIZE
 unsigned int sceLibcHeapSize = SCE_LIBC_SIZE;
@@ -167,6 +168,8 @@ int AppInit(int argc, char *const argv[])
 
     Retro_InitLib();
     Setting_Init();
+
+    InitZipCache();
 
     // Lock USB connection and PS button
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_USB_CONNECTION | SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN_2);

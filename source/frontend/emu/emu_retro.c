@@ -32,6 +32,7 @@ enum retro_pixel_format core_pixel_format = RETRO_PIXEL_FORMAT_RGB565;
 GuiPixelFormat core_video_pixel_format = GUI_PIXEL_FORMAT_U5U6U5_RGB;
 int core_input_supports_bitmasks = 0;
 int core_display_rotate = 0;
+int core_support_zip = 0;
 
 static unsigned int emu_device_type = RETRO_DEVICE_JOYPAD;
 
@@ -66,6 +67,7 @@ static int creatValidFileExts()
     int exts_len;
     int n_exts;
     int i;
+    const char *zip_ext = "zip";
 
     if (!exts)
         return -1;
@@ -86,7 +88,7 @@ static int creatValidFileExts()
 
     if (file_valid_exts)
         freeValidFileExts();
-    file_valid_exts = (char **)calloc((n_exts + 1), sizeof(char *));
+    file_valid_exts = (char **)calloc((n_exts + 2), sizeof(char *));
     if (!file_valid_exts)
         return -1;
 
@@ -104,10 +106,21 @@ static int creatValidFileExts()
         {
             strncpy(file_valid_exts[i], p, len);
             file_valid_exts[i][len] = '\0';
+
+            if (!core_support_zip && strcasecmp(file_valid_exts[i], zip_ext) == 0)
+                core_support_zip = 1;
         }
         p = sep + 1;
     }
-    file_valid_exts[n_exts] = NULL;
+
+    if (!core_support_zip)
+    {
+        file_valid_exts[i] = (char *)malloc(strlen(zip_ext) + 1);
+        strcpy(file_valid_exts[i], zip_ext);
+        i++;
+    }
+
+    file_valid_exts[i] = NULL;
 
     // for (i = 0; i < n_exts; i++)
     //     printf("exts[%d]: %s\n", i, file_valid_exts[i]);

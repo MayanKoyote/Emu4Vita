@@ -10,7 +10,7 @@
 
 extern char **file_valid_exts;
 
-int IsValidFile(char *path);
+int IsValidFile(const char *path);
 
 int MakeBaseDirectoryEx(char *base, int base_size, const char *path, int path_len);
 int MakeFileNameEx(char *name, int name_size, const char *path, int path_len);
