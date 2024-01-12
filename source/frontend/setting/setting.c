@@ -7,6 +7,7 @@
 #include <psp2/io/fcntl.h>
 #include <psp2/power.h>
 
+#include "list/cheat_list.h"
 #include "list/config_list.h"
 #include "list/option_list.h"
 #include "activity/browser.h"
@@ -303,6 +304,97 @@ int Setting_SetCoreMenu(LinkedList *list)
 
     core_menu.items = items;
     core_menu.n_items = n_items;
+
+    if (tab_focus_pos == INDEX_MENU_CORE)
+        moveMenuListPos(TYPE_MOVE_NONE);
+
+    return 0;
+}
+
+int Setting_SetCheatMenu(LinkedList *list)
+{
+    // Free old menu items
+    if (cheat_menu.items)
+        destroySettingMenuItems(cheat_menu.items, cheat_menu.n_items);
+    cheat_menu.items = NULL;
+    cheat_menu.n_items = 0;
+
+    if (!list)
+        return -1;
+
+    int l_length = LinkedListGetLength(list);
+
+    // Create new menu items
+    int n_items = l_length + 1; // +1 for reset config
+    SettingMenuItem *items = (SettingMenuItem *)calloc(n_items, sizeof(SettingMenuItem));
+    if (!items)
+        return -1;
+
+    LinkedListEntry *entry = LinkedListHead(list);
+
+    int i, j;
+    for (i = 0; i < l_length && entry; i++)
+    {
+        CheatListEntryData *data = (CheatListEntryData *)LinkedListGetEntryData(entry);
+
+        // Disable use lang
+        items[i].name.lang = LANG_NULL;
+        items[i].visibility = &visibility_visible;
+
+        // Item name
+        char *desc = data->desc;
+        if (desc)
+        {
+            // printf("desc: %s\n", desc);
+            items[i].name.string = (char *)malloc(strlen(desc) + 1);
+            if (items[i].name.string)
+                strcpy(items[i].name.string, desc);
+        }
+
+        // Item option
+        StrArrayOption *option = (StrArrayOption *)calloc(1, sizeof(StrArrayOption));
+        if (!option)
+            continue;
+        items[i].option_type = TYPE_OPTION_STR_ARRAY;
+        items[i].option = option;
+
+        // Item option callbacks
+        option->updateCallback = cheatOptionUpdateCallback;
+
+        // Item option value
+        option->value = &(data->enable);
+
+        // Item option names
+        option->n_names = sizeof(no_yes_values) / sizeof(LangString);
+        option->names = (LangString *)calloc(option->n_names, sizeof(LangString));
+        if (!option->names)
+            continue;
+
+        for (j = 0; j < option->n_names; j++)
+        {
+            // Disable use lang
+            option->names[j].lang = no_yes_values[j].lang;
+
+            char *name = no_yes_values[j].string;
+            if (name)
+            {
+                option->names[j].string = (char *)malloc(strlen(name) + 1);
+                if (option->names[j].string)
+                    strcpy(option->names[j].string, name);
+            }
+        }
+
+        entry = LinkedListNext(entry);
+    }
+
+    // The last one is reset config
+    items[n_items - 1].name.lang = LABEL_RESET_CONFIGS;
+    items[n_items - 1].option_type = TYPE_OPTION_CALLBACK;
+    items[n_items - 1].option = resetCheatConfigCallback;
+    items[n_items - 1].visibility = &visibility_visible;
+
+    cheat_menu.items = items;
+    cheat_menu.n_items = n_items;
 
     if (tab_focus_pos == INDEX_MENU_CORE)
         moveMenuListPos(TYPE_MOVE_NONE);
@@ -970,6 +1062,7 @@ static int openDialogCallback(GUI_Dialog *dialog)
         setting_config_type = game_is_loaded ? TYPE_CONFIG_GAME : TYPE_CONFIG_MAIN;
         app_menu_visibility = !game_is_loaded;
         core_menu_visibility = (setting_menus[INDEX_MENU_CORE]->items && (game_is_loaded || has_main_core_menu));
+        cheat_menu_visibility = (setting_menus[INDEX_MENU_CHEAT]->items && game_is_loaded);
         disk_control_visibility = (game_is_loaded && Emu_HasDiskControl() && Emu_DiskGetNumImages() > 0);
         exit_to_arch_visibility = (exec_boot_mode == BOOT_MODE_ARCH);
         touch_to_button_visibility = !is_vitatv_model;

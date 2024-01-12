@@ -204,6 +204,19 @@ static void resetCoreConfigCallback()
     Retro_UpdateCoreOptionsDisplay();
 }
 
+//----------------- Cheat menu -----------------//
+static void cheatMenuExitCallback(SettingMenu *menu)
+{
+}
+
+static void cheatOptionUpdateCallback(StrArrayOption *option)
+{
+}
+
+static void resetCheatConfigCallback()
+{
+}
+
 //----------------- Misc menu -----------------//
 static void miscMenuExitCallback(SettingMenu *menu)
 {

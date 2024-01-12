@@ -183,7 +183,7 @@ SettingMenuItem control_menu_items[] = {
     {{BUTTON_R3, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_r3_option},
     {{BUTTON_SELECT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_select_option},
     {{BUTTON_START, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_start_option},
-    
+
     {{BUTTON_LEFT_ANALOG_LEFT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &left_analog_left_option},
     {{BUTTON_LEFT_ANALOG_UP, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &left_analog_up_option},
     {{BUTTON_LEFT_ANALOG_RIGHT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &left_analog_right_option},
@@ -192,7 +192,6 @@ SettingMenuItem control_menu_items[] = {
     {{BUTTON_RIGHT_ANALOG_UP, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &right_analog_up_option},
     {{BUTTON_RIGHT_ANALOG_RIGHT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &right_analog_right_option},
     {{BUTTON_RIGHT_ANALOG_DOWN, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &right_analog_down_option},
-
 
     {{LABEL_FRONT_TOUCH_TO_BUTTON, NULL}, &touch_to_button_visibility, TYPE_OPTION_STR_ARRAY, &front_touch_pad_option},
     {{LABEL_BACK_TOUCH_TO_BUTTON, NULL}, &touch_to_button_visibility, TYPE_OPTION_STR_ARRAY, &back_touch_pad_option},
@@ -216,6 +215,9 @@ static SettingMenu hotkey_menu = {{TAB_HOTKEY, NULL}, &visibility_visible, hotke
 
 // 核心
 static SettingMenu core_menu = {{TAB_CORE, NULL}, &core_menu_visibility, NULL, 0, NULL, coreMenuExitCallback};
+
+// 金手指
+static SettingMenu cheat_menu = {{TAB_CHEAT, NULL}, &cheat_menu_visibility, NULL, 0, NULL, cheatMenuExitCallback};
 
 // 杂项
 static SettingMenuItem misc_menu_items[] = {
@@ -246,6 +248,7 @@ static SettingMenu *setting_menus[] = {
     &control_menu,  // 控制
     &hotkey_menu,   // 热键
     &core_menu,     // 核心
+    &cheat_menu,    // 金手指
     &misc_menu,     // 杂项
     &app_menu,      // 程序
 };

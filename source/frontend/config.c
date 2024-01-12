@@ -5,6 +5,7 @@
 
 #include <psp2/io/fcntl.h>
 
+#include "list/cheat_list.h"
 #include "list/option_list.h"
 #include "list/overlay_list.h"
 #include "activity/browser.h"
@@ -25,6 +26,7 @@ MiscConfig misc_config;
 char *private_assets_dir = NULL;
 char *public_assets_dir = NULL;
 
+LinkedList *core_cheat_list = NULL;
 LinkedList *core_option_list = NULL;
 LinkedList *graphics_overlay_list = NULL;
 

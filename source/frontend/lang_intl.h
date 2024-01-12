@@ -205,6 +205,8 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "HotKey",
     // TAB_CORE
     "Core",
+    // TAB_CHEAT
+    "Cheat",
     // TAB_MISC
     "Misc",
     // TAB_APP
@@ -578,6 +580,8 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "热键",
     // TAB_CORE
     "核心",
+    // TAB_CHEAT
+    "金手指",
     // TAB_MISC
     "杂项",
     // TAB_APP
@@ -952,6 +956,8 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     "熱鍵",
     // TAB_CORE
     "核心",
+    // TAB_CHEAT
+    "金手指",
     // TAB_MISC
     "雜項",
     // TAB_APP

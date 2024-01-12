@@ -2,7 +2,7 @@ APP_VER      := 1.03
 SFO_APP_VER  := 0$(APP_VER)
 
 DEBUG        := 1
-BUILD_DATE   := $(shell date +"%Y.%m.%d")
+BUILD_DATE   := $(shell date +"%Y/%m/%d")
 
 APP_NAME_STR     := $(APP_NAME)
 APP_NAME_EXT_STR := $(APP_NAME_EXT)
@@ -54,6 +54,7 @@ SRC_C += \
 
 SRC_C += \
 	emu/emu_audio.c \
+	emu/emu_cheat.c \
 	emu/emu_disk.c \
 	emu/emu_game.c \
 	emu/emu_input.c \
@@ -87,7 +88,8 @@ SRC_C += \
 	list/file_list.c \
 	list/option_list.c \
 	list/overlay_list.c \
-	list/string_list.c
+	list/string_list.c \
+	list/cheat_list.c
 
 SRC_C += \
 	setting/setting_overlay.c \

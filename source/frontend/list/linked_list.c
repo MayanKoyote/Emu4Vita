@@ -175,14 +175,14 @@ int LinkedListRemove(LinkedList *list, LinkedListEntry *entry)
     return 1;
 }
 
-int LinkedListAddEx(LinkedList *list, void *data, LinkedListFreeDataCallback freeEntryData)
+LinkedListEntry *LinkedListAddEx(LinkedList *list, void *data, LinkedListFreeDataCallback freeEntryData)
 {
     if (!list || !data)
-        return 0;
+        return NULL;
 
     LinkedListEntry *entry = malloc(sizeof(LinkedListEntry));
     if (!entry)
-        return 0;
+        return NULL;
 
     entry->next = NULL;
     entry->prev = NULL;
@@ -232,10 +232,10 @@ int LinkedListAddEx(LinkedList *list, void *data, LinkedListFreeDataCallback fre
 
     list->length++;
 
-    return 1;
+    return entry;
 }
 
-int LinkedListAdd(LinkedList *list, void *data)
+LinkedListEntry *LinkedListAdd(LinkedList *list, void *data)
 {
     return LinkedListAddEx(list, data, NULL);
 }

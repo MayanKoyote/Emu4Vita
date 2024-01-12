@@ -115,6 +115,7 @@ enum LanguageContainer
     TAB_CONTROL,
     TAB_HOTKEY,
     TAB_CORE,
+    TAB_CHEAT,
     TAB_MISC,
     TAB_APP,
 

@@ -9,5 +9,6 @@
 #include "emu_save.h"
 #include "emu_state.h"
 #include "emu_disk.h"
+#include "emu_cheat.h"
 
 #endif

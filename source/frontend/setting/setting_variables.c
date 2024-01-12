@@ -40,6 +40,7 @@ enum IndexSettingMenuList
     INDEX_MENU_CONTROL,
     INDEX_MENU_HOTKEY,
     INDEX_MENU_CORE,
+    INDEX_MENU_CHEAT,
     INDEX_MENU_MISC,
     INDEX_MENU_APP,
 };
@@ -76,6 +77,7 @@ static uint32_t config_app_language = 0;
 static int visibility_visible = 1;
 // static int visibility_invisible = 0;
 static int core_menu_visibility = 0;
+static int cheat_menu_visibility = 0;
 static int app_menu_visibility = 0;
 static int disk_control_visibility = 0;
 static int exit_to_arch_visibility = 0;

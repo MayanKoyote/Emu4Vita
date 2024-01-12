@@ -280,6 +280,8 @@ int Emu_StartGame(EmuGameInfo *info)
     if (state_num >= -1)
         Emu_LoadState(state_num);
 
+    Emu_LoadCheatOption();
+
     GUI_CleanPad();
     Emu_RequestUpdateVideoDisplay();
     Retro_UpdateCoreOptionsDisplay();
@@ -335,6 +337,13 @@ void Emu_ExitGame()
         free(game_rom_data);
         game_rom_data = NULL;
     }
+
+    if (core_cheat_list)
+    {
+        LinkedListDestroy(core_cheat_list);
+        core_cheat_list = NULL;
+    }
+    Setting_SetCheatMenu(NULL);
 
     AppLog("[GAME] Exit game OK!\n");
 }
