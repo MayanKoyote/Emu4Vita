@@ -95,6 +95,9 @@ SRC_C += \
 	setting/setting.c
 
 SRC_C += \
+    zip/zip.c
+
+SRC_C += \
 	boot.c \
 	config.c \
 	file.c \
@@ -106,7 +109,11 @@ SRC_C += \
 	utils_string.c \
 	utils.c
 
+SRC_CPP += \
+	zip/zip_cache.cpp
+
 OBJS := $(SRC_C:.c=.o)
+OBJS += $(SRC_CPP:.cpp=.o)
 OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
 
 LIBS := \
