@@ -110,7 +110,7 @@ SRC_C += \
 	utils.c
 
 SRC_CPP += \
-	zip_cache.cpp
+	zip/zip_cache.cpp
 
 OBJS := $(SRC_C:.c=.o)
 OBJS += $(SRC_CPP:.cpp=.o)
