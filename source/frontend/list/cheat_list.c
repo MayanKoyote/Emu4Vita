@@ -49,16 +49,14 @@ static int checkCheatConfig(CheatListEntryData *data, int idx, char *key, char *
     int idx2 = StringToDecimal(p); // 字符串转整数index
     *p2 = ch;
 
-    // printf("checkCheatConfig: idx: %d, idx2: %d\n", idx, idx2);
-
     if (idx2 != idx)
         return 0; // 合法但非当前index
 
-    p2++; // 前进跳过'_'
+    p = ++p2; // 前进跳过'_'
 
-    // int found = 1;
+    int found = 1;
 
-    if (strcmp(p2, "desc") == 0)
+    if (strcmp(p, "desc") == 0)
     {
         if (!data->desc)
         {
@@ -67,7 +65,7 @@ static int checkCheatConfig(CheatListEntryData *data, int idx, char *key, char *
                 strcpy(data->desc, value);
         }
     }
-    else if (strcmp(p2, "code") == 0)
+    else if (strcmp(p, "code") == 0)
     {
         if (!data->code)
         {
@@ -76,93 +74,95 @@ static int checkCheatConfig(CheatListEntryData *data, int idx, char *key, char *
                 strcpy(data->code, value);
         }
     }
-    else if (strcmp(p2, "enable") == 0)
+    else if (strcmp(p, "enable") == 0)
     {
         data->enable = StringToBoolean(value);
     }
-    else if (strcmp(p2, "address") == 0)
+    else if (strcmp(p, "address") == 0)
     {
         data->address = StringToDecimal(value);
     }
-    else if (strcmp(p2, "address_bit_position") == 0)
+    else if (strcmp(p, "address_bit_position") == 0)
     {
-        data->address = StringToDecimal(value);
+        data->address_bit_position = StringToDecimal(value);
     }
-    else if (strcmp(p2, "big_endian") == 0)
+    else if (strcmp(p, "big_endian") == 0)
     {
-        data->address = StringToBoolean(value);
+        data->big_endian = StringToBoolean(value);
     }
-    else if (strcmp(p2, "cheat_type") == 0)
+    else if (strcmp(p, "cheat_type") == 0)
     {
-        data->address = StringToDecimal(value);
+        data->cheat_type = StringToDecimal(value);
     }
-    else if (strcmp(p2, "handler") == 0)
+    else if (strcmp(p, "handler") == 0)
     {
-        data->address = StringToDecimal(value);
+        data->handler = StringToDecimal(value);
     }
-    else if (strcmp(p2, "memory_search_size") == 0)
+    else if (strcmp(p, "memory_search_size") == 0)
     {
-        data->address = StringToDecimal(value);
+        data->memory_search_size = StringToDecimal(value);
     }
-    else if (strncmp(p2, "repeat_", 7) == 0)
+    else if (strncmp(p, "repeat_", 7) == 0)
     {
-        p2 += 7;
+        p2 = p + 7;
         if (strcmp(p2, "add_to_address") == 0)
         {
-            data->address = StringToDecimal(value);
+            data->repeat_add_to_address = StringToDecimal(value);
         }
         else if (strcmp(p2, "add_to_value") == 0)
         {
-            data->address = StringToDecimal(value);
+            data->repeat_add_to_value = StringToDecimal(value);
         }
         else if (strcmp(p2, "count") == 0)
         {
-            data->address = StringToDecimal(value);
+            data->repeat_count = StringToDecimal(value);
         }
     }
-    else if (strncmp(p2, "rumble_", 7) == 0)
+    else if (strncmp(p, "rumble_", 7) == 0)
     {
-        p2 += 7;
+        p2 = p + 7;
         if (strcmp(p2, "port") == 0)
         {
-            data->address = StringToDecimal(value);
+            data->rumble_port = StringToDecimal(value);
         }
         else if (strcmp(p2, "primary_duration") == 0)
         {
-            data->address = StringToDecimal(value);
+            data->rumble_primary_duration = StringToDecimal(value);
         }
         else if (strcmp(p2, "primary_strength") == 0)
         {
-            data->address = StringToDecimal(value);
+            data->rumble_primary_strength = StringToDecimal(value);
         }
         else if (strcmp(p2, "secondary_duration") == 0)
         {
-            data->address = StringToDecimal(value);
+            data->rumble_secondary_duration = StringToDecimal(value);
         }
         else if (strcmp(p2, "secondary_strength") == 0)
         {
-            data->address = StringToDecimal(value);
+            data->rumble_secondary_strength = StringToDecimal(value);
         }
         else if (strcmp(p2, "type") == 0)
         {
-            data->address = StringToDecimal(value);
+            data->rumble_type = StringToDecimal(value);
         }
         else if (strcmp(p2, "value") == 0)
         {
-            data->address = StringToDecimal(value);
+            data->rumble_value = StringToDecimal(value);
         }
     }
-    else if (strcmp(p2, "value") == 0)
+    else if (strcmp(p, "value") == 0)
     {
-        data->address = StringToDecimal(value);
+        data->value = StringToDecimal(value);
     }
     else
     {
-        // found = 0;
+        found = 0;
     }
 
-    // if (found)
-    //     printf("Add Found: index: %d, key: %s, value: %s\n", idx, p2, value);
+    if (found)
+    {
+        // printf("Add Found: index: %d, key: %s, value: %s\n", idx, p, value);
+    }
 
     return 1;
 }
