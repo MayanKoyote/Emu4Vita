@@ -22,23 +22,30 @@ static int makeCheatPath(char *path)
 
 int Emu_LoadCheatOption()
 {
-    printf("[CHEAT] Emu_LoadCheatOption...\n");
+    AppLog("[CHEAT] Emu_LoadCheatOption...\n");
 
     Setting_SetCheatMenu(NULL);
     if (core_cheat_list)
         LinkedListDestroy(core_cheat_list);
-
-    core_cheat_list = NewCheatList();
-    if (!core_cheat_list)
-        return -1;
+    core_cheat_list = NULL;
 
     char path[1024];
     makeCheatPath(path);
+    core_cheat_list = NewCheatList();
+    if (!core_cheat_list)
+        goto FAILED;
+
     CheatListGetEntries(core_cheat_list, path);
+    if (LinkedListGetLength(core_cheat_list) <= 0)
+        goto FAILED;
 
     Setting_SetCheatMenu(core_cheat_list);
-
+    AppLog("[CHEAT] Emu_LoadCheatOption OK!\n");
     return 0;
+
+FAILED:
+    AppLog("[CHEAT] Emu_LoadCheatOption failed!\n");
+    return -1;
 }
 
 int Emu_SaveCheatOption()
