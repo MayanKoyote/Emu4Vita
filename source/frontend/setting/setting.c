@@ -170,7 +170,7 @@ static void moveMenuListPos(int move_type)
     option_listview_scroll_sx = option_listview_dx;
 }
 
-static void destroySettingMenuItemOption(void *option, int option_type)
+static int cleanSettingMenuItemOption(void *option, int option_type)
 {
     if (option_type == TYPE_OPTION_STR_ARRAY)
     {
@@ -183,10 +183,54 @@ static void destroySettingMenuItemOption(void *option, int option_type)
                 if (m_option->names[i].string)
                     free(m_option->names[i].string);
             }
-            free(m_option->names);
         }
-        free(option);
+        m_option->names = NULL;
+        m_option->n_names = 0;
     }
+    else if (option_type == TYPE_OPTION_INT_ARRAY)
+    {
+        IntArrayOption *m_option = (IntArrayOption *)option;
+        if (m_option->values)
+            free(m_option->values);
+        m_option->values = NULL;
+        m_option->n_values = 0;
+
+        if (m_option->format)
+            free(m_option->format);
+        m_option->format = NULL;
+    }
+    else if (option_type == TYPE_OPTION_INT_RANGE)
+    {
+        IntRangeOption *m_option = (IntRangeOption *)option;
+        if (m_option->format)
+            free(m_option->format);
+        m_option->format = NULL;
+    }
+    else if (option_type == TYPE_OPTION_CHECK_BOX)
+    {
+        CheckBoxOptionMenu *m_option = (CheckBoxOptionMenu *)option;
+        if (m_option->name.string)
+            free(m_option->name.string);
+        m_option->name.string = NULL;
+
+        if (m_option->items)
+        {
+            int i;
+            for (i = 0; i < m_option->n_items; i++)
+            {
+                if (m_option->items[i].name.string)
+                    free(m_option->items[i].name.string);
+            }
+        }
+        m_option->items = NULL;
+        m_option->n_items = 0;
+    }
+    else
+    {
+        return 0;
+    }
+
+    return 1;
 }
 
 static void cleanSettingMenuItem(SettingMenuItem *item)
@@ -198,7 +242,8 @@ static void cleanSettingMenuItem(SettingMenuItem *item)
     }
     if (item->option)
     {
-        destroySettingMenuItemOption(item->option, item->option_type);
+        if (cleanSettingMenuItemOption(item->option, item->option_type) == 1)
+            free(item->option);
         item->option = NULL;
     }
 }
@@ -249,7 +294,7 @@ int Setting_SetCoreMenu(LinkedList *list)
             desc = data->key;
         if (desc)
         {
-            // printf("desc: %s\n", desc);
+            // printf("core_option: name: %s\n", desc);
             items[i].name.string = (char *)malloc(strlen(desc) + 1);
             if (items[i].name.string)
                 strcpy(items[i].name.string, desc);
@@ -345,7 +390,7 @@ int Setting_SetCheatMenu(LinkedList *list)
         char *desc = data->desc;
         if (desc)
         {
-            // printf("desc: %s\n", desc);
+            // printf("cheat_option: name: %s\n", desc);
             items[i].name.string = (char *)malloc(strlen(desc) + 1);
             if (items[i].name.string)
                 strcpy(items[i].name.string, desc);
@@ -407,21 +452,10 @@ int Setting_SetOverlayOption(LinkedList *list)
     if (!list)
         return -1;
 
-    // Clean old options
-    if (overlay_select_option.names)
-    {
-        int i;
-        for (i = 0; i < overlay_select_option.n_names; i++)
-        {
-            if (overlay_select_option.names[i].string)
-                free(overlay_select_option.names[i].string);
-        }
-        free(overlay_select_option.names);
-        overlay_select_option.names = NULL;
-        overlay_select_option.n_names = 0;
-    }
+    // Clean old option
+    cleanSettingMenuItemOption(&overlay_select_option, TYPE_OPTION_STR_ARRAY);
 
-    // Create new options
+    // Create new option
     int ls_length = LinkedListGetLength(list);
     int n_names = ls_length + 1; // +1 for none
     LangString *names = (LangString *)calloc(n_names, sizeof(LangString));
@@ -440,7 +474,7 @@ int Setting_SetOverlayOption(LinkedList *list)
         OverlayListEntryData *data = (OverlayListEntryData *)LinkedListGetEntryData(entry);
         if (data->name)
         {
-            // printf("overlay: name = %s\n", data->name);
+            // printf("overlay_option: name = %s\n", data->name);
             names[i].string = (char *)malloc(strlen(data->name) + 1);
             if (names[i].string)
                 strcpy(names[i].string, data->name);
@@ -459,21 +493,10 @@ int Setting_SetOverlayOption(LinkedList *list)
 
 int Setting_SetLangOption()
 {
-    // Clean old options
-    if (language_option.names)
-    {
-        int i;
-        for (i = 0; i < language_option.n_names; i++)
-        {
-            if (language_option.names[i].string)
-                free(language_option.names[i].string);
-        }
-        free(language_option.names);
-        language_option.names = NULL;
-        language_option.n_names = 0;
-    }
+    // Clean old option
+    cleanSettingMenuItemOption(&language_option, TYPE_OPTION_STR_ARRAY);
 
-    // Create new options
+    // Create new option
     int n_names = 0;
     int langs_len = GetLangsLength();
     int i;
@@ -494,7 +517,13 @@ int Setting_SetLangOption()
         if (lang_entries[i].container)
         {
             names[index].lang = LANG_NULL;
-            names[index].string = lang_entries[i].name;
+            if (lang_entries[i].name)
+            {
+                // printf("lang_option: name = %s\n", lang_entries[i].name);
+                names[index].string = (char *)malloc(strlen(lang_entries[i].name) + 1);
+                if (names[index].string)
+                    strcpy(names[index].string, lang_entries[i].name);
+            }
             index++;
         }
     }
@@ -721,7 +750,7 @@ static void drawMenu()
                 {
                     CheckBoxOptionMenu *option = (CheckBoxOptionMenu *)items[i]->option;
                     int x = dx;
-                    if (tab_focus_pos == INDEX_MENU_CONTROL)
+                    if (tab_focus_pos == INDEX_MENU_CONTROL) // Draw turbo button
                     {
                         int turbo = *(int *)(option->userdata) & TURBO_KEY_BITMASK;
                         uint32_t bg_color = turbo ? COLOR_ALPHA(COLOR_ORANGE, 0xBF) : COLOR_ALPHA(COLOR_BLACK, 0xBF);
