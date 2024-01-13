@@ -31,7 +31,7 @@ static void freeEntryData(void *data)
     }
 }
 
-LinkedListEntry *ConfigListFindEntryByName(LinkedList *list, const char *name)
+LinkedListEntry *OverlayListFindEntryByName(LinkedList *list, const char *name)
 {
     if (!list || !name)
         return NULL;

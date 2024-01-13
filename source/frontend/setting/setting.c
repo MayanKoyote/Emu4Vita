@@ -396,7 +396,7 @@ int Setting_SetCheatMenu(LinkedList *list)
     cheat_menu.items = items;
     cheat_menu.n_items = n_items;
 
-    if (tab_focus_pos == INDEX_MENU_CORE)
+    if (tab_focus_pos == INDEX_MENU_CHEAT)
         moveMenuListPos(TYPE_MOVE_NONE);
 
     return 0;
