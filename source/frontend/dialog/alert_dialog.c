@@ -52,6 +52,11 @@ static int isEnglishCharacter(char ch)
         return 0;
 }
 
+static int getGradualSize(int size, int gradual, int max)
+{
+    return (float)size * ((float)gradual / (float)max);
+}
+
 static uint32_t getGradualColor(uint32_t color, int gradual, int max)
 {
     uint32_t rgb = color & 0x00FFFFFF;
@@ -408,11 +413,31 @@ static void drawDialogCallback(GUI_Dialog *dialog)
     int bottom_bar_x = dialog_x;
     int bottom_bar_y = listview_y + listview_h;
 
+    if (data->status == TYPE_DIALOG_STATUS_SHOW)
+    {
+        if (data->gradual_count < MAX_DIALOG_GRADUAL_COUNT)
+        {
+            data->gradual_count++;
+        }
+    }
+    else
+    {
+        if (data->gradual_count > 0)
+        {
+            data->gradual_count--;
+        }
+        else
+        {
+            GUI_CloseDialog(dialog);
+            return;
+        }
+    }
+
     uint32_t overlay_color = getGradualColor(OVERLAY_COLOR, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
-    uint32_t dialog_color = DIALOG_COLOR_BG;
-    uint32_t statebar_color = STATEBAR_COLOR_BG;
-    uint32_t text_color = DIALOG_COLOR_TEXT;
-    uint32_t focus_color = ITEMVIEW_COLOR_FOCUS_BG;
+    uint32_t dialog_color = getGradualColor(DIALOG_COLOR_BG, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
+    uint32_t statebar_color = getGradualColor(STATEBAR_COLOR_BG, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
+    uint32_t text_color = getGradualColor(DIALOG_COLOR_TEXT, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
+    uint32_t focus_color = getGradualColor(ITEMVIEW_COLOR_FOCUS_BG, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
 
     int x, y;
     int clip_w, clip_h;
@@ -420,22 +445,10 @@ static void drawDialogCallback(GUI_Dialog *dialog)
     // Draw overlay
     GUI_DrawFillRectangle(0, 0, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, overlay_color);
 
-    if (data->status == TYPE_DIALOG_STATUS_SHOW)
-    {
-        if (data->gradual_count < MAX_DIALOG_GRADUAL_COUNT)
-        {
-            data->gradual_count++;
-            return;
-        }
-    }
-    else
-    {
-        if (data->gradual_count > 0)
-            data->gradual_count--;
-        else
-            GUI_CloseDialog(dialog);
-        return;
-    }
+    // Set dialog clip
+    clip_w = getGradualSize(dialog_w, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
+    clip_h = getGradualSize(dialog_h, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
+    GUI_EnableClipping((GUI_SCREEN_WIDTH - clip_w) / 2, (GUI_SCREEN_HEIGHT - clip_h) / 2, clip_w, clip_h);
 
     // Draw dialog bg
     GUI_DrawFillRectangle(dialog_x, dialog_y, dialog_w, dialog_h, dialog_color);
@@ -508,7 +521,7 @@ static void drawDialogCallback(GUI_Dialog *dialog)
             if (data->type == TYPE_ALERT_DIALOG_MENU && i == data->focus_pos)
                 GUI_DrawFillRectangle(itemview_x, itemview_y, clip_w, clip_h, focus_color);
             GUI_DisableClipping();
-            
+
             x = itemview_x + itemview_padding_l;
             y = itemview_y + itemview_padding_t;
             clip_w = itemview_w - itemview_padding_l * 2;
@@ -551,6 +564,8 @@ static void drawDialogCallback(GUI_Dialog *dialog)
         x -= GUI_GetTextWidth(buf);
         GUI_DrawText(x, y, text_color, buf);
     }
+
+    GUI_DisableClipping();
 }
 
 static void ctrlDialogCallback(GUI_Dialog *dialog)
