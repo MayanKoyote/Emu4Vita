@@ -62,7 +62,7 @@ SRC_C += \
 	emu/emu_state.c \
 	emu/emu_video.c \
 	emu/emu_retro.c \
-	emu/emu_zip.c \
+	emu/emu_archive.c \
 	emu/retro_environ.c \
 	emu/retro_option.c
 

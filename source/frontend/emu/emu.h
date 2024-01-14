@@ -10,6 +10,6 @@
 #include "emu_state.h"
 #include "emu_disk.h"
 #include "emu_cheat.h"
-#include "emu_zip.h"
+#include "emu_archive.h"
 
 #endif

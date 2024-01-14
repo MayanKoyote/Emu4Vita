@@ -27,7 +27,7 @@ static ZipCacheEntry zip_cache_entries[MAX_CACHE_SIZE];
 static int zip_cache_num = 0;
 static struct zip_t *current_zip = NULL;
 
-int ZIP_LoadCacheConfig()
+int Archive_LoadCacheConfig()
 {
     memset(zip_cache_entries, 0, sizeof(zip_cache_entries));
     zip_cache_num = 0;
@@ -91,7 +91,7 @@ int ZIP_LoadCacheConfig()
     return 0;
 }
 
-int ZIP_SaveCacheConfig()
+int Archive_SaveCacheConfig()
 {
     SceUID fd = sceIoOpen(ZIP_CACHE_CONFIG_PATH, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
     if (fd < 0)
@@ -188,7 +188,7 @@ static int ZIP_ExtractRomCache(const char *rom_name, char *rom_path)
     zip_cache_entries[index].crc = zip_entry_crc32(current_zip);
     strcpy(zip_cache_entries[index].name, rom_name);
 
-    ZIP_SaveCacheConfig();
+    Archive_SaveCacheConfig();
 
     AppLog("[ZIP] ExtractRomCache OK: %d, %s\n", index, rom_name);
     return index;

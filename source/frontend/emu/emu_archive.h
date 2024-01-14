@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-int ZIP_LoadCacheConfig();
-int ZIP_SaveCacheConfig();
+int Archive_LoadCacheConfig();
+int Archive_SaveCacheConfig();
 
 int ZIP_GetRomMemory(const char *zip_path, void **buf, size_t *size);
 int ZIP_GetRomPath(const char *zip_path, char *rom_path);
