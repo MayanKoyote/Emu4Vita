@@ -32,7 +32,7 @@ enum retro_pixel_format core_pixel_format = RETRO_PIXEL_FORMAT_RGB565;
 GuiPixelFormat core_video_pixel_format = GUI_PIXEL_FORMAT_U5U6U5_RGB;
 int core_input_supports_bitmasks = 0;
 int core_display_rotate = 0;
-int core_support_zip = 0;
+int core_want_ext_zip_mode = 0;
 
 static unsigned int emu_device_type = RETRO_DEVICE_JOYPAD;
 
@@ -68,6 +68,13 @@ static int creatValidFileExts()
     int n_exts;
     int i;
     const char *zip_ext = "zip";
+
+#if defined(FC_BUILD) || defined(SFC_BUILD) || defined(GBC_BUILD) || defined(GBA_BUILD) || \
+    defined(MD_BUILD) || defined(NGP_BUILD) || defined(WSC_BUILD) || defined(PCE_BUILD)
+    core_want_ext_zip_mode = 1;
+#else
+    core_want_ext_zip_mode = 0;
+#endif
 
     if (!exts)
         return -1;
@@ -106,14 +113,15 @@ static int creatValidFileExts()
         {
             strncpy(file_valid_exts[i], p, len);
             file_valid_exts[i][len] = '\0';
-
-            if (!core_support_zip && strcasecmp(file_valid_exts[i], zip_ext) == 0)
-                core_support_zip = 1;
+            
+            // If the core native support zip rom, skip ext zip mode
+            if (core_want_ext_zip_mode && strcasecmp(file_valid_exts[i], zip_ext) == 0)
+                core_want_ext_zip_mode = 0;
         }
         p = sep + 1;
     }
 
-    if (!core_support_zip)
+    if (core_want_ext_zip_mode)
     {
         file_valid_exts[i] = (char *)malloc(strlen(zip_ext) + 1);
         strcpy(file_valid_exts[i], zip_ext);

@@ -351,7 +351,7 @@ int Emu_SaveVideoScreenshot(char *path)
     }
 
     uint64_t screenshot_size = 0;
-    uint32_t *screenshot_buf = Emu_GetVideoScreenshotData(&screenshot_width, &screenshot_height, &screenshot_size, rotate, 1);
+    uint32_t *screenshot_buf = Emu_GetVideoScreenshotData(&screenshot_width, &screenshot_height, &screenshot_size, rotate, 0);
     if (!screenshot_buf)
         return -1;
 

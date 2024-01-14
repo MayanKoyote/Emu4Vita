@@ -62,6 +62,7 @@ SRC_C += \
 	emu/emu_state.c \
 	emu/emu_video.c \
 	emu/emu_retro.c \
+	emu/emu_zip.c \
 	emu/retro_environ.c \
 	emu/retro_option.c
 
@@ -110,9 +111,6 @@ SRC_C += \
 	strnatcmp.c \
 	utils_string.c \
 	utils.c
-
-SRC_CPP += \
-	zip/zip_cache.cpp
 
 OBJS := $(SRC_C:.c=.o)
 OBJS += $(SRC_CPP:.cpp=.o)

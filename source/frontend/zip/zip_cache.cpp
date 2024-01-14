@@ -18,7 +18,7 @@ extern "C"
 
 #define DEFAULT_CACHE_SIZE 5
 #define CHECK_SIZE 0x20
-#define ZIP_CACHE_CONFIG_PATH CORE_ZIPCACHE_DIR "/cache.txt"
+#define ZIP_CACHE_CONFIG_PATH CORE_CACHE_DIR "/zip_cache.txt"
 #define LINE_BUF_SIZE 256 + 16
 
 struct CachedItem
@@ -156,10 +156,10 @@ bool ZipCache::CheckSize()
 
 void InitZipCache()
 {
-    SceUID dfd = sceIoDopen(CORE_ZIPCACHE_DIR);
+    SceUID dfd = sceIoDopen(CORE_CACHE_DIR);
     if (dfd < 0)
     {
-        CreateFolder(CORE_ZIPCACHE_DIR);
+        CreateFolder(CORE_CACHE_DIR);
     }
     else
     {
@@ -212,8 +212,8 @@ bool ExtractByCrc32(const char *name, uint32_t crc32)
             const char *ext = strrchr(entry_name, '.');
 
             char cache_name[256];
-            strcpy(cache_name, CORE_ZIPCACHE_DIR "/");
-            MakeBaseName(cache_name + sizeof(CORE_ZIPCACHE_DIR), name, strlen(name));
+            strcpy(cache_name, CORE_CACHE_DIR "/");
+            MakeBaseName(cache_name + sizeof(CORE_CACHE_DIR), name, strlen(name));
             strcat(cache_name, ext);
 
             if (zip_entry_fread(zip, cache_name) == 0)
