@@ -24,6 +24,8 @@ LIBRETRO_COMM_DIR          := $(LIBRETRO_DIR)/libretro-common
 LIBRETRO_COMM_INCLUDE_DIR  := $(LIBRETRO_COMM_DIR)/include
 LIBRETRO_DEPS_DIR          := $(LIBRETRO_DIR)/deps
 
+7Z_DIR := $(LIBRETRO_DIR)/deps/7zip
+
 EBOOT_PATH         := $(PRIVATE_PKG_DIR)/eboot.bin
 SFO_PATH           := $(PRIVATE_PKG_DIR)/sce_sys/param.sfo
 
@@ -42,7 +44,8 @@ endif
 INCDIRS := \
 	-I$(FRONTEND_DIR) \
 	-I$(FRONTEND_INCLUDE_DIR) \
-	-I$(LIBRETRO_COMM_INCLUDE_DIR)
+	-I$(LIBRETRO_COMM_INCLUDE_DIR) \
+	-I$(7Z_DIR)
 
 LIBDIRS := \
 	-L$(FRONTEND_LIB_DIR)

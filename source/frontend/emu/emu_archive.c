@@ -12,25 +12,26 @@
 #include "config.h"
 #include "utils.h"
 #include "utils_string.h"
+#include "7z.h"
 
 typedef struct
 {
     uint32_t crc;               // crc32
     uint64_t ltime;             // 加载时间
     char name[MAX_NAME_LENGTH]; // rom名称
-} ZipCacheEntry;
+} ArchiveCacheEntry;
 
 #define MAX_CACHE_SIZE 5
 #define ZIP_CACHE_CONFIG_PATH CORE_CACHE_DIR "/zip_cache.txt"
 
-static ZipCacheEntry zip_cache_entries[MAX_CACHE_SIZE];
-static int zip_cache_num = 0;
+static ArchiveCacheEntry archive_cache_entries[MAX_CACHE_SIZE];
+static int archive_cache_num = 0;
 static struct zip_t *current_zip = NULL;
 
 int Archive_LoadCacheConfig()
 {
-    memset(zip_cache_entries, 0, sizeof(zip_cache_entries));
-    zip_cache_num = 0;
+    memset(archive_cache_entries, 0, sizeof(archive_cache_entries));
+    archive_cache_num = 0;
 
     void *buffer = NULL;
     int size = AllocateReadFile(ZIP_CACHE_CONFIG_PATH, &buffer);
@@ -64,10 +65,10 @@ int Archive_LoadCacheConfig()
                 sprintf(path, "%s/%s", CORE_CACHE_DIR, value);
                 if (CheckFileExist(path))
                 {
-                    zip_cache_entries[zip_cache_num].crc = StringToHexdecimal(name);
-                    zip_cache_entries[zip_cache_num].ltime = 0; // 加载时间初始化为0
-                    strcpy(zip_cache_entries[zip_cache_num].name, value);
-                    zip_cache_num++;
+                    archive_cache_entries[archive_cache_num].crc = StringToHexdecimal(name);
+                    archive_cache_entries[archive_cache_num].ltime = 0; // 加载时间初始化为0
+                    strcpy(archive_cache_entries[archive_cache_num].name, value);
+                    archive_cache_num++;
                 }
             }
 
@@ -84,7 +85,7 @@ int Archive_LoadCacheConfig()
             size -= res;
             p += res;
         }
-    } while (res > 0 && zip_cache_num < MAX_CACHE_SIZE);
+    } while (res > 0 && archive_cache_num < MAX_CACHE_SIZE);
 
     free(buffer);
 
@@ -100,9 +101,9 @@ int Archive_SaveCacheConfig()
     int ret = 0;
     char string[MAX_CONFIG_LINE_LENGTH];
     int i;
-    for (i = 0; i < zip_cache_num; i++)
+    for (i = 0; i < archive_cache_num; i++)
     {
-        snprintf(string, sizeof(string), "%08X=\"%s\"\n", zip_cache_entries[i].crc, zip_cache_entries[i].name);
+        snprintf(string, sizeof(string), "%08X=\"%s\"\n", archive_cache_entries[i].crc, archive_cache_entries[i].name);
         if ((ret = sceIoWrite(fd, string, strlen(string))) < 0)
             break;
     }
@@ -121,9 +122,9 @@ static int ZIP_FindRomCache(const char *rom_name, char *rom_path)
     uint32_t crc = zip_entry_crc32(current_zip);
 
     int i;
-    for (i = 0; i < zip_cache_num; i++)
+    for (i = 0; i < archive_cache_num; i++)
     {
-        if (zip_cache_entries[i].crc == crc && strcasecmp(zip_cache_entries[i].name, rom_name) == 0)
+        if (archive_cache_entries[i].crc == crc && strcasecmp(archive_cache_entries[i].name, rom_name) == 0)
         {
             sprintf(rom_path, "%s/%s", CORE_CACHE_DIR, rom_name);
             AppLog("[ZIP] FindRomCache OK: %d, %s\n", i, rom_name);
@@ -137,17 +138,17 @@ static int ZIP_FindRomCache(const char *rom_name, char *rom_path)
 
 static int getInsertCacheEntriesIndex()
 {
-    if (zip_cache_num < MAX_CACHE_SIZE)
-        return zip_cache_num;
+    if (archive_cache_num < MAX_CACHE_SIZE)
+        return archive_cache_num;
 
     int index = 0;
-    uint64_t ltime = zip_cache_entries[0].ltime;
+    uint64_t ltime = archive_cache_entries[0].ltime;
 
     int i;
     for (i = 1; i < MAX_CACHE_SIZE; i++)
     {
         // 获取最小加载时间的缓存条目
-        if (zip_cache_entries[i].ltime < ltime)
+        if (archive_cache_entries[i].ltime < ltime)
             index = i;
     }
 
@@ -171,22 +172,22 @@ static int ZIP_ExtractRomCache(const char *rom_name, char *rom_path)
 
     int index = getInsertCacheEntriesIndex(); // 获取新条目插入位置
 
-    if (zip_cache_num >= MAX_CACHE_SIZE) // 缓存条目已达到最大数
+    if (archive_cache_num >= MAX_CACHE_SIZE) // 缓存条目已达到最大数
     {
         // 删除要替换的旧条目指向的rom文件
         char tmp_path[MAX_PATH_LENGTH];
-        sprintf(tmp_path, "%s/%s", CORE_CACHE_DIR, zip_cache_entries[index].name);
+        sprintf(tmp_path, "%s/%s", CORE_CACHE_DIR, archive_cache_entries[index].name);
         sceIoRemove(tmp_path);
     }
     else
     {
-        zip_cache_num++;
+        archive_cache_num++;
     }
 
     // 设置新条目的crc和name，ltime由ZIP_GetRomPath函数设定
-    memset(&zip_cache_entries[index], 0, sizeof(zip_cache_entries[index]));
-    zip_cache_entries[index].crc = zip_entry_crc32(current_zip);
-    strcpy(zip_cache_entries[index].name, rom_name);
+    memset(&archive_cache_entries[index], 0, sizeof(archive_cache_entries[index]));
+    archive_cache_entries[index].crc = zip_entry_crc32(current_zip);
+    strcpy(archive_cache_entries[index].name, rom_name);
 
     Archive_SaveCacheConfig();
 
@@ -276,7 +277,24 @@ int ZIP_GetRomPath(const char *zip_path, char *rom_path)
     }
 
     // 设置rom加载时间为当前线程时间
-    zip_cache_entries[index].ltime = sceKernelGetProcessTimeWide();
+    archive_cache_entries[index].ltime = sceKernelGetProcessTimeWide();
     AppLog("[ZIP] GetRomPath OK: %s\n", rom_path);
+    return 0;
+}
+
+// static int SevernZ_FindRomCache(const char *rom_name, char *rom_path)
+// {
+//     return 0;
+// }
+
+int SevenZ_GetRomMemory(const char *zip_path, void **buf, size_t *size)
+{
+    return 0;
+}
+
+int SevenZ_GetRomPath(const char *zip_path, char *rom_path)
+{
+    CSzArEx db;
+    SzArEx_Init(&db);
     return 0;
 }
