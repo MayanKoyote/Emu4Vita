@@ -35,7 +35,7 @@
 #define ICON_LONG_NAME_COLOR 0xFFFFFFFF
 
 #define ICON_UNFOCUS_MARGIN 2
-#define ICON_FOCUS_MARGIN 6
+#define ICON_FOCUS_MARGIN 8
 #define ICON_UNFOCUS_WIDTH 120
 #define ICON_UNFOCUS_HIEGHT 120
 #define ICON_FOCUS_WIDTH 160
@@ -636,8 +636,11 @@ static int drawSoftwareEntries()
     }
 
     // Draw selview border
-    vita2d_draw_empty_rectangle(icon_selview_current_x - ICON_SELVIEW_BORDER_SIZE, icon_selview_current_y - ICON_SELVIEW_BORDER_SIZE,
-                                icon_selview_w + ICON_SELVIEW_BORDER_SIZE * 2, icon_selview_h + ICON_SELVIEW_BORDER_SIZE * 2,
+    int selview_border_x = icon_selview_current_x - 1 - ICON_SELVIEW_BORDER_SIZE;
+    int selview_border_y = icon_selview_current_y - 1 - ICON_SELVIEW_BORDER_SIZE;
+    int selview_border_w = icon_selview_w + 2 + ICON_SELVIEW_BORDER_SIZE * 2;
+    int selview_border_h = icon_selview_h + 2 + ICON_SELVIEW_BORDER_SIZE * 2;
+    vita2d_draw_empty_rectangle(selview_border_x,  selview_border_y, selview_border_w, selview_border_h,
                                 ICON_SELVIEW_BORDER_SIZE, icon_selview_border_color);
     // Draw icon short name
     int short_name_x = icon_selview_current_x + (icon_selview_w - GUI_getTextWidth(focus_entry->short_name)) / 2;
