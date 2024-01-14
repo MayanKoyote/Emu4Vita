@@ -1,15 +1,24 @@
-#ifndef __M_EMU_ZIP_H__
-#define __M_EMU_ZIP_H__
+#ifndef __M_EMU_ARCHIVE_H__
+#define __M_EMU_ARCHIVE_H__
 
 #include <stdint.h>
+
+#define MAX_CACHE_SIZE 5
+
+typedef struct
+{
+    uint32_t crc;               // crc32
+    uint64_t ltime;             // 加载时间
+    char name[MAX_NAME_LENGTH]; // rom名称
+} ArchiveCacheEntry;
+
+extern ArchiveCacheEntry archive_cache_entries[MAX_CACHE_SIZE];
+extern int archive_cache_num;
 
 int Archive_LoadCacheConfig();
 int Archive_SaveCacheConfig();
 
-int ZIP_GetRomMemory(const char *zip_path, void **buf, size_t *size);
-int ZIP_GetRomPath(const char *zip_path, char *rom_path);
-
-int SevenZ_GetRomMemory(const char *zip_path, void **buf, size_t *size);
-int SevenZ_GetRomPath(const char *zip_path, char *rom_path);
+#include "zip/zip_archive.h"
+#include "7z/7z_archive.h"
 
 #endif
