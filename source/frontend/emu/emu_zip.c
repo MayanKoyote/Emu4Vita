@@ -146,7 +146,7 @@ static int getInsertCacheEntriesIndex()
     int i;
     for (i = 1; i < MAX_CACHE_SIZE; i++)
     {
-        // 对比最小加载时间
+        // 获取最小加载时间的缓存条目
         if (zip_cache_entries[i].ltime < ltime)
             index = i;
     }
@@ -173,7 +173,7 @@ static int ZIP_ExtractRomCache(const char *rom_name, char *rom_path)
 
     if (zip_cache_num >= MAX_CACHE_SIZE) // 缓存条目已达到最大数
     {
-        // 删除要插入的条目指向的rom文件
+        // 删除要替换的旧条目指向的rom文件
         char tmp_path[MAX_PATH_LENGTH];
         sprintf(tmp_path, "%s/%s", CORE_CACHE_DIR, zip_cache_entries[index].name);
         RemovePath(tmp_path);
@@ -183,8 +183,8 @@ static int ZIP_ExtractRomCache(const char *rom_name, char *rom_path)
         zip_cache_num++;
     }
 
+    // 设置新条目的crc和name，ltime由ZIP_GetRomPath函数设定
     memset(&zip_cache_entries[index], 0, sizeof(zip_cache_entries[index]));
-
     zip_cache_entries[index].crc = zip_entry_crc32(current_zip);
     strcpy(zip_cache_entries[index].name, rom_name);
 
@@ -256,10 +256,10 @@ int ZIP_GetRomPath(const char *zip_path, char *rom_path)
     const char *entry_name = zip_entry_name(current_zip);
     const char *ext = strrchr(entry_name, '.');
 
+    // 缓存文件名：例GBA: game1.zip ==> game1.gba（忽略压缩包内的rom文件名，以zip文件名为rom名）
     char rom_name[MAX_NAME_LENGTH];
     MakeBaseName(rom_name, zip_path, sizeof(rom_name));
     strcat(rom_name, ext);
-    // printf("ZIP_GetRomPath: rom_name: %s\n", rom_name);
 
     int index = ZIP_FindRomCache(rom_name, rom_path);
     if (index < 0)
