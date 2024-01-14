@@ -164,7 +164,7 @@ static int ZIP_ExtractRomCache(const char *rom_name, char *rom_path)
 
     if (zip_entry_fread(current_zip, rom_path) != 0)
     {
-        RemovePath(rom_path);
+        sceIoRemove(rom_path);
         AppLog("[ZIP] ExtractRomCache failed: %s\n", rom_name);
         return -1;
     }
@@ -176,7 +176,7 @@ static int ZIP_ExtractRomCache(const char *rom_name, char *rom_path)
         // 删除要替换的旧条目指向的rom文件
         char tmp_path[MAX_PATH_LENGTH];
         sprintf(tmp_path, "%s/%s", CORE_CACHE_DIR, zip_cache_entries[index].name);
-        RemovePath(tmp_path);
+        sceIoRemove(tmp_path);
     }
     else
     {
@@ -212,7 +212,7 @@ static int ZIP_GetRomEntry(const char *zip_path)
             const char *entry_name = zip_entry_name(current_zip);
             if (IsValidFile(entry_name))
             {
-                AppLog("[ZIP] ZIP_GetRomEntry OK!\n");
+                AppLog("[ZIP] GetRomEntry OK!\n");
                 return 1;
             }
             zip_entry_close(current_zip);
@@ -224,7 +224,7 @@ static int ZIP_GetRomEntry(const char *zip_path)
         zip_close(current_zip);
         current_zip = NULL;
     }
-    AppLog("[ZIP] ZIP_GetRomEntry failed!\n");
+    AppLog("[ZIP] GetRomEntry failed!\n");
     return 0;
 }
 
@@ -240,11 +240,11 @@ int ZIP_GetRomMemory(const char *zip_path, void **buf, size_t *size)
             zip_close(current_zip);
             current_zip = NULL;
         }
-        AppLog("[ZIP] ZIP_GetRomMemory failed!\n");
+        AppLog("[ZIP] GetRomMemory failed!\n");
         return -1;
     }
 
-    AppLog("[ZIP] ZIP_GetRomMemory OK!\n");
+    AppLog("[ZIP] GetRomMemory OK!\n");
     return 0;
 }
 
