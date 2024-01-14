@@ -16,6 +16,17 @@
 #include "config.h"
 #include "boot.h"
 
+#define NES_SHOR_NAME "NES"
+#define SNES_SHOR_NAME "SNES"
+#define MD_SHOR_NAME "MD"
+#define GBA_SHOR_NAME "GBA"
+#define GBC_SHOR_NAME "GBC"
+#define PCE_SHOR_NAME "PCE"
+#define PS1_SHOR_NAME "PS1"
+#define WSC_SHOR_NAME "WSC"
+#define NGP_SHOR_NAME "NGP"
+#define FBA_SHOR_NAME "FBA"
+
 #define VIEW_MARGIN 10
 
 #define ICON_SHORT_NAME_PADDING 4
@@ -23,7 +34,8 @@
 #define ICON_SHORT_NAME_COLOR 0xFFFFFFFF
 #define ICON_LONG_NAME_COLOR 0xFFFFFFFF
 
-#define ICON_MARGIN 2
+#define ICON_UNFOCUS_MARGIN 2
+#define ICON_FOCUS_MARGIN 6
 #define ICON_UNFOCUS_WIDTH 120
 #define ICON_UNFOCUS_HIEGHT 120
 #define ICON_FOCUS_WIDTH 160
@@ -49,62 +61,62 @@
 #define CORE_ITEM_SEL_BG_COLOR 0xAFFF7F00
 
 CoreEntry nes_entries[] = {
-    {"FCEUmm", "fceumm", "NES"},
-    {"Nestopia", "nestopia", "NES"},
+    {"FCEUmm", "fceumm", NES_SHOR_NAME},
+    {"Nestopia", "nestopia", NES_SHOR_NAME},
 };
 
 CoreEntry snes_entries[] = {
-    {"Snes9x 2002", "snes9x2002", "SNES"},
-    {"Snes9x 2005", "snes9x2005", "SNES"},
-    {"Snes9x 2005 Plus", "snes9x2005_plus", "SNES"},
+    {"Snes9x 2002", "snes9x2002", SNES_SHOR_NAME},
+    {"Snes9x 2005", "snes9x2005", SNES_SHOR_NAME},
+    {"Snes9x 2005 Plus", "snes9x2005_plus", SNES_SHOR_NAME},
 };
 
 CoreEntry md_entries[] = {
-    {"Genesis Plus GX", "genesis_plus_gx", "MD"},
-    {"PicoDrive", "picodrive", "MD"},
+    {"Genesis Plus GX", "genesis_plus_gx", MD_SHOR_NAME},
+    {"PicoDrive", "picodrive", MD_SHOR_NAME},
 };
 
 CoreEntry gba_entries[] = {
-    {"gpSP", "gpsp", "GBA"},
-    {"VBA Next", "vba_next", "GBA"},
+    {"gpSP", "gpsp", GBA_SHOR_NAME},
+    {"VBA Next", "vba_next", GBA_SHOR_NAME},
 };
 
 CoreEntry gbc_entries[] = {
-    {"Gambatte", "gambatte", "GBC"},
+    {"Gambatte", "gambatte", GBC_SHOR_NAME},
 };
 
 CoreEntry pce_entries[] = {
-    {"Mednafen PCE Fast", "mednafen_pce_fast", "PCE"},
-    {"Mednafen SuperGrafx", "mednafen_supergrafx", "PCE"},
+    {"Mednafen PCE Fast", "mednafen_pce_fast", PCE_SHOR_NAME},
+    {"Mednafen SuperGrafx", "mednafen_supergrafx", PCE_SHOR_NAME},
 };
 
 CoreEntry ps_entries[] = {
-    {"PCSX ReARMed", "pcsx_rearmed", "PS1"},
+    {"PCSX ReARMed", "pcsx_rearmed", PS1_SHOR_NAME},
 };
 
 CoreEntry wsc_entries[] = {
-    {"Mednafen Wswan", "mednafen_wswan", "WSC"},
+    {"Mednafen Wswan", "mednafen_wswan", WSC_SHOR_NAME},
 };
 
 CoreEntry ngp_entries[] = {
-    {"Mednafen NeoPop", "mednafen_ngp", "NGP"},
+    {"Mednafen NeoPop", "mednafen_ngp", NGP_SHOR_NAME},
 };
 
 CoreEntry fba_entries[] = {
-    {"FBA Lite", "fba_lite", "FBA"},
+    {"FBA Lite", "fba_lite", FBA_SHOR_NAME},
 };
 
 SoftwareEntry software_entries[] = {
-    {"NES", NULL, nes_entries, sizeof(nes_entries) / sizeof(CoreEntry), &g_config.nes_pos, {0}},
-    {"SNES", NULL, snes_entries, sizeof(snes_entries) / sizeof(CoreEntry), &g_config.snes_pos, {0}},
-    {"MD", NULL, md_entries, sizeof(md_entries) / sizeof(CoreEntry), &g_config.md_pos, {0}},
-    {"GBA", NULL, gba_entries, sizeof(gba_entries) / sizeof(CoreEntry), &g_config.gba_pos, {0}},
-    {"GBC", NULL, gbc_entries, sizeof(gbc_entries) / sizeof(CoreEntry), &g_config.gbc_pos, {0}},
-    {"PCE", NULL, pce_entries, sizeof(pce_entries) / sizeof(CoreEntry), &g_config.pce_pos, {0}},
-    {"PS1", NULL, ps_entries, sizeof(ps_entries) / sizeof(CoreEntry), &g_config.ps1_pos, {0}},
-    {"WSC", NULL, wsc_entries, sizeof(wsc_entries) / sizeof(CoreEntry), &g_config.wsc_pos, {0}},
-    {"NGP", NULL, ngp_entries, sizeof(ngp_entries) / sizeof(CoreEntry), &g_config.ngp_pos, {0}},
-    {"FBA", NULL, fba_entries, sizeof(fba_entries) / sizeof(CoreEntry), &g_config.arc_pos, {0}},
+    {NES_SHOR_NAME, NULL, nes_entries, sizeof(nes_entries) / sizeof(CoreEntry), &g_config.nes_pos, {0}},
+    {SNES_SHOR_NAME, NULL, snes_entries, sizeof(snes_entries) / sizeof(CoreEntry), &g_config.snes_pos, {0}},
+    {MD_SHOR_NAME, NULL, md_entries, sizeof(md_entries) / sizeof(CoreEntry), &g_config.md_pos, {0}},
+    {GBA_SHOR_NAME, NULL, gba_entries, sizeof(gba_entries) / sizeof(CoreEntry), &g_config.gba_pos, {0}},
+    {GBC_SHOR_NAME, NULL, gbc_entries, sizeof(gbc_entries) / sizeof(CoreEntry), &g_config.gbc_pos, {0}},
+    {PCE_SHOR_NAME, NULL, pce_entries, sizeof(pce_entries) / sizeof(CoreEntry), &g_config.pce_pos, {0}},
+    {PS1_SHOR_NAME, NULL, ps_entries, sizeof(ps_entries) / sizeof(CoreEntry), &g_config.ps1_pos, {0}},
+    {WSC_SHOR_NAME, NULL, wsc_entries, sizeof(wsc_entries) / sizeof(CoreEntry), &g_config.wsc_pos, {0}},
+    {NGP_SHOR_NAME, NULL, ngp_entries, sizeof(ngp_entries) / sizeof(CoreEntry), &g_config.ngp_pos, {0}},
+    {FBA_SHOR_NAME, NULL, fba_entries, sizeof(fba_entries) / sizeof(CoreEntry), &g_config.arc_pos, {0}},
 };
 #define N_SOFTWARE_ENTRIES (sizeof(software_entries) / sizeof(SoftwareEntry))
 
@@ -200,7 +212,7 @@ static void refreshIconScroll()
     if (g_config.software_pos == 0)
         icon_target_sx = icon_focus_x;
     else
-        icon_target_sx = icon_focus_x - (g_config.software_pos * (ICON_UNFOCUS_WIDTH + ICON_MARGIN) + ICON_SELVIEW_BORDER_SIZE);
+        icon_target_sx = icon_focus_x - (g_config.software_pos * (ICON_UNFOCUS_WIDTH + ICON_UNFOCUS_MARGIN) - ICON_UNFOCUS_MARGIN + ICON_FOCUS_MARGIN);
 
     if (icon_target_sx > icon_current_sx)
         icon_scroll_step = (float)(icon_target_sx - icon_current_sx) / (float)ICON_MAX_STEP_COUNT;
@@ -216,7 +228,7 @@ static void initSoftwareEntriesLayout()
     icon_selview_bg_color = 0;
     icon_short_name_color = 0;
 
-    icon_focus_x = MAIN_FREE_DRAW_SX + ICON_UNFOCUS_WIDTH * 0.8f + ICON_MARGIN;
+    icon_focus_x = MAIN_FREE_DRAW_SX + ICON_UNFOCUS_WIDTH * 0.8f + ICON_FOCUS_MARGIN;
     icon_focus_y = MAIN_FREE_DRAW_SY + (MAIN_FREE_DRAW_HEIGHT - ICON_FOCUS_HIEGHT) / 5;
 
     icon_selview_current_x = icon_selview_target_x = icon_focus_x;
@@ -232,7 +244,7 @@ static void initSoftwareEntriesLayout()
         IconLayout *layout = &software_entries[i].layout;
         layout->w = ICON_UNFOCUS_WIDTH;
         layout->h = ICON_UNFOCUS_HIEGHT;
-        layout->margin_r = ICON_MARGIN;
+        layout->margin_r = ICON_UNFOCUS_MARGIN;
     }
 
     refreshIconScroll();
@@ -269,7 +281,6 @@ static void updateSoftwareEntriesLayout()
     int target_w, target_h;
     float icon_w_scale_step = (float)(ICON_FOCUS_WIDTH - ICON_UNFOCUS_WIDTH) / (float)ICON_MAX_STEP_COUNT;
     float icon_h_scale_step = (float)(ICON_FOCUS_HIEGHT - ICON_UNFOCUS_HIEGHT) / (float)ICON_MAX_STEP_COUNT;
-    float icon_margin_scale_step = (float)ICON_SELVIEW_BORDER_SIZE / (float)ICON_MAX_STEP_COUNT;
 
     int i;
     for (i = 0; i < N_SOFTWARE_ENTRIES; i++)
@@ -314,19 +325,19 @@ static void updateSoftwareEntriesLayout()
         }
 
         // Scale icon margin right
-        int target_margin_r = ICON_MARGIN;
+        int target_margin_r = ICON_UNFOCUS_MARGIN;
         if (i == g_config.software_pos || i == g_config.software_pos - 1)
-            target_margin_r += ICON_SELVIEW_BORDER_SIZE;
+            target_margin_r = ICON_FOCUS_MARGIN;
 
         if (layout->margin_r < target_margin_r)
         {
-            layout->margin_r += icon_margin_scale_step;
+            layout->margin_r += icon_w_scale_step;
             if (layout->margin_r > target_margin_r)
                 layout->margin_r = target_margin_r;
         }
         else if (layout->margin_r > target_margin_r)
         {
-            layout->margin_r -= icon_margin_scale_step;
+            layout->margin_r -= icon_w_scale_step;
             if (layout->margin_r < target_margin_r)
                 layout->margin_r = target_margin_r;
         }
@@ -401,8 +412,7 @@ static void moveSoftwareEntriesPos(int type)
 
         icon_selview_w = ICON_SELVIEW_WIDTH(ICON_UNFOCUS_WIDTH);
         icon_selview_h = ICON_SELVIEW_HEIGHT(ICON_UNFOCUS_HIEGHT);
-        if (new_focus_pos < old_focus_pos)
-            icon_selview_current_x = icon_focus_x + (ICON_FOCUS_WIDTH - ICON_UNFOCUS_WIDTH);
+        icon_selview_current_x = icon_focus_x + (ICON_FOCUS_WIDTH - icon_selview_w) / 2;
         if (icon_selview_target_x > icon_selview_current_x)
             icon_selview_scroll_step = (float)(icon_selview_target_x - icon_selview_current_x) / (float)ICON_MAX_STEP_COUNT;
         else
