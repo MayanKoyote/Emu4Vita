@@ -1,7 +1,0 @@
-../libretro/deps/7zip/LzmaDec.o: ../libretro/deps/7zip/LzmaDec.c \
- ../libretro/deps/7zip/Precomp.h ../libretro/deps/7zip/Compiler.h \
- ../libretro/deps/7zip/LzmaDec.h ../libretro/deps/7zip/7zTypes.h
-../libretro/deps/7zip/Precomp.h:
-../libretro/deps/7zip/Compiler.h:
-../libretro/deps/7zip/LzmaDec.h:
-../libretro/deps/7zip/7zTypes.h:

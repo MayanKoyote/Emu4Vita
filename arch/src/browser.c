@@ -202,7 +202,7 @@ static int loadCoreEboot(CoreEntry *entry)
     char assets_dir[MAX_PATH_LENGTH];
     snprintf(assets_dir, MAX_CONFIG_LINE_LENGTH, "%s/%s", CORE_DATA_DIR, entry->assets_name);
 
-    int ret = loadCoreWithBootParams(core_path, assets_dir);
+    int ret = BootLoadExecForCore(core_path, assets_dir);
 
     return ret;
 }

@@ -38,7 +38,7 @@ static void exitGameCallback()
     GUI_CloseDialog(&setting_dialog);
     Emu_ExitGame();
     if (exec_boot_mode == BOOT_MODE_GAME)
-        BootReturnToParent();
+        BootLoadParentExec();
 }
 
 static void diskControlOptionMenuPositiveCallback(GUI_Dialog *dialog)
@@ -82,7 +82,7 @@ static void exitToArchCallback()
     Emu_CleanAudioSound();
     GUI_CloseDialog(&setting_dialog);
     Emu_ExitGame();
-    BootReturnToParent();
+    BootLoadParentExec();
 }
 
 static void exitAppCallback()

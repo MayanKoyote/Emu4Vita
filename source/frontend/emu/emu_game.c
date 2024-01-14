@@ -379,7 +379,7 @@ static void onGameRunEvent()
     {
         Emu_ExitGame();
         if (exec_boot_mode == BOOT_MODE_GAME)
-            BootReturnToParent();
+            BootLoadParentExec();
     }
     break;
     default:

@@ -5069,7 +5069,7 @@ static int mz_mkdir(const char *pDirname) {
 #define MZ_DELETE_FILE remove
 #define MZ_MKDIR(d) mkdir(d, 0755)
 
-#elif defined(__APPLE__) || defined(__FreeBSD__)
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(VITA)
 #ifndef MINIZ_NO_TIME
 #include <utime.h>
 #endif
@@ -5084,7 +5084,12 @@ static int mz_mkdir(const char *pDirname) {
 #define MZ_FFLUSH fflush
 #define MZ_FREOPEN(p, m, s) freopen(p, m, s)
 #define MZ_DELETE_FILE remove
+#if defined(VITA)
+#include <psp2/io/stat.h>
+#define MZ_MKDIR(d) sceIoMkdir(d, 0777)
+#else
 #define MZ_MKDIR(d) mkdir(d, 0755)
+#endif
 
 #else
 #pragma message(                                                               \
