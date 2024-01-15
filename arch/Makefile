@@ -7,8 +7,8 @@ SFO_APP_VER       := 0$(TARGET_VER)
 
 APP_NAME_STR      := Emu4Vita\ Arch
 APP_VER_STR       := $(TARGET_VER)
-APP_DIR_NAME      := Emu4VitaArch
-BUILD_DATE        := $(shell date +"%Y-%m-%d")
+APP_DIR_NAME      := Arch
+BUILD_DATE        := $(shell date +"%Y/%m/%d")
 
 MAKEFILE_PATH     := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR      := $(dir $(MAKEFILE_PATH))

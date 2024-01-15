@@ -149,13 +149,13 @@ int ZIP_GetRomPath(const char *zip_path, char *rom_path)
     if (ZIP_GetRomEntry(zip_path) <= 0)
         return -1;
 
-    const char *entry_name = zip_entry_name(current_zip);
-    const char *ext = strrchr(entry_name, '.');
-
     // 缓存文件名：例GBA: game1.zip ==> game1.gba（忽略压缩包内的rom文件名，以zip文件名为rom名）
     char rom_name[MAX_NAME_LENGTH];
     MakeBaseName(rom_name, zip_path, sizeof(rom_name));
-    strcat(rom_name, ext);
+    const char *entry_name = zip_entry_name(current_zip);
+    const char *ext = strrchr(entry_name, '.');
+    if (ext)
+        strcat(rom_name, ext);
 
     int index = ZIP_FindRomCache(rom_name, rom_path);
     if (index < 0)
