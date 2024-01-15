@@ -101,11 +101,9 @@ SRC_C += \
 	setting/setting.c
 
 SRC_C += \
-    zip/zip.c \
-	zip/zip_archive.c
-
-SRC_C += \
-	7z/7z_archive.c
+    archive/zip.c \
+	archive/zip_archive.c \
+	archive/7z_archive.c
 
 SRC_C += \
 	boot.c \

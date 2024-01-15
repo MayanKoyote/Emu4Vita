@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <psp2/kernel/processmgr.h>
 #include <psp2/io/fcntl.h>
-#include "zip/zip.h"
+#include "archive/zip.h"
 #include "emu/emu.h"
 #include "config.h"
 #include "utils.h"
