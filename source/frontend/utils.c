@@ -28,9 +28,11 @@ int AppLog(const char *text, ...)
 
     va_list list;
     char buf[512];
-
+    SceDateTime time;
+    sceRtcGetCurrentClockLocalTime(&time);
+    sprintf(buf, "%02d:%02d:%02d.%03d ", time.hour, time.minute, time.second, time.microsecond / 1000);
     va_start(list, text);
-    vsprintf(buf, text, list);
+    vsprintf(buf + strlen(buf), text, list);
     va_end(list);
 
 #ifdef DEBUG

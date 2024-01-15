@@ -240,8 +240,7 @@ int SevenZ_GetRomPath(const char *archive_path, char *rom_path)
     if (index < 0)
         index = SevernZ_ExtractRomCache(rom_name, rom_path);
 
-    if (current_7z.inited)
-        Deinit7z();
+    Deinit7z();
 
     if (index < 0)
     {
