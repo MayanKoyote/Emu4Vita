@@ -129,18 +129,17 @@ static int SevernZ_ExtractRomCache(const char *rom_name, char *rom_path)
     uint8_t *output = NULL;
     int index = -1;
     SRes res = SzArEx_Extract(&current_7z.db, &current_7z.look_stream.vt, current_7z.index, &block_index,
-                              &output, &output_size, &offset, &outsize_processed,
-                              &alloc_imp, &alloc_temp_imp);
+                              &output, &output_size, &offset, &outsize_processed, &alloc_imp, &alloc_temp_imp);
     if (res != SZ_OK)
     {
         AppLog("[7Z] Extract failed: %d\n", res);
-        goto EXTRACT_END;
+        goto EXTRACT_CACHE_END;
     }
 
     if (WriteFile(rom_path, output + offset, outsize_processed) < 0)
     {
         AppLog("[7Z] Write file failed: %s\n", rom_path);
-        goto EXTRACT_END;
+        goto EXTRACT_CACHE_END;
     }
 
     index = Archive_GetInsertCacheEntriesIndex(); // 获取新条目插入位置
@@ -165,16 +164,65 @@ static int SevernZ_ExtractRomCache(const char *rom_name, char *rom_path)
 
     AppLog("[7Z] ExtractRomCache OK: %d, %s\n", index, rom_name);
 
-EXTRACT_END:
+EXTRACT_CACHE_END:
     if (output)
         IAlloc_Free(&alloc_imp, output);
 
     return index;
 }
 
+static int SevenZ_ExtractRomMemory(void **buf, size_t *size)
+{
+    if (!current_7z.inited)
+        return -1;
+
+    uint32_t block_index = 0xFFFFFFFF;
+    size_t output_size = 0;
+    size_t offset = 0;
+    uint8_t *output = NULL;
+    int result = -1;
+    *size = 0;
+    SRes res = SzArEx_Extract(&current_7z.db, &current_7z.look_stream.vt, current_7z.index, &block_index,
+                              &output, &output_size, &offset, size, &alloc_imp, &alloc_temp_imp);
+    if (res != SZ_OK)
+    {
+        AppLog("[7Z] Extract failed: %d\n", res);
+        goto EXTRACT_MEM_END;
+    }
+
+    *buf = malloc(*size);
+    if (*buf)
+    {
+        memcpy(*buf, output + offset, *size);
+        result = 1;
+    }
+
+EXTRACT_MEM_END:
+    if (output)
+        IAlloc_Free(&alloc_imp, output);
+
+    return result;
+}
+
 int SevenZ_GetRomMemory(const char *archive_path, void **buf, size_t *size)
 {
-    return -1;
+    if (SevenZ_GetRomEntry(archive_path) <= 0)
+        return -1;
+
+    int result = SevenZ_ExtractRomMemory(buf, size);
+
+    Deinit7z();
+
+    if (result <= 0)
+    {
+        AppLog("[7Z] GetRomMemory failed!\n");
+        return -1;
+    }
+    else
+    {
+        AppLog("[7Z] GetRomMemory OK!\n");
+        return 0;
+    }
 }
 
 int SevenZ_GetRomPath(const char *archive_path, char *rom_path)

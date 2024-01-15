@@ -98,19 +98,24 @@ int ZIP_GetRomMemory(const char *zip_path, void **buf, size_t *size)
     if (ZIP_GetRomEntry(zip_path) <= 0)
         return -1;
 
-    if (zip_entry_read(current_zip, buf, size) <= 0)
+    ssize_t result = zip_entry_read(current_zip, buf, size);
+    if (current_zip)
     {
-        if (current_zip)
-        {
-            zip_close(current_zip);
-            current_zip = NULL;
-        }
+        zip_entry_close(current_zip);
+        zip_close(current_zip);
+        current_zip = NULL;
+    }
+
+    if (result <= 0)
+    {
         AppLog("[ZIP] GetRomMemory failed!\n");
         return -1;
     }
-
-    AppLog("[ZIP] GetRomMemory OK!\n");
-    return 0;
+    else
+    {
+        AppLog("[ZIP] GetRomMemory OK!\n");
+        return 0;
+    }
 }
 
 int ZIP_GetRomPath(const char *zip_path, char *rom_path)
