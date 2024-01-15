@@ -16,38 +16,7 @@ static int ZIP_FindRomCache(const char *rom_name, char *rom_path)
 
     uint32_t crc = zip_entry_crc32(current_zip);
 
-    int i;
-    for (i = 0; i < archive_cache_num; i++)
-    {
-        if (archive_cache_entries[i].crc == crc && strcasecmp(archive_cache_entries[i].name, rom_name) == 0)
-        {
-            sprintf(rom_path, "%s/%s", CORE_CACHE_DIR, rom_name);
-            AppLog("[ZIP] FindRomCache OK: %d, %s\n", i, rom_name);
-            return i;
-        }
-    }
-
-    AppLog("[ZIP] FindRomCache failed: %s\n", rom_name);
-    return -1;
-}
-
-static int getInsertCacheEntriesIndex()
-{
-    if (archive_cache_num < MAX_CACHE_SIZE)
-        return archive_cache_num;
-
-    int index = 0;
-    uint64_t ltime = archive_cache_entries[0].ltime;
-
-    int i;
-    for (i = 1; i < MAX_CACHE_SIZE; i++)
-    {
-        // 获取最小加载时间的缓存条目
-        if (archive_cache_entries[i].ltime < ltime)
-            index = i;
-    }
-
-    return index;
+    return Archive_FindRomCache(crc, rom_name, rom_path);
 }
 
 static int ZIP_ExtractRomCache(const char *rom_name, char *rom_path)
@@ -65,7 +34,7 @@ static int ZIP_ExtractRomCache(const char *rom_name, char *rom_path)
         return -1;
     }
 
-    int index = getInsertCacheEntriesIndex(); // 获取新条目插入位置
+    int index = Archive_GetInsertCacheEntriesIndex(); // 获取新条目插入位置
 
     if (archive_cache_num >= MAX_CACHE_SIZE) // 缓存条目已达到最大数
     {
@@ -160,13 +129,16 @@ int ZIP_GetRomPath(const char *zip_path, char *rom_path)
     int index = ZIP_FindRomCache(rom_name, rom_path);
     if (index < 0)
         index = ZIP_ExtractRomCache(rom_name, rom_path);
+
+    if (current_zip)
+    {
+        zip_entry_close(current_zip);
+        zip_close(current_zip);
+        current_zip = NULL;
+    }
+
     if (index < 0)
     {
-        if (current_zip)
-        {
-            zip_close(current_zip);
-            current_zip = NULL;
-        }
         AppLog("[ZIP] GetRomPath failed!\n");
         return -1;
     }

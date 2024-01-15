@@ -19,6 +19,13 @@
 #define MAX_GAME_RUN_SPEED 2.0f
 #define STEP_GAME_RUN_SPEED 0.5f
 
+enum ARCHIVE_MODE
+{
+    NORMAL_MODE = 0,
+    ZIP_MODE,
+    SEVENZ_MODE,
+};
+
 extern GUI_Activity loading_activity;
 extern GUI_Dialog setting_dialog;
 
@@ -80,15 +87,29 @@ void Emu_SpeedDownGame()
     Emu_SetRunSpeed(speed);
 }
 
-static int loadGameFromFile(const char *path, int is_zip_mode)
+static int loadGameFromFile(const char *path, int archive_mode)
 {
     const char *rom_path = path;
-    if (is_zip_mode)
+    char cache_path[MAX_PATH_LENGTH];
+
+    switch (archive_mode)
     {
-        char cache_path[MAX_PATH_LENGTH];
+    case ZIP_MODE:
+    {
         if (ZIP_GetRomPath(path, cache_path) < 0)
             return -1;
         rom_path = cache_path;
+        break;
+    }
+    case SEVENZ_MODE:
+    {
+        if (SevenZ_GetRomPath(path, cache_path) < 0)
+            return -1;
+        rom_path = cache_path;
+        break;
+    }
+    default:
+        break;
     }
 
     struct retro_game_info game_info;
@@ -103,7 +124,7 @@ static int loadGameFromFile(const char *path, int is_zip_mode)
     return 0;
 }
 
-static int loadGameFromMemory(const char *path, int is_zip_mode)
+static int loadGameFromMemory(const char *path, int archive_mode)
 {
     if (game_rom_data)
         free(game_rom_data);
@@ -111,13 +132,17 @@ static int loadGameFromMemory(const char *path, int is_zip_mode)
 
     size_t size = 0;
 
-    if (is_zip_mode)
+    switch (archive_mode)
     {
+    case ZIP_MODE:
         if (ZIP_GetRomMemory(path, &game_rom_data, &size) < 0)
             return -1;
-    }
-    else
-    {
+        break;
+    case SEVENZ_MODE:
+        if (SevenZ_GetRomMemory(path, &game_rom_data, &size) < 0)
+            return -1;
+        break;
+    default:
         if (AllocateReadFileEX(path, &game_rom_data, &size) < 0)
             return -1;
     }
@@ -158,19 +183,26 @@ static int loadGame(const char *path)
     core_display_rotate = 0;
     retro_init();
 
-    int is_zip_mode = 0;
+    int archive_mode = NORMAL_MODE;
 
     if (core_want_ext_zip_mode)
     {
         const char *ext = strrchr(path, '.');
         if (ext++ && strcasecmp(ext, "zip") == 0)
-            is_zip_mode = 1;
+            archive_mode = ZIP_MODE;
+    }
+
+    if (archive_mode == NORMAL_MODE && core_want_ext_7z_mode)
+    {
+        const char *ext = strrchr(path, '.');
+        if (ext++ && strcasecmp(ext, "7z") == 0)
+            archive_mode = SEVENZ_MODE;
     }
 
     if (core_system_info.need_fullpath)
-        ret = loadGameFromFile(path, is_zip_mode);
+        ret = loadGameFromFile(path, archive_mode);
     else
-        ret = loadGameFromMemory(path, is_zip_mode);
+        ret = loadGameFromMemory(path, archive_mode);
 
     if (ret < 0)
     {

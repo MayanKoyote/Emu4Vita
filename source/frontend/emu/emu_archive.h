@@ -17,6 +17,8 @@ extern int archive_cache_num;
 
 int Archive_LoadCacheConfig();
 int Archive_SaveCacheConfig();
+int Archive_FindRomCache(uint32_t crc, const char *rom_name, char *rom_path);
+int Archive_GetInsertCacheEntriesIndex();
 
 #include "zip/zip_archive.h"
 #include "7z/7z_archive.h"

@@ -4,6 +4,7 @@
 #include <psp2/io/fcntl.h>
 #include "emu/emu.h"
 #include "config.h"
+#include "utils.h"
 #include "7z.h"
 
 #define ARCHIVE_CACHE_CONFIG_PATH CORE_CACHE_DIR "/cache.txt"
@@ -95,4 +96,40 @@ int Archive_SaveCacheConfig()
     if (ret < 0)
         sceIoRemove(ARCHIVE_CACHE_CONFIG_PATH);
     return ret;
+}
+
+int Archive_FindRomCache(uint32_t crc, const char *rom_name, char *rom_path)
+{
+    int i;
+    for (i = 0; i < archive_cache_num; i++)
+    {
+        if (archive_cache_entries[i].crc == crc && strcasecmp(archive_cache_entries[i].name, rom_name) == 0)
+        {
+            sprintf(rom_path, "%s/%s", CORE_CACHE_DIR, rom_name);
+            AppLog("[ARCHIVE] FindRomCache OK: %d, %s\n", i, rom_name);
+            return i;
+        }
+    }
+
+    AppLog("[ARCHIVE] FindRomCache failed: %s\n", rom_name);
+    return -1;
+}
+
+int Archive_GetInsertCacheEntriesIndex()
+{
+    if (archive_cache_num < MAX_CACHE_SIZE)
+        return archive_cache_num;
+
+    int index = 0;
+    uint64_t ltime = archive_cache_entries[0].ltime;
+
+    int i;
+    for (i = 1; i < MAX_CACHE_SIZE; i++)
+    {
+        // 获取最小加载时间的缓存条目
+        if (archive_cache_entries[i].ltime < ltime)
+            index = i;
+    }
+
+    return index;
 }

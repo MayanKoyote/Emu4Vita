@@ -62,6 +62,7 @@ COMM_OBJS := $(COMM_C:.c=.o)
 COMM_OBJS := $(addprefix $(BUILD_DIR)/, $(COMM_OBJS))
 
 7ZIP_C += \
+    deps/7zip/7zAlloc.c \
 	deps/7zip/7zArcIn.c \
 	deps/7zip/7zBuf.c \
 	deps/7zip/7zCrc.c \
