@@ -1,0 +1,115 @@
+TARGET = libretro_comm
+
+MAKEFILE_PATH              := $(abspath $(lastword $(MAKEFILE_LIST)))
+MAKEFILE_DIR               := $(dir $(MAKEFILE_PATH))
+ROOT_DIR                   := $(patsubst %/,%, $(MAKEFILE_DIR))
+
+SRC_DIR                    := $(ROOT_DIR)/../libretro-common
+INCLUDE_DIR                := $(SRC_DIR)/include
+BUILD_DIR                  := $(ROOT_DIR)/../build/libretro-common
+
+TARGET_PATH                := $(ROOT_DIR)/imports/lib/$(TARGET).a
+
+LIBDIRS := 
+
+INCDIRS := \
+	-I$(SRC_DIR) \
+	-I$(INCLUDE_DIR)
+
+SRC_C := \
+	string/stdstring.c \
+	encodings/encoding_utf.c \
+	encodings/encoding_crc32.c \
+	compat/fopen_utf8.c \
+	compat/compat_strl.c \
+	compat/compat_snprintf.c \
+	compat/compat_strcasestr.c \
+	compat/compat_posix_string.c \
+	file/file_path.c \
+	file/file_path_io.c \
+	streams/file_stream.c \
+	streams/file_stream_transforms.c \
+	streams/memory_stream.c \
+	lists/string_list.c \
+	lists/file_list.c \
+	lists/dir_list.c \
+	file/retro_dirent.c \
+	memmap/memalign.c \
+	vfs/vfs_implementation.c \
+	time/rtime.c
+
+SRC_C += \
+	streams/interface_stream.c \
+	streams/rzip_stream.c \
+	streams/stdin_stream.c \
+	streams/trans_stream.c \
+	streams/trans_stream_pipe.c \
+	streams/trans_stream_zlib.c \
+
+SRC_C += \
+	features/features_cpu.c \
+	file/config_file.c \
+	file/config_file_userdata.c \
+	rthreads/rthreads.c
+
+SRC_C += \
+	utils/md5.c
+
+OBJS := $(SRC_C:.c=.o)
+OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
+
+DEFINES := \
+	-DHAVE_NEON \
+	-DHAVE_THREADS \
+	-DHAVE_COMPRESSION \
+	-DHAVE_ZLIB \
+	-DHAVE_7ZIP
+
+WARNINGS := \
+	-Wall
+
+ARCHFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=hard -DVITA
+CFLAGS    += $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
+CFLAGS    += -O3
+ASFLAGS   := $(CFLAGS) $(WARNINGS) $(INCDIRS)
+
+CFLAGS    += -ffast-math $(WARNINGS) $(INCDIRS) $(DEFINES)
+CXXFLAGS  := $(CFLAGS) -fno-rtti -fno-exceptions
+LDFLAGS   := -Wl,-q $(LIBDIRS)
+
+PREFIX  := arm-vita-eabi
+CC      := $(PREFIX)-gcc
+CXX     := $(PREFIX)-g++
+AS      := $(PREFIX)-as
+AR      := $(PREFIX)-ar
+OBJCOPY := $(PREFIX)-objcopy
+STRIP   := $(PREFIX)-strip
+NM      := $(PREFIX)-nm
+LD      := $(CXX)
+
+all: $(TARGET_PATH)
+
+$(TARGET_PATH): $(OBJS)
+	$(AR) -rc $@ $^
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) -c $(CXXFLAGS) $< -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) -c $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.S
+	@mkdir -p $(dir $@)
+	$(CC) -c $(ASFLAGS) $< -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
+	@mkdir -p $(dir $@)
+	$(CC) -c $(ASFLAGS) $< -o $@
+
+clean: 
+	rm -rf $(BUILD_DIR) $(TARGET_PATH)
+
+.PHONY: clean all
+	

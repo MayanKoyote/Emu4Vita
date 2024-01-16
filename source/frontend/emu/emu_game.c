@@ -84,8 +84,7 @@ static int loadGameFromFile(const char *path, int archive_mode)
 {
     const char *rom_path = path;
     char cache_path[MAX_PATH_LENGTH];
-
-    if (archive_mode != NORMAL_MODE)
+    if (archive_mode != ARCHIVE_MODE_NO)
     {
         if (Archive_GetRomPath(path, cache_path, archive_mode) < 0)
             return -1;
@@ -112,14 +111,14 @@ static int loadGameFromMemory(const char *path, int archive_mode)
 
     size_t size = 0;
 
-    if (archive_mode == NORMAL_MODE)
+    if (archive_mode != ARCHIVE_MODE_NO)
     {
-        if (AllocateReadFileEX(path, &game_rom_data, &size) < 0)
+        if (Archive_GetRomMemory(path, &game_rom_data, &size, archive_mode) < 0)
             return -1;
     }
     else
     {
-        if (Archive_GetRomMemory(path, &game_rom_data, &size, archive_mode) < 0)
+        if (AllocateReadFileEX(path, &game_rom_data, &size) < 0)
             return -1;
     }
 
@@ -159,20 +158,20 @@ static int loadGame(const char *path)
     core_display_rotate = 0;
     retro_init();
 
-    int archive_mode = NORMAL_MODE;
+    int archive_mode = ARCHIVE_MODE_NO;
 
     if (core_want_ext_zip_mode)
     {
         const char *ext = strrchr(path, '.');
         if (ext++ && strcasecmp(ext, "zip") == 0)
-            archive_mode = ZIP_MODE;
+            archive_mode = ARCHIVE_MODE_ZIP;
     }
 
-    if (archive_mode == NORMAL_MODE && core_want_ext_7z_mode)
+    if (archive_mode == ARCHIVE_MODE_NO && core_want_ext_zip_mode)
     {
         const char *ext = strrchr(path, '.');
-        if (ext++ && strcasecmp(ext, "7z") == 0)
-            archive_mode = SEVENZ_MODE;
+        if (ext++ && strcasecmp(ext, "zip") == 0)
+            archive_mode = ARCHIVE_MODE_ZIP;
     }
 
     if (core_system_info.need_fullpath)

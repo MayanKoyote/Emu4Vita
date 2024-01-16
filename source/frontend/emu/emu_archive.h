@@ -7,9 +7,9 @@
 
 enum ARCHIVE_MODE
 {
-    NORMAL_MODE = 0,
-    ZIP_MODE,
-    SEVENZ_MODE,
+    ARCHIVE_MODE_NO = 0,
+    ARCHIVE_MODE_ZIP,
+    ARCHIVE_MODE_7Z,
 };
 
 typedef struct

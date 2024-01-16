@@ -226,6 +226,9 @@ int LoadGraphicsConfig(int type)
 
     memcpy(&graphics_config, &config, sizeof(GraphicsConfig));
 
+    if (graphics_overlay_list && graphics_config.overlay_select > LinkedListGetLength(graphics_overlay_list))
+        graphics_config.overlay_select = 0;
+
     return 0;
 }
 

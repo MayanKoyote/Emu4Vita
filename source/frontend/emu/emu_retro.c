@@ -99,7 +99,8 @@ static int creatValidFileExts()
 
     if (file_valid_exts)
         freeValidFileExts();
-    file_valid_exts = (char **)calloc((n_exts + 2), sizeof(char *));
+    // +3 for "zip" + "7z" + NULL
+    file_valid_exts = (char **)calloc((n_exts + 3), sizeof(char *));
     if (!file_valid_exts)
         return -1;
 
@@ -121,8 +122,7 @@ static int creatValidFileExts()
             // If the core native support zip rom, skip ext zip mode
             if (core_want_ext_zip_mode && strcasecmp(file_valid_exts[i], zip_ext) == 0)
                 core_want_ext_zip_mode = 0;
-
-            // If the core native support 7z rom, skip ext zip mode
+            // If the core native support 7z rom, skip ext 7z mode
             if (core_want_ext_7z_mode && strcasecmp(file_valid_exts[i], sevenz_ext) == 0)
                 core_want_ext_7z_mode = 0;
         }

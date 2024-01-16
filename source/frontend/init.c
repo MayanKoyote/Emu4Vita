@@ -190,11 +190,15 @@ END:
 
 int AppDeinit()
 {
+    AppLog("[INIT] Deinit app...\n");
+
     Setting_Deinit();
     GUI_Deinit();
     Retro_DeinitLib();
 
     finishSceAppUtil();
+
+    AppLog("[INIT] Deinit app OK!\n");
 
     return 0;
 }
