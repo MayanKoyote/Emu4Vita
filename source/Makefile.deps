@@ -102,7 +102,7 @@ DEFINES := \
 WARNINGS := \
 	-Wall
 
-CFLAGS    := -march=armv8-a+crc+crypto -mfpu=neon -mfloat-abi=hard -DVITA
+CFLAGS    := -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=hard -DVITA
 CFLAGS    := $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
 CFLAGS    += -O3
 ASFLAGS   := $(CFLAGS) $(INCDIRS)

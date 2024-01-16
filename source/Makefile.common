@@ -185,7 +185,7 @@ WARNINGS := \
 # -Wno-unused-variable
 # -Wno-unused-but-set-variable
 
-ARCHFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=hard -DVITA
+ARCHFLAGS := -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=hard -DVITA
 CFLAGS    := $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
 CFLAGS    += -O3
 ASFLAGS   := $(CFLAGS) $(INCDIRS)
