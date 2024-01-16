@@ -115,7 +115,7 @@ int Archive_FindRomCache(uint32_t crc, const char *rom_name, char *rom_path)
     return -1;
 }
 
-int Archive_GetInsertCacheEntriesIndex()
+static int Archive_GetInsertCacheEntriesIndex()
 {
     if (archive_cache_num < MAX_CACHE_SIZE)
         return archive_cache_num;
@@ -132,4 +132,55 @@ int Archive_GetInsertCacheEntriesIndex()
     }
 
     return index;
+}
+
+int Archive_InsertCache(uint32_t crc, const char *rom_name)
+{
+    int index = Archive_GetInsertCacheEntriesIndex(); // 获取新条目插入位置
+
+    if (archive_cache_num >= MAX_CACHE_SIZE) // 缓存条目已达到最大数
+    {
+        // 删除要替换的旧条目指向的rom文件
+        char tmp_path[MAX_PATH_LENGTH];
+        sprintf(tmp_path, "%s/%s", CORE_CACHE_DIR, archive_cache_entries[index].name);
+        sceIoRemove(tmp_path);
+    }
+    else
+    {
+        archive_cache_num++;
+    }
+
+    memset(&archive_cache_entries[index], 0, sizeof(archive_cache_entries[index]));
+    archive_cache_entries[index].crc = crc;
+    strcpy(archive_cache_entries[index].name, rom_name);
+
+    Archive_SaveCacheConfig();
+
+    return index;
+}
+
+int Archive_GetRomMemory(const char *archive_path, void **buf, size_t *size, int mode)
+{
+    switch (mode)
+    {
+    case ZIP_MODE:
+        return ZIP_GetRomMemory(archive_path, buf, size);
+    case SEVENZ_MODE:
+        return SevenZ_GetRomMemory(archive_path, buf, size);
+    default:
+        return -1;
+    }
+}
+
+int Archive_GetRomPath(const char *archive_path, char *rom_path, int mode)
+{
+    switch (mode)
+    {
+    case ZIP_MODE:
+        return ZIP_GetRomPath(archive_path, rom_path);
+    case SEVENZ_MODE:
+        return SevenZ_GetRomPath(archive_path, rom_path);
+    default:
+        return -1;
+    }
 }

@@ -142,25 +142,7 @@ static int SevernZ_ExtractRomCache(const char *rom_name, char *rom_path)
         goto EXTRACT_CACHE_END;
     }
 
-    index = Archive_GetInsertCacheEntriesIndex(); // 获取新条目插入位置
-
-    if (archive_cache_num >= MAX_CACHE_SIZE) // 缓存条目已达到最大数
-    {
-        // 删除要替换的旧条目指向的rom文件
-        char tmp_path[MAX_PATH_LENGTH];
-        sprintf(tmp_path, "%s/%s", CORE_CACHE_DIR, archive_cache_entries[index].name);
-        sceIoRemove(tmp_path);
-    }
-    else
-    {
-        archive_cache_num++;
-    }
-
-    memset(&archive_cache_entries[index], 0, sizeof(archive_cache_entries[index]));
-    archive_cache_entries[index].crc = current_7z.db.CRCs.Vals[current_7z.index];
-    strcpy(archive_cache_entries[index].name, rom_name);
-
-    Archive_SaveCacheConfig();
+    index = Archive_InsertCache(current_7z.db.CRCs.Vals[current_7z.index], rom_name);
 
     AppLog("[7Z] ExtractRomCache OK: %d, %s\n", index, rom_name);
 

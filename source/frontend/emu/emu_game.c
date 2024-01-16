@@ -19,13 +19,6 @@
 #define MAX_GAME_RUN_SPEED 2.0f
 #define STEP_GAME_RUN_SPEED 0.5f
 
-enum ARCHIVE_MODE
-{
-    NORMAL_MODE = 0,
-    ZIP_MODE,
-    SEVENZ_MODE,
-};
-
 extern GUI_Activity loading_activity;
 extern GUI_Dialog setting_dialog;
 
@@ -92,24 +85,11 @@ static int loadGameFromFile(const char *path, int archive_mode)
     const char *rom_path = path;
     char cache_path[MAX_PATH_LENGTH];
 
-    switch (archive_mode)
+    if (archive_mode != NORMAL_MODE)
     {
-    case ZIP_MODE:
-    {
-        if (ZIP_GetRomPath(path, cache_path) < 0)
+        if (Archive_GetRomPath(path, cache_path, archive_mode) < 0)
             return -1;
         rom_path = cache_path;
-        break;
-    }
-    case SEVENZ_MODE:
-    {
-        if (SevenZ_GetRomPath(path, cache_path) < 0)
-            return -1;
-        rom_path = cache_path;
-        break;
-    }
-    default:
-        break;
     }
 
     struct retro_game_info game_info;
@@ -132,18 +112,14 @@ static int loadGameFromMemory(const char *path, int archive_mode)
 
     size_t size = 0;
 
-    switch (archive_mode)
+    if (archive_mode == NORMAL_MODE)
     {
-    case ZIP_MODE:
-        if (ZIP_GetRomMemory(path, &game_rom_data, &size) < 0)
-            return -1;
-        break;
-    case SEVENZ_MODE:
-        if (SevenZ_GetRomMemory(path, &game_rom_data, &size) < 0)
-            return -1;
-        break;
-    default:
         if (AllocateReadFileEX(path, &game_rom_data, &size) < 0)
+            return -1;
+    }
+    else
+    {
+        if (Archive_GetRomMemory(path, &game_rom_data, &size, archive_mode) < 0)
             return -1;
     }
 
