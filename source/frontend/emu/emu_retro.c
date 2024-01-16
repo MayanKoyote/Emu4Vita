@@ -123,7 +123,7 @@ static int creatValidFileExts()
             if (core_want_ext_zip_mode && strcasecmp(file_valid_exts[i], zip_ext) == 0)
                 core_want_ext_zip_mode = 0;
             // If the core native support 7z rom, skip ext 7z mode
-            if (core_want_ext_7z_mode && strcasecmp(file_valid_exts[i], zip_ext) == 0)
+            if (core_want_ext_7z_mode && strcasecmp(file_valid_exts[i], sevenz_ext) == 0)
                 core_want_ext_7z_mode = 0;
         }
         p = sep + 1;
