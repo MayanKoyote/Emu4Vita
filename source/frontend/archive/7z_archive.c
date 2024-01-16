@@ -21,16 +21,17 @@
 typedef struct
 {
     int inited;
+    int crc32_init;
     int index;
     CFileInStream file_stream;
     CLookToRead2 look_stream;
     CSzArEx db;
 } SevenContext;
 
+ISzAlloc alloc_imp = {SzAlloc, SzFree};
+ISzAlloc alloc_temp_imp = {SzAllocTemp, SzFreeTemp};
+
 static SevenContext current_7z = {0};
-static ISzAlloc alloc_imp = {SzAlloc, SzFree};
-static ISzAlloc alloc_temp_imp = {SzAllocTemp, SzFreeTemp};
-static int crc32_init = 0;
 
 int SevenZ_OpenRom(const char *archive_path, uint32_t *crc, char *name)
 {
@@ -39,10 +40,10 @@ int SevenZ_OpenRom(const char *archive_path, uint32_t *crc, char *name)
         SevenZ_CloseRom();
     }
 
-    if (!crc32_init)
+    if (!current_7z.crc32_init)
     {
         CrcGenerateTable();
-        crc32_init = 1;
+        current_7z.crc32_init = 1;
     }
 
     if (InFile_Open(&current_7z.file_stream.file, archive_path) != 0)
