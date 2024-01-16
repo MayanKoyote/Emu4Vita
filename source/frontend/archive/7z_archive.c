@@ -38,6 +38,8 @@ void Init7z()
         current_7z.look_stream.bufSize = SEVENZIP_LOOKTOREAD_BUF_SIZE;
     }
 
+    CrcGenerateTable();
+
     current_7z.inited = 1;
 }
 
@@ -74,7 +76,6 @@ SevenZ_GetRomEntry(const char *archive_path)
     LookToRead2_CreateVTable(&current_7z.look_stream, False);
     current_7z.look_stream.realStream = &current_7z.file_stream.vt;
     LookToRead2_Init(&current_7z.look_stream);
-    CrcGenerateTable();
 
     CSzArEx *db = &current_7z.db;
     SzArEx_Init(db);
@@ -142,7 +143,7 @@ static int SevernZ_ExtractRomCache(const char *rom_name, char *rom_path)
         goto EXTRACT_CACHE_END;
     }
 
-    index = Archive_InsertCache(current_7z.db.CRCs.Vals[current_7z.index], rom_name);
+    index = Archive_InsertRomCache(current_7z.db.CRCs.Vals[current_7z.index], rom_name);
 
     AppLog("[7Z] ExtractRomCache OK: %d, %s\n", index, rom_name);
 
@@ -158,11 +159,12 @@ static int SevenZ_ExtractRomMemory(void **buf, size_t *size)
     if (!current_7z.inited)
         return -1;
 
+    AppLog("[7Z] Start extacting\n");
+
     uint32_t block_index = 0xFFFFFFFF;
     size_t output_size = 0;
     size_t offset = 0;
     uint8_t *output = NULL;
-    int result = -1;
     *size = 0;
     SRes res = SzArEx_Extract(&current_7z.db, &current_7z.look_stream.vt, current_7z.index, &block_index,
                               &output, &output_size, &offset, size, &alloc_imp, &alloc_temp_imp);
@@ -176,14 +178,19 @@ static int SevenZ_ExtractRomMemory(void **buf, size_t *size)
     if (*buf)
     {
         memcpy(*buf, output + offset, *size);
-        result = 1;
+    }
+    else
+    {
+        *size = 0;
     }
 
 EXTRACT_MEM_END:
     if (output)
         IAlloc_Free(&alloc_imp, output);
 
-    return result;
+    AppLog("[7Z] End extracting\n");
+
+    return *size > 0;
 }
 
 int SevenZ_GetRomMemory(const char *archive_path, void **buf, size_t *size)
@@ -191,11 +198,28 @@ int SevenZ_GetRomMemory(const char *archive_path, void **buf, size_t *size)
     if (SevenZ_GetRomEntry(archive_path) <= 0)
         return -1;
 
-    int result = SevenZ_ExtractRomMemory(buf, size);
+    char rom_name[MAX_NAME_LENGTH];
+    MakeBaseName(rom_name, archive_path, sizeof(rom_name));
+    const char *ext = strrchr(current_7z.name, '.');
+    if (ext)
+        strcat(rom_name, ext);
+
+    char rom_path[MAX_NAME_LENGTH];
+    int index = SevernZ_FindRomCache(rom_name, rom_path);
+    if (index >= 0)
+    {
+        *size = AllocateReadFile(rom_path, buf);
+    }
+    else
+    {
+        SevenZ_ExtractRomMemory(buf, size);
+        if (*size > 0)
+            Archive_AsyncWriteRomCache(current_7z.db.CRCs.Vals[current_7z.index], rom_name, *buf, *size);
+    }
 
     Deinit7z();
 
-    if (result <= 0)
+    if (*size <= 0)
     {
         AppLog("[7Z] GetRomMemory failed!\n");
         return -1;

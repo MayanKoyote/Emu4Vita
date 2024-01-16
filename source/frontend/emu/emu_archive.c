@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <psp2/io/fcntl.h>
+#include <psp2/kernel/threadmgr.h>
 #include "emu/emu.h"
 #include "config.h"
 #include "utils.h"
@@ -134,7 +135,7 @@ static int Archive_GetInsertCacheEntriesIndex()
     return index;
 }
 
-int Archive_InsertCache(uint32_t crc, const char *rom_name)
+int Archive_InsertRomCache(uint32_t crc, const char *rom_name)
 {
     int index = Archive_GetInsertCacheEntriesIndex(); // 获取新条目插入位置
 
@@ -182,5 +183,50 @@ int Archive_GetRomPath(const char *archive_path, char *rom_path, int mode)
         return SevenZ_GetRomPath(archive_path, rom_path);
     default:
         return -1;
+    }
+}
+
+typedef struct
+{
+    char name[256];
+    uint32_t crc;
+    char *buf;
+    size_t size;
+} RomCacheThreadArgs;
+
+int WriteRomCahceThread(SceSize args, void *argp)
+{
+    RomCacheThreadArgs *arg = (RomCacheThreadArgs *)argp;
+    char rom_path[MAX_NAME_LENGTH];
+    strcpy(rom_path, CORE_CACHE_DIR "/");
+    strcat(rom_path, arg->name);
+    if (WriteFile(rom_path, arg->buf, arg->size) > 0)
+    {
+        Archive_InsertRomCache(arg->crc, arg->name);
+    }
+
+    free(arg->buf);
+    AppLog("[ARCHIVE] AsyncWriteRomCache thread end\n");
+
+    sceKernelExitDeleteThread(0);
+    return 0;
+}
+
+void Archive_AsyncWriteRomCache(uint32_t crc, const char *rom_name, const char *buf, size_t size)
+{
+    AppLog("[ARCHIVE] AsyncWriteRomCache start\n");
+    int write_thread = sceKernelCreateThread("write_rom_cache_thread", WriteRomCahceThread, 0x10000100 + 20, 0x10000, 0, 0, NULL);
+    if (write_thread >= 0)
+    {
+        RomCacheThreadArgs args;
+        strcpy(args.name, rom_name);
+        args.crc = crc;
+        args.size = size;
+        args.buf = malloc(size);
+        if (args.buf)
+        {
+            memcpy(args.buf, buf, size);
+            sceKernelStartThread(write_thread, sizeof(args), &args);
+        }
     }
 }

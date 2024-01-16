@@ -34,7 +34,7 @@ static int ZIP_ExtractRomCache(const char *rom_name, char *rom_path)
         return -1;
     }
 
-    int index = Archive_InsertCache(zip_entry_crc32(current_zip), rom_name);
+    int index = Archive_InsertRomCache(zip_entry_crc32(current_zip), rom_name);
 
     AppLog("[ZIP] ExtractRomCache OK: %d, %s\n", index, rom_name);
     return index;
@@ -79,7 +79,27 @@ int ZIP_GetRomMemory(const char *zip_path, void **buf, size_t *size)
     if (ZIP_GetRomEntry(zip_path) <= 0)
         return -1;
 
-    ssize_t result = zip_entry_read(current_zip, buf, size);
+    char rom_name[MAX_NAME_LENGTH];
+    MakeBaseName(rom_name, zip_path, sizeof(rom_name));
+    const char *entry_name = zip_entry_name(current_zip);
+    const char *ext = strrchr(entry_name, '.');
+    if (ext)
+        strcat(rom_name, ext);
+
+    char rom_path[MAX_NAME_LENGTH];
+    int index = ZIP_FindRomCache(rom_name, rom_path);
+    if (index >= 0)
+    {
+        *size = AllocateReadFile(rom_path, buf);
+    }
+    else
+    {
+        if (zip_entry_read(current_zip, buf, size) > 0)
+            Archive_AsyncWriteRomCache(zip_entry_crc32(current_zip), rom_name, *buf, *size);
+        else
+            *size = -1;
+    }
+
     if (current_zip)
     {
         zip_entry_close(current_zip);
@@ -87,7 +107,7 @@ int ZIP_GetRomMemory(const char *zip_path, void **buf, size_t *size)
         current_zip = NULL;
     }
 
-    if (result <= 0)
+    if (*size <= 0)
     {
         AppLog("[ZIP] GetRomMemory failed!\n");
         return -1;
