@@ -1,5 +1,5 @@
 /* Lzma2Dec.c -- LZMA2 Decoder
-2019-02-02 : Igor Pavlov : Public domain */
+2023-03-03 : Igor Pavlov : Public domain */
 
 /* #define SHOW_DEBUG_INFO */
 
@@ -32,7 +32,7 @@
 #define LZMA2_IS_UNCOMPRESSED_STATE(p) (((p)->control & (1 << 7)) == 0)
 
 #define LZMA2_LCLP_MAX 4
-#define LZMA2_DIC_SIZE_FROM_PROP(p) (((uint32_t)2 | ((p) & 1)) << ((p) / 2 + 11))
+#define LZMA2_DIC_SIZE_FROM_PROP(p) (((UInt32)2 | ((p) & 1)) << ((p) / 2 + 11))
 
 #ifdef SHOW_DEBUG_INFO
 #define PRF(x) x
@@ -56,7 +56,7 @@ typedef enum
 
 static SRes Lzma2Dec_GetOldProps(Byte prop, Byte *props)
 {
-  uint32_t dicSize;
+  UInt32 dicSize;
   if (prop > 40)
     return SZ_ERROR_UNSUPPORTED;
   dicSize = (prop == 40) ? 0xFFFFFFFF : LZMA2_DIC_SIZE_FROM_PROP(prop);
@@ -71,14 +71,14 @@ static SRes Lzma2Dec_GetOldProps(Byte prop, Byte *props)
 SRes Lzma2Dec_AllocateProbs(CLzma2Dec *p, Byte prop, ISzAllocPtr alloc)
 {
   Byte props[LZMA_PROPS_SIZE];
-  RINOK(Lzma2Dec_GetOldProps(prop, props));
+  RINOK(Lzma2Dec_GetOldProps(prop, props))
   return LzmaDec_AllocateProbs(&p->decoder, props, LZMA_PROPS_SIZE, alloc);
 }
 
 SRes Lzma2Dec_Allocate(CLzma2Dec *p, Byte prop, ISzAllocPtr alloc)
 {
   Byte props[LZMA_PROPS_SIZE];
-  RINOK(Lzma2Dec_GetOldProps(prop, props));
+  RINOK(Lzma2Dec_GetOldProps(prop, props))
   return LzmaDec_Allocate(&p->decoder, props, LZMA_PROPS_SIZE, alloc);
 }
 
@@ -89,11 +89,12 @@ void Lzma2Dec_Init(CLzma2Dec *p)
   p->isExtraMode = False;
   p->unpackSize = 0;
   
-  /* p->decoder.dicPos = 0; // we can use it instead of full init */
+  // p->decoder.dicPos = 0; // we can use it instead of full init
   LzmaDec_Init(&p->decoder);
 }
 
-static ELzma2State Lzma2Dec_UpdateState(CLzma2Dec *p, Byte b)
+// ELzma2State
+static unsigned Lzma2Dec_UpdateState(CLzma2Dec *p, Byte b)
 {
   switch (p->state)
   {
@@ -116,28 +117,28 @@ static ELzma2State Lzma2Dec_UpdateState(CLzma2Dec *p, Byte b)
         if (b < p->needInitLevel)
           return LZMA2_STATE_ERROR;
         p->needInitLevel = 0;
-        p->unpackSize = (uint32_t)(b & 0x1F) << 16;
+        p->unpackSize = (UInt32)(b & 0x1F) << 16;
       }
       return LZMA2_STATE_UNPACK0;
     
     case LZMA2_STATE_UNPACK0:
-      p->unpackSize |= (uint32_t)b << 8;
+      p->unpackSize |= (UInt32)b << 8;
       return LZMA2_STATE_UNPACK1;
     
     case LZMA2_STATE_UNPACK1:
-      p->unpackSize |= (uint32_t)b;
+      p->unpackSize |= (UInt32)b;
       p->unpackSize++;
       PRF(printf(" %7u", (unsigned)p->unpackSize));
       return LZMA2_IS_UNCOMPRESSED_STATE(p) ? LZMA2_STATE_DATA : LZMA2_STATE_PACK0;
     
     case LZMA2_STATE_PACK0:
-      p->packSize = (uint32_t)b << 8;
+      p->packSize = (UInt32)b << 8;
       return LZMA2_STATE_PACK1;
 
     case LZMA2_STATE_PACK1:
-      p->packSize |= (uint32_t)b;
+      p->packSize |= (UInt32)b;
       p->packSize++;
-      /* if (p->packSize < 5) return LZMA2_STATE_ERROR; */
+      // if (p->packSize < 5) return LZMA2_STATE_ERROR;
       PRF(printf(" %5u", (unsigned)p->packSize));
       return (p->control & 0x40) ? LZMA2_STATE_PROP : LZMA2_STATE_DATA;
 
@@ -166,7 +167,7 @@ static void LzmaDec_UpdateWithUncompressed(CLzmaDec *p, const Byte *src, SizeT s
   p->dicPos += size;
   if (p->checkDicSize == 0 && p->prop.dicSize - p->processedPos <= size)
     p->checkDicSize = p->prop.dicSize;
-  p->processedPos += (uint32_t)size;
+  p->processedPos += (UInt32)size;
 }
 
 void LzmaDec_InitDicAndState(CLzmaDec *p, BoolInt initDic, BoolInt initState);
@@ -245,7 +246,7 @@ SRes Lzma2Dec_DecodeToDic(CLzma2Dec *p, SizeT dicLimit,
 
         src += inCur;
         *srcLen += inCur;
-        p->unpackSize -= (uint32_t)inCur;
+        p->unpackSize -= (UInt32)inCur;
         p->state = (p->unpackSize == 0) ? LZMA2_STATE_CONTROL : LZMA2_STATE_DATA_CONT;
       }
       else
@@ -267,9 +268,9 @@ SRes Lzma2Dec_DecodeToDic(CLzma2Dec *p, SizeT dicLimit,
 
         src += inCur;
         *srcLen += inCur;
-        p->packSize -= (uint32_t)inCur;
+        p->packSize -= (UInt32)inCur;
         outCur = p->decoder.dicPos - dicPos;
-        p->unpackSize -= (uint32_t)outCur;
+        p->unpackSize -= (UInt32)outCur;
 
         if (res != 0)
           break;
@@ -329,21 +330,21 @@ ELzma2ParseStatus Lzma2Dec_Parse(CLzma2Dec *p,
 
       if (p->state == LZMA2_STATE_UNPACK0)
       {
-        /* if (p->decoder.dicPos != 0) */
+        // if (p->decoder.dicPos != 0)
         if (p->control == LZMA2_CONTROL_COPY_RESET_DIC || p->control >= 0xE0)
           return LZMA2_PARSE_STATUS_NEW_BLOCK;
-        /* if (outSize == 0) return LZMA_STATUS_NOT_FINISHED; */
+        // if (outSize == 0) return LZMA_STATUS_NOT_FINISHED;
       }
 
-      /* The following code can be commented.
-       * It's not big problem, if we read additional input bytes.
-       * It will be stopped later in LZMA2_STATE_DATA / LZMA2_STATE_DATA_CONT state. */
+      // The following code can be commented.
+      // It's not big problem, if we read additional input bytes.
+      // It will be stopped later in LZMA2_STATE_DATA / LZMA2_STATE_DATA_CONT state.
 
       if (outSize == 0 && p->state != LZMA2_STATE_FINISHED)
       {
-        /* checkFinishBlock is true. So we expect that block must be finished,
-         * We can return LZMA_STATUS_NOT_SPECIFIED or LZMA_STATUS_NOT_FINISHED here
-         * break; */
+        // checkFinishBlock is true. So we expect that block must be finished,
+        // We can return LZMA_STATUS_NOT_SPECIFIED or LZMA_STATUS_NOT_FINISHED here
+        // break;
         return (ELzma2ParseStatus)LZMA_STATUS_NOT_FINISHED;
       }
 
@@ -371,7 +372,7 @@ ELzma2ParseStatus Lzma2Dec_Parse(CLzma2Dec *p,
         src += inCur;
         *srcLen += inCur;
         outSize -= inCur;
-        p->unpackSize -= (uint32_t)inCur;
+        p->unpackSize -= (UInt32)inCur;
         p->state = (p->unpackSize == 0) ? LZMA2_STATE_CONTROL : LZMA2_STATE_DATA_CONT;
       }
       else
@@ -388,7 +389,7 @@ ELzma2ParseStatus Lzma2Dec_Parse(CLzma2Dec *p,
           p->state = LZMA2_STATE_DATA_CONT;
           if (*src != 0)
           {
-            /* first byte of lzma chunk must be Zero */
+            // first byte of lzma chunk must be Zero
             *srcLen += 1;
             p->packSize--;
             break;
@@ -400,7 +401,7 @@ ELzma2ParseStatus Lzma2Dec_Parse(CLzma2Dec *p,
 
         src += inCur;
         *srcLen += inCur;
-        p->packSize -= (uint32_t)inCur;
+        p->packSize -= (UInt32)inCur;
 
         if (p->packSize == 0)
         {
@@ -408,7 +409,7 @@ ELzma2ParseStatus Lzma2Dec_Parse(CLzma2Dec *p,
           if (rem > p->unpackSize)
             rem = p->unpackSize;
           p->decoder.dicPos += rem;
-          p->unpackSize -= (uint32_t)rem;
+          p->unpackSize -= (UInt32)rem;
           outSize -= rem;
           if (p->unpackSize == 0)
             p->state = LZMA2_STATE_CONTROL;
@@ -473,8 +474,8 @@ SRes Lzma2Decode(Byte *dest, SizeT *destLen, const Byte *src, SizeT *srcLen,
   SizeT outSize = *destLen, inSize = *srcLen;
   *destLen = *srcLen = 0;
   *status = LZMA_STATUS_NOT_SPECIFIED;
-  Lzma2Dec_Construct(&p);
-  RINOK(Lzma2Dec_AllocateProbs(&p, prop, alloc));
+  Lzma2Dec_CONSTRUCT(&p)
+  RINOK(Lzma2Dec_AllocateProbs(&p, prop, alloc))
   p.decoder.dic = dest;
   p.decoder.dicBufSize = outSize;
   Lzma2Dec_Init(&p);
@@ -486,3 +487,5 @@ SRes Lzma2Decode(Byte *dest, SizeT *destLen, const Byte *src, SizeT *srcLen,
   Lzma2Dec_FreeProbs(&p, alloc);
   return res;
 }
+
+#undef PRF

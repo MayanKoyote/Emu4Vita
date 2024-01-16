@@ -1,22 +1,22 @@
 /* LzmaDec.h -- LZMA Decoder
-2018-04-21 : Igor Pavlov : Public domain */
+2023-04-02 : Igor Pavlov : Public domain */
 
-#ifndef __LZMA_DEC_H
-#define __LZMA_DEC_H
+#ifndef ZIP7_INC_LZMA_DEC_H
+#define ZIP7_INC_LZMA_DEC_H
 
 #include "7zTypes.h"
 
 EXTERN_C_BEGIN
 
-/* #define _LZMA_PROB32 */
-/* _LZMA_PROB32 can increase the speed on some CPUs,
+/* #define Z7_LZMA_PROB32 */
+/* Z7_LZMA_PROB32 can increase the speed on some CPUs,
    but memory usage for CLzmaDec::probs will be doubled in that case */
 
 typedef
-#ifdef _LZMA_PROB32
-  uint32_t 
+#ifdef Z7_LZMA_PROB32
+  UInt32
 #else
-  uint16_t 
+  UInt16
 #endif
   CLzmaProb;
 
@@ -25,13 +25,13 @@ typedef
 
 #define LZMA_PROPS_SIZE 5
 
-typedef struct _CLzmaProps
+typedef struct
 {
   Byte lc;
   Byte lp;
   Byte pb;
   Byte _pad_;
-  uint32_t dicSize;
+  UInt32 dicSize;
 } CLzmaProps;
 
 /* LzmaProps_Decode - decodes properties
@@ -60,20 +60,21 @@ typedef struct
   SizeT dicBufSize;
   SizeT dicPos;
   const Byte *buf;
-  uint32_t range;
-  uint32_t code;
-  uint32_t processedPos;
-  uint32_t checkDicSize;
-  uint32_t reps[4];
-  uint32_t state;
-  uint32_t remainLen;
+  UInt32 range;
+  UInt32 code;
+  UInt32 processedPos;
+  UInt32 checkDicSize;
+  UInt32 reps[4];
+  UInt32 state;
+  UInt32 remainLen;
 
-  uint32_t numProbs;
+  UInt32 numProbs;
   unsigned tempBufSize;
   Byte tempBuf[LZMA_REQUIRED_INPUT_MAX];
 } CLzmaDec;
 
-#define LzmaDec_Construct(p) { (p)->dic = NULL; (p)->probs = NULL; }
+#define LzmaDec_CONSTRUCT(p) { (p)->dic = NULL; (p)->probs = NULL; }
+#define LzmaDec_Construct(p) LzmaDec_CONSTRUCT(p)
 
 void LzmaDec_Init(CLzmaDec *p);
 
@@ -181,6 +182,7 @@ Returns:
       LZMA_STATUS_NEEDS_MORE_INPUT
       LZMA_STATUS_MAYBE_FINISHED_WITHOUT_MARK
   SZ_ERROR_DATA - Data error
+  SZ_ERROR_FAIL - Some unexpected error: internal error of code, memory corruption or hardware failure
 */
 
 SRes LzmaDec_DecodeToDic(CLzmaDec *p, SizeT dicLimit,
@@ -223,6 +225,7 @@ Returns:
   SZ_ERROR_MEM  - Memory allocation error
   SZ_ERROR_UNSUPPORTED - Unsupported properties
   SZ_ERROR_INPUT_EOF - It needs more bytes in input buffer (src).
+  SZ_ERROR_FAIL - Some unexpected error: internal error of code, memory corruption or hardware failure
 */
 
 SRes LzmaDecode(Byte *dest, SizeT *destLen, const Byte *src, SizeT *srcLen,

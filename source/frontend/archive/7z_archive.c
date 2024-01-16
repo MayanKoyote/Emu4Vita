@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <psp2/kernel/processmgr.h>
 #include <psp2/io/fcntl.h>
 #include <7zTypes.h>
@@ -75,7 +76,7 @@ SevenZ_GetRomEntry(const char *archive_path)
     FileInStream_CreateVTable(&current_7z.file_stream);
     LookToRead2_CreateVTable(&current_7z.look_stream, False);
     current_7z.look_stream.realStream = &current_7z.file_stream.vt;
-    LookToRead2_Init(&current_7z.look_stream);
+    LookToRead2_INIT(&current_7z.look_stream);
 
     CSzArEx *db = &current_7z.db;
     SzArEx_Init(db);

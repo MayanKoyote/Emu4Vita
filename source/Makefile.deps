@@ -79,7 +79,9 @@ COMM_OBJS := $(addprefix $(BUILD_DIR)/, $(COMM_OBJS))
 	deps/7zip/BraIA64.c \
 	deps/7zip/Bcj2.c \
 	deps/7zip/7zFile.c \
-	deps/7zip/7zStream.c
+	deps/7zip/7zStream.c \
+	deps/7zip/LzFindMt.c \
+	deps/7zip/Threads.c
 
 DEPS_OBJS := $(7ZIP_C:.c=.o)
 DEPS_OBJS := $(addprefix $(BUILD_DIR)/, $(DEPS_OBJS))
@@ -94,12 +96,13 @@ DEFINES := \
 	-DHAVE_7ZIP \
 	-D_7ZIP_ST \
 	-DHAVE_ZLIB \
-	-DHAVE_COMPRESSION
+	-DHAVE_COMPRESSION \
+	-DUSE_FOPEN
 
 WARNINGS := \
 	-Wall
 
-CFLAGS    := -march=armv7-a -mfpu=neon -mfloat-abi=hard -DVITA
+CFLAGS    := -march=armv8-a+crc+crypto -mfpu=neon -mfloat-abi=hard -DVITA
 CFLAGS    := $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
 CFLAGS    += -O3
 ASFLAGS   := $(CFLAGS) $(INCDIRS)

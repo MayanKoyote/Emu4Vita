@@ -1,24 +1,26 @@
 /* 7zCrc.h -- CRC32 calculation
-2013-01-18 : Igor Pavlov : Public domain */
+2023-04-02 : Igor Pavlov : Public domain */
 
-#ifndef __7Z_CRC_H
-#define __7Z_CRC_H
+#ifndef ZIP7_INC_7Z_CRC_H
+#define ZIP7_INC_7Z_CRC_H
 
 #include "7zTypes.h"
 
 EXTERN_C_BEGIN
 
-extern uint32_t g_CrcTable[];
+extern UInt32 g_CrcTable[];
 
 /* Call CrcGenerateTable one time before other CRC functions */
-void MY_FAST_CALL CrcGenerateTable(void);
+void Z7_FASTCALL CrcGenerateTable(void);
 
 #define CRC_INIT_VAL 0xFFFFFFFF
 #define CRC_GET_DIGEST(crc) ((crc) ^ CRC_INIT_VAL)
 #define CRC_UPDATE_BYTE(crc, b) (g_CrcTable[((crc) ^ (b)) & 0xFF] ^ ((crc) >> 8))
 
-uint32_t MY_FAST_CALL CrcUpdate(uint32_t crc, const void *data, size_t size);
-uint32_t MY_FAST_CALL CrcCalc(const void *data, size_t size);
+UInt32 Z7_FASTCALL CrcUpdate(UInt32 crc, const void *data, size_t size);
+UInt32 Z7_FASTCALL CrcCalc(const void *data, size_t size);
+
+typedef UInt32 (Z7_FASTCALL *CRC_FUNC)(UInt32 v, const void *data, size_t size, const UInt32 *table);
 
 EXTERN_C_END
 
