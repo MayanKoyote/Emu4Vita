@@ -9,41 +9,42 @@ APP_NAME_STR      := Emu4Vita\ Arch
 APP_VER_STR       := $(TARGET_VER)
 APP_DIR_NAME      := Arch
 BUILD_DATE        := $(shell date +"%Y/%m/%d")
+BUILD_DATE2       := $(shell date +"%Y_%m_%d")
 
 MAKEFILE_PATH     := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR      := $(dir $(MAKEFILE_PATH))
 ROOT_DIR          := $(patsubst %/,%, $(MAKEFILE_DIR))
 
-DEPS_DIR          := $(ROOT_DIR)/deps
-DEPS_INCLUDE_DIR  := $(DEPS_DIR)/include
-DEPS_LIB_DIR      := $(DEPS_DIR)/lib
+IMPORTS_DIR       := $(ROOT_DIR)/imports
+INCLUDE_DIR       := $(IMPORTS_DIR)/include
+LIB_DIR           := $(IMPORTS_DIR)/lib
 
 CORES_DIR         := $(ROOT_DIR)/cores
+APPS_DIR          := $(ROOT_DIR)/../apps
 PKG_DIR           := $(ROOT_DIR)/pkg
 SRC_DIR           := $(ROOT_DIR)/src
 BUILD_DIR         := $(ROOT_DIR)/../build/arch
-BUBBLE_DIR        := $(ROOT_DIR)/../apps
 
 RELEASES_DIR      := $(ROOT_DIR)/../releases
-NIGHTLYS_DIR      := $(ROOT_DIR)/../nightlys
+NIGHTLIES_DIR     := $(ROOT_DIR)/../nightlies
 
 EBOOT_PATH        := $(PKG_DIR)/eboot.bin
 SFO_PATH          := $(PKG_DIR)/sce_sys/param.sfo
 
 ifeq ($(nightly), 1)
-	TARGET_PATH   := $(NIGHTLYS_DIR)/Emu4VitaArch_nightly/$(TARGET)_nightly_$(BUILD_DATE).vpk
+	TARGET_PATH   := $(NIGHTLIES_DIR)/Emu4VitaArch/$(TARGET)_nightly_$(BUILD_DATE2).vpk
 else
 	TARGET_PATH   := $(RELEASES_DIR)/Emu4VitaArch/$(TARGET)_v$(TARGET_VER).vpk
 endif
 
-MAKE_ARGS := arch_build=1
+MAKE_ARGS := arch_build=1 ARCH_DIR=$(ROOT_DIR)
 
 INCDIRS := \
 	-ISRC_DIR \
-	-I$(DEPS_INCLUDE_DIR)
+	-I$(INCLUDE_DIR)
 
 LIBDIRS := \
-	-L$(DEPS_LIB_DIR)
+	-L$(LIB_DIR)
 
 SRC_C := \
 	browser.c \
@@ -108,8 +109,8 @@ STRIP   := $(PREFIX)-strip
 NM      := $(PREFIX)-nm
 LD      := $(CXX)
 
-#all: clean_files create_dirs build-vita
-all: clean_files create_dirs build-cores build-vita
+#all: clean_files create_dirs build-app
+all: clean_files create_dirs build-cores build-app
 
 clean_files:
 	@rm -rf $(TARGET_PATH) $(EBOOT_PATH) $(SFO_PATH) $(BUILD_DIR)/$(TARGET).velf $(BUILD_DIR)/$(TARGET).elf
@@ -117,7 +118,7 @@ clean_files:
 create_dirs:
 	@mkdir -p $(BUILD_DIR)
 
-build-vita: $(EBOOT_PATH) $(SFO_PATH)
+build-app: $(EBOOT_PATH) $(SFO_PATH)
 	@rm -rf $(TARGET_PATH)
 	@mkdir -p $(dir $(TARGET_PATH))
 	cd $(PKG_DIR) && zip -r $(TARGET_PATH) ./*
@@ -145,45 +146,45 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-clean: clean-vita
+clean: clean-app
 
-clean-all: clean-cores clean-vita
+clean-all: clean-cores clean-app
 
-clean-vita:
+clean-app:
 	rm -rf $(BUILD_DIR) $(TARGET_PATH) $(EBOOT_PATH) $(SFO_PATH)
 
 build-cores:
-	cd $(BUBBLE_DIR)/fba_lite && make build-self $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/fceumm && make build-self $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/gambatte && make build-self $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/genesis_plus_gx && make build-self $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/gpsp && make build-self $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/mednafen_ngp && make build-self $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/mednafen_pce_fast && make build-self $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/mednafen_supergrafx && make build-self $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/mednafen_wswan && make build-self $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/nestopia && make build-self $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/pcsx_rearmed && make build-self $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/picodrive && make build-self $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/snes9x2002 && make build-self $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/snes9x2005 && make build-self $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/snes9x2005_plus && make build-self $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/vba_next && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/fba_lite && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/fceumm && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/gambatte && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/genesis_plus_gx && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/gpsp && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/mednafen_ngp && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/mednafen_pce_fast && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/mednafen_supergrafx && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/mednafen_wswan && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/nestopia && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/pcsx_rearmed && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/picodrive && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/snes9x2002 && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/snes9x2005 && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/snes9x2005_plus && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/vba_next && make build-self $(MAKE_ARGS)
 	
 clean-cores:
-	cd $(BUBBLE_DIR)/fba_lite && make clean $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/fceumm && make clean $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/gambatte && make clean $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/genesis_plus_gx && make clean $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/gpsp && make clean $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/mednafen_ngp && make clean $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/mednafen_pce_fast && make clean $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/mednafen_supergrafx && make clean $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/mednafen_wswan && make clean $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/nestopia && make clean $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/pcsx_rearmed && make clean $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/picodrive && make clean $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/snes9x2002 && make clean $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/snes9x2005 && make clean $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/snes9x2005_plus && make clean $(MAKE_ARGS)
-	cd $(BUBBLE_DIR)/vba_next && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/fba_lite && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/fceumm && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/gambatte && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/genesis_plus_gx && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/gpsp && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/mednafen_ngp && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/mednafen_pce_fast && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/mednafen_supergrafx && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/mednafen_wswan && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/nestopia && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/pcsx_rearmed && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/picodrive && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/snes9x2002 && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/snes9x2005 && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/snes9x2005_plus && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/vba_next && make clean $(MAKE_ARGS)

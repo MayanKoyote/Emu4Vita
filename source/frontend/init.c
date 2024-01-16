@@ -169,7 +169,7 @@ int AppInit(int argc, char *const argv[])
     Retro_InitLib();
     Setting_Init();
 
-    ZIP_LoadCacheConfig();
+    Archive_LoadCacheConfig();
 
     // Lock USB connection and PS button
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_USB_CONNECTION | SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN_2);
@@ -190,11 +190,15 @@ END:
 
 int AppDeinit()
 {
+    AppLog("[INIT] Deinit app...\n");
+
     Setting_Deinit();
     GUI_Deinit();
     Retro_DeinitLib();
 
     finishSceAppUtil();
+
+    AppLog("[INIT] Deinit app OK!\n");
 
     return 0;
 }

@@ -1,0 +1,91 @@
+TARGET = lib7zip
+
+MAKEFILE_PATH              := $(abspath $(lastword $(MAKEFILE_LIST)))
+MAKEFILE_DIR               := $(dir $(MAKEFILE_PATH))
+ROOT_DIR                   := $(patsubst %/,%, $(MAKEFILE_DIR))
+
+DEPS_DIR                   := $(ROOT_DIR)/../DEPS
+SRC_DIR                    := $(DEPS_DIR)/7zip
+BUILD_DIR                  := $(ROOT_DIR)/../build/7zip
+
+TARGET_PATH                := $(ROOT_DIR)/imports/lib/$(TARGET).a
+
+LIBDIRS := 
+
+INCDIRS := \
+	-I$(DEPS_DIR) \
+	-I$(SRC_DIR)
+
+SRC_C += \
+	7zArcIn.c \
+	7zBuf.c \
+	7zCrc.c \
+	7zCrcOpt.c \
+	7zDec.c \
+	CpuArch.c \
+	Delta.c \
+	LzFind.c \
+	LzmaDec.c \
+	Lzma2Dec.c \
+	LzmaEnc.c \
+	Bra.c \
+	Bra86.c \
+	BraIA64.c \
+	Bcj2.c \
+	7zFile.c \
+	7zStream.c
+
+OBJS := $(SRC_C:.c=.o)
+OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
+
+DEFINES := \
+    -D_7ZIP_ST
+
+WARNINGS := \
+	-Wall
+
+ARCHFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=hard -DVITA
+CFLAGS    += $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
+CFLAGS    += -O3
+ASFLAGS   := $(CFLAGS) $(WARNINGS) $(INCDIRS)
+
+CFLAGS    += -ffast-math $(WARNINGS) $(INCDIRS) $(DEFINES)
+CXXFLAGS  := $(CFLAGS) -fno-rtti -fno-exceptions
+LDFLAGS   := -Wl,-q $(LIBDIRS)
+
+PREFIX  := arm-vita-eabi
+CC      := $(PREFIX)-gcc
+CXX     := $(PREFIX)-g++
+AS      := $(PREFIX)-as
+AR      := $(PREFIX)-ar
+OBJCOPY := $(PREFIX)-objcopy
+STRIP   := $(PREFIX)-strip
+NM      := $(PREFIX)-nm
+LD      := $(CXX)
+
+all: $(TARGET_PATH)
+
+$(TARGET_PATH): $(OBJS)
+	$(AR) -rc $@ $^
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) -c $(CXXFLAGS) $< -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) -c $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.S
+	@mkdir -p $(dir $@)
+	$(CC) -c $(ASFLAGS) $< -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
+	@mkdir -p $(dir $@)
+	$(CC) -c $(ASFLAGS) $< -o $@
+
+clean: 
+	rm -rf $(BUILD_DIR) $(TARGET_PATH)
+
+.PHONY: clean all
+	

@@ -1,2 +1,4 @@
 .vscode
-deps/lib/libretro_comm.a
+imports/lib/libretro_comm.a
+imports/lib/lib7zip.a
+imports/lib/libminizip.a

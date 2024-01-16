@@ -264,7 +264,7 @@ int AllocateReadFileEX(const char *file, void **buffer, size_t *buffersize)
     }
     sceIoClose(fd);
 
-    printf("AllocateReadFile: size: %lld, remaining: %lld", size, remaining);
+    // printf("AllocateReadFile: size: %lld, remaining: %lld\n", size, remaining);
     return size - remaining;
 }
 

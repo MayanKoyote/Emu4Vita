@@ -36,7 +36,6 @@
 
 #define APP_DATA_DIR "ux0:data/EMU4VITA/" APP_DIR_NAME
 #define APP_ASSETS_DIR "app0:assets"
-#define CORE_DATA_DIR "app0:data"
 
 #define CORE_CONFIGS_DIR APP_DATA_DIR "/configs"
 #define CORE_SAVEFILES_DIR APP_DATA_DIR "/savefiles"

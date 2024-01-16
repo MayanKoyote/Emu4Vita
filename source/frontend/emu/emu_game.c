@@ -80,13 +80,13 @@ void Emu_SpeedDownGame()
     Emu_SetRunSpeed(speed);
 }
 
-static int loadGameFromFile(const char *path, int is_zip_mode)
+static int loadGameFromFile(const char *path, int archive_mode)
 {
     const char *rom_path = path;
-    if (is_zip_mode)
+    if (archive_mode != ARCHIVE_MODE_NO)
     {
         char cache_path[MAX_PATH_LENGTH];
-        if (ZIP_GetRomPath(path, cache_path) < 0)
+        if (Archive_GetRomPath(path, cache_path, archive_mode) < 0)
             return -1;
         rom_path = cache_path;
     }
@@ -103,7 +103,7 @@ static int loadGameFromFile(const char *path, int is_zip_mode)
     return 0;
 }
 
-static int loadGameFromMemory(const char *path, int is_zip_mode)
+static int loadGameFromMemory(const char *path, int archive_mode)
 {
     if (game_rom_data)
         free(game_rom_data);
@@ -111,9 +111,9 @@ static int loadGameFromMemory(const char *path, int is_zip_mode)
 
     size_t size = 0;
 
-    if (is_zip_mode)
+    if (archive_mode != ARCHIVE_MODE_NO)
     {
-        if (ZIP_GetRomMemory(path, &game_rom_data, &size) < 0)
+        if (Archive_GetRomMemory(path, &game_rom_data, &size, archive_mode) < 0)
             return -1;
     }
     else
@@ -158,19 +158,26 @@ static int loadGame(const char *path)
     core_display_rotate = 0;
     retro_init();
 
-    int is_zip_mode = 0;
+    int archive_mode = ARCHIVE_MODE_NO;
 
     if (core_want_ext_zip_mode)
     {
         const char *ext = strrchr(path, '.');
         if (ext++ && strcasecmp(ext, "zip") == 0)
-            is_zip_mode = 1;
+            archive_mode = ARCHIVE_MODE_ZIP;
+    }
+
+    if (archive_mode == ARCHIVE_MODE_NO && core_want_ext_zip_mode)
+    {
+        const char *ext = strrchr(path, '.');
+        if (ext++ && strcasecmp(ext, "zip") == 0)
+            archive_mode = ARCHIVE_MODE_ZIP;
     }
 
     if (core_system_info.need_fullpath)
-        ret = loadGameFromFile(path, is_zip_mode);
+        ret = loadGameFromFile(path, archive_mode);
     else
-        ret = loadGameFromMemory(path, is_zip_mode);
+        ret = loadGameFromMemory(path, archive_mode);
 
     if (ret < 0)
     {
