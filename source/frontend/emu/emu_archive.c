@@ -1,17 +1,31 @@
 #include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include <psp2/kernel/processmgr.h>
 #include <psp2/io/fcntl.h>
-#include <psp2/kernel/threadmgr.h>
+
+#include "archive/zip_archive.h"
+#include "archive/7z_archive.h"
 #include "emu/emu.h"
+#include "file.h"
 #include "config.h"
 #include "utils.h"
-#include "7z.h"
+#include "utils_string.h"
 
-#define ARCHIVE_CACHE_CONFIG_PATH CORE_CACHE_DIR "/cache.txt"
+typedef struct
+{
+    uint32_t crc;               // crc32
+    uint64_t ltime;             // 加载时间
+    char name[MAX_NAME_LENGTH]; // rom名称
+} ArchiveEntry;
 
-ArchiveCacheEntry archive_cache_entries[MAX_CACHE_SIZE];
-int archive_cache_num = 0;
+#define MAX_CACHE_SIZE 5
+#define ARCHIVE_CACHE_CONFIG_PATH CORE_CACHE_DIR "/archive_cache.txt"
+
+static ArchiveEntry archive_cache_entries[MAX_CACHE_SIZE];
+static int archive_cache_num = 0;
 
 int Archive_LoadCacheConfig()
 {
@@ -99,12 +113,12 @@ int Archive_SaveCacheConfig()
     return ret;
 }
 
-int Archive_FindRomCache(uint32_t crc, const char *rom_name, char *rom_path)
+static int Archive_FindRomCache(int rom_crc, const char *rom_name, char *rom_path)
 {
     int i;
     for (i = 0; i < archive_cache_num; i++)
     {
-        if (archive_cache_entries[i].crc == crc && strcasecmp(archive_cache_entries[i].name, rom_name) == 0)
+        if (archive_cache_entries[i].crc == rom_crc && strcasecmp(archive_cache_entries[i].name, rom_name) == 0)
         {
             sprintf(rom_path, "%s/%s", CORE_CACHE_DIR, rom_name);
             AppLog("[ARCHIVE] FindRomCache OK: %d, %s\n", i, rom_name);
@@ -116,7 +130,7 @@ int Archive_FindRomCache(uint32_t crc, const char *rom_name, char *rom_path)
     return -1;
 }
 
-static int Archive_GetInsertCacheEntriesIndex()
+static int getInsertCacheEntriesIndex()
 {
     if (archive_cache_num < MAX_CACHE_SIZE)
         return archive_cache_num;
@@ -135,9 +149,9 @@ static int Archive_GetInsertCacheEntriesIndex()
     return index;
 }
 
-int Archive_InsertRomCache(uint32_t crc, const char *rom_name)
+static int Archive_AddCacheEntry(int crc, const char *rom_name)
 {
-    int index = Archive_GetInsertCacheEntriesIndex(); // 获取新条目插入位置
+    int index = getInsertCacheEntriesIndex(); // 获取新条目插入位置
 
     if (archive_cache_num >= MAX_CACHE_SIZE) // 缓存条目已达到最大数
     {
@@ -152,40 +166,108 @@ int Archive_InsertRomCache(uint32_t crc, const char *rom_name)
     }
 
     memset(&archive_cache_entries[index], 0, sizeof(archive_cache_entries[index]));
+    // 设置新条目的crc
     archive_cache_entries[index].crc = crc;
+    // 设置新条目的name
     strcpy(archive_cache_entries[index].name, rom_name);
+    // 设置新条目的ltime为当前线程时间
+    archive_cache_entries[index].ltime = sceKernelGetProcessTimeWide();
 
     Archive_SaveCacheConfig();
 
+    AppLog("[ARCHIVE] Archive_AddCacheEntry OK: %d, %s\n", index, rom_name);
     return index;
 }
 
-int Archive_GetRomMemory(const char *archive_path, void **buf, size_t *size, int mode)
+int Archive_GetRomMemory(const char *archive_path, void **buf, size_t *size, int archive_mode)
 {
-    switch (mode)
+    int ret = -1;
+
+    if (archive_mode == ARCHIVE_MODE_ZIP)
     {
-    case ZIP_MODE:
-        return ZIP_GetRomMemory(archive_path, buf, size);
-    case SEVENZ_MODE:
-        return SevenZ_GetRomMemory(archive_path, buf, size);
-    default:
-        return -1;
+        if (ZIP_OpenRom(archive_path, NULL, NULL) <= 0)
+            goto FAILED;
+        ret = ZIP_ExtractRomMemory(buf, size);
     }
+    else if (archive_mode == ARCHIVE_MODE_7Z)
+    {
+        if (SevenZ_OpenRom(archive_path, NULL, NULL) <= 0)
+            goto FAILED;
+        ret = SevenZ_ExtractRomMemory(buf, size);
+    }
+
+END:
+    ZIP_CloseRom();
+    SevenZ_CloseRom();
+    if (ret < 0)
+        AppLog("[Archive] Archive_GetRomMemory failed!\n");
+    else
+        AppLog("[Archive] Archive_GetRomMemory OK!\n");
+    return ret;
+
+FAILED:
+    ret = -1;
+    goto END;
 }
 
-int Archive_GetRomPath(const char *archive_path, char *rom_path, int mode)
+int Archive_GetRomPath(const char *archive_path, char *rom_path, int archive_mode)
 {
-    switch (mode)
+    int ret = -1;
+    uint32_t rom_crc;
+    char entry_name[MAX_PATH_LENGTH];
+
+    if (archive_mode == ARCHIVE_MODE_ZIP)
+        ret = ZIP_OpenRom(archive_path, &rom_crc, entry_name);
+    else if (archive_mode == ARCHIVE_MODE_7Z)
+        ret = SevenZ_OpenRom(archive_path, &rom_crc, entry_name);
+
+    if (ret <= 0)
+        goto FAILED;
+
+    // 缓存文件名：例GBA: game1.zip ==> game1.gba（忽略压缩包内的rom文件名，以zip文件名为rom名）
+    char rom_name[MAX_NAME_LENGTH];
+    MakeBaseName(rom_name, archive_path, sizeof(rom_name));
+    const char *ext = strrchr(entry_name, '.');
+    if (ext)
+        strcat(rom_name, ext);
+
+    int index = Archive_FindRomCache(rom_crc, rom_name, rom_path);
+    if (index < 0)
     {
-    case ZIP_MODE:
-        return ZIP_GetRomPath(archive_path, rom_path);
-    case SEVENZ_MODE:
-        return SevenZ_GetRomPath(archive_path, rom_path);
-    default:
-        return -1;
+        ret = -1;
+        // 未找到cache，执行解压
+        if (archive_mode == ARCHIVE_MODE_ZIP)
+            ret = ZIP_ExtractRom(rom_name, rom_path);
+        else if (archive_mode == ARCHIVE_MODE_7Z)
+            ret = SevenZ_ExtractRom(rom_name, rom_path);
+
+        if (ret < 0)
+            goto FAILED;
+
+        // 添加新的cache条目
+        Archive_AddCacheEntry(rom_crc, rom_name);
     }
+    else
+    {
+        // 更新ltime为当前线程时间
+        archive_cache_entries[index].ltime = sceKernelGetProcessTimeWide();
+    }
+
+END:
+    ZIP_CloseRom();
+    SevenZ_CloseRom();
+    if (ret < 0)
+        AppLog("[Archive] Archive_GetRomPath failed!\n");
+    else
+        AppLog("[Archive] Archive_GetRomPath OK: %s\n", rom_path);
+    return ret;
+
+FAILED:
+    ret = -1;
+    goto END;
 }
 
+/*
 typedef struct
 {
     char name[256];
@@ -229,4 +311,4 @@ void Archive_AsyncWriteRomCache(uint32_t crc, const char *rom_name, const char *
             sceKernelStartThread(write_thread, sizeof(args), &args);
         }
     }
-}
+}*/
