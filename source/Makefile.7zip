@@ -51,8 +51,9 @@ DEFINES := \
 WARNINGS := \
 	-Wall
 
-ARCHFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=hard -DVITA
+ARCHFLAGS := -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=hard -DVITA
 CFLAGS    += $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
+CFLAGS    += -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables -ftree-vectorize
 CFLAGS    += -O3
 ASFLAGS   := $(CFLAGS) $(WARNINGS) $(INCDIRS)
 
