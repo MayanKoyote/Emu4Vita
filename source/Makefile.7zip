@@ -39,13 +39,15 @@ SRC_C += \
 	LzmaEnc.c \
 	MtCoder.c \
 	MtDec.c \
-	Threads.c
+	Threads.c \
+    LzFindOpt.c
 
 OBJS := $(SRC_C:.c=.o)
 OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
 
 DEFINES := \
-    -D_7ZIP_ST
+    -D_7ZIP_ST \
+	-DUSE_FOPEN
 
 DEFINES += $(EXT_DEFINES)
 
