@@ -134,6 +134,7 @@ LIBS := \
 	-lz \
 	-lm \
 	-lc \
+	-larchive \
 	-lScePgf_stub \
 	-lSceDisplay_stub \
 	-lSceGxm_stub \

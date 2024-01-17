@@ -5,6 +5,8 @@
 
 #include <psp2/kernel/processmgr.h>
 #include <psp2/io/fcntl.h>
+#include <archive.h>
+#include <archive_entry.h>
 
 #include "archive/zip_archive.h"
 #include "archive/7z_archive.h"
@@ -23,9 +25,13 @@ typedef struct
 
 #define MAX_CACHE_SIZE 5
 #define ARCHIVE_CACHE_CONFIG_PATH CORE_CACHE_DIR "/archive_cache.txt"
+#define ARCHIVE_BLOCK_SIZE 10240
 
 static ArchiveEntry archive_cache_entries[MAX_CACHE_SIZE];
 static int archive_cache_num = 0;
+
+static struct archive *current_archive = NULL;
+static struct archive_entry *current_entry = NULL;
 
 int Archive_LoadCacheConfig()
 {
@@ -177,6 +183,45 @@ static int Archive_AddCacheEntry(int crc, const char *rom_name)
 
     AppLog("[ARCHIVE] Archive_AddCacheEntry OK: %d, %s\n", index, rom_name);
     return index;
+}
+
+static int Archive_OpenRom(const char *archive_path, int archive_mode, uint32_t *crc, char *name)
+{
+    if (current_archive)
+        archive_read_free(current_archive);
+
+    current_archive = archive_read_new();
+    if (!current_archive)
+        return -1;
+
+    if (archive_mode == ARCHIVE_MODE_ZIP &&
+        (!(archive_read_support_filter_lzip(current_archive) == ARCHIVE_OK &&
+           archive_read_support_format_zip(current_archive) == ARCHIVE_OK)))
+        goto FAILED;
+    else if (archive_mode == ARCHIVE_MODE_7Z &&
+             (!(archive_read_support_filter_lzma(current_archive) &&
+                archive_read_support_format_7zip(current_archive))))
+        goto FAILED;
+
+    if (archive_read_open_filename(current_archive, archive_path, ARCHIVE_BLOCK_SIZE) != ARCHIVE_OK)
+        goto FAILED;
+
+    while (archive_read_next_header(current_archive, &current_entry) == ARCHIVE_OK)
+    {
+        const char *entry_name = archive_entry_pathname(current_entry);
+        if (entry_name && IsValidFile(entry_name))
+        {
+            strcpy(name, entry_name);
+
+            AppLog("[ARCHIVE] Archive_OpenRom OK!\n");
+            return 1;
+        }
+    }
+
+FAILED:
+    archive_read_free(current_archive);
+    current_archive = NULL;
+    return -1;
 }
 
 int Archive_GetRomMemory(const char *archive_path, void **buf, size_t *size, int archive_mode)
