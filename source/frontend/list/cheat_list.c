@@ -3,11 +3,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <psp2/io/fcntl.h>
+
 #include "cheat_list.h"
 #include "linked_list.h"
 #include "config_list.h"
 #include "utils_string.h"
 #include "file.h"
+#include "config.h"
 
 static void freeEntryData(void *data)
 {
@@ -69,15 +72,19 @@ static int checkCheatConfig(CheatListEntryData *data, int idx, char *key, char *
     {
         if (!data->code)
         {
-            data->code = malloc(strlen(value) + 1);
-            if (data->code)
-                strcpy(data->code, value);
+            int value_len = strlen(value);
+            if (value_len > 0)
+            {
+                data->code = malloc(value_len + 1);
+                if (data->code)
+                    strcpy(data->code, value);
+            }
         }
     }
-    else if (strcmp(p, "enable") == 0)
-    {
-        data->enable = StringToBoolean(value);
-    }
+    // else if (strcmp(p, "enable") == 0)
+    // {
+    //    data->enable = StringToBoolean(value);
+    // }
     else if (strcmp(p, "address") == 0)
     {
         data->address = StringToDecimal(value);
@@ -247,4 +254,87 @@ LinkedList *NewCheatList()
 
     LinkedListSetFreeEntryDataCallback(list, freeEntryData);
     return list;
+}
+
+int CheatListResetConfig(LinkedList *list)
+{
+    if (!list)
+        return -1;
+
+    LinkedListEntry *entry = LinkedListHead(list);
+
+    while (entry)
+    {
+        CheatListEntryData *data = (CheatListEntryData *)LinkedListGetEntryData(entry);
+        data->enable = 0;
+        entry = LinkedListNext(entry);
+    }
+
+    return 0;
+}
+
+int CheatListLoadConfig(LinkedList *list, const char *path)
+{
+    if (!list)
+        return -1;
+
+    LinkedList *config_list = NewConfigList();
+    if (config_list)
+        ConfigListGetEntries(config_list, path);
+
+    LinkedListEntry *entry = LinkedListHead(list);
+
+    while (entry)
+    {
+        CheatListEntryData *data = (CheatListEntryData *)LinkedListGetEntryData(entry);
+        data->enable = 0;
+
+        if (data->desc && config_list)
+        {
+            LinkedListEntry *find = ConfigListFindEntryByKey(config_list, data->desc);
+            if (find)
+            {
+                ConfigListEntryData *c_data = (ConfigListEntryData *)LinkedListGetEntryData(find);
+                data->enable = StringToDecimal(c_data->value);
+                LinkedListRemove(config_list, find);
+            }
+        }
+
+        entry = LinkedListNext(entry);
+    }
+
+    if (config_list)
+        LinkedListDestroy(config_list);
+
+    return 0;
+}
+
+int CheatListSaveConfig(LinkedList *list, const char *path)
+{
+    if (!list)
+        return -1;
+
+    SceUID fd = sceIoOpen(path, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
+    if (fd < 0)
+        return fd;
+
+    int ret = 0;
+    char string[MAX_CONFIG_LINE_LENGTH];
+    LinkedListEntry *entry = LinkedListHead(list);
+
+    while (entry)
+    {
+        CheatListEntryData *data = (CheatListEntryData *)LinkedListGetEntryData(entry);
+        snprintf(string, MAX_CONFIG_LINE_LENGTH, "%s = \"%d\"\n", data->desc, data->enable);
+
+        if ((ret = sceIoWrite(fd, string, strlen(string))) < 0)
+            break;
+
+        entry = LinkedListNext(entry);
+    }
+
+    sceIoClose(fd);
+    if (ret < 0)
+        sceIoRemove(path);
+    return ret;
 }

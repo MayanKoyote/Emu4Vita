@@ -234,7 +234,7 @@ int Emu_StartGame(EmuGameInfo *info)
     if (state_num >= -1)
         Emu_LoadState(state_num);
 
-    Emu_LoadCheatOption();
+    Emu_InitCheat();
 
     GUI_CleanPad();
     Emu_RequestUpdateVideoDisplay();
@@ -270,6 +270,7 @@ void Emu_ExitGame()
         retro_unload_game();
         retro_deinit();
         game_loaded = 0;
+        Emu_DeinitCheat();
         Emu_DeinitAudio();
         Emu_DeinitVideo();
         Emu_DeinitInput();
@@ -307,6 +308,7 @@ void Emu_PauseGame()
     if (game_loaded)
     {
         game_run = 0;
+        Emu_PauseCheat();
         Emu_PauseAudio();
         Emu_PauseVideo();
         if (game_run_event_action_type == TYPE_GAME_RUN_EVENT_ACTION_NONE)
@@ -319,6 +321,7 @@ void Emu_ResumeGame()
     if (game_loaded)
     {
         game_run = 1;
+        Emu_ResumeCheat();
         Emu_ResumeAudio();
         Emu_ResumeVideo();
         LockQuickMenu();

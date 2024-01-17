@@ -3,12 +3,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <psp2/kernel/threadmgr/thread.h>
+
 #include "activity/browser.h"
 #include "list/cheat_list.h"
 #include "setting/setting.h"
 #include "emu/emu.h"
 #include "config.h"
 #include "utils.h"
+
+static SceUID cheat_thid = -1;
+static int cheat_run = 0;
+static int cheat_pause = 1;
+static int cheat_reset = 0;
 
 static int makeCheatPath(char *path)
 {
@@ -20,14 +27,39 @@ static int makeCheatPath(char *path)
     return 0;
 }
 
-int Emu_LoadCheatOption()
+void Emu_PauseCheat()
 {
-    AppLog("[CHEAT] Emu_LoadCheatOption...\n");
+    cheat_pause = 1;
+}
 
+void Emu_ResumeCheat()
+{
+    cheat_pause = 0;
+}
+
+void Emu_CleanCheatOption()
+{
     Setting_SetCheatMenu(NULL);
     if (core_cheat_list)
         LinkedListDestroy(core_cheat_list);
     core_cheat_list = NULL;
+}
+
+int Emu_UpdateCheatOption()
+{
+    cheat_reset = 1;
+
+    return 0;
+}
+
+int Emu_ResetCheatOption()
+{
+    return CheatListResetConfig(core_cheat_list);
+}
+
+int Emu_LoadCheatOption()
+{
+    Emu_CleanCheatOption();
 
     char path[1024];
     makeCheatPath(path);
@@ -38,6 +70,9 @@ int Emu_LoadCheatOption()
     CheatListGetEntries(core_cheat_list, path);
     if (LinkedListGetLength(core_cheat_list) <= 0)
         goto FAILED;
+
+    MakeConfigPath(path, CHEAT_CONFIG_NAME, TYPE_CONFIG_GAME);
+    CheatListLoadConfig(core_cheat_list, path);
 
     Setting_SetCheatMenu(core_cheat_list);
     AppLog("[CHEAT] Emu_LoadCheatOption OK!\n");
@@ -50,5 +85,122 @@ FAILED:
 
 int Emu_SaveCheatOption()
 {
+    if (!core_cheat_list)
+        goto FAILED;
+
+    char path[1024];
+    MakeConfigPath(path, CHEAT_CONFIG_NAME, TYPE_CONFIG_GAME);
+    if (CheatListSaveConfig(core_cheat_list, path) < 0)
+        goto FAILED;
+
+    AppLog("[CHEAT] Emu_SaveCheatOption OK!\n");
+    return 0;
+
+FAILED:
+    AppLog("[CHEAT] Emu_SaveCheatOption failed!\n");
+    return -1;
+}
+
+static int ApplyCheatOption()
+{
+    if (cheat_reset)
+    {
+        retro_cheat_reset();
+        cheat_reset = 0;
+    }
+
+    if (!core_cheat_list || LinkedListGetLength(core_cheat_list) <= 0)
+        return -1;
+
+    LinkedListEntry *entry = LinkedListHead(core_cheat_list);
+    int index = 0;
+
+    while (entry)
+    {
+        CheatListEntryData *data = (CheatListEntryData *)LinkedListGetEntryData(entry);
+        if (data->enable)
+        {
+            if (data->code)
+            {
+                // printf("[CHEAT] ApplyCheatOption: %s\n", data->code);
+                retro_cheat_set(index, 1, data->code);
+            }
+        }
+
+        entry = LinkedListNext(entry);
+        index++;
+    }
+
+    return 0;
+}
+
+static int ApplyCheatOptionThreadFunc(SceSize args, void *argp)
+{
+    AppLog("[CHEAT] Cheat thread start.\n");
+
+    while (cheat_run)
+    {
+        if (cheat_pause || !core_cheat_list || LinkedListGetLength(core_cheat_list) <= 0)
+        {
+            sceKernelDelayThread(1000);
+            continue;
+        }
+
+        ApplyCheatOption();
+        sceKernelDelayThread(1000);
+    }
+
+    AppLog("[CHEAT] Cheat thread exit.\n");
+    sceKernelExitThread(0);
+    return 0;
+}
+
+static int StartApplyCheatOptionThread()
+{
+    int ret = -1;
+
+    if (cheat_thid >= 0)
+        Setting_WaitOverlayInitEnd();
+
+    ret = cheat_thid = sceKernelCreateThread("cheat_thread", ApplyCheatOptionThreadFunc, 0x10000100, 0x10000, 0, 0, NULL);
+    if (cheat_thid >= 0)
+    {
+        cheat_run = 1;
+        ret = sceKernelStartThread(cheat_thid, 0, NULL);
+    }
+
+    return ret;
+}
+
+static int ExitApplyCheatOptiontThread()
+{
+    if (cheat_thid >= 0)
+    {
+        cheat_run = 0;
+        sceKernelWaitThreadEnd(cheat_thid, NULL, NULL);
+        sceKernelDeleteThread(cheat_thid);
+        cheat_thid = -1;
+    }
+
+    return 0;
+}
+
+int Emu_InitCheat()
+{
+    if (Emu_LoadCheatOption() < 0)
+        return -1;
+
+    cheat_reset = 1;
+
+    return StartApplyCheatOptionThread();
+}
+
+int Emu_DeinitCheat()
+{
+    ExitApplyCheatOptiontThread();
+    Emu_CleanCheatOption();
+    // cheat_reset = 1;
+    // ApplyCheatOption();
+
     return 0;
 }
