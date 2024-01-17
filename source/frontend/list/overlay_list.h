@@ -14,7 +14,7 @@ typedef struct
     int *viewport_y;
 } OverlayListEntryData;
 
-LinkedListEntry *ConfigListFindEntryByName(LinkedList *list, const char *name);
+LinkedListEntry *OverlayListFindEntryByName(LinkedList *list, const char *name);
 int OverlayListGetEntriesFromBuffer(LinkedList *list, void *buffer, int size);
 int OverlayListGetEntries(LinkedList *list, const char *path);
 LinkedList * NewOverlayList();

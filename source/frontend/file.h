@@ -1,6 +1,8 @@
 #ifndef __M_FILE_H__
 #define __M_FILE_H__
 
+#include <stdint.h>
+
 #define MAX_PATH_LENGTH 1024
 #define MAX_NAME_LENGTH 256
 #define MAX_SHORT_NAME_LENGTH 64
@@ -16,12 +18,13 @@ int MakeBaseDirectoryEx(char *base, int base_size, const char *path, int path_le
 int MakeFileNameEx(char *name, int name_size, const char *path, int path_len);
 int MakeBaseNameEx(char *name, int name_size, const char *path, int path_len);
 int MakeBaseDirectory(char *base_dir, const char *path, int size);
-int MakeFilename(char *name, const char *path, int size);
+int MakeFileName(char *name, const char *path, int size);
 int MakeBaseName(char *name, const char *path, int size);
 
 int ReadFile(const char *file, void *buf, int size);
 int WriteFile(const char *file, const void *buf, int size);
 int AllocateReadFile(const char *file, void **buffer);
+int AllocateReadFileEX(const char *file, void **buffer, size_t *buffersize);
 
 int CheckFileExist(const char *file);
 int CheckFolderExist(const char *folder);

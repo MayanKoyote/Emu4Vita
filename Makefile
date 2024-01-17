@@ -12,10 +12,14 @@ all: build-app build-arch
 clean: clean-app clean-arch
 
 build-deps:
-	cd $(SOURCE_DIR) && make -f Makefile.deps
+	cd $(SOURCE_DIR) && make -f Makefile.7zip $(MAKE_ARGS)
+	cd $(SOURCE_DIR) && make -f Makefile.minizip $(MAKE_ARGS)
+	cd $(SOURCE_DIR) && make -f Makefile.libretro_comm $(MAKE_ARGS)
 
 clean-deps:
-	cd $(SOURCE_DIR) && make -f Makefile.deps clean
+	cd $(SOURCE_DIR) && make -f Makefile.7zip clean $(MAKE_ARGS)
+	cd $(SOURCE_DIR) && make -f Makefile.minizip clean $(MAKE_ARGS)
+	cd $(SOURCE_DIR) && make -f Makefile.libretro_comm clean $(MAKE_ARGS)
 
 build-app:
 	cd $(APPS_DIR)/fba_lite && make $(MAKE_ARGS)

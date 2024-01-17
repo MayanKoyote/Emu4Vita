@@ -15,7 +15,6 @@
 #include "boot.h"
 #include "utils.h"
 #include "lang.h"
-#include "zip/zip_cache.h"
 
 #define MAX_GAME_RUN_SPEED 2.0f
 #define STEP_GAME_RUN_SPEED 0.5f
@@ -81,10 +80,19 @@ void Emu_SpeedDownGame()
     Emu_SetRunSpeed(speed);
 }
 
-static int loadGameFromFile(const char *path)
+static int loadGameFromFile(const char *path, int archive_mode)
 {
+    const char *rom_path = path;
+    char cache_path[MAX_PATH_LENGTH];
+    if (archive_mode != ARCHIVE_MODE_NO)
+    {
+        if (Archive_GetRomPath(path, cache_path, archive_mode) < 0)
+            return -1;
+        rom_path = cache_path;
+    }
+
     struct retro_game_info game_info;
-    game_info.path = path;
+    game_info.path = rom_path;
     game_info.data = NULL;
     game_info.size = 0;
     game_info.meta = NULL;
@@ -95,55 +103,24 @@ static int loadGameFromFile(const char *path)
     return 0;
 }
 
-static int loadGameFromMemory(const char *path)
+static int loadGameFromMemory(const char *path, int archive_mode)
 {
-    SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
-    if (fd < 0)
-        return -1;
-
-    int64_t size = sceIoLseek(fd, 0, SCE_SEEK_END);
-    if (size <= 0)
-    {
-        sceIoClose(fd);
-        return -1;
-    }
-
     if (game_rom_data)
         free(game_rom_data);
-    game_rom_data = (void *)malloc(size);
-    if (!game_rom_data)
+    game_rom_data = NULL;
+
+    size_t size = 0;
+
+    if (archive_mode != ARCHIVE_MODE_NO)
     {
-        sceIoClose(fd);
-        return -1;
-    }
-
-    sceIoLseek(fd, 0, SCE_SEEK_SET);
-    char *buf = (char *)game_rom_data;
-    int64_t remaining = size;
-    int64_t transfer = TRANSFER_SIZE;
-
-    while (remaining > 0)
-    {
-        if (remaining < TRANSFER_SIZE)
-            transfer = remaining;
-        else
-            transfer = TRANSFER_SIZE;
-
-        int read = sceIoRead(fd, buf, transfer);
-        if (read < 0)
-        {
-            free(game_rom_data);
-            game_rom_data = NULL;
-            sceIoClose(fd);
+        if (Archive_GetRomMemory(path, &game_rom_data, &size, archive_mode) < 0)
             return -1;
-        }
-        if (read == 0)
-            break;
-
-        buf += read;
-        remaining -= read;
     }
-    sceIoClose(fd);
+    else
+    {
+        if (AllocateReadFileEX(path, &game_rom_data, &size) < 0)
+            return -1;
+    }
 
     struct retro_game_info game_info;
     game_info.path = path;
@@ -159,26 +136,6 @@ static int loadGameFromMemory(const char *path)
         return -1;
     }
 
-    return 0;
-}
-
-static int loadGameFromZipMemory(const char *path)
-{
-    int64_t size = GetZipCacheRomMemory(path, &game_rom_data);
-    if (size <= 0)
-        return -1;
-
-    struct retro_game_info game_info;
-    game_info.path = path;
-    game_info.data = game_rom_data;
-    game_info.size = size;
-    game_info.meta = NULL;
-    if (!retro_load_game(&game_info))
-    {
-        free(game_rom_data);
-        game_rom_data = NULL;
-        return -1;
-    }
     return 0;
 }
 
@@ -201,28 +158,28 @@ static int loadGame(const char *path)
     core_display_rotate = 0;
     retro_init();
 
-    char *ext = strrchr(path, '.');
-    int is_zip = ext && strcasecmp(ext, ".zip") == 0;
+    int archive_mode = ARCHIVE_MODE_NO;
 
-    if (core_support_zip || !is_zip)
+    const char *ext = NULL;
+    if (core_want_ext_zip_mode || core_want_ext_zip_mode)
+        ext = strrchr(path, '.');
+
+    if (core_want_ext_zip_mode)
     {
-        if (core_system_info.need_fullpath)
-            ret = loadGameFromFile(path);
-        else
-            ret = loadGameFromMemory(path);
+        if (ext && strcasecmp(ext, ".zip") == 0)
+            archive_mode = ARCHIVE_MODE_ZIP;
     }
+
+    if (archive_mode == ARCHIVE_MODE_NO && core_want_ext_zip_mode)
+    {
+        if (ext && strcasecmp(ext, ".7z") == 0)
+            archive_mode = ARCHIVE_MODE_7Z;
+    }
+
+    if (core_system_info.need_fullpath)
+        ret = loadGameFromFile(path, archive_mode);
     else
-    {
-        if (core_system_info.need_fullpath)
-        {
-            path = GetZipCacheRomPath(path);
-            ret = path ? loadGameFromFile(path) : -1;
-        }
-        else
-        {
-            ret = loadGameFromZipMemory(path);
-        }
-    }
+        ret = loadGameFromMemory(path, archive_mode);
 
     if (ret < 0)
     {
@@ -280,6 +237,8 @@ int Emu_StartGame(EmuGameInfo *info)
     if (state_num >= -1)
         Emu_LoadState(state_num);
 
+    Emu_LoadCheatOption();
+
     GUI_CleanPad();
     Emu_RequestUpdateVideoDisplay();
     Retro_UpdateCoreOptionsDisplay();
@@ -335,6 +294,13 @@ void Emu_ExitGame()
         free(game_rom_data);
         game_rom_data = NULL;
     }
+
+    if (core_cheat_list)
+    {
+        LinkedListDestroy(core_cheat_list);
+        core_cheat_list = NULL;
+    }
+    Setting_SetCheatMenu(NULL);
 
     AppLog("[GAME] Exit game OK!\n");
 }
@@ -422,7 +388,7 @@ static void onGameRunEvent()
     {
         Emu_ExitGame();
         if (exec_boot_mode == BOOT_MODE_GAME)
-            BootReturnToParent();
+            BootLoadParentExec();
     }
     break;
     default:

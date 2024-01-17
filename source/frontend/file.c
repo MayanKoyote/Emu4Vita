@@ -161,7 +161,7 @@ int MakeBaseDirectory(char *base_dir, const char *path, int size)
     return MakeBaseDirectoryEx(base_dir, size, path, strlen(path));
 }
 
-int MakeFilename(char *name, const char *path, int size)
+int MakeFileName(char *name, const char *path, int size)
 {
     return MakeFileNameEx(name, size, path, strlen(path));
 }
@@ -215,6 +215,57 @@ int AllocateReadFile(const char *file, void **buffer)
     sceIoClose(fd);
 
     return read;
+}
+
+int AllocateReadFileEX(const char *file, void **buffer, size_t *buffersize)
+{
+    SceUID fd = sceIoOpen(file, SCE_O_RDONLY, 0);
+    if (fd < 0)
+        return fd;
+
+    int64_t size = sceIoLseek32(fd, 0, SCE_SEEK_END);
+    sceIoLseek32(fd, 0, SCE_SEEK_SET);
+
+    *buffersize = size;
+    *buffer = malloc(size);
+    if (!*buffer)
+    {
+        sceIoClose(fd);
+        return -1;
+    }
+
+    sceIoLseek(fd, 0, SCE_SEEK_SET);
+    char *buf = (char *)*buffer;
+    int64_t remaining = size;
+    int transfer = TRANSFER_SIZE;
+    int read = 0;
+
+    while (remaining > 0)
+    {
+        if (remaining < TRANSFER_SIZE)
+            transfer = remaining;
+        else
+            transfer = TRANSFER_SIZE;
+
+        read = sceIoRead(fd, buf, transfer);
+        if (read < 0)
+        {
+            free(*buffer);
+            *buffer = NULL;
+            *buffersize = 0;
+            sceIoClose(fd);
+            return read;
+        }
+        if (read == 0)
+            break;
+
+        buf += read;
+        remaining -= read;
+    }
+    sceIoClose(fd);
+
+    // printf("AllocateReadFile: size: %lld, remaining: %lld\n", size, remaining);
+    return size - remaining;
 }
 
 int GetFileSize(const char *file)

@@ -483,7 +483,7 @@ int Browser_ChangeDirByFilePath(const char *path)
         return ret;
 
     char name[MAX_NAME_LENGTH];
-    ret = MakeFilename(name, path, MAX_NAME_LENGTH);
+    ret = MakeFileName(name, path, MAX_NAME_LENGTH);
     if (ret >= 0)
         setFocusByName(name);
 

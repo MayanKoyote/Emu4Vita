@@ -110,7 +110,7 @@ void GUI_drawBottomStatusBar()
 
     int sx = view_sx + STATUS_BAR_PADDING_L;
     int sy = view_sy + STATUS_BAR_PADDING_T;
-    GUI_drawTextf(sx, sy, WHITE, "Built on  %s by Yizhigai  %s", BUILD_DATE, REPOSITORY_ADDRESS);
+    GUI_drawTextf(sx, sy, WHITE, "Built on  %s  %s", BUILD_DATE, REPOSITORY_ADDRESS);
 }
 
 static void drawMain()

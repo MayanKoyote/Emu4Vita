@@ -36,13 +36,13 @@
 
 #define APP_DATA_DIR "ux0:data/EMU4VITA/" APP_DIR_NAME
 #define APP_ASSETS_DIR "app0:assets"
-#define CORE_DATA_DIR "app0:data"
 
 #define CORE_CONFIGS_DIR APP_DATA_DIR "/configs"
 #define CORE_SAVEFILES_DIR APP_DATA_DIR "/savefiles"
 #define CORE_SAVESTATES_DIR APP_DATA_DIR "/savestates"
 #define CORE_SCREENSHOTS_DIR APP_DATA_DIR "/screenshots"
-#define CORE_ZIPCACHE_DIR APP_DATA_DIR "/zipcache"
+#define CORE_CHEATS_DIR APP_DATA_DIR "/cheats"
+#define CORE_CACHE_DIR APP_DATA_DIR "/cache"
 
 #define APP_LOG_PATH APP_DATA_DIR "/app_log.txt"
 #define CORE_LOG_PATH APP_DATA_DIR "/core_log.txt"
@@ -205,6 +205,7 @@ extern MiscConfig misc_config;
 extern char *private_assets_dir;
 extern char *public_assets_dir;
 
+extern LinkedList *core_cheat_list;
 extern LinkedList *core_option_list;
 extern LinkedList *graphics_overlay_list;
 

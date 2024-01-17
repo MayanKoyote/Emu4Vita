@@ -231,7 +231,7 @@ int Emu_SaveState(int num)
 
     screenshot_size = 0;
     screenshot_offset = sizeof(EmuStateHeader);
-    screenshot_buf = Emu_GetVideoScreenshotData(&screenshot_width, &screenshot_height, &screenshot_size, rotate, 1);
+    screenshot_buf = Emu_GetVideoScreenshotData(&screenshot_width, &screenshot_height, &screenshot_size, rotate, 0);
     if (!screenshot_buf)
     {
         AppLog("[STATE] Save state: make screenshot failed!\n");

@@ -9,35 +9,35 @@
 #include "file.h"
 #include "config.h"
 
-#define EXEC_BOOT_MODE_CASE_STR "boot_mode"
-#define BOOT_GAME_PATH_CASE_STR "game_path"
-#define PRIVATE_ASSETS_CASE_STR "core_assets_dir"
-#define PUBLIC_ASSETS_CASE_STR "common_assets_dir"
-#define RESTORE_APP_PATH_CASE_STR "restore_app_path"
+#define EXEC_BOOT_MODE_KEY_STR "boot_mode"
+#define BOOT_GAME_PATH_KEY_STR "game_path"
+#define PRIVATE_ASSETS_KEY_STR "core_assets_dir"
+#define PUBLIC_ASSETS_KEY_STR "common_assets_dir"
+#define RESTORE_APP_PATH_KEY_STR "restore_app_path"
 
-int sendBootParams(char *app_path, char *argv[])
+int BootLoadExec(char *app_path, char *argv[])
 {
     int ret = sceAppMgrLoadExec(app_path, (char *const *)argv, NULL);
 
     return ret;
 }
 
-int loadGameWithBootParams(char *app_path, char *game_path, char *assets_dir)
+int BootLoadExecForGame(char *app_path, char *game_path, char *assets_dir)
 {
     if (!checkFileExist(app_path))
         return -1;
 
     char boot_mode_param[MAX_CONFIG_LINE_LENGTH];
-    snprintf(boot_mode_param, MAX_CONFIG_LINE_LENGTH, "%s=%d", EXEC_BOOT_MODE_CASE_STR, BOOT_MODE_GAME);
+    snprintf(boot_mode_param, MAX_CONFIG_LINE_LENGTH, "%s=%d", EXEC_BOOT_MODE_KEY_STR, BOOT_MODE_GAME);
 
     char game_path_param[MAX_CONFIG_LINE_LENGTH];
-    snprintf(game_path_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", BOOT_GAME_PATH_CASE_STR, game_path);
+    snprintf(game_path_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", BOOT_GAME_PATH_KEY_STR, game_path);
 
     char private_assets_param[MAX_CONFIG_LINE_LENGTH];
-    snprintf(private_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", PRIVATE_ASSETS_CASE_STR, assets_dir);
+    snprintf(private_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", PRIVATE_ASSETS_KEY_STR, assets_dir);
 
     char public_assets_param[MAX_CONFIG_LINE_LENGTH];
-    snprintf(public_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", PUBLIC_ASSETS_CASE_STR, APP_ASSETS_DIR);
+    snprintf(public_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", PUBLIC_ASSETS_KEY_STR, APP_ASSETS_DIR);
 
     char *argv[] = {
         boot_mode_param,
@@ -46,24 +46,24 @@ int loadGameWithBootParams(char *app_path, char *game_path, char *assets_dir)
         public_assets_param,
         NULL,
     };
-    int ret = sendBootParams(app_path, argv);
+    int ret = BootLoadExec(app_path, argv);
 
     return ret;
 }
 
-int loadCoreWithBootParams(char *app_path, char *assets_dir)
+int BootLoadExecForCore(char *app_path, char *assets_dir)
 {
     if (!checkFileExist(app_path))
         return -1;
 
     char boot_mode_param[MAX_CONFIG_LINE_LENGTH];
-    snprintf(boot_mode_param, MAX_CONFIG_LINE_LENGTH, "%s=%d", EXEC_BOOT_MODE_CASE_STR, BOOT_MODE_ARCH);
+    snprintf(boot_mode_param, MAX_CONFIG_LINE_LENGTH, "%s=%d", EXEC_BOOT_MODE_KEY_STR, BOOT_MODE_ARCH);
 
     char private_assets_param[MAX_CONFIG_LINE_LENGTH];
-    snprintf(private_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", PRIVATE_ASSETS_CASE_STR, assets_dir);
+    snprintf(private_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", PRIVATE_ASSETS_KEY_STR, assets_dir);
 
     char public_assets_param[MAX_CONFIG_LINE_LENGTH];
-    snprintf(public_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", PUBLIC_ASSETS_CASE_STR, APP_ASSETS_DIR);
+    snprintf(public_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", PUBLIC_ASSETS_KEY_STR, APP_ASSETS_DIR);
 
     char *argv[] = {
         boot_mode_param,
@@ -71,7 +71,7 @@ int loadCoreWithBootParams(char *app_path, char *assets_dir)
         public_assets_param,
         NULL,
     };
-    int ret = sendBootParams(app_path, argv);
+    int ret = BootLoadExec(app_path, argv);
 
     return ret;
 }

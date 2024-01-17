@@ -8,8 +8,8 @@ enum BootModes
     BOOT_MODE_ARCH,
 };
 
-int sendBootParams(char *app_path, char *argv[]);
-int loadGameWithBootParams(char *app_path, char *game_path, char *assets_dir);
-int loadCoreWithBootParams(char *app_path, char *assets_dir);
+int BootLoadExec(char *app_path, char *argv[]);
+int BootLoadExecForGame(char *app_path, char *game_path, char *assets_dir);
+int BootLoadExecForCore(char *app_path, char *assets_dir);
 
 #endif

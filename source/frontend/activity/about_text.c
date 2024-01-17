@@ -1,6 +1,6 @@
 char *about_texts[] = {
     APP_NAME_STR " " APP_NAME_EXT_STR,
-    " * 作者: 一直改 (百度psvita破解吧)",
+    " * 作者: 一直改, noword",
     " * 版本: " APP_VER_STR "    日期: " BUILD_DATE,
     "",
     "平台:",
@@ -59,6 +59,8 @@ char *about_texts[] = {
     " * frangarcj (vita shader)",
     " * 永爱水原ありさ (图标及素材)",
     " * ......",
+    "",
+    "(百度psvita破解吧)",
 };
 
 #define N_ABOUT_TEXTS (sizeof(about_texts) / sizeof(char *))

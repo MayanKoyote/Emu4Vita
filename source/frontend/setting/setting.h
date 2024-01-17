@@ -90,6 +90,7 @@ int Setting_Init();
 int Setting_Deinit();
 
 int Setting_SetCoreMenu(LinkedList *list);
+int Setting_SetCheatMenu(LinkedList *list);
 int Setting_SetOverlayOption(LinkedList *list);
 int Setting_SetLangOption();
 void Setting_UpdataLangOption();
