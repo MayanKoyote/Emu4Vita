@@ -164,17 +164,11 @@ static int loadGame(const char *path)
     if (core_want_ext_zip_mode || core_want_ext_zip_mode)
         ext = strrchr(path, '.');
 
-    if (core_want_ext_zip_mode)
-    {
-        if (ext && strcasecmp(ext, ".zip") == 0)
-            archive_mode = ARCHIVE_MODE_ZIP;
-    }
+    if (core_want_ext_zip_mode && ext && strcasecmp(ext, ".zip") == 0)
+        archive_mode = ARCHIVE_MODE_ZIP;
 
-    if (archive_mode == ARCHIVE_MODE_NO && core_want_ext_zip_mode)
-    {
-        if (ext && strcasecmp(ext, ".7z") == 0)
-            archive_mode = ARCHIVE_MODE_7Z;
-    }
+    if (archive_mode == ARCHIVE_MODE_NO && core_want_ext_zip_mode && ext && strcasecmp(ext, ".7z") == 0)
+        archive_mode = ARCHIVE_MODE_7Z;
 
     if (core_system_info.need_fullpath)
         ret = loadGameFromFile(path, archive_mode);

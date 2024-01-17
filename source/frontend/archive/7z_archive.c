@@ -107,8 +107,7 @@ void SevenZ_CloseRom()
 
     SzArEx_Free(&current_7z.db, &alloc_imp);
 
-    if (current_7z.file_stream.file.file)
-        File_Close(&current_7z.file_stream.file);
+    File_Close(&current_7z.file_stream.file);
 
     if (current_7z.look_stream.buf)
         free(current_7z.look_stream.buf);
