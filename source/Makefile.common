@@ -34,7 +34,7 @@ else
 endif
 
 ifeq ($(arch_build), 1)
-	ARCH_CORES_DIR := $(ARCH_DIR)//cores
+	ARCH_CORES_DIR := $(ARCH_DIR)/cores
 	EBOOT_PATH     := $(ARCH_CORES_DIR)/$(CORE_FILE_NAME).self
 	TARGET_PATH    :=
 endif
@@ -256,6 +256,7 @@ $(EBOOT_PATH): $(BUILD_DIR)/$(TARGET).velf
 	vita-make-fself -c -a 0x2800000000000001 $< $@
 
 $(BUILD_DIR)/$(TARGET).velf: $(BUILD_DIR)/$(TARGET).elf
+	@mkdir -p $(dir $@)
 	$(STRIP) -g $<
 	vita-elf-create $< $@
 

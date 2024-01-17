@@ -33,21 +33,20 @@ SRC_C += \
 	Delta.c \
 	LzFind.c \
 	LzFindMt.c \
+    LzFindOpt.c \
 	Lzma2Dec.c \
 	Lzma2Enc.c \
 	LzmaDec.c \
 	LzmaEnc.c \
 	MtCoder.c \
 	MtDec.c \
-	Threads.c \
-    LzFindOpt.c
+	Threads.c
 
 OBJS := $(SRC_C:.c=.o)
 OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
 
 DEFINES := \
-    -D_7ZIP_ST \
-	-DUSE_FOPEN
+    -D_7ZIP_ST
 
 DEFINES += $(EXT_DEFINES)
 
