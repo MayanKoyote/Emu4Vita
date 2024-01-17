@@ -207,14 +207,23 @@ static void resetCoreConfigCallback()
 //----------------- Cheat menu -----------------//
 static void cheatMenuExitCallback(SettingMenu *menu)
 {
+    if (cheat_option_changed)
+    {
+        Emu_UpdateCheatOption();
+        Emu_SaveCheatOption();
+        cheat_option_changed = 0;
+    }
 }
 
 static void cheatOptionUpdateCallback(StrArrayOption *option)
 {
+    cheat_option_changed = 1;
 }
 
 static void resetCheatConfigCallback()
 {
+    Emu_ResetCheatOption();
+    cheat_option_changed = 1;
 }
 
 //----------------- Misc menu -----------------//

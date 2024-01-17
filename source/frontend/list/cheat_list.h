@@ -31,4 +31,8 @@ int CheatListGetEntriesFromBuffer(LinkedList *list, void *buffer, int size);
 int CheatListGetEntries(LinkedList *list, const char *path);
 LinkedList *NewCheatList();
 
+int CheatListResetConfig(LinkedList *list);
+int CheatListLoadConfig(LinkedList *list, const char *path);
+int CheatListSaveConfig(LinkedList *list, const char *path);
+
 #endif

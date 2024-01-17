@@ -67,6 +67,7 @@ static int graphics_option_changed = 0;
 static int control_option_changed = 0;
 static int hotkey_option_changed = 0;
 static int core_option_changed = 0;
+static int cheat_option_changed = 0;
 static int misc_option_changed = 0;
 
 static int current_path_is_file = 0;

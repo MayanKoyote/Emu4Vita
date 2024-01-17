@@ -23,6 +23,7 @@
 #define CORE_CONFIG_NAME "core.cfg"
 #define MISC_CONFIG_NAME "misc.cfg"
 #define OVERLAYS_CONFIG_NAME "overlays.cfg"
+#define CHEAT_CONFIG_NAME "cheat.cfg"
 
 #define OVERLAYS_DIR_NAME "overlays"
 #define PREVIEW_DIR_NAME "images"
