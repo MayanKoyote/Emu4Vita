@@ -6,7 +6,6 @@ APP_NAME_STR     := $(APP_NAME)
 APP_NAME_EXT_STR := $(APP_NAME_EXT)
 APP_VER_STR      := $(APP_VER)
 
-DEBUG            := 1
 BUILD_DATE       := $(shell date +"%Y/%m/%d")
 BUILD_DATE2      := $(shell date +"%Y_%m_%d")
 
@@ -65,7 +64,6 @@ SRC_C += \
 	emu/emu_state.c \
 	emu/emu_video.c \
 	emu/emu_retro.c \
-	emu/emu_archive.c \
 	emu/retro_environ.c \
 	emu/retro_option.c
 
@@ -162,8 +160,10 @@ DEFINES := \
 	-DBUILD_DATE=\"$(BUILD_DATE)\" \
 	-DCORE_SOFTWARE=\"$(CORE_SOFTWARE)\"
 
-# SCE_LIBC_SIZE := 4194304
-# DEFINES += -DSCE_LIBC_SIZE=$(SCE_LIBC_SIZE)
+DEBUG          := 1
+SCE_LIBC_SIZE  := 4194304
+SEVENZ_DEFINES := -DUSE_FOPEN
+
 DEFINES += $(CORE_DEFINES)
 
 DEFINES += -DVITA
@@ -174,6 +174,14 @@ endif
 
 ifeq ($(DEBUG), 1)
 	DEFINES += -DDEBUG
+endif
+
+ifeq ($(WANT_OPENGL), 1)
+	DEFINES += -DSCE_LIBC_SIZE=$(SCE_LIBC_SIZE)
+endif
+
+ifeq ($(WANT_DISPLAY_ROTATE), 1)
+	DEFINES += -DWANT_DISPLAY_ROTATE
 endif
 
 CORE_ARGS += platform=vita EXTERNAL_ZLIB=1
@@ -220,7 +228,7 @@ build-libretro_comm:
 	cd $(SOURCE_DIR) && make -f Makefile.libretro_comm
 
 build-7zip:
-	cd $(SOURCE_DIR) && make -f Makefile.7zip
+	cd $(SOURCE_DIR) && make -f Makefile.7zip EXT_DEFINES=$(SEVENZ_DEFINES)
 
 build-minizip:
 	cd $(SOURCE_DIR) && make -f Makefile.minizip
@@ -268,14 +276,17 @@ clean-libretro_comm:
 	cd $(SOURCE_DIR) && make -f Makefile.libretro_comm clean
 
 clean-7zip:
-	cd $(SOURCE_DIR) && make -f Makefile.7zip clean
+	cd $(SOURCE_DIR) && make -f Makefile.7zip clean EXT_DEFINES=$(SEVENZ_DEFINES)
 
 clean-minizip:
 	cd $(SOURCE_DIR) && make -f Makefile.minizip clean
 
 clean-core:
 	cd $(CORE_MAKEFILE_DIR) && make -f $(CORE_MAKEFILE_NAME) clean $(CORE_ARGS)
-	
+
+clean-self:
+	rm -rf $(BUILD_DIR) $(EBOOT_PATH)
+
 clean-app:
 	rm -rf $(BUILD_DIR) $(TARGET_PATH) $(EBOOT_PATH) $(SFO_PATH)
 

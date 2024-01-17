@@ -45,8 +45,9 @@ OBJS := $(SRC_C:.c=.o)
 OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
 
 DEFINES := \
-    -D_7ZIP_ST \
-	-DUSE_FOPEN
+    -D_7ZIP_ST
+
+DEFINES += $(EXT_DEFINES)
 
 WARNINGS := \
 	-Wall
