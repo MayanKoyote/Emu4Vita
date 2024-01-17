@@ -1,4 +1,4 @@
-TARGET_VER := 1.03
+APP_VER := 1.03
 
 SFO_APP_VER      := 0$(APP_VER)
 

@@ -130,7 +130,7 @@ int SevenZ_ExtractRomMemory(void **buf, size_t *size)
                               &output, &output_size, &offset, size, &alloc_imp, &alloc_temp_imp);
     if (res != SZ_OK)
     {
-        AppLog("[7Z] SevenZ_ExtractRomMemory failed!");
+        AppLog("[7Z] SevenZ_ExtractRomMemory failed! Error: %d\n", res);
         goto EXTRACT_MEM_END;
     }
 
@@ -158,7 +158,7 @@ int SevenZ_ExtractRom(const char *rom_name, char *rom_path)
 
     void *buf;
     size_t size;
-    if (SevenZ_ExtractRomMemory(&buf, &size) <= 0)
+    if (SevenZ_ExtractRomMemory(&buf, &size) != 0)
     {
         AppLog("[7Z] SevenZ_ExtractRom failed!\n");
         return -1;
