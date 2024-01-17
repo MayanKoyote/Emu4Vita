@@ -133,12 +133,24 @@ int SevenZ_ExtractRomMemory(void **buf, size_t *size)
         goto EXTRACT_MEM_END;
     }
 
-    *buf = malloc(*size);
-    if (*buf)
-        memcpy(*buf, output + offset, *size);
+    if (offset == 0)
+    {
+        *buf = output;
+        output = NULL;
+    }
     else
-        *size = 0;
+    {
+        *buf = malloc(*size);
+        if (!*buf)
+        {
+            *size = 0;
+            AppLog("[7Z] SevenZ_ExtractRomMemory failed: connot alloc buf!\n");
+            goto EXTRACT_MEM_END;
+        }
+        memcpy(*buf, output + offset, *size);
+    }
 
+    // printf("[7Z] SevenZ_ExtractRomMemory: offset = %d\n", offset);
     AppLog("[7Z] SevenZ_ExtractRomMemory OK\n");
 
 EXTRACT_MEM_END:
