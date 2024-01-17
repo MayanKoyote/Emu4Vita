@@ -45,6 +45,13 @@ void Emu_CleanCheatOption()
     core_cheat_list = NULL;
 }
 
+int Emu_UpdateCheatOption()
+{
+    cheat_reset = 1;
+
+    return 0;
+}
+
 int Emu_ResetCheatOption()
 {
     return CheatListResetConfig(core_cheat_list);
@@ -94,7 +101,7 @@ FAILED:
     return -1;
 }
 
-static int ApplyCheatOption2()
+static int ApplyCheatOption()
 {
     if (cheat_reset)
     {
@@ -139,7 +146,7 @@ static int ApplyCheatOptionThreadFunc(SceSize args, void *argp)
             continue;
         }
 
-        ApplyCheatOption2();
+        ApplyCheatOption();
         sceKernelDelayThread(1000);
     }
 
@@ -148,7 +155,7 @@ static int ApplyCheatOptionThreadFunc(SceSize args, void *argp)
     return 0;
 }
 
-int StartApplyCheatOptionThread()
+static int StartApplyCheatOptionThread()
 {
     int ret = -1;
 
@@ -165,7 +172,7 @@ int StartApplyCheatOptionThread()
     return ret;
 }
 
-int ExitApplyCheatOptiontThread()
+static int ExitApplyCheatOptiontThread()
 {
     if (cheat_thid >= 0)
     {
@@ -174,13 +181,6 @@ int ExitApplyCheatOptiontThread()
         sceKernelDeleteThread(cheat_thid);
         cheat_thid = -1;
     }
-
-    return 0;
-}
-
-int Emu_UpdateCheatOption()
-{
-    cheat_reset = 1;
 
     return 0;
 }
@@ -200,7 +200,7 @@ int Emu_DeinitCheat()
     ExitApplyCheatOptiontThread();
     Emu_CleanCheatOption();
     // cheat_reset = 1;
-    // ApplyCheatOption2();
+    // ApplyCheatOption();
 
     return 0;
 }
