@@ -150,7 +150,9 @@ LIBS := \
 	-lSceShellSvc_stub \
 	-lSceMotion_stub \
 	-lSceHid_stub \
-	-lSceFiber_stub
+	-lSceFiber_stub \
+	-lzstd \
+	-lz
 
 DEFINES := \
 	-DAPP_NAME_STR=\"$(APP_NAME_STR)\" \
