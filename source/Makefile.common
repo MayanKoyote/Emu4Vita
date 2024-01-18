@@ -152,7 +152,8 @@ LIBS := \
 	-lSceHid_stub \
 	-lSceFiber_stub \
 	-lzstd \
-	-lz
+	-lz \
+	-llzma
 
 DEFINES := \
 	-DAPP_NAME_STR=\"$(APP_NAME_STR)\" \

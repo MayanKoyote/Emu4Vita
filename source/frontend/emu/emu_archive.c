@@ -185,7 +185,7 @@ static int Archive_AddCacheEntry(int crc, const char *rom_name)
     return index;
 }
 
-static int Archive_OpenRom(const char *archive_path, int archive_mode, uint32_t *crc, char *name)
+static int Archive_OpenRom(const char *archive_path, uint32_t *crc, char *name)
 {
     if (current_archive)
         archive_read_free(current_archive);
@@ -196,34 +196,50 @@ static int Archive_OpenRom(const char *archive_path, int archive_mode, uint32_t 
 
     archive_read_support_filter_all(current_archive);
     archive_read_support_format_all(current_archive);
-    // if (archive_mode == ARCHIVE_MODE_ZIP &&
-    //     (!(archive_read_support_filter_lzip(current_archive) == ARCHIVE_OK &&
-    //        archive_read_support_format_zip(current_archive) == ARCHIVE_OK)))
-    //     goto FAILED;
-    // else if (archive_mode == ARCHIVE_MODE_7Z &&
-    //          (!(archive_read_support_filter_lzma(current_archive) &&
-    //             archive_read_support_format_7zip(current_archive))))
-    //     goto FAILED;
 
     if (archive_read_open_filename(current_archive, archive_path, ARCHIVE_BLOCK_SIZE) != ARCHIVE_OK)
+    {
+        AppLog("[ARCHIVE] Archive_OpenRom failed: cannot open file!\n");
         goto FAILED;
+    }
 
     while (archive_read_next_header(current_archive, &current_entry) == ARCHIVE_OK)
     {
         const char *entry_name = archive_entry_pathname_utf8(current_entry);
+        AppLog("%s\n", entry_name);
         if (entry_name && IsValidFile(entry_name))
         {
             strcpy(name, entry_name);
-            *crc = archive_entry_hash(current_entry);
-            AppLog("%s %08x\n", name, *crc);
+            *crc = archive_entry_crc32(current_entry);
             AppLog("[ARCHIVE] Archive_OpenRom OK!\n");
             return 1;
         }
     }
 
+    AppLog("[ARCHIVE] Archive_OpenRom failed: no valid rom found!\n");
+
 FAILED:
     archive_read_free(current_archive);
     current_archive = NULL;
+    return -1;
+}
+
+static int Archive_CloseRom()
+{
+    if (current_archive)
+    {
+        archive_read_free(current_archive);
+        current_archive = NULL;
+    }
+}
+
+int Archive_ExtractRomMemory(void **buf, size_t *size)
+{
+    return -1;
+}
+
+int Archive_ExtractRom(const char *rom_name, char *rom_path)
+{
     return -1;
 }
 
@@ -263,12 +279,7 @@ int Archive_GetRomPath(const char *archive_path, char *rom_path, int archive_mod
     int ret = -1;
     uint32_t rom_crc;
     char entry_name[MAX_PATH_LENGTH];
-    ret = Archive_OpenRom(archive_path, archive_mode, &rom_crc, entry_name);
-
-    // if (archive_mode == ARCHIVE_MODE_ZIP)
-    //     ret = ZIP_OpenRom(archive_path, &rom_crc, entry_name);
-    // else if (archive_mode == ARCHIVE_MODE_7Z)
-    //     ret = SevenZ_OpenRom(archive_path, &rom_crc, entry_name);
+    ret = Archive_OpenRom(archive_path, &rom_crc, entry_name);
 
     if (ret <= 0)
         goto FAILED;
