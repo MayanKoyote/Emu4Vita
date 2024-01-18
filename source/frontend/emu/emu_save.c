@@ -45,13 +45,13 @@ static int loadMemoryFile(int id)
     int64_t src_size = sceIoLseek(fd, 0, SCE_SEEK_END);
     if (src_size <= 0)
     {
-        AppLog("[SAVE] Load memory file: get file size failed\n");
+        AppLog("[SAVEFILE] Load memory file: get file size failed\n");
         sceIoClose(fd);
         return -1;
     }
     if (src_size > dst_size)
     {
-        AppLog("[SAVE]] Load memory file: SRAM is larger than implementation expects\n");
+        AppLog("[SAVEFILE] Load memory file: SRAM is larger than implementation expects\n");
         sceIoClose(fd);
         return -1;
     }
@@ -60,7 +60,7 @@ static int loadMemoryFile(int id)
     if (src_data == NULL)
     {
         sceIoClose(fd);
-        AppLog("[SAVE] Load memory file: alloc buf failed\n");
+        AppLog("[SAVEFILE] Load memory file: alloc buf failed\n");
         return -1;
     }
 
@@ -81,7 +81,7 @@ static int loadMemoryFile(int id)
         {
             free(src_data);
             sceIoClose(fd);
-            AppLog("[SAVE] Load memory file: read file failed\n");
+            AppLog("[SAVEFILE] Load memory file: read file failed\n");
             return -1;
         }
         if (read == 0)
@@ -114,7 +114,7 @@ static int saveMemoryFile(int id)
     SceUID fd = sceIoOpen(path, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
     if (fd < 0)
     {
-        AppLog("[SAVE] Save memory file: open file failed\n");
+        AppLog("[SAVEFILE] Save memory file: open file failed\n");
         return fd;
     }
 
@@ -133,7 +133,7 @@ static int saveMemoryFile(int id)
         if (written < 0)
         {
             sceIoClose(fd);
-            AppLog("[SAVE] Save memory file: write file failed\n");
+            AppLog("[SAVEFILE] Save memory file: write file failed\n");
             return -1;
         }
 

@@ -5,1128 +5,1126 @@
 
 /* English */
 char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
-    // Null
+    // LANG_NULL
     NULL,
 
     /**************  General  *****************/
-    // YES
-    "yes",
-    // NO
-    "no",
-    // CONFIRM
-    "confirm",
-    // CANCEL
-    "cancel",
-    // BACK
-    "back",
-    // EXIT
-    "exit",
+    // LANG_YES
+    "Yes",
+    // LANG_NO
+    "No",
+    // LANG_CONFIRM
+    "Confirm",
+    // LANG_CANCEL
+    "Cancel",
+    // LANG_BACK
+    "Back",
+    // LANG_EXIT
+    "Exit",
 
     /**************  Alert dialog  *****************/
-    // TITLE_TIP
+    // LANG_TIP
     "Tip",
-    // TITLE_MENU
+    // LANG_MENU
     "Menu",
-    // COLSE
-    "close",
+    // LANG_COLSE
+    "Close",
 
     /**************  Safe mode  *****************/
-    // MESSAGE_SAFE_MODE
+    // LANG_MESSAGE_WARN_SAFE_MODE
     "Currently in safe mode, please enable unsafe homemade software in HENkaku settings first, "
     "only then can this program be used normally.",
 
     /**************  Button string  *****************/
-    // BUTTON_ENTER
+    // LANG_BUTTON_ENTER
     NULL,
-    // BUTTON_CANCEL
+    // LANG_BUTTON_CANCEL
     NULL,
-    // BUTTON_LEFT
+    // LANG_BUTTON_LEFT
     "←",
-    // BUTTON_UP
+    // LANG_BUTTON_UP
     "↑",
-    // BUTTON_RIGHT
+    // LANG_BUTTON_RIGHT
     "→",
-    // BUTTON_DOWN
+    // LANG_BUTTON_DOWN
     "↓",
-    // BUTTON_CROSS
+    // LANG_BUTTON_CROSS
     "×",
-    // BUTTON_CIRCLE
+    // LANG_BUTTON_CIRCLE
     "○",
-    // BUTTON_SQUARE
+    // LANG_BUTTON_SQUARE
     "□",
-    // BUTTON_TRIANGLE
+    // LANG_BUTTON_TRIANGLE
     "△",
-    // BUTTON_L
+    // LANG_BUTTON_L
     "L",
-    // BUTTON_R
+    // LANG_BUTTON_R
     "R",
-    // BUTTON_L2
+    // LANG_BUTTON_L2
     "L2",
-    // BUTTON_R2
+    // LANG_BUTTON_R2
     "R2",
-    // BUTTON_L3
+    // LANG_BUTTON_L3
     "L3",
-    // BUTTON_R3
+    // LANG_BUTTON_R3
     "R3",
-    // BUTTON_SELECT
+    // LANG_BUTTON_SELECT
     "Select",
-    // BUTTON_START
+    // LANG_BUTTON_START
     "Start",
-    // BUTTON_PSBUTTON
+    // LANG_BUTTON_PSBUTTON
     "Home",
-    // BUTTON_LEFT_ANALOG
+    // LANG_BUTTON_LEFT_ANALOG
     "Left analog",
-    // BUTTON_LEFT_ANALOG_LEFT
-    "Left analog←",
-    // BUTTON_LEFT_ANALOG_UP
-    "Left analog↑",
-    // BUTTON_LEFT_ANALOG_RIGHT
-    "Left analog→",
-    // BUTTON_LEFT_ANALOG_DOWN
-    "Left analog↓",
-    // BUTTON_RIGHT_ANALOG
+    // LANG_BUTTON_LEFT_ANALOG_LEFT
+    "Left analog ←",
+    // LANG_BUTTON_LEFT_ANALOG_UP
+    "Left analog ↑",
+    // LANG_BUTTON_LEFT_ANALOG_RIGHT
+    "Left analog →",
+    // LANG_BUTTON_LEFT_ANALOG_DOWN
+    "Left analog ↓",
+    // LANG_BUTTON_RIGHT_ANALOG
     "Right analog",
-    // BUTTON_RIGHT_ANALOG_LEFT
-    "Right analog←",
-    // BUTTON_RIGHT_ANALOG_UP
-    "Right analog↑",
-    // BUTTON_RIGHT_ANALOG_RIGHT
-    "Right analog→",
-    // BUTTON_RIGHT_ANALOG_DOWN
-    "Right analog↓",
+    // LANG_BUTTON_RIGHT_ANALOG_LEFT
+    "Right analog ←",
+    // LANG_BUTTON_RIGHT_ANALOG_UP
+    "Right analog ↑",
+    // LANG_BUTTON_RIGHT_ANALOG_RIGHT
+    "Right analog →",
+    // LANG_BUTTON_RIGHT_ANALOG_DOWN
+    "Right analog ↓",
 
     /**************  Button string 2  *****************/
-    // BUTTON_A
+    // LANG_BUTTON_A
     "A",
-    // BUTTON_B
+    // LANG_BUTTON_B
     "B",
-    // BUTTON_C
+    // LANG_BUTTON_C
     "C",
-    // BUTTON_D
+    // LANG_BUTTON_D
     "D",
-    // BUTTON_E
+    // LANG_BUTTON_E
     "E",
-    // BUTTON_F
+    // LANG_BUTTON_F
     "F",
-    // BUTTON_G
+    // LANG_BUTTON_G
     "G",
-    // BUTTON_H
+    // LANG_BUTTON_H
     "H",
-    // BUTTON_X
+    // LANG_BUTTON_X
     "X",
-    // BUTTON_Y
+    // LANG_BUTTON_Y
     "Y",
-    // BUTTON_Z
+    // LANG_BUTTON_Z
     "Z",
 
-    // BUTTON_X1
+    // LANG_BUTTON_X1
     "X1",
-    // BUTTON_X2
+    // LANG_BUTTON_X2
     "X2",
-    // BUTTON_X3
+    // LANG_BUTTON_X3
     "X3",
-    // BUTTON_X4
+    // LANG_BUTTON_X4
     "X4",
-    // BUTTON_Y1
+    // LANG_BUTTON_Y1
     "Y1",
-    // BUTTON_Y2
+    // LANG_BUTTON_Y2
     "Y2",
-    // BUTTON_Y3
+    // LANG_BUTTON_Y3
     "Y3",
-    // BUTTON_Y4
+    // LANG_BUTTON_Y4
     "Y4",
 
-    // LABEL_SWICTH_MODE
+    // LANG_SWICTH_MODE
     "Swicth mode",
-    // LABEL_COIN
+    // LANG_COIN
     "Coin",
-    // LABEL_SELECT
+    // LANG_SELECT
     "Select",
-    // LABEL_START
+    // LANG_START
     "Start",
-    // LABEL_TURBO
+    // LANG_TURBO
     "Turbo",
-    // LABEL_FDS_DISK_SIDE_CHANGE
-    "(FDS) Disk side change",
-    // LABEL_FDS_INSERT_EJECT_DISK
-    "(FDS) Insert/Eject disk",
+    // LANG_FDS_DISK_SIDE_CHANGE
+    "[FDS] Disk side change",
+    // LANG_FDS_INSERT_EJECT_DISK
+    "[FDS] Insert/Eject disk",
 
     /**************  Browser  *****************/
-    // APP_TITLE
+    // LANG_APP_TITLE
     APP_NAME_STR " v" APP_VER_STR,
 
-    // PARENT_DIRECTORY
-    "parent dir",
-    // OPEN_DIR
-    "open dir",
-    // START_GAME
-    "start game",
-    // OPTION_MENU
-    "option menu",
-    // SETTING_MENU
-    "setting menu",
-    // ABOUT
-    "about",
-    // CHANGE_DIR
-    "change dir",
-
-    // LABEL_START_GAME
+    // LANG_PARENT_DIR
+    "Parent dir",
+    // LANG_OPEN_DIR
+    "Open dir",
+    // LANG_START_GAME
     "Start game",
-    // LABEL_DELETE_GAME
-    "Delete game",
-    // LABEL_DELETE_AUTO_STATE
-    "Delete auto state",
-    // LABEL_DELETE_SAVEFILE
-    "Delete savefile",
+    // LANG_OPTION_MENU
+    "Option menu",
+    // LANG_SETTING_MENU
+    "Setting menu",
+    // LANG_ABOUT
+    "About",
+    // LANG_CHANGE_DIR
+    "Change dir",
 
-    // MESSAGE_ASK_DELETE_GAME
+    // LANG_OPTION_MENU_START_GAME
+    "Start game",
+    // LANG_OPTION_MENU_DELETE_GAME
+    "Delete game",
+    // LANG_OPTION_MENU_DELETE_AUTO_SAVESTATE
+    "Delete auto savestate",
+    // LANG_OPTION_MENU_DELETE_AUTO_SAVEFILE
+    "Delete auto savefile",
+
+    // LANG_MESSAGE_ASK_DELETE_GAME
     "Are you sure you want to delete this game?",
-    // MESSAGE_ASK_DELETE_AUTO_STATE
-    "Are you sure you want to delete the auto state of this game?",
-    // MESSAGE_ASK_DELETE_SAVEFILE
-    "Are you sure you want to delete the save file of this game?",
-    // MESSAGE_START_GAME_FAILED
+    // LANG_MESSAGE_ASK_DELETE_AUTO_STATE
+    "Are you sure you want to delete the auto savestate of this game?",
+    // LANG_MESSAGE_ASK_DELETE_AUTO_SAVEFILE
+    "Are you sure you want to delete the auto savefile of this game?",
+    // LANG_MESSAGE_START_GAME_FAILED
     "Failed to start this game!",
 
     /**************  About  *****************/
-    // ABOUT_TITLE
+    // LANG_ABOUT_TITLE
     "About",
 
-    /**************  Setting table  *****************/
-    // TAB_MAIN
+    /**************  Menu table  *****************/
+    // LANG_MENU_MAIN
     "Main",
-    // TAB_STATE
+    // LANG_MENU_STATE
     "State",
-    // TAB_GRAPHICS
+    // LANG_MENU_GRAPHICS
     "Graphics",
-    // TAB_CONTROL
+    // LANG_MENU_CONTROL
     "Control",
-    // TAB_HOTKEY
-    "HotKey",
-    // TAB_CORE
+    // LANG_MENU_HOTKEY
+    "Hotkey",
+    // LANG_MENU_CORE
     "Core",
-    // TAB_CHEAT
+    // LANG_MENU_CHEAT
     "Cheat",
-    // TAB_MISC
+    // LANG_MENU_MISC
     "Misc",
-    // TAB_APP
+    // LANG_MENU_APP
     "App",
 
     /**************  Menu general  *****************/
-    // DISABLE
-    "disable",
-    // DEFAULT
-    "default",
-    // AUTO
-    "auto",
-    // NONE
-    "none",
-    // LABEL_RESET_CONFIGS
+    // LANG_DISABLE
+    "Disable",
+    // LANG_DEFAULT
+    "Default",
+    // LANG_AUTO
+    "Auto",
+    // LANG_NONE
+    "None",
+    // LANG_RESET_CONFIGS
     "Reset configs",
 
     /**************  Menu main  *****************/
-    // LABEL_RESUME_GAME
+    // LANG_RESUME_GAME
     "Resume game",
-    // LABEL_RESET_GAME
+    // LANG_RESET_GAME
     "Reset game",
-    // LABEL_EXIT_GAME
+    // LANG_EXIT_GAME
     "Exit game",
-    // LABEL_DISK_CONTROL
+    // LANG_DISK_CONTROL
     "Disk control",
-    // LABEL_EXIT_TO_ARCH
-    "Eixt to arch",
-    // LABEL_EXIT_APP
+    // LANG_EXIT_TO_ARCH
+    "Eixt to Arch",
+    // LANG_EXIT_APP
     "Exit app",
 
-    // TITLE_SWITCH_DISK
+    // LANG_SWITCH_DISK
     "Switch disk",
-    // LABEL_DISK
+    // LANG_DISK
     "Disk",
-    // CURRENT
-    "current",
+    // LANG_CURRENT
+    "Current",
 
     /**************  Menu graphics  *****************/
-    // LABEL_DISPLAY_SIZE
+    // LANG_DISPLAY_SIZE
     "Display size",
-    // LABEL_ASPECT_RATIO
+    // LANG_ASPECT_RATIO
     "Aspect ratio",
-    // LABEL_DISPLAY_ROTATE
+    // LANG_DISPLAY_ROTATE
     "Display rotate",
-    // LABEL_GRAPHICS_SHADER
+    // LANG_GRAPHICS_SHADER
     "Graphics shader",
-    // LABEL_GRAPHICS_SMOOTH
+    // LANG_GRAPHICS_SMOOTH
     "Graphics smooth",
-    // LABEL_OVERLAY_SELECT
+    // LANG_OVERLAY_SELECT
     "Overlay select",
-    // LABEL_OVERLAY_MODE
+    // LANG_OVERLAY_MODE
     "Overlay mode",
-    // LABEL_SHOW_FPS
+    // LANG_SHOW_FPS
     "Show FPS",
 
-    // DISPLAY_SIZE_1X
+    // LANG_DISPLAY_SIZE_1X
     "1X",
-    // DISPLAY_SIZE_2X
+    // LANG_DISPLAY_SIZE_2X
     "2X",
-    // DISPLAY_SIZE_3X
+    // LANG_DISPLAY_SIZE_3X
     "3X",
-    // DISPLAY_SIZE_FULL
-    "full",
+    // LANG_DISPLAY_SIZE_FULL
+    "Full",
 
-    // ASPECT_RATIO_BY_GAME_RESOLUTION
-    "by game resolution",
-    // ASPECT_RATIO_BY_DEV_SCREEN
-    "by device screen",
-    // ASPECT_RATIO_8_7
+    // LANG_ASPECT_RATIO_BY_GAME_RESOLUTION
+    "By game resolution",
+    // LANG_ASPECT_RATIO_BY_DEV_SCREEN
+    "By device screen",
+    // LANG_ASPECT_RATIO_8_7
     "8:7",
-    // ASPECT_RATIO_4_3
+    // LANG_ASPECT_RATIO_4_3
     "4:3",
-    // ASPECT_RATIO_3_2
+    // LANG_ASPECT_RATIO_3_2
     "3:2",
-    // ASPECT_RATIO_16_9
+    // LANG_ASPECT_RATIO_16_9
     "16:9",
 
-    // DISPLAY_ROTATE_CW_90
-    "rotate 90°CW",
-    // DISPLAY_ROTATE_CW_180
-    "rotate 180°CW",
-    // DISPLAY_ROTATE_CW_270
-    "rotate 270°CW",
+    // LANG_DISPLAY_ROTATE_CW_90
+    "Rotate 90°CW",
+    // LANG_DISPLAY_ROTATE_CW_180
+    "Rotate 180°CW",
+    // LANG_DISPLAY_ROTATE_CW_270
+    "Rotate 270°CW",
 
-    // SHADER_LCD3X
+    // LANG_SHADER_LCD3X
     "LCD3x",
-    // SHADER_SHARP_BILINEAR_SIMPLE
-    "sharp bilinear simple",
-    // SHADER_SHARP_BILINEAR
-    "sharp bilinear",
-    // SHADER_ADVANCED_AA
-    "advanced AA",
+    // LANG_SHADER_SHARP_BILINEAR_SIMPLE
+    "Sharp bilinear simple",
+    // LANG_SHADER_SHARP_BILINEAR
+    "Sharp bilinear",
+    // LANG_SHADER_ADVANCED_AA
+    "Advanced AA",
 
-    // OVERLAY_MODE_OVERLAY
-    "overlay",
-    // OVERLAY_MODE_BACKGROUND
-    "background",
+    // LANG_OVERLAY_MODE_OVERLAY
+    "Overlay",
+    // LANG_OVERLAY_MODE_BACKGROUND
+    "Background",
 
     /**************  Menu control  *****************/
-    // LABEL_CTRL_PLAYER
+    // LANG_CTRL_PLAYER
     "Control player",
-    // LABEL_FRONT_TOUCH_TO_BUTTON
+    // LANG_FRONT_TOUCH_TO_BUTTON
     "Front touch to button",
-    // LABEL_BACK_TOUCH_TO_BUTTON
+    // LANG_BACK_TOUCH_TO_BUTTON
     "Back touch to button",
-    // LABEL_TURBO_DELAY
+    // LANG_TURBO_DELAY
     "Turbo delay (frame)",
 
     /**************  Menu misc  *****************/
-    // LABEL_AUTO_SAVE_LOAD_STATE
+    // LANG_AUTO_SAVE_LOAD_STATE
     "Auto save/load state",
-    // LABEL_SAVE_SCREENSHOT
+    // LANG_SAVE_SCREENSHOT
     "Save screenshot",
-    // LABEL_SAVE_PREVIEW
+    // LANG_SAVE_PREVIEW
     "Save screenshot for preview",
 
-    /**************  Menu hot key  *****************/
-    // LABEL_HK_SAVESTATE
-    "Save state (hot key)",
-    // LABEL_HK_LOADSTATE
-    "Load state (hot key)",
-    // LABEL_HK_SPEED_UP
-    "Speed up (hot key)",
-    // LABEL_HK_SPEED_DOWN
-    "Speed down (hot key)",
-    // LABEL_HK_PLAYER_UP
-    "Control player+ (hot key)",
-    // LABEL_HK_PLAYER_DOWN
-    "Control player- (hot key)",
-    // LABEL_HK_EXIT_GAME
-    "Exit game (hot key)",
+    /**************  Menu hotkey  *****************/
+    // LANG_HOTKEY_SAVESTATE
+    "[Hotkey] Save state",
+    // LANG_HOTKEY_LOADSTATE
+    "[Hotkey] Load state",
+    // LANG_HOTKEY_GAME_SPEED_UP
+    "[Hotkey] Game speed up",
+    // LANG_HOTKEY_GAME_SPEED_DOWN
+    "[Hotkey] Game speed down",
+    // LANG_HOTKEY_CONTROL_PLAYER_UP
+    "[Hotkey] Control player +",
+    // LANG_HOTKEY_CONTROL_PLAYER_DOWN
+    "[Hotkey] Control player -",
+    // LANG_HOTKEY_EXIT_GAME
+    "[Hotkey] Exit game",
 
     /**************  Menu app  *****************/
-    // LABEL_PREVIEW_PATH
+    // LANG_PREVIEW_PATH
     "Preview path",
-    // LABEL_PREVIEW_STYLE
+    // LANG_PREVIEW_STYLE
     "Preview style",
-    // LABEL_APP_LOG
+    // LANG_APP_LOG
     "App log",
-    // LABEL_CORE_LOG
+    // LANG_CORE_LOG
     "Core log",
-    // LABEL_SHOW_LOG
+    // LANG_SHOW_LOG
     "Show log (loading)",
-    // LABEL_LANGUAGE
+    // LANG_LANGUAGE
     "Language",
 
-    // FROM_AUTO_STATE
-    "from auto state",
+    // LANG_PREVIEW_PATH_FROM_AUTO_STATE
+    "From auto savestate",
 
-    // FULL_PRESERVE
-    "preserve full",
-    // FULL_STRETCH
-    "stretch full",
-    // FULL_CROP,
-    "crop full",
+    // LANG_PREVIEW_STYLE_PRESERVE_FULL
+    "Preserve full",
+    // LANG_PREVIEW_STYLE_STRETCH_FULL
+    "Stretch full",
+    // LANG_PREVIEW_STYLE_CROP_FULL,
+    "Crop full",
 
     /**************  Menu state  *****************/
-    // LABEL_EXISTENT_STATE
+    // LANG_STATE_EXISTENT_STATE
     "State",
-    // LABEL_NON_EXISTENT_STATE
-    "None",
+    // LANG_STATE_EMPTY_STATE
+    "Empty",
 
-    // LOAD
-    "load",
-    // SAVE
-    "save",
-    // DELETE
-    "delete",
+    // LANG_STATE_LOAD_STATE
+    "Load",
+    // LANG_STATE_SAVE_STATE
+    "Save",
+    // LANG_STATE_DELETE_STATE
+    "Delete",
 };
 
 /* 简体中文 */
 char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
-    // Null
+    // LANG_NULL
     NULL,
 
     /**************  General  *****************/
-    // YES
+    // LANG_YES
     "是",
-    // NO
+    // LANG_NO
     "否",
-    // CONFIRM
+    // LANG_CONFIRM
     "确定",
-    // CANCEL
+    // LANG_CANCEL
     "取消",
-    // BACK
+    // LANG_BACK
     "返回",
-    // EXIT
+    // LANG_EXIT
     "退出",
 
     /**************  Dialog  *****************/
-    // TITLE_TIP
+    // LANG_TIP
     "提示",
-    // TITLE_MENU
+    // LANG_MENU
     "菜单",
-    // COLSE
+    // LANG_COLSE
     "关闭",
 
     /**************  Safe mode  *****************/
-    // MESSAGE_SAFE_MODE
+    // LANG_MESSAGE_WARN_SAFE_MODE
     "当前处于安全模式，请先在HENkaku设置里开启启用不安全自制软件，"
     "然后才能正常使用本程序。",
 
     /**************  Button string  *****************/
-    // BUTTON_ENTER
+    // LANG_BUTTON_ENTER
     NULL,
-    // BUTTON_CANCEL
+    // LANG_BUTTON_CANCEL
     NULL,
-    // BUTTON_LEFT
+    // LANG_BUTTON_LEFT
     "←",
-    // BUTTON_UP
+    // LANG_BUTTON_UP
     "↑",
-    // BUTTON_RIGHT
+    // LANG_BUTTON_RIGHT
     "→",
-    // BUTTON_DOWN
+    // LANG_BUTTON_DOWN
     "↓",
-    // BUTTON_CROSS
+    // LANG_BUTTON_CROSS
     "×",
-    // BUTTON_CIRCLE
+    // LANG_BUTTON_CIRCLE
     "○",
-    // BUTTON_SQUARE
+    // LANG_BUTTON_SQUARE
     "□",
-    // BUTTON_TRIANGLE
+    // LANG_BUTTON_TRIANGLE
     "△",
-    // BUTTON_L
+    // LANG_BUTTON_L
     "L",
-    // BUTTON_R
+    // LANG_BUTTON_R
     "R",
-    // BUTTON_L2
+    // LANG_BUTTON_L2
     "L2",
-    // BUTTON_R2
+    // LANG_BUTTON_R2
     "R2",
-    // BUTTON_L3
+    // LANG_BUTTON_L3
     "L3",
-    // BUTTON_R3
+    // LANG_BUTTON_R3
     "R3",
-    // BUTTON_SELECT
+    // LANG_BUTTON_SELECT
     "Select",
-    // BUTTON_START
+    // LANG_BUTTON_START
     "Start",
-    // BUTTON_PSBUTTON
+    // LANG_BUTTON_PSBUTTON
     "Home",
-    // BUTTON_LEFT_ANALOG
+    // LANG_BUTTON_LEFT_ANALOG
     "左摇杆",
-    // BUTTON_LEFT_ANALOG_LEFT
+    // LANG_BUTTON_LEFT_ANALOG_LEFT
     "左摇杆←",
-    // BUTTON_LEFT_ANALOG_UP
+    // LANG_BUTTON_LEFT_ANALOG_UP
     "左摇杆↑",
-    // BUTTON_LEFT_ANALOG_RIGHT
+    // LANG_BUTTON_LEFT_ANALOG_RIGHT
     "左摇杆→",
-    // BUTTON_LEFT_ANALOG_DOWN
+    // LANG_BUTTON_LEFT_ANALOG_DOWN
     "左摇杆↓",
-    // BUTTON_RIGHT_ANALOG
+    // LANG_BUTTON_RIGHT_ANALOG
     "右摇杆",
-    // BUTTON_RIGHT_ANALOG_LEFT
+    // LANG_BUTTON_RIGHT_ANALOG_LEFT
     "右摇杆←",
-    // BUTTON_RIGHT_ANALOG_UP
+    // LANG_BUTTON_RIGHT_ANALOG_UP
     "右摇杆↑",
-    // BUTTON_RIGHT_ANALOG_RIGHT
+    // LANG_BUTTON_RIGHT_ANALOG_RIGHT
     "右摇杆→",
-    // BUTTON_RIGHT_ANALOG_DOWN
+    // LANG_BUTTON_RIGHT_ANALOG_DOWN
     "右摇杆↓",
 
     /**************  Button string 2  *****************/
-    // BUTTON_A
+    // LANG_BUTTON_A
     "A",
-    // BUTTON_B
+    // LANG_BUTTON_B
     "B",
-    // BUTTON_C
+    // LANG_BUTTON_C
     "C",
-    // BUTTON_D
+    // LANG_BUTTON_D
     "D",
-    // BUTTON_E
+    // LANG_BUTTON_E
     "E",
-    // BUTTON_F
+    // LANG_BUTTON_F
     "F",
-    // BUTTON_G
+    // LANG_BUTTON_G
     "G",
-    // BUTTON_H
+    // LANG_BUTTON_H
     "H",
-    // BUTTON_X
+    // LANG_BUTTON_X
     "X",
-    // BUTTON_Y
+    // LANG_BUTTON_Y
     "Y",
-    // BUTTON_Z
+    // LANG_BUTTON_Z
     "Z",
 
-    // BUTTON_X1
+    // LANG_BUTTON_X1
     "X1",
-    // BUTTON_X2
+    // LANG_BUTTON_X2
     "X2",
-    // BUTTON_X3
+    // LANG_BUTTON_X3
     "X3",
-    // BUTTON_X4
+    // LANG_BUTTON_X4
     "X4",
-    // BUTTON_Y1
+    // LANG_BUTTON_Y1
     "Y1",
-    // BUTTON_Y2
+    // LANG_BUTTON_Y2
     "Y2",
-    // BUTTON_Y3
+    // LANG_BUTTON_Y3
     "Y3",
-    // BUTTON_Y4
+    // LANG_BUTTON_Y4
     "Y4",
 
-    // LABEL_SWICTH_MODE
+    // LANG_SWICTH_MODE
     "模式切换",
-    // LABEL_COIN
+    // LANG_COIN
     "投币",
-    // LABEL_SELECT
+    // LANG_SELECT
     "选择",
-    // LABEL_START
+    // LANG_START
     "开始",
-    // LABEL_TURBO
+    // LANG_TURBO
     "连发",
-    // LABEL_FDS_DISK_SIDE_CHANGE
-    "(FDS) 更换磁盘面",
-    // LABEL_FDS_INSERT_EJECT_DISK
-    "(FDS) 插入/弹出磁盘",
+    // LANG_FDS_DISK_SIDE_CHANGE
+    "[FDS] 更换磁盘面",
+    // LANG_FDS_INSERT_EJECT_DISK
+    "[FDS] 插入/弹出磁盘",
 
     /**************  Browser  *****************/
-    // APP_TITLE
+    // LANG_APP_TITLE
     APP_NAME_STR " v" APP_VER_STR,
 
-    // PARENT_DIRECTORY
+    // LANG_PARENT_DIR
     "上层目录",
-    // OPEN_DIR
+    // LANG_OPEN_DIR
     "打开目录",
-    // START_GAME
+    // LANG_START_GAME
     "启动游戏",
-    // OPTION_MENU
+    // LANG_OPTION_MENU
     "选项菜单",
-    // SETTING_MENU
+    // LANG_SETTING_MENU
     "设置菜单",
-    // ABOUT
+    // LANG_ABOUT
     "关于",
-    // CHANGE_DIR
+    // LANG_CHANGE_DIR
     "跳转目录",
 
-    // LABEL_START_GAME
+    // LANG_OPTION_MENU_START_GAME
     "启动游戏",
-    // LABEL_DELETE_GAME
+    // LANG_OPTION_MENU_DELETE_GAME
     "删除游戏",
-    // LABEL_DELETE_AUTO_STATE
-    "删除自动存档",
-    // LABEL_DELETE_SAVEFILE
-    "删除模拟存档",
+    // LANG_OPTION_MENU_DELETE_AUTO_SAVESTATE
+    "删除自动即时存档",
+    // LANG_OPTION_MENU_DELETE_AUTO_SAVEFILE
+    "删除自动模拟存档",
 
-    // MESSAGE_ASK_DELETE_GAME
+    // LANG_MESSAGE_ASK_DELETE_GAME
     "确认要删除这个游戏？",
-    // MESSAGE_ASK_DELETE_AUTO_STATE
-    "确认要删除这个游戏的自动存档？",
-    // MESSAGE_ASK_DELETE_SAVEFILE
-    "确认要删除这个游戏的模拟存档？",
-    // MESSAGE_START_GAME_FAILED
+    // LANG_MESSAGE_ASK_DELETE_AUTO_STATE
+    "确认要删除这个游戏的自动即时存档？",
+    // LANG_MESSAGE_ASK_DELETE_AUTO_SAVEFILE
+    "确认要删除这个游戏的自动模拟存档？",
+    // LANG_MESSAGE_START_GAME_FAILED
     "启动游戏失败！",
 
     /**************  About  *****************/
-    // ABOUT_TITLE
+    // LANG_ABOUT_TITLE
     "关于",
 
-    /**************  Setting tab  *****************/
-    // TAB_MAIN
+    /**************  Menu tab  *****************/
+    // LANG_MENU_MAIN
     "主菜单",
-    // TAB_STATE
+    // LANG_MENU_STATE
     "即时存档",
-    // TAB_GRAPHICS
+    // LANG_MENU_GRAPHICS
     "图形",
-    // TAB_CONTROL
+    // LANG_MENU_CONTROL
     "控制",
-    // TAB_HOTKEY
-    "热键",
-    // TAB_CORE
+    // LANG_MENU_HOTKEY
+    "快捷键",
+    // LANG_MENU_CORE
     "核心",
-    // TAB_CHEAT
+    // LANG_MENU_CHEAT
     "金手指",
-    // TAB_MISC
+    // LANG_MENU_MISC
     "杂项",
-    // TAB_APP
+    // LANG_MENU_APP
     "程序",
 
     /**************  Menu general  *****************/
-    // DISABLE
+    // LANG_DISABLE
     "禁用",
-    // DEFAULT
+    // LANG_DEFAULT
     "默认",
-    // AUTO
+    // LANG_AUTO
     "自动",
-    // NONE
+    // LANG_NONE
     "无",
-    // LABEL_RESET_CONFIGS
+    // LANG_RESET_CONFIGS
     "恢复默认设置",
 
     /**************  Menu main  *****************/
-    // LABEL_RESUME_GAME
+    // LANG_RESUME_GAME
     "继续游戏",
-    // LABEL_RESET_GAME
+    // LANG_RESET_GAME
     "重置游戏",
-    // LABEL_EXIT_GAME
+    // LANG_EXIT_GAME
     "退出游戏",
-    // LABEL_DISK_CONTROL
+    // LANG_DISK_CONTROL
     "光盘控制",
-    // LABEL_EXIT_TO_ARCH
+    // LANG_EXIT_TO_ARCH
     "返回前端",
-    // LABEL_EXIT_APP
+    // LANG_EXIT_APP
     "退出程序",
 
-    // TITLE_SWITCH_DISK
+    // LANG_SWITCH_DISK
     "更换光盘",
-    // LABEL_DISK
+    // LANG_DISK
     "光盘",
-    // CURRENT
+    // LANG_CURRENT
     "当前",
 
     /**************  Menu graphics  *****************/
-    // LABEL_DISPLAY_SIZE
+    // LANG_DISPLAY_SIZE
     "画面尺寸",
-    // LABEL_ASPECT_RATIO
+    // LANG_ASPECT_RATIO
     "画面比例",
-    // LABEL_DISPLAY_ROTATE
+    // LANG_DISPLAY_ROTATE
     "画面旋转",
-    // LABEL_GRAPHICS_SHADER
+    // LANG_GRAPHICS_SHADER
     "图像滤境",
-    // LABEL_GRAPHICS_SMOOTH
+    // LANG_GRAPHICS_SMOOTH
     "平滑图像",
-    // LABEL_OVERLAY_SELECT
+    // LANG_OVERLAY_SELECT
     "遮罩图选择",
-    // LABEL_OVERLAY_MODE
+    // LANG_OVERLAY_MODE
     "遮罩图显示模式",
-    // LABEL_SHOW_FPS
+    // LANG_SHOW_FPS
     "显示帧数",
 
-    // DISPLAY_SIZE_1X
+    // LANG_DISPLAY_SIZE_1X
     "1倍大小",
-    // DISPLAY_SIZE_2X
+    // LANG_DISPLAY_SIZE_2X
     "2倍大小",
-    // DISPLAY_SIZE_3X
+    // LANG_DISPLAY_SIZE_3X
     "3倍大小",
-    // DISPLAY_SIZE_FULL
+    // LANG_DISPLAY_SIZE_FULL
     "铺满屏幕",
 
-    // ASPECT_RATIO_BY_GAME_RESOLUTION
+    // LANG_ASPECT_RATIO_BY_GAME_RESOLUTION
     "由游戏分辨率",
-    // ASPECT_RATIO_BY_DEV_SCREEN
+    // LANG_ASPECT_RATIO_BY_DEV_SCREEN
     "由设备屏幕",
-    // ASPECT_RATIO_8_7
+    // LANG_ASPECT_RATIO_8_7
     "8:7",
-    // ASPECT_RATIO_4_3
+    // LANG_ASPECT_RATIO_4_3
     "4:3",
-    // ASPECT_RATIO_3_2
+    // LANG_ASPECT_RATIO_3_2
     "3:2",
-    // ASPECT_RATIO_16_9
+    // LANG_ASPECT_RATIO_16_9
     "16:9",
 
-    // DISPLAY_ROTATE_CW_90
+    // LANG_DISPLAY_ROTATE_CW_90
     "旋转90度(顺时针)",
-    // DISPLAY_ROTATE_CW_180
+    // LANG_DISPLAY_ROTATE_CW_180
     "旋转180度(顺时针)",
-    // DISPLAY_ROTATE_CW_270
+    // LANG_DISPLAY_ROTATE_CW_270
     "旋转270度(顺时针)",
 
-    // SHADER_LCD3X
+    // LANG_SHADER_LCD3X
     "LCD3x",
-    // SHADER_SHARP_BILINEAR_SIMPLE
+    // LANG_SHADER_SHARP_BILINEAR_SIMPLE
     "锐利双线性",
-    // SHADER_SHARP_BILINEAR
+    // LANG_SHADER_SHARP_BILINEAR
     "锐利双线性+扫描线",
-    // SHADER_ADVANCED_AA
+    // LANG_SHADER_ADVANCED_AA
     "高级AA",
 
-    // OVERLAY_MODE_OVERLAY
+    // LANG_OVERLAY_MODE_OVERLAY
     "覆层模式",
-    // OVERLAY_MODE_BACKGROUND
+    // LANG_OVERLAY_MODE_BACKGROUND
     "背景模式",
 
     /**************  Menu control  *****************/
-    // LABEL_CTRL_PLAYER
+    // LANG_CTRL_PLAYER
     "玩家控制",
-    // LABEL_FRONT_TOUCH_TO_BUTTON
+    // LANG_FRONT_TOUCH_TO_BUTTON
     "前触摸映射按键",
-    // LABEL_BACK_TOUCH_TO_BUTTON
+    // LANG_BACK_TOUCH_TO_BUTTON
     "背触摸映射按键",
-    // LABEL_TURBO_DELAY
+    // LANG_TURBO_DELAY
     "连发间隔 (帧)",
 
     /**************  Menu misc  *****************/
-    // LABEL_AUTO_SAVE_LOAD_STATE
+    // LANG_AUTO_SAVE_LOAD_STATE
     "自动存读档",
-    // LABEL_SAVE_SCREENSHOT
+    // LANG_SAVE_SCREENSHOT
     "保存截图",
-    // LABEL_SAVE_PREVIEW
+    // LANG_SAVE_PREVIEW
     "保存截图为预览图",
 
-
-    /**************  Menu hot key  *****************/
-    // LABEL_HK_SAVESTATE
-    "保存存档 (快捷键)",
-    // LABEL_HK_LOADSTATE
-    "读取存档 (快捷键)",
-    // LABEL_HK_SPEED_UP
-    "加速游戏 (快捷键)",
-    // LABEL_HK_SPEED_DOWN
-    "减速游戏 (快捷键)",
-    // LABEL_HK_PLAYER_UP
-    "切换玩家+ (快捷键)",
-    // LABEL_HK_PLAYER_DOWN
-    "切换玩家- (快捷键)",
-    // LABEL_HK_EXIT_GAME
-    "退出游戏 (快捷键)",
+    /**************  Menu hotkey  *****************/
+    // LANG_HOTKEY_SAVESTATE
+    "[快捷键] 保存存档",
+    // LANG_HOTKEY_LOADSTATE
+    "[快捷键] 读取存档",
+    // LANG_HOTKEY_GAME_SPEED_UP
+    "[快捷键] 加速游戏",
+    // LANG_HOTKEY_GAME_SPEED_DOWN
+    "[快捷键] 减速游戏",
+    // LANG_HOTKEY_CONTROL_PLAYER_UP
+    "[快捷键] 切换玩家+",
+    // LANG_HOTKEY_CONTROL_PLAYER_DOWN
+    "[快捷键] 切换玩家-",
+    // LANG_HOTKEY_EXIT_GAME
+    "[快捷键] 退出游戏",
 
     /**************  Menu app  *****************/
-    // LABEL_PREVIEW_PATH
+    // LANG_PREVIEW_PATH
     "预览图路径",
-    // LABEL_PREVIEW_STYLE
+    // LANG_PREVIEW_STYLE
     "预览图样式",
-    // LABEL_APP_LOG
+    // LANG_APP_LOG
     "程序日志",
-    // LABEL_CORE_LOG
+    // LANG_CORE_LOG
     "核心日志",
-    // LABEL_SHOW_LOG
+    // LANG_SHOW_LOG
     "显示日志 (加载游戏时)",
-    // LABEL_LANGUAGE
+    // LANG_LANGUAGE
     "语言",
 
-    // FROM_AUTO_STATE
-    "从自动存档",
+    // LANG_PREVIEW_PATH_FROM_AUTO_STATE
+    "从自动即时存档",
 
-    // FULL_PRESERVE
+    // LANG_PREVIEW_STYLE_PRESERVE_FULL
     "等比铺满",
-    // FULL_STRETCH
+    // LANG_PREVIEW_STYLE_STRETCH_FULL
     "拉伸铺满",
-    // FULL_CROP,
+    // LANG_PREVIEW_STYLE_CROP_FULL,
     "裁剪铺满",
 
     /**************  Menu state  *****************/
-    // LABEL_EXISTENT_STATE
+    // LANG_STATE_EXISTENT_STATE
     "已存档",
-    // LABEL_NON_EXISTENT_STATE
+    // LANG_STATE_EMPTY_STATE
     "未存档",
 
-    // LOAD
+    // LANG_STATE_LOAD_STATE
     "读取",
-    // SAVE
+    // LANG_STATE_SAVE_STATE
     "保存",
-    // DELETE
+    // LANG_STATE_DELETE_STATE
     "删除",
 };
 
 /* 繁體中文 */
 char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
-    // Null
+    // LANG_NULL
     NULL,
 
     /**************  General  *****************/
-    // YES
+    // LANG_YES
     "是",
-    // NO
+    // LANG_NO
     "否",
-    // CONFIRM
+    // LANG_CONFIRM
     "確定",
-    // CANCEL
+    // LANG_CANCEL
     "取消",
-    // BACK
+    // LANG_BACK
     "返回",
-    // EXIT
+    // LANG_EXIT
     "退出",
 
     /**************  Dialog  *****************/
-    // TITLE_TIP
+    // LANG_TIP
     "提示",
-    // TITLE_MENU
+    // LANG_MENU
     "菜單",
-    // COLSE
+    // LANG_COLSE
     "關閉",
 
     /**************  Safe mode  *****************/
-    // MESSAGE_SAFE_MODE
+    // LANG_MESSAGE_WARN_SAFE_MODE
     "當前處於安全模式，請先在HENkaku設置裏開啟啟用不安全自製軟件，"
     "然後才能正常使用本程序。",
 
     /**************  Button string  *****************/
-    // BUTTON_ENTER
+    // LANG_BUTTON_ENTER
     NULL,
-    // BUTTON_CANCEL
+    // LANG_BUTTON_CANCEL
     NULL,
-    // BUTTON_LEFT
+    // LANG_BUTTON_LEFT
     "←",
-    // BUTTON_UP
+    // LANG_BUTTON_UP
     "↑",
-    // BUTTON_RIGHT
+    // LANG_BUTTON_RIGHT
     "→",
-    // BUTTON_DOWN
+    // LANG_BUTTON_DOWN
     "↓",
-    // BUTTON_CROSS
+    // LANG_BUTTON_CROSS
     "×",
-    // BUTTON_CIRCLE
+    // LANG_BUTTON_CIRCLE
     "○",
-    // BUTTON_SQUARE
+    // LANG_BUTTON_SQUARE
     "□",
-    // BUTTON_TRIANGLE
+    // LANG_BUTTON_TRIANGLE
     "△",
-    // BUTTON_L
+    // LANG_BUTTON_L
     "L",
-    // BUTTON_R
+    // LANG_BUTTON_R
     "R",
-    // BUTTON_L2
+    // LANG_BUTTON_L2
     "L2",
-    // BUTTON_R2
+    // LANG_BUTTON_R2
     "R2",
-    // BUTTON_L3
+    // LANG_BUTTON_L3
     "L3",
-    // BUTTON_R3
+    // LANG_BUTTON_R3
     "R3",
-    // BUTTON_SELECT
+    // LANG_BUTTON_SELECT
     "Select",
-    // BUTTON_START
+    // LANG_BUTTON_START
     "Start",
-    // BUTTON_PSBUTTON
+    // LANG_BUTTON_PSBUTTON
     "Home",
-    // BUTTON_LEFT_ANALOG
+    // LANG_BUTTON_LEFT_ANALOG
     "左搖桿",
-    // BUTTON_LEFT_ANALOG_LEFT
+    // LANG_BUTTON_LEFT_ANALOG_LEFT
     "左搖桿←",
-    // BUTTON_LEFT_ANALOG_UP
+    // LANG_BUTTON_LEFT_ANALOG_UP
     "左搖桿↑",
-    // BUTTON_LEFT_ANALOG_RIGHT
+    // LANG_BUTTON_LEFT_ANALOG_RIGHT
     "左搖桿→",
-    // BUTTON_LEFT_ANALOG_DOWN
+    // LANG_BUTTON_LEFT_ANALOG_DOWN
     "左搖桿↓",
-    // BUTTON_RIGHT_ANALOG
+    // LANG_BUTTON_RIGHT_ANALOG
     "右搖桿",
-    // BUTTON_RIGHT_ANALOG_LEFT
+    // LANG_BUTTON_RIGHT_ANALOG_LEFT
     "右搖桿←",
-    // BUTTON_RIGHT_ANALOG_UP
+    // LANG_BUTTON_RIGHT_ANALOG_UP
     "右搖桿↑",
-    // BUTTON_RIGHT_ANALOG_RIGHT
+    // LANG_BUTTON_RIGHT_ANALOG_RIGHT
     "右搖桿→",
-    // BUTTON_RIGHT_ANALOG_DOWN
+    // LANG_BUTTON_RIGHT_ANALOG_DOWN
     "右搖桿↓",
 
     /**************  Button string 2  *****************/
-    // BUTTON_A
+    // LANG_BUTTON_A
     "A",
-    // BUTTON_B
+    // LANG_BUTTON_B
     "B",
-    // BUTTON_C
+    // LANG_BUTTON_C
     "C",
-    // BUTTON_D
+    // LANG_BUTTON_D
     "D",
-    // BUTTON_E
+    // LANG_BUTTON_E
     "E",
-    // BUTTON_F
+    // LANG_BUTTON_F
     "F",
-    // BUTTON_G
+    // LANG_BUTTON_G
     "G",
-    // BUTTON_H
+    // LANG_BUTTON_H
     "H",
-    // BUTTON_X
+    // LANG_BUTTON_X
     "X",
-    // BUTTON_Y
+    // LANG_BUTTON_Y
     "Y",
-    // BUTTON_Z
+    // LANG_BUTTON_Z
     "Z",
 
-    // BUTTON_X1
+    // LANG_BUTTON_X1
     "X1",
-    // BUTTON_X2
+    // LANG_BUTTON_X2
     "X2",
-    // BUTTON_X3
+    // LANG_BUTTON_X3
     "X3",
-    // BUTTON_X4
+    // LANG_BUTTON_X4
     "X4",
-    // BUTTON_Y1
+    // LANG_BUTTON_Y1
     "Y1",
-    // BUTTON_Y2
+    // LANG_BUTTON_Y2
     "Y2",
-    // BUTTON_Y3
+    // LANG_BUTTON_Y3
     "Y3",
-    // BUTTON_Y4
+    // LANG_BUTTON_Y4
     "Y4",
 
-    // LABEL_SWICTH_MODE
+    // LANG_SWICTH_MODE
     "模式切換",
-    // LABEL_COIN
+    // LANG_COIN
     "投幣",
-    // LABEL_SELECT
+    // LANG_SELECT
     "選擇",
-    // LABEL_START
+    // LANG_START
     "開始",
-    // LABEL_TURBO
+    // LANG_TURBO
     "連發",
-    // LABEL_FDS_DISK_SIDE_CHANGE
-    "(FDS) 更換磁盤面",
-    // LABEL_FDS_INSERT_EJECT_DISK
-    "(FDS) 插入/彈出磁盤",
+    // LANG_FDS_DISK_SIDE_CHANGE
+    "[FDS] 更換磁盤面",
+    // LANG_FDS_INSERT_EJECT_DISK
+    "[FDS] 插入/彈出磁盤",
 
     /**************  Browser  *****************/
-    // APP_TITLE
+    // LANG_APP_TITLE
     APP_NAME_STR " v" APP_VER_STR,
 
-    // PARENT_DIRECTORY
+    // LANG_PARENT_DIR
     "上層目錄",
-    // OPEN_DIR
+    // LANG_OPEN_DIR
     "打開目錄",
-    // START_GAME
+    // LANG_START_GAME
     "啟動遊戲",
-    // OPTION_MENU
+    // LANG_OPTION_MENU
     "選項菜單",
-    // SETTING_MENU
+    // LANG_SETTING_MENU
     "設置菜單",
-    // ABOUT
+    // LANG_ABOUT
     "關於",
-    // CHANGE_DIR
+    // LANG_CHANGE_DIR
     "跳轉目錄",
 
-    // LABEL_START_GAME
+    // LANG_OPTION_MENU_START_GAME
     "啟動遊戲",
-    // LABEL_DELETE_GAME
+    // LANG_OPTION_MENU_DELETE_GAME
     "刪除遊戲",
-    // LABEL_DELETE_AUTO_STATE
-    "刪除自動存檔",
-    // LABEL_DELETE_SAVEFILE
-    "刪除模擬存檔",
+    // LANG_OPTION_MENU_DELETE_AUTO_SAVESTATE
+    "刪除自動即時存檔",
+    // LANG_OPTION_MENU_DELETE_AUTO_SAVEFILE
+    "刪除自動模擬存檔",
 
-    // MESSAGE_ASK_DELETE_GAME
+    // LANG_MESSAGE_ASK_DELETE_GAME
     "確認要刪除這個遊戲？",
-    // MESSAGE_ASK_DELETE_AUTO_STATE
-    "確認要刪除這個遊戲的自動存檔？",
-    // MESSAGE_ASK_DELETE_SAVEFILE
-    "確認要刪除這個遊戲的模擬存檔？",
-    // MESSAGE_START_GAME_FAILED
+    // LANG_MESSAGE_ASK_DELETE_AUTO_STATE
+    "確認要刪除這個遊戲的自動即時存檔？",
+    // LANG_MESSAGE_ASK_DELETE_AUTO_SAVEFILE
+    "確認要刪除這個遊戲的自動模擬存檔？",
+    // LANG_MESSAGE_START_GAME_FAILED
     "啟動遊戲失敗！",
 
     /**************  About  *****************/
-    // ABOUT_TITLE
+    // LANG_ABOUT_TITLE
     "關於",
 
-    /**************  Setting tab  *****************/
-    // TAB_MAIN
+    /**************  Menu tab  *****************/
+    // LANG_MENU_MAIN
     "主菜單",
-    // TAB_STATE
+    // LANG_MENU_STATE
     "即時存檔",
-    // TAB_GRAPHICS
+    // LANG_MENU_GRAPHICS
     "圖形",
-    // TAB_CONTROL
+    // LANG_MENU_CONTROL
     "控製",
-    // TAB_HOTKEY
-    "熱鍵",
-    // TAB_CORE
+    // LANG_MENU_HOTKEY
+    "快捷鍵",
+    // LANG_MENU_CORE
     "核心",
-    // TAB_CHEAT
+    // LANG_MENU_CHEAT
     "金手指",
-    // TAB_MISC
+    // LANG_MENU_MISC
     "雜項",
-    // TAB_APP
+    // LANG_MENU_APP
     "程序",
 
     /**************  Menu general  *****************/
-    // DISABLE
+    // LANG_DISABLE
     "禁用",
-    // DEFAULT
+    // LANG_DEFAULT
     "默認",
-    // AUTO
+    // LANG_AUTO
     "自動",
-    // NONE
+    // LANG_NONE
     "無",
-    // LABEL_RESET_CONFIGS
+    // LANG_RESET_CONFIGS
     "恢復默認設置",
 
     /**************  Menu main  *****************/
-    // LABEL_RESUME_GAME
+    // LANG_RESUME_GAME
     "繼續遊戲",
-    // LABEL_RESET_GAME
+    // LANG_RESET_GAME
     "重置遊戲",
-    // LABEL_EXIT_GAME
+    // LANG_EXIT_GAME
     "退出遊戲",
-    // LABEL_DISK_CONTROL
+    // LANG_DISK_CONTROL
     "光盤控製",
-    // LABEL_EXIT_TO_ARCH
+    // LANG_EXIT_TO_ARCH
     "返回前端",
-    // LABEL_EXIT_APP
+    // LANG_EXIT_APP
     "退出程序",
 
-    // TITLE_SWITCH_DISK
+    // LANG_SWITCH_DISK
     "更換光盤",
-    // LABEL_DISK
+    // LANG_DISK
     "光盤",
-    // CURRENT
+    // LANG_CURRENT
     "當前",
 
     /**************  Menu graphics  *****************/
-    // LABEL_DISPLAY_SIZE
+    // LANG_DISPLAY_SIZE
     "畫面尺寸",
-    // LABEL_ASPECT_RATIO
+    // LANG_ASPECT_RATIO
     "畫面比例",
-    // LABEL_DISPLAY_ROTATE
+    // LANG_DISPLAY_ROTATE
     "畫面旋轉",
-    // LABEL_GRAPHICS_SHADER
+    // LANG_GRAPHICS_SHADER
     "圖像濾境",
-    // LABEL_GRAPHICS_SMOOTH
+    // LANG_GRAPHICS_SMOOTH
     "平滑圖像",
-    // LABEL_OVERLAY_SELECT
+    // LANG_OVERLAY_SELECT
     "遮罩圖選擇",
-    // LABEL_OVERLAY_MODE
+    // LANG_OVERLAY_MODE
     "遮罩圖顯示模式",
-    // LABEL_SHOW_FPS
+    // LANG_SHOW_FPS
     "顯示幀數",
 
-    // DISPLAY_SIZE_1X
+    // LANG_DISPLAY_SIZE_1X
     "1倍大小",
-    // DISPLAY_SIZE_2X
+    // LANG_DISPLAY_SIZE_2X
     "2倍大小",
-    // DISPLAY_SIZE_3X
+    // LANG_DISPLAY_SIZE_3X
     "3倍大小",
-    // DISPLAY_SIZE_FULL
+    // LANG_DISPLAY_SIZE_FULL
     "鋪滿屏幕",
 
-    // ASPECT_RATIO_BY_GAME_RESOLUTION
+    // LANG_ASPECT_RATIO_BY_GAME_RESOLUTION
     "由遊戲分辨率",
-    // ASPECT_RATIO_BY_DEV_SCREEN
+    // LANG_ASPECT_RATIO_BY_DEV_SCREEN
     "由設備屏幕",
-    // ASPECT_RATIO_8_7
+    // LANG_ASPECT_RATIO_8_7
     "8:7",
-    // ASPECT_RATIO_4_3
+    // LANG_ASPECT_RATIO_4_3
     "4:3",
-    // ASPECT_RATIO_3_2
+    // LANG_ASPECT_RATIO_3_2
     "3:2",
-    // ASPECT_RATIO_16_9
+    // LANG_ASPECT_RATIO_16_9
     "16:9",
 
-    // DISPLAY_ROTATE_CW_90
+    // LANG_DISPLAY_ROTATE_CW_90
     "旋轉90度(順時針)",
-    // DISPLAY_ROTATE_CW_180
+    // LANG_DISPLAY_ROTATE_CW_180
     "旋轉180度(順時針)",
-    // DISPLAY_ROTATE_CW_270
+    // LANG_DISPLAY_ROTATE_CW_270
     "旋轉270度(順時針)",
 
-    // SHADER_LCD3X
+    // LANG_SHADER_LCD3X
     "LCD3x",
-    // SHADER_SHARP_BILINEAR_SIMPLE
+    // LANG_SHADER_SHARP_BILINEAR_SIMPLE
     "銳利雙線性",
-    // SHADER_SHARP_BILINEAR
+    // LANG_SHADER_SHARP_BILINEAR
     "銳利雙線性+掃描線",
-    // SHADER_ADVANCED_AA
+    // LANG_SHADER_ADVANCED_AA
     "高級AA",
 
-    // OVERLAY_MODE_OVERLAY
+    // LANG_OVERLAY_MODE_OVERLAY
     "覆層模式",
-    // OVERLAY_MODE_BACKGROUND
+    // LANG_OVERLAY_MODE_BACKGROUND
     "背景模式",
 
     /**************  Menu control  *****************/
-    // LABEL_CTRL_PLAYER
+    // LANG_CTRL_PLAYER
     "玩家控製",
-    // LABEL_FRONT_TOUCH_TO_BUTTON
+    // LANG_FRONT_TOUCH_TO_BUTTON
     "前觸摸映射按鍵",
-    // LABEL_BACK_TOUCH_TO_BUTTON
+    // LANG_BACK_TOUCH_TO_BUTTON
     "背觸摸映射按鍵",
-    // LABEL_TURBO_DELAY
+    // LANG_TURBO_DELAY
     "連發間隔 (幀)",
 
     /**************  Menu misc  *****************/
-    // LABEL_AUTO_SAVE_LOAD_STATE
+    // LANG_AUTO_SAVE_LOAD_STATE
     "自動存讀檔",
-    // LABEL_SAVE_SCREENSHOT
+    // LANG_SAVE_SCREENSHOT
     "保存截圖",
-    // LABEL_SAVE_PREVIEW
+    // LANG_SAVE_PREVIEW
     "保存截圖為預覽圖",
 
-
-    /**************  Menu hot key  *****************/
-    // LABEL_HK_SAVESTATE
-    "保存存檔 (快捷鍵)",
-    // LABEL_HK_LOADSTATE
-    "讀取存檔 (快捷鍵)",
-    // LABEL_HK_SPEED_UP
-    "加速遊戲 (快捷鍵)",
-    // LABEL_HK_SPEED_DOWN
-    "減速遊戲 (快捷鍵)",
-    // LABEL_HK_PLAYER_UP
-    "切換玩家+ (快捷鍵)",
-    // LABEL_HK_PLAYER_DOWN
-    "切換玩家- (快捷鍵)",
-    // LABEL_HK_EXIT_GAME
-    "退出遊戲 (快捷鍵)",
+    /**************  Menu hotkey  *****************/
+    // LANG_HOTKEY_SAVESTATE
+    "[快捷鍵] 保存存檔",
+    // LANG_HOTKEY_LOADSTATE
+    "[快捷鍵] 讀取存檔",
+    // LANG_HOTKEY_GAME_SPEED_UP
+    "[快捷鍵] 加速遊戲",
+    // LANG_HOTKEY_GAME_SPEED_DOWN
+    "[快捷鍵] 減速遊戲",
+    // LANG_HOTKEY_CONTROL_PLAYER_UP
+    "[快捷鍵] 切換玩家+",
+    // LANG_HOTKEY_CONTROL_PLAYER_DOWN
+    "[快捷鍵] 切換玩家-",
+    // LANG_HOTKEY_EXIT_GAME
+    "[快捷鍵] 退出遊戲",
 
     /**************  Menu app  *****************/
-    // LABEL_PREVIEW_PATH
+    // LANG_PREVIEW_PATH
     "預覽圖路徑",
-    // LABEL_PREVIEW_STYLE
+    // LANG_PREVIEW_STYLE
     "預覽圖樣式",
-    // LABEL_APP_LOG
+    // LANG_APP_LOG
     "程序日誌",
-    // LABEL_CORE_LOG
+    // LANG_CORE_LOG
     "核心日誌",
-    // LABEL_SHOW_LOG
+    // LANG_SHOW_LOG
     "顯示日誌 (加載遊戲時)",
-    // LABEL_LANGUAGE
+    // LANG_LANGUAGE
     "語言",
 
-    // FROM_AUTO_STATE
-    "從自動存檔",
+    // LANG_PREVIEW_PATH_FROM_AUTO_STATE
+    "從自動即時存檔",
 
-    // FULL_PRESERVE
+    // LANG_PREVIEW_STYLE_PRESERVE_FULL
     "等比鋪滿",
-    // FULL_STRETCH
+    // LANG_PREVIEW_STYLE_STRETCH_FULL
     "拉伸鋪滿",
-    // FULL_CROP,
+    // LANG_PREVIEW_STYLE_CROP_FULL,
     "裁剪鋪滿",
 
     /**************  Menu state  *****************/
-    // LABEL_EXISTENT_STATE
+    // LANG_STATE_EXISTENT_STATE
     "已存檔",
-    // LABEL_NON_EXISTENT_STATE
+    // LANG_STATE_EMPTY_STATE
     "未存檔",
 
-    // LOAD
+    // LANG_STATE_LOAD_STATE
     "讀取",
-    // SAVE
+    // LANG_STATE_SAVE_STATE
     "保存",
-    // DELETE
+    // LANG_STATE_DELETE_STATE
     "刪除",
 };
 

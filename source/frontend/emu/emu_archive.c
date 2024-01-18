@@ -264,9 +264,9 @@ END:
     ZIP_CloseRom();
     SevenZ_CloseRom();
     if (ret < 0)
-        AppLog("[Archive] Archive_GetRomMemory failed!\n");
+        AppLog("[ARCHIVE] Archive_GetRomMemory failed!\n");
     else
-        AppLog("[Archive] Archive_GetRomMemory OK!\n");
+        AppLog("[ARCHIVE] Archive_GetRomMemory OK!\n");
     return ret;
 
 FAILED:
@@ -317,9 +317,9 @@ END:
     ZIP_CloseRom();
     SevenZ_CloseRom();
     if (ret < 0)
-        AppLog("[Archive] Archive_GetRomPath failed!\n");
+        AppLog("[ARCHIVE] Archive_GetRomPath failed!\n");
     else
-        AppLog("[Archive] Archive_GetRomPath OK: %s\n", rom_path);
+        AppLog("[ARCHIVE] Archive_GetRomPath OK: %s\n", rom_path);
     return ret;
 
 FAILED:

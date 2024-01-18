@@ -623,7 +623,7 @@ static void displayVideo()
     {
         uint64_t cur_micros = sceKernelGetProcessTimeWide();
         if (cur_micros < show_player_micros)
-            GUI_DrawTextf(0.0f, GUI_SCREEN_HEIGHT - GUI_GetFontSize(), COLOR_WHITE, "%s: %dP", cur_lang[LABEL_CTRL_PLAYER], control_config.ctrl_player + 1);
+            GUI_DrawTextf(0.0f, GUI_SCREEN_HEIGHT - GUI_GetFontSize(), COLOR_WHITE, "%s: %dP", cur_lang[LANG_CTRL_PLAYER], control_config.ctrl_player + 1);
         else
             show_player_micros = 0;
     }

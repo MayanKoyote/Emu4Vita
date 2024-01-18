@@ -342,7 +342,7 @@ int Setting_SetCoreMenu(LinkedList *list)
     }
 
     // The last one is reset config
-    items[n_items - 1].name.lang = LABEL_RESET_CONFIGS;
+    items[n_items - 1].name.lang = LANG_RESET_CONFIGS;
     items[n_items - 1].option_type = TYPE_OPTION_CALLBACK;
     items[n_items - 1].option = resetCoreConfigCallback;
     items[n_items - 1].visibility = &visibility_visible;
@@ -433,7 +433,7 @@ int Setting_SetCheatMenu(LinkedList *list)
     }
 
     // The last one is reset config
-    items[n_items - 1].name.lang = LABEL_RESET_CONFIGS;
+    items[n_items - 1].name.lang = LANG_RESET_CONFIGS;
     items[n_items - 1].option_type = TYPE_OPTION_CALLBACK;
     items[n_items - 1].option = resetCheatConfigCallback;
     items[n_items - 1].visibility = &visibility_visible;
@@ -462,7 +462,7 @@ int Setting_SetOverlayOption(LinkedList *list)
     if (!names)
         return -1;
 
-    names[0].lang = NONE; // The first one is none
+    names[0].lang = LANG_NONE; // The first one is none
 
     LinkedListEntry *entry = LinkedListHead(list);
 
@@ -576,7 +576,7 @@ void Setting_UpdateKeyMapperMenu(int idx)
         int enabled = config_key & ENABLE_KEY_BITMASK;
         if (!enabled)
         {
-            option->name.lang = DISABLE;
+            option->name.lang = LANG_DISABLE;
             continue;
         }
 
@@ -606,7 +606,7 @@ void Setting_UpdateKeyMapperMenu(int idx)
         if (n_mapped > 0)
             option->name.lang = LANG_NULL;
         else
-            option->name.lang = DISABLE;
+            option->name.lang = LANG_DISABLE;
     }
 }
 
@@ -755,7 +755,7 @@ static void drawMenu()
                         int turbo = *(int *)(option->userdata) & TURBO_KEY_BITMASK;
                         uint32_t bg_color = turbo ? COLOR_ALPHA(COLOR_ORANGE, 0xBF) : COLOR_ALPHA(COLOR_BLACK, 0xBF);
                         uint32_t text_color = turbo ? COLOR_WHITE : COLOR_DARKGRAY;
-                        char *turbo_str = cur_lang[LABEL_TURBO];
+                        char *turbo_str = cur_lang[LANG_TURBO];
                         int turbo_text_width = GUI_GetTextWidth(turbo_str);
                         x = dx - turbo_text_width;
                         GUI_DrawFillRectangle(x, sy, turbo_text_width, GUI_GetFontSize(), bg_color);

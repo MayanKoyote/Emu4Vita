@@ -14,12 +14,12 @@ static void drawActivityCallback(GUI_Activity *activity);
 static void ctrlActivityCallback(GUI_Activity *activity);
 
 static GUI_ButtonInstruction button_instructions[] = {
-    {BUTTON_CANCEL, BACK, 1},
+    {LANG_BUTTON_CANCEL, LANG_BACK, 1},
     {LANG_NULL, LANG_NULL, 1},
 };
 
 GUI_Activity about_activity = {
-    ABOUT_TITLE,           // Title
+    LANG_ABOUT_TITLE,           // Title
     button_instructions,   // Button instructions
     NULL,                  // Wallpaper
     startActivityCallback, // Start callback

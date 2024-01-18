@@ -207,13 +207,13 @@ END:
     {
         if (enter_button == SCE_SYSTEM_PARAM_ENTER_BUTTON_CIRCLE)
         {
-            cur_lang[BUTTON_ENTER] = cur_lang[BUTTON_CIRCLE];
-            cur_lang[BUTTON_CANCEL] = cur_lang[BUTTON_CROSS];
+            cur_lang[LANG_BUTTON_ENTER] = cur_lang[LANG_BUTTON_CIRCLE];
+            cur_lang[LANG_BUTTON_CANCEL] = cur_lang[LANG_BUTTON_CROSS];
         }
         else
         {
-            cur_lang[BUTTON_ENTER] = cur_lang[BUTTON_CROSS];
-            cur_lang[BUTTON_CANCEL] = cur_lang[BUTTON_CIRCLE];
+            cur_lang[LANG_BUTTON_ENTER] = cur_lang[LANG_BUTTON_CROSS];
+            cur_lang[LANG_BUTTON_CANCEL] = cur_lang[LANG_BUTTON_CIRCLE];
         }
     }
 
@@ -225,8 +225,11 @@ char *GetLangString(LangString *lang_s)
     if (!lang_s)
         return NULL;
 
-    if (cur_lang && lang_s->lang != LANG_NULL && lang_s->lang < LANGUAGE_CONTAINER_SIZE)
-        return cur_lang[lang_s->lang];
-    else
-        return lang_s->string;
+    char *res = NULL;
+    if (lang_s->lang != LANG_NULL && lang_s->lang < LANGUAGE_CONTAINER_SIZE)
+        res = cur_lang[lang_s->lang];
+    if (res == NULL)
+        res = lang_s->string;
+
+    return res;
 }
