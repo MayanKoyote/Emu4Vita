@@ -102,6 +102,7 @@ int OptionListLoadConfig(LinkedList *list, const char *path)
                         break;
                     }
                 }
+                LinkedListRemove(config_list, find);
             }
         }
 
