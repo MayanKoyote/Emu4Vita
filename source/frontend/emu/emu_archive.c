@@ -8,8 +8,6 @@
 #include <archive.h>
 #include <archive_entry.h>
 
-#include "archive/zip_archive.h"
-#include "archive/7z_archive.h"
 #include "emu/emu.h"
 #include "file.h"
 #include "config.h"
@@ -26,6 +24,7 @@ typedef struct
 #define MAX_CACHE_SIZE 5
 #define ARCHIVE_CACHE_CONFIG_PATH CORE_CACHE_DIR "/archive_cache.txt"
 #define ARCHIVE_BLOCK_SIZE 10240
+#define ARCHIVE_BUF_SIZE 0x800 * 0x1000
 
 static ArchiveEntry archive_cache_entries[MAX_CACHE_SIZE];
 static int archive_cache_num = 0;
@@ -209,8 +208,10 @@ static int Archive_OpenRom(const char *archive_path, uint32_t *crc, char *name)
         AppLog("%s\n", entry_name);
         if (entry_name && IsValidFile(entry_name))
         {
-            strcpy(name, entry_name);
-            *crc = archive_entry_crc32(current_entry);
+            if (name)
+                strcpy(name, entry_name);
+            if (crc)
+                *crc = archive_entry_crc32(current_entry);
             AppLog("[ARCHIVE] Archive_OpenRom OK!\n");
             return 1;
         }
@@ -224,7 +225,7 @@ FAILED:
     return -1;
 }
 
-static int Archive_CloseRom()
+static void Archive_CloseRom()
 {
     if (current_archive)
     {
@@ -235,43 +236,82 @@ static int Archive_CloseRom()
 
 int Archive_ExtractRomMemory(void **buf, size_t *size)
 {
-    return -1;
+    if (!current_archive)
+        return -1;
+
+    *size = archive_entry_size(current_entry);
+    *buf = malloc(*size);
+    if (!*buf)
+    {
+        AppLog("[ARCHIVE] Archive_ExtractRom failed: connot alloc buf!\n");
+        return -1;
+    }
+
+    return archive_read_data(current_archive, buf, *size) == *size ? 0 : -1;
 }
 
 int Archive_ExtractRom(const char *rom_name, char *rom_path)
 {
-    return -1;
+    if (!current_archive)
+        return -1;
+
+    CreateFolder(CORE_CACHE_DIR);
+    sprintf(rom_path, "%s/%s", CORE_CACHE_DIR, rom_name);
+
+    FILE *fp = fopen(rom_path, "wb");
+    if (!fp)
+    {
+        AppLog("[ARCHIVE] Failed to open file for writing: %s\n", rom_path);
+        return -1;
+    }
+
+    int ret = -1;
+    char *buf = malloc(ARCHIVE_BUF_SIZE);
+    if (!buf)
+    {
+        AppLog("[ARCHIVE] Archive_ExtractRom failed: connot alloc buf!\n");
+        goto END;
+    }
+
+    ssize_t size;
+    do
+    {
+        size = archive_read_data(current_archive, buf, ARCHIVE_BUF_SIZE);
+        if (size > 0)
+            fwrite(buf, size, 1, fp);
+        else if (size == 0)
+            break;
+        else
+            goto END;
+    } while (size > 0);
+    ret = 0;
+
+    AppLog("[ARCHIVE] Archive_ExtractRom OK!\n");
+
+END:
+    if (buf)
+        free(buf);
+    fclose(fp);
+
+    return ret;
 }
 
 int Archive_GetRomMemory(const char *archive_path, void **buf, size_t *size, int archive_mode)
 {
-    int ret = -1;
+    int ret = Archive_OpenRom(archive_path, NULL, NULL);
+    if (ret <= 0)
+        goto END;
 
-    if (archive_mode == ARCHIVE_MODE_ZIP)
-    {
-        if (ZIP_OpenRom(archive_path, NULL, NULL) <= 0)
-            goto FAILED;
-        ret = ZIP_ExtractRomMemory(buf, size);
-    }
-    else if (archive_mode == ARCHIVE_MODE_7Z)
-    {
-        if (SevenZ_OpenRom(archive_path, NULL, NULL) <= 0)
-            goto FAILED;
-        ret = SevenZ_ExtractRomMemory(buf, size);
-    }
+    ret = Archive_ExtractRomMemory(buf, size);
 
-END:
-    ZIP_CloseRom();
-    SevenZ_CloseRom();
+    Archive_CloseRom();
+
     if (ret < 0)
         AppLog("[ARCHIVE] Archive_GetRomMemory failed!\n");
     else
         AppLog("[ARCHIVE] Archive_GetRomMemory OK!\n");
+END:
     return ret;
-
-FAILED:
-    ret = -1;
-    goto END;
 }
 
 int Archive_GetRomPath(const char *archive_path, char *rom_path, int archive_mode)
@@ -294,12 +334,8 @@ int Archive_GetRomPath(const char *archive_path, char *rom_path, int archive_mod
     int index = Archive_FindRomCache(rom_crc, rom_name, rom_path);
     if (index < 0)
     {
-        ret = -1;
         // 未找到cache，执行解压
-        if (archive_mode == ARCHIVE_MODE_ZIP)
-            ret = ZIP_ExtractRom(rom_name, rom_path);
-        else if (archive_mode == ARCHIVE_MODE_7Z)
-            ret = SevenZ_ExtractRom(rom_name, rom_path);
+        ret = Archive_ExtractRom(rom_name, rom_path);
 
         if (ret < 0)
             goto FAILED;
@@ -314,12 +350,13 @@ int Archive_GetRomPath(const char *archive_path, char *rom_path, int archive_mod
     }
 
 END:
-    ZIP_CloseRom();
-    SevenZ_CloseRom();
+    Archive_CloseRom();
+
     if (ret < 0)
         AppLog("[ARCHIVE] Archive_GetRomPath failed!\n");
     else
         AppLog("[ARCHIVE] Archive_GetRomPath OK: %s\n", rom_path);
+
     return ret;
 
 FAILED:
