@@ -76,9 +76,9 @@ static void safeModeDialogNegativeCallback(GUI_Dialog *dialog)
 static void showSafeModeDialog()
 {
     GUI_Dialog *tip_dialog = AlertDialog_Create();
-    AlertDialog_SetTitle(tip_dialog, cur_lang[TITLE_TIP]);
-    AlertDialog_SetMessage(tip_dialog, cur_lang[MESSAGE_SAFE_MODE]);
-    AlertDialog_SetNegativeButton(tip_dialog, cur_lang[EXIT], safeModeDialogNegativeCallback);
+    AlertDialog_SetTitle(tip_dialog, cur_lang[LANG_TIP]);
+    AlertDialog_SetMessage(tip_dialog, cur_lang[LANG_MESSAGE_WARN_SAFE_MODE]);
+    AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_EXIT], safeModeDialogNegativeCallback);
     AlertDialog_Show(tip_dialog);
 }
 

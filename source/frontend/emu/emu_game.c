@@ -204,7 +204,7 @@ int Emu_StartGame(EmuGameInfo *info)
     {
         game_loading = 0;
         Loading_SetAutoScrollListview(0);
-        AlertDialog_ShowSimpleTipDialog(cur_lang[TITLE_TIP], cur_lang[MESSAGE_START_GAME_FAILED]);
+        AlertDialog_ShowSimpleTipDialog(cur_lang[LANG_TIP], cur_lang[LANG_MESSAGE_START_GAME_FAILED]);
         if (app_config.show_log)
             Loading_WaitActivityThreadEnd();
         else
@@ -222,7 +222,7 @@ int Emu_StartGame(EmuGameInfo *info)
     retro_get_system_av_info(&core_system_av_info);
     Emu_SetRunSpeed(1.0f);
     Retro_SetControllerPortDevices();
-    Emu_LoadSrm(); // Auto load savefile
+    Emu_LoadSrm(); // Auto load srm
     retro_run();   // Run one frame to fix some bug for savestate
     int state_num = info->state_num;
     if (state_num == -2) // -2 auto check, < -2 disable
@@ -235,15 +235,14 @@ int Emu_StartGame(EmuGameInfo *info)
         Emu_LoadState(state_num);
 
     Emu_InitCheat();
+    Emu_InitAudio();
+    Emu_InitVideo();
+    Emu_InitInput();
 
     GUI_CleanPad();
     Emu_RequestUpdateVideoDisplay();
     Retro_UpdateCoreOptionsDisplay();
     Setting_RequestUpdateMenu();
-
-    Emu_InitAudio();
-    Emu_InitVideo();
-    Emu_InitInput();
 
     game_loaded = 1;
     Emu_ResumeGame();
@@ -261,7 +260,7 @@ void Emu_ExitGame()
     if (game_loaded)
     {
         Emu_PauseGame();
-        Emu_SaveSrm(); // Auto save file
+        Emu_SaveSrm(); // Auto save srm
         if (!game_reloading && misc_config.auto_save_load)
         { // Auto save state
             Emu_SaveState(-1);
@@ -292,13 +291,6 @@ void Emu_ExitGame()
         free(game_rom_data);
         game_rom_data = NULL;
     }
-
-    if (core_cheat_list)
-    {
-        LinkedListDestroy(core_cheat_list);
-        core_cheat_list = NULL;
-    }
-    Setting_SetCheatMenu(NULL);
 
     AppLog("[GAME] Exit game OK!\n");
 }

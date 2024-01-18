@@ -23,17 +23,17 @@ static void drawActivityCallback(GUI_Activity *activity);
 static void ctrlActivityCallback(GUI_Activity *activity);
 
 static GUI_ButtonInstruction button_instructions[] = {
-    {BUTTON_CANCEL, PARENT_DIRECTORY, 1},
-    {BUTTON_ENTER, OPEN_DIR, 1},
-    {BUTTON_TRIANGLE, OPTION_MENU, 1},
-    {BUTTON_PSBUTTON, SETTING_MENU, 1},
-    {BUTTON_SELECT, ABOUT, 1},
-    {BUTTON_START, CHANGE_DIR, 1},
+    {LANG_BUTTON_CANCEL, LANG_PARENT_DIR, 1},
+    {LANG_BUTTON_ENTER, LANG_OPEN_DIR, 1},
+    {LANG_BUTTON_TRIANGLE, LANG_OPTION_MENU, 1},
+    {LANG_BUTTON_PSBUTTON, LANG_SETTING_MENU, 1},
+    {LANG_BUTTON_SELECT, LANG_ABOUT, 1},
+    {LANG_BUTTON_START, LANG_CHANGE_DIR, 1},
     {LANG_NULL, LANG_NULL, 0},
 };
 
 GUI_Activity browser_activity = {
-    APP_TITLE,             // Title
+    LANG_APP_TITLE,             // Title
     button_instructions,   // Button instructions
     NULL,                  // Wallpaper
     startActivityCallback, // Start callback
@@ -54,10 +54,10 @@ enum IndexOptionItem
 };
 
 static int option_items[] = {
-    LABEL_START_GAME,
-    LABEL_DELETE_GAME,
-    LABEL_DELETE_AUTO_STATE,
-    LABEL_DELETE_SAVEFILE,
+    LANG_OPTION_MENU_START_GAME,
+    LANG_OPTION_MENU_DELETE_GAME,
+    LANG_OPTION_MENU_DELETE_AUTO_SAVESTATE,
+    LANG_OPTION_MENU_DELETE_AUTO_SAVEFILE,
 };
 #define N_OPTION_ITEMS (sizeof(option_items) / sizeof(int))
 
@@ -332,12 +332,12 @@ static void moveFileListPos(int type)
 
     if (CurrentPathIsFile())
     {
-        button_instructions[1].instruction = START_GAME;
+        button_instructions[1].instruction = LANG_START_GAME;
         button_instructions[2].visibility = 1;
     }
     else
     {
-        button_instructions[1].instruction = OPEN_DIR;
+        button_instructions[1].instruction = LANG_OPEN_DIR;
         button_instructions[2].visibility = 0;
     }
 
@@ -678,10 +678,10 @@ static void optionMenuPositiveCallback(GUI_Dialog *dialog)
         if (CurrentPathIsFile())
         {
             GUI_Dialog *tip_dialog = AlertDialog_Create();
-            AlertDialog_SetTitle(tip_dialog, cur_lang[TITLE_TIP]);
-            AlertDialog_SetMessage(tip_dialog, cur_lang[MESSAGE_ASK_DELETE_GAME]);
-            AlertDialog_SetPositiveButton(tip_dialog, cur_lang[CONFIRM], deleteGameCallback);
-            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[CANCEL], NULL);
+            AlertDialog_SetTitle(tip_dialog, cur_lang[LANG_TIP]);
+            AlertDialog_SetMessage(tip_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_GAME]);
+            AlertDialog_SetPositiveButton(tip_dialog, cur_lang[LANG_CONFIRM], deleteGameCallback);
+            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], NULL);
             AlertDialog_Show(tip_dialog);
         }
     }
@@ -691,10 +691,10 @@ static void optionMenuPositiveCallback(GUI_Dialog *dialog)
         if (CurrentPathIsFile())
         {
             GUI_Dialog *tip_dialog = AlertDialog_Create();
-            AlertDialog_SetTitle(tip_dialog, cur_lang[TITLE_TIP]);
-            AlertDialog_SetMessage(tip_dialog, cur_lang[MESSAGE_ASK_DELETE_AUTO_STATE]);
-            AlertDialog_SetPositiveButton(tip_dialog, cur_lang[CONFIRM], deleteAutoStateCallback);
-            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[CANCEL], NULL);
+            AlertDialog_SetTitle(tip_dialog, cur_lang[LANG_TIP]);
+            AlertDialog_SetMessage(tip_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_AUTO_STATE]);
+            AlertDialog_SetPositiveButton(tip_dialog, cur_lang[LANG_CONFIRM], deleteAutoStateCallback);
+            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], NULL);
             AlertDialog_Show(tip_dialog);
         }
     }
@@ -704,10 +704,10 @@ static void optionMenuPositiveCallback(GUI_Dialog *dialog)
         if (CurrentPathIsFile())
         {
             GUI_Dialog *tip_dialog = AlertDialog_Create();
-            AlertDialog_SetTitle(tip_dialog, cur_lang[TITLE_TIP]);
-            AlertDialog_SetMessage(tip_dialog, cur_lang[MESSAGE_ASK_DELETE_SAVEFILE]);
-            AlertDialog_SetPositiveButton(tip_dialog, cur_lang[CONFIRM], deleteSrmCallback);
-            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[CANCEL], NULL);
+            AlertDialog_SetTitle(tip_dialog, cur_lang[LANG_TIP]);
+            AlertDialog_SetMessage(tip_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_AUTO_SAVEFILE]);
+            AlertDialog_SetPositiveButton(tip_dialog, cur_lang[LANG_CONFIRM], deleteSrmCallback);
+            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], NULL);
             AlertDialog_Show(tip_dialog);
         }
     }
@@ -726,13 +726,13 @@ static void openOptionMenu()
         return;
 
     GUI_Dialog *dialog = AlertDialog_Create();
-    AlertDialog_SetTitle(dialog, cur_lang[TITLE_MENU]);
+    AlertDialog_SetTitle(dialog, cur_lang[LANG_MENU]);
     int n_items = N_OPTION_ITEMS;
     char **items = GUI_GetStringArrayByIdArray(option_items, n_items);
     AlertDialog_SetItems(dialog, items, n_items);
     free(items);
-    AlertDialog_SetPositiveButton(dialog, cur_lang[CONFIRM], optionMenuPositiveCallback);
-    AlertDialog_SetNegativeButton(dialog, cur_lang[CANCEL], NULL);
+    AlertDialog_SetPositiveButton(dialog, cur_lang[LANG_CONFIRM], optionMenuPositiveCallback);
+    AlertDialog_SetNegativeButton(dialog, cur_lang[LANG_CANCEL], NULL);
     AlertDialog_Show(dialog);
 }
 

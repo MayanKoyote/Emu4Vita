@@ -122,7 +122,7 @@ static int ApplyCheatOption()
         {
             if (data->code)
             {
-                // printf("[CHEAT] ApplyCheatOption: %s\n", data->code);
+                // printf("[CHEAT] ApplyCheatOption: %s = %s\n", data->desc, data->code);
                 retro_cheat_set(index, 1, data->code);
             }
         }
@@ -190,6 +190,7 @@ int Emu_InitCheat()
     if (Emu_LoadCheatOption() < 0)
         return -1;
 
+    cheat_pause = 1;
     cheat_reset = 1;
 
     return StartApplyCheatOptionThread();
@@ -199,8 +200,6 @@ int Emu_DeinitCheat()
 {
     ExitApplyCheatOptiontThread();
     Emu_CleanCheatOption();
-    // cheat_reset = 1;
-    // ApplyCheatOption();
 
     return 0;
 }

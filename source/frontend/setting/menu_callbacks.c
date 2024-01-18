@@ -54,7 +54,7 @@ static void diskControlOptionMenuPositiveCallback(GUI_Dialog *dialog)
 static void diskControlCallback()
 {
     GUI_Dialog *dialog = AlertDialog_Create();
-    AlertDialog_SetTitle(dialog, cur_lang[TITLE_SWITCH_DISK]);
+    AlertDialog_SetTitle(dialog, cur_lang[LANG_SWITCH_DISK]);
     int n_items = Emu_DiskGetNumImages();
     char **items = (char **)malloc(n_items * sizeof(char *));
     char string[MAX_NAME_LENGTH];
@@ -64,16 +64,16 @@ static void diskControlCallback()
     for (i = 0; i < n_items; i++)
     {
         if (i == cur_index)
-            snprintf(string, MAX_NAME_LENGTH, "%s %d (%s)", cur_lang[LABEL_DISK], i + 1, cur_lang[CURRENT]);
+            snprintf(string, MAX_NAME_LENGTH, "%s %d (%s)", cur_lang[LANG_DISK], i + 1, cur_lang[LANG_CURRENT]);
         else
-            snprintf(string, MAX_NAME_LENGTH, "%s %d", cur_lang[LABEL_DISK], i + 1);
+            snprintf(string, MAX_NAME_LENGTH, "%s %d", cur_lang[LANG_DISK], i + 1);
         items[i] = (char *)malloc(strlen(string) + 1);
         strcpy(items[i], string);
     }
 
     AlertDialog_SetItems(dialog, items, n_items);
-    AlertDialog_SetPositiveButton(dialog, cur_lang[CONFIRM], diskControlOptionMenuPositiveCallback);
-    AlertDialog_SetNegativeButton(dialog, cur_lang[CANCEL], NULL);
+    AlertDialog_SetPositiveButton(dialog, cur_lang[LANG_CONFIRM], diskControlOptionMenuPositiveCallback);
+    AlertDialog_SetNegativeButton(dialog, cur_lang[LANG_CANCEL], NULL);
     AlertDialog_Show(dialog);
 }
 

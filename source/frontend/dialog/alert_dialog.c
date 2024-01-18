@@ -36,6 +36,7 @@
 #define DIALOG_COLOR_BG 0xFF6F480A
 #define ITEMVIEW_COLOR_FOCUS_BG COLOR_ALPHA(COLOR_ORANGE, 0xDF)
 #define DIALOG_COLOR_TEXT COLOR_WHITE
+#define DIALOG_COLOR_BUTTON COLOR_ORANGE // 0xFFB0C94E
 
 #define MAX_DIALOG_GRADUAL_COUNT 10
 
@@ -437,6 +438,7 @@ static void drawDialogCallback(GUI_Dialog *dialog)
     uint32_t dialog_color = getGradualColor(DIALOG_COLOR_BG, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
     uint32_t statebar_color = getGradualColor(STATEBAR_COLOR_BG, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
     uint32_t text_color = getGradualColor(DIALOG_COLOR_TEXT, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
+    uint32_t button_color = getGradualColor(DIALOG_COLOR_BUTTON, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
     uint32_t focus_color = getGradualColor(ITEMVIEW_COLOR_FOCUS_BG, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
 
     int x, y;
@@ -546,23 +548,30 @@ static void drawDialogCallback(GUI_Dialog *dialog)
     y = bottom_bar_y + STATEBAR_PADDING_T;
     if (data->positive_text)
     {
-        snprintf(buf, 24, "%s:%s", cur_lang[BUTTON_ENTER], data->positive_text);
+        x -= GUI_GetTextWidth(data->positive_text);
+        GUI_DrawText(x, y, text_color, data->positive_text);
+        snprintf(buf, 24, "%s:", cur_lang[LANG_BUTTON_ENTER]);
         x -= GUI_GetTextWidth(buf);
-        GUI_DrawText(x, y, text_color, buf);
+        GUI_DrawText(x, y, button_color, buf);
         x -= STATEBAR_PADDING_L;
     }
     if (data->neutral_text)
     {
-        snprintf(buf, 24, "%s:%s", cur_lang[BUTTON_TRIANGLE], data->neutral_text);
+        x -= GUI_GetTextWidth(data->neutral_text);
+        GUI_DrawText(x, y, text_color, data->neutral_text);
+        snprintf(buf, 24, "%s:", cur_lang[LANG_BUTTON_TRIANGLE]);
         x -= GUI_GetTextWidth(buf);
-        GUI_DrawText(x, y, text_color, buf);
+        GUI_DrawText(x, y, button_color, buf);
         x -= STATEBAR_PADDING_L;
     }
     if (data->negative_text)
     {
-        snprintf(buf, 24, "%s:%s", cur_lang[BUTTON_CANCEL], data->negative_text);
+        x -= GUI_GetTextWidth(data->negative_text);
+        GUI_DrawText(x, y, text_color, data->negative_text);
+        snprintf(buf, 24, "%s:", cur_lang[LANG_BUTTON_CANCEL]);
         x -= GUI_GetTextWidth(buf);
-        GUI_DrawText(x, y, text_color, buf);
+        GUI_DrawText(x, y, button_color, buf);
+        x -= STATEBAR_PADDING_L;
     }
 
     GUI_DisableClipping();
@@ -641,7 +650,7 @@ int AlertDialog_ShowSimpleTipDialog(char *title, char *message)
         return -1;
     AlertDialog_SetTitle(tip_dialog, title);
     AlertDialog_SetMessage(tip_dialog, message);
-    AlertDialog_SetNegativeButton(tip_dialog, cur_lang[COLSE], NULL);
+    AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_COLSE], NULL);
     AlertDialog_Show(tip_dialog);
     return 0;
 }

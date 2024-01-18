@@ -5,9 +5,10 @@ void Emu_PauseCheat();
 void Emu_ResumeCheat();
 
 void Emu_CleanCheatOption();
+int Emu_UpdateCheatOption();
+int Emu_ResetCheatOption();
 int Emu_LoadCheatOption();
 int Emu_SaveCheatOption();
-int Emu_UpdateCheatOption();
 
 int Emu_InitCheat();
 int Emu_DeinitCheat();

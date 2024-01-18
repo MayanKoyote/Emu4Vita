@@ -9,48 +9,48 @@
 #include "menu_callbacks.c"
 
 static LangString no_yes_values[] = {
-    {NO, NULL},
-    {YES, NULL},
+    {LANG_NO, NULL},
+    {LANG_YES, NULL},
 };
 
 static LangString display_size_values[] = {
-    {DISPLAY_SIZE_1X, NULL},
-    {DISPLAY_SIZE_2X, NULL},
-    {DISPLAY_SIZE_3X, NULL},
-    {DISPLAY_SIZE_FULL, NULL},
+    {LANG_DISPLAY_SIZE_1X, NULL},
+    {LANG_DISPLAY_SIZE_2X, NULL},
+    {LANG_DISPLAY_SIZE_3X, NULL},
+    {LANG_DISPLAY_SIZE_FULL, NULL},
 };
 
 static LangString aspect_ratio_values[] = {
-    {DEFAULT, NULL},
-    {ASPECT_RATIO_BY_GAME_RESOLUTION, NULL},
-    {ASPECT_RATIO_BY_DEV_SCREEN, NULL},
-    {ASPECT_RATIO_8_7, NULL},
-    {ASPECT_RATIO_4_3, NULL},
-    {ASPECT_RATIO_3_2, NULL},
-    {ASPECT_RATIO_16_9, NULL},
+    {LANG_DEFAULT, NULL},
+    {LANG_ASPECT_RATIO_BY_GAME_RESOLUTION, NULL},
+    {LANG_ASPECT_RATIO_BY_DEV_SCREEN, NULL},
+    {LANG_ASPECT_RATIO_8_7, NULL},
+    {LANG_ASPECT_RATIO_4_3, NULL},
+    {LANG_ASPECT_RATIO_3_2, NULL},
+    {LANG_ASPECT_RATIO_16_9, NULL},
 };
 
 #if defined(WANT_DISPLAY_ROTATE)
 static LangString display_rotate_values[] = {
-    {DISABLE, NULL},
-    {DISPLAY_ROTATE_CW_90, NULL},
-    {DISPLAY_ROTATE_CW_180, NULL},
-    {DISPLAY_ROTATE_CW_270, NULL},
-    {DEFAULT, NULL},
+    {LANG_DISABLE, NULL},
+    {LANG_DISPLAY_ROTATE_CW_90, NULL},
+    {LANG_DISPLAY_ROTATE_CW_180, NULL},
+    {LANG_DISPLAY_ROTATE_CW_270, NULL},
+    {LANG_DEFAULT, NULL},
 };
 #endif
 
 static LangString graphics_shader_values[] = {
-    {DEFAULT, NULL},
-    {SHADER_LCD3X, NULL},
-    {SHADER_SHARP_BILINEAR_SIMPLE, NULL},
-    {SHADER_SHARP_BILINEAR, NULL},
-    {SHADER_ADVANCED_AA, NULL},
+    {LANG_DEFAULT, NULL},
+    {LANG_SHADER_LCD3X, NULL},
+    {LANG_SHADER_SHARP_BILINEAR_SIMPLE, NULL},
+    {LANG_SHADER_SHARP_BILINEAR, NULL},
+    {LANG_SHADER_ADVANCED_AA, NULL},
 };
 
 static LangString overlay_mode_values[] = {
-    {OVERLAY_MODE_OVERLAY, NULL},
-    {OVERLAY_MODE_BACKGROUND, NULL},
+    {LANG_OVERLAY_MODE_OVERLAY, NULL},
+    {LANG_OVERLAY_MODE_BACKGROUND, NULL},
 };
 
 static LangString ctrl_player_values[] = {
@@ -61,15 +61,15 @@ static LangString ctrl_player_values[] = {
 };
 
 static LangString preview_path_values[] = {
-    {AUTO, NULL},
-    {DEFAULT, NULL},
-    {FROM_AUTO_STATE, NULL},
+    {LANG_AUTO, NULL},
+    {LANG_DEFAULT, NULL},
+    {LANG_PREVIEW_PATH_FROM_AUTO_STATE, NULL},
 };
 
 static LangString preview_style_values[] = {
-    {FULL_PRESERVE, NULL},
-    {FULL_STRETCH, NULL},
-    {FULL_CROP, NULL},
+    {LANG_PREVIEW_STYLE_PRESERVE_FULL, NULL},
+    {LANG_PREVIEW_STYLE_STRETCH_FULL, NULL},
+    {LANG_PREVIEW_STYLE_CROP_FULL, NULL},
 };
 
 // 图形 (菜单条目)
@@ -136,109 +136,109 @@ StrArrayOption language_option = {&config_app_language, NULL, 0, langOptionUpdat
 
 // 主菜单
 static SettingMenuItem main_menu_items[] = {
-    {{LABEL_RESUME_GAME, NULL}, &game_is_loaded, TYPE_OPTION_CALLBACK, resumeGameCallback},
-    {{LABEL_RESET_GAME, NULL}, &game_is_loaded, TYPE_OPTION_CALLBACK, resetGameCallback},
-    {{LABEL_EXIT_GAME, NULL}, &game_is_loaded, TYPE_OPTION_CALLBACK, exitGameCallback},
-    {{LABEL_DISK_CONTROL, NULL}, &disk_control_visibility, TYPE_OPTION_CALLBACK, diskControlCallback},
-    {{LABEL_EXIT_TO_ARCH, NULL}, &exit_to_arch_visibility, TYPE_OPTION_CALLBACK, exitToArchCallback},
-    {{LABEL_EXIT_APP, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, exitAppCallback},
+    {{LANG_RESUME_GAME, NULL}, &game_is_loaded, TYPE_OPTION_CALLBACK, resumeGameCallback},
+    {{LANG_RESET_GAME, NULL}, &game_is_loaded, TYPE_OPTION_CALLBACK, resetGameCallback},
+    {{LANG_EXIT_GAME, NULL}, &game_is_loaded, TYPE_OPTION_CALLBACK, exitGameCallback},
+    {{LANG_DISK_CONTROL, NULL}, &disk_control_visibility, TYPE_OPTION_CALLBACK, diskControlCallback},
+    {{LANG_EXIT_TO_ARCH, NULL}, &exit_to_arch_visibility, TYPE_OPTION_CALLBACK, exitToArchCallback},
+    {{LANG_EXIT_APP, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, exitAppCallback},
 };
-static SettingMenu main_menu = {{TAB_MAIN, NULL}, &visibility_visible, main_menu_items, sizeof(main_menu_items) / sizeof(SettingMenuItem), NULL, NULL};
+static SettingMenu main_menu = {{LANG_MENU_MAIN, NULL}, &visibility_visible, main_menu_items, sizeof(main_menu_items) / sizeof(SettingMenuItem), NULL, NULL};
 
 // 即时存档
-static SettingMenu state_menu = {{TAB_STATE, NULL}, &current_path_is_file, NULL, 0, stateMenuEnterCallback, stateMenuExitCallback};
+static SettingMenu state_menu = {{LANG_MENU_STATE, NULL}, &current_path_is_file, NULL, 0, stateMenuEnterCallback, stateMenuExitCallback};
 
 // 图形
 static SettingMenuItem graphics_menu_items[] = {
-    {{LABEL_DISPLAY_SIZE, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &display_size_option},
-    {{LABEL_ASPECT_RATIO, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &aspect_ratio_option},
+    {{LANG_DISPLAY_SIZE, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &display_size_option},
+    {{LANG_ASPECT_RATIO, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &aspect_ratio_option},
 #if defined(WANT_DISPLAY_ROTATE)
-    {{LABEL_DISPLAY_ROTATE, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &display_rotate_option},
+    {{LANG_DISPLAY_ROTATE, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &display_rotate_option},
 #endif
-    {{LABEL_GRAPHICS_SHADER, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &graphics_shader_option},
-    {{LABEL_GRAPHICS_SMOOTH, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &graphics_smooth_option},
-    {{LABEL_OVERLAY_SELECT, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &overlay_select_option},
-    {{LABEL_OVERLAY_MODE, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &overlay_mode_option},
-    {{LABEL_SHOW_FPS, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &show_fps_option},
-    {{LABEL_RESET_CONFIGS, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetGraphicsConfigCallback},
+    {{LANG_GRAPHICS_SHADER, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &graphics_shader_option},
+    {{LANG_GRAPHICS_SMOOTH, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &graphics_smooth_option},
+    {{LANG_OVERLAY_SELECT, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &overlay_select_option},
+    {{LANG_OVERLAY_MODE, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &overlay_mode_option},
+    {{LANG_SHOW_FPS, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &show_fps_option},
+    {{LANG_RESET_CONFIGS, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetGraphicsConfigCallback},
 };
-static SettingMenu graphics_menu = {{TAB_GRAPHICS, NULL}, &visibility_visible, graphics_menu_items, sizeof(graphics_menu_items) / sizeof(SettingMenuItem), NULL, graphicsMenuExitCallback};
+static SettingMenu graphics_menu = {{LANG_MENU_GRAPHICS, NULL}, &visibility_visible, graphics_menu_items, sizeof(graphics_menu_items) / sizeof(SettingMenuItem), NULL, graphicsMenuExitCallback};
 
 // 控制 (菜单选项)
 SettingMenuItem control_menu_items[] = {
-    {{LABEL_CTRL_PLAYER, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &ctrl_player_option},
-    {{BUTTON_LEFT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_left_option},
-    {{BUTTON_UP, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_up_option},
-    {{BUTTON_RIGHT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_right_option},
-    {{BUTTON_DOWN, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_down_option},
-    {{BUTTON_CROSS, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_cross_option},
-    {{BUTTON_CIRCLE, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_circle_option},
-    {{BUTTON_SQUARE, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_square_option},
-    {{BUTTON_TRIANGLE, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_triangle_option},
-    {{BUTTON_L, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_l_option},
-    {{BUTTON_R, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_r_option},
-    {{BUTTON_L2, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_l2_option},
-    {{BUTTON_R2, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_r2_option},
-    {{BUTTON_L3, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_l3_option},
-    {{BUTTON_R3, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_r3_option},
-    {{BUTTON_SELECT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_select_option},
-    {{BUTTON_START, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_start_option},
+    {{LANG_CTRL_PLAYER, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &ctrl_player_option},
+    {{LANG_BUTTON_LEFT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_left_option},
+    {{LANG_BUTTON_UP, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_up_option},
+    {{LANG_BUTTON_RIGHT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_right_option},
+    {{LANG_BUTTON_DOWN, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_down_option},
+    {{LANG_BUTTON_CROSS, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_cross_option},
+    {{LANG_BUTTON_CIRCLE, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_circle_option},
+    {{LANG_BUTTON_SQUARE, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_square_option},
+    {{LANG_BUTTON_TRIANGLE, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_triangle_option},
+    {{LANG_BUTTON_L, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_l_option},
+    {{LANG_BUTTON_R, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_r_option},
+    {{LANG_BUTTON_L2, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_l2_option},
+    {{LANG_BUTTON_R2, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_r2_option},
+    {{LANG_BUTTON_L3, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_l3_option},
+    {{LANG_BUTTON_R3, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_r3_option},
+    {{LANG_BUTTON_SELECT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_select_option},
+    {{LANG_BUTTON_START, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &button_start_option},
 
-    {{BUTTON_LEFT_ANALOG_LEFT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &left_analog_left_option},
-    {{BUTTON_LEFT_ANALOG_UP, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &left_analog_up_option},
-    {{BUTTON_LEFT_ANALOG_RIGHT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &left_analog_right_option},
-    {{BUTTON_LEFT_ANALOG_DOWN, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &left_analog_down_option},
-    {{BUTTON_RIGHT_ANALOG_LEFT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &right_analog_left_option},
-    {{BUTTON_RIGHT_ANALOG_UP, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &right_analog_up_option},
-    {{BUTTON_RIGHT_ANALOG_RIGHT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &right_analog_right_option},
-    {{BUTTON_RIGHT_ANALOG_DOWN, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &right_analog_down_option},
+    {{LANG_BUTTON_LEFT_ANALOG_LEFT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &left_analog_left_option},
+    {{LANG_BUTTON_LEFT_ANALOG_UP, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &left_analog_up_option},
+    {{LANG_BUTTON_LEFT_ANALOG_RIGHT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &left_analog_right_option},
+    {{LANG_BUTTON_LEFT_ANALOG_DOWN, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &left_analog_down_option},
+    {{LANG_BUTTON_RIGHT_ANALOG_LEFT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &right_analog_left_option},
+    {{LANG_BUTTON_RIGHT_ANALOG_UP, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &right_analog_up_option},
+    {{LANG_BUTTON_RIGHT_ANALOG_RIGHT, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &right_analog_right_option},
+    {{LANG_BUTTON_RIGHT_ANALOG_DOWN, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &right_analog_down_option},
 
-    {{LABEL_FRONT_TOUCH_TO_BUTTON, NULL}, &touch_to_button_visibility, TYPE_OPTION_STR_ARRAY, &front_touch_pad_option},
-    {{LABEL_BACK_TOUCH_TO_BUTTON, NULL}, &touch_to_button_visibility, TYPE_OPTION_STR_ARRAY, &back_touch_pad_option},
-    {{LABEL_TURBO_DELAY, NULL}, &visibility_visible, TYPE_OPTION_INT_RANGE, &turbo_delay_option},
-    {{LABEL_RESET_CONFIGS, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetControlConfigCallback},
+    {{LANG_FRONT_TOUCH_TO_BUTTON, NULL}, &touch_to_button_visibility, TYPE_OPTION_STR_ARRAY, &front_touch_pad_option},
+    {{LANG_BACK_TOUCH_TO_BUTTON, NULL}, &touch_to_button_visibility, TYPE_OPTION_STR_ARRAY, &back_touch_pad_option},
+    {{LANG_TURBO_DELAY, NULL}, &visibility_visible, TYPE_OPTION_INT_RANGE, &turbo_delay_option},
+    {{LANG_RESET_CONFIGS, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetControlConfigCallback},
 };
-static SettingMenu control_menu = {{TAB_CONTROL, NULL}, &visibility_visible, control_menu_items, sizeof(control_menu_items) / sizeof(SettingMenuItem), NULL, controlMenuExitCallback};
+static SettingMenu control_menu = {{LANG_MENU_CONTROL, NULL}, &visibility_visible, control_menu_items, sizeof(control_menu_items) / sizeof(SettingMenuItem), NULL, controlMenuExitCallback};
 
 // 热键
 static SettingMenuItem hotkey_menu_items[] = {
-    {{LABEL_HK_SAVESTATE, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_loadstate_option},      // 0
-    {{LABEL_HK_LOADSTATE, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_savestate_option},      // 1
-    {{LABEL_HK_SPEED_UP, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_speed_up_option},        // 2
-    {{LABEL_HK_SPEED_DOWN, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_speed_down_option},    // 3
-    {{LABEL_HK_PLAYER_UP, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_player_up_option},      // 4
-    {{LABEL_HK_PLAYER_DOWN, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_player_down_option},  // 5
-    {{LABEL_HK_EXIT_GAME, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_exit_game_option},      // 6
-    {{LABEL_RESET_CONFIGS, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetHotkeyConfigCallback}, // 7
+    {{LANG_HOTKEY_SAVESTATE, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_loadstate_option},      // 0
+    {{LANG_HOTKEY_LOADSTATE, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_savestate_option},      // 1
+    {{LANG_HOTKEY_GAME_SPEED_UP, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_speed_up_option},        // 2
+    {{LANG_HOTKEY_GAME_SPEED_DOWN, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_speed_down_option},    // 3
+    {{LANG_HOTKEY_CONTROL_PLAYER_UP, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_player_up_option},      // 4
+    {{LANG_HOTKEY_CONTROL_PLAYER_DOWN, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_player_down_option},  // 5
+    {{LANG_HOTKEY_EXIT_GAME, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_exit_game_option},      // 6
+    {{LANG_RESET_CONFIGS, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetHotkeyConfigCallback}, // 7
 };
-static SettingMenu hotkey_menu = {{TAB_HOTKEY, NULL}, &visibility_visible, hotkey_menu_items, sizeof(hotkey_menu_items) / sizeof(SettingMenuItem), NULL, hotkeyMenuExitCallback};
+static SettingMenu hotkey_menu = {{LANG_MENU_HOTKEY, NULL}, &visibility_visible, hotkey_menu_items, sizeof(hotkey_menu_items) / sizeof(SettingMenuItem), NULL, hotkeyMenuExitCallback};
 
 // 核心
-static SettingMenu core_menu = {{TAB_CORE, NULL}, &core_menu_visibility, NULL, 0, NULL, coreMenuExitCallback};
+static SettingMenu core_menu = {{LANG_MENU_CORE, NULL}, &core_menu_visibility, NULL, 0, NULL, coreMenuExitCallback};
 
 // 金手指
-static SettingMenu cheat_menu = {{TAB_CHEAT, NULL}, &cheat_menu_visibility, NULL, 0, NULL, cheatMenuExitCallback};
+static SettingMenu cheat_menu = {{LANG_MENU_CHEAT, NULL}, &cheat_menu_visibility, NULL, 0, NULL, cheatMenuExitCallback};
 
 // 杂项
 static SettingMenuItem misc_menu_items[] = {
-    {{LABEL_AUTO_SAVE_LOAD_STATE, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &auto_save_load_option}, // 0
-    {{LABEL_SAVE_SCREENSHOT, NULL}, &game_is_loaded, TYPE_OPTION_CALLBACK, saveScreenshotCallback},           // 1
-    {{LABEL_SAVE_PREVIEW, NULL}, &game_is_loaded, TYPE_OPTION_CALLBACK, saveScreenshotForPreviewCallback},    // 2
-    {{LABEL_RESET_CONFIGS, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetMiscConfigCallback},        // 3
+    {{LANG_AUTO_SAVE_LOAD_STATE, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &auto_save_load_option}, // 0
+    {{LANG_SAVE_SCREENSHOT, NULL}, &game_is_loaded, TYPE_OPTION_CALLBACK, saveScreenshotCallback},           // 1
+    {{LANG_SAVE_PREVIEW, NULL}, &game_is_loaded, TYPE_OPTION_CALLBACK, saveScreenshotForPreviewCallback},    // 2
+    {{LANG_RESET_CONFIGS, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetMiscConfigCallback},        // 3
 };
-static SettingMenu misc_menu = {{TAB_MISC, NULL}, &visibility_visible, misc_menu_items, sizeof(misc_menu_items) / sizeof(SettingMenuItem), NULL, miscMenuExitCallback};
+static SettingMenu misc_menu = {{LANG_MENU_MISC, NULL}, &visibility_visible, misc_menu_items, sizeof(misc_menu_items) / sizeof(SettingMenuItem), NULL, miscMenuExitCallback};
 
 // 程序
 static SettingMenuItem app_menu_items[] = {
-    {{LABEL_PREVIEW_PATH, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &preview_path_option},
-    {{LABEL_PREVIEW_STYLE, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &preview_style_option},
-    {{LABEL_APP_LOG, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &app_log_option},
-    {{LABEL_CORE_LOG, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &core_log_option},
-    {{LABEL_SHOW_LOG, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &show_log_option},
-    {{LABEL_LANGUAGE, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &language_option},
-    {{LABEL_RESET_CONFIGS, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetAppConfigCallback},
+    {{LANG_PREVIEW_PATH, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &preview_path_option},
+    {{LANG_PREVIEW_STYLE, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &preview_style_option},
+    {{LANG_APP_LOG, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &app_log_option},
+    {{LANG_CORE_LOG, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &core_log_option},
+    {{LANG_SHOW_LOG, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &show_log_option},
+    {{LANG_LANGUAGE, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &language_option},
+    {{LANG_RESET_CONFIGS, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetAppConfigCallback},
 };
-static SettingMenu app_menu = {{TAB_APP, NULL}, &app_menu_visibility, app_menu_items, sizeof(app_menu_items) / sizeof(SettingMenuItem), NULL, appMenuExitCallback};
+static SettingMenu app_menu = {{LANG_MENU_APP, NULL}, &app_menu_visibility, app_menu_items, sizeof(app_menu_items) / sizeof(SettingMenuItem), NULL, appMenuExitCallback};
 
 // 菜单列表
 static SettingMenu *setting_menus[] = {

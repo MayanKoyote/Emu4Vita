@@ -52,10 +52,10 @@ typedef struct
 } StateMenuItem;
 
 static StateMenuItem state_menu[] = {
-    {LOAD, 1},
-    {SAVE, 1},
-    {DELETE, 1},
-    {CANCEL, 1},
+    {LANG_STATE_LOAD_STATE, 1},
+    {LANG_STATE_SAVE_STATE, 1},
+    {LANG_STATE_DELETE_STATE, 1},
+    {LANG_CANCEL, 1},
 };
 #define N_MENU_ITEMS (sizeof(state_menu) / sizeof(StateMenuItem))
 
@@ -307,13 +307,13 @@ void Setting_DrawState()
             GetTimeString(time_string, time_format, &state_list[i].time);
             GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %s", date_string, time_string);
             info_sy -= (GUI_GetFontSize() + STATE_INFO_LINE_SPACE);
-            GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %d", cur_lang[LABEL_EXISTENT_STATE], i);
+            GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %d", cur_lang[LANG_STATE_EXISTENT_STATE], i);
         }
         else
         {
             // Empty
             GUI_DrawFillRectangle(preview_sx, preview_sy, state_preview_width, state_preview_height, STATE_PREVIEW_COLOR_BG);
-            GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %d", cur_lang[LABEL_NON_EXISTENT_STATE], i);
+            GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %d", cur_lang[LANG_STATE_EMPTY_STATE], i);
         }
 
         // If open menu

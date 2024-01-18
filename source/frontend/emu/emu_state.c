@@ -120,7 +120,7 @@ int Emu_LoadState(int num)
 
     if (header.version != STATES_VERSION)
     {
-        AppLog("[STATE] Load state: state version is different from internal version\n");
+        AppLog("[SAVESTATE] Load state: state version is different from internal version\n");
         ret = -1;
         goto END;
     }
@@ -128,7 +128,7 @@ int Emu_LoadState(int num)
     size_t serialize_size = retro_serialize_size();
     if (header.state_size > serialize_size)
     {
-        AppLog("[STATE] Load state: state size is larger than implementation expects\n");
+        AppLog("[SAVESTATE] Load state: state size is larger than implementation expects\n");
         ret = -1;
         goto END;
     }
@@ -136,7 +136,7 @@ int Emu_LoadState(int num)
     state_buf = malloc(header.state_size);
     if (!state_buf)
     {
-        AppLog("[STATE] Load state: alloc state buf failed\n");
+        AppLog("[SAVESTATE] Load state: alloc state buf failed\n");
         ret = -1;
         goto END;
     }
@@ -156,7 +156,7 @@ int Emu_LoadState(int num)
         int read = sceIoRead(fd, buf, transfer);
         if (read < 0)
         {
-            AppLog("[STATE] Load state: read file failed\n");
+            AppLog("[SAVESTATE] Load state: read file failed\n");
             ret = -1;
             goto END;
         }
@@ -172,7 +172,7 @@ int Emu_LoadState(int num)
 
     if (!retro_unserialize(state_buf, header.state_size))
     {
-        AppLog("[STATE] Load state: retro_unserialize failed\n");
+        AppLog("[SAVESTATE] Load state: retro_unserialize failed\n");
         ret = -1;
         goto END;
     }
@@ -234,7 +234,7 @@ int Emu_SaveState(int num)
     screenshot_buf = Emu_GetVideoScreenshotData(&screenshot_width, &screenshot_height, &screenshot_size, rotate, 0);
     if (!screenshot_buf)
     {
-        AppLog("[STATE] Save state: make screenshot failed!\n");
+        AppLog("[SAVESTATE] Save state: make screenshot failed!\n");
         ret = -1;
         goto END;
     }
@@ -246,7 +246,7 @@ int Emu_SaveState(int num)
     preview_buf = Emu_GetVideoScreenshotData(&preview_width, &preview_height, &preview_size, rotate, 0);
     if (!preview_buf)
     {
-        AppLog("[STATE] Save state: make preview failed!\n");
+        AppLog("[SAVESTATE] Save state: make preview failed!\n");
         ret = -1;
         goto END;
     }
@@ -255,14 +255,14 @@ int Emu_SaveState(int num)
     state_size = retro_serialize_size();
     if (state_size == 0)
     {
-        AppLog("[STATE] Save state: retro_serialize_size failed!\n");
+        AppLog("[SAVESTATE] Save state: retro_serialize_size failed!\n");
         ret = -1;
         goto END;
     }
     state_buf = malloc(state_size);
     if (!state_buf)
     {
-        AppLog("[STATE] Save state: alloc state buf failed!\n");
+        AppLog("[SAVESTATE] Save state: alloc state buf failed!\n");
         ret = -1;
         goto END;
     }
@@ -315,7 +315,7 @@ int Emu_SaveState(int num)
         int written = sceIoWrite(fd, buf, transfer);
         if (written < 0)
         {
-            AppLog("[STATE] Save state: write file failed\n");
+            AppLog("[SAVESTATE] Save state: write file failed\n");
             ret = -1;
             goto END;
         }
