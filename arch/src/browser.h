@@ -5,6 +5,7 @@
 
 typedef struct
 {
+	float x, y;
 	float w, h;
 	float margin_r;
 } IconLayout;
