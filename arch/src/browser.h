@@ -7,7 +7,9 @@ typedef struct
 {
 	float x, y;
 	float w, h;
-	float margin_r;
+	uint32_t selview_border_color;
+	uint32_t selview_bg_color;
+	uint32_t short_name_color;
 } IconLayout;
 
 typedef struct
