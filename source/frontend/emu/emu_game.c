@@ -118,7 +118,7 @@ static int loadGameFromMemory(const char *path, int archive_mode)
     }
     else
     {
-        if (AllocateReadFileEX(path, &game_rom_data, &size) < 0)
+        if (AllocateReadFileEx(path, &game_rom_data, &size) < 0)
             return -1;
     }
 
@@ -158,20 +158,7 @@ static int loadGame(const char *path)
     core_display_rotate = 0;
     retro_init();
 
-    int archive_mode = ARCHIVE_MODE_NO;
-
-    if (core_want_ext_zip_mode || core_want_ext_7z_mode)
-    {
-        const char *ext = strrchr(path, '.');
-        if (ext++)
-        {
-            if (core_want_ext_zip_mode && strcasecmp(ext, "zip") == 0)
-                archive_mode = ARCHIVE_MODE_ZIP;
-
-            if (archive_mode == ARCHIVE_MODE_NO && core_want_ext_7z_mode && strcasecmp(ext, "7z") == 0)
-                archive_mode = ARCHIVE_MODE_7Z;
-        }
-    }
+    int archive_mode = Archive_GetMode(path);
 
     if (core_system_info.need_fullpath)
         ret = loadGameFromFile(path, archive_mode);

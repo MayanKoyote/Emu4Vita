@@ -10,6 +10,12 @@ enum ArchiveMode
     ARCHIVE_MODE_7Z,
 };
 
+int Archive_GetMode(const char *path);
+
+int Archive_CleanCache(int index);
+int Archive_CleanCacheByPath(const char *path);
+int Archive_CleanAllCaches();
+
 int Archive_LoadCacheConfig();
 int Archive_SaveCacheConfig();
 

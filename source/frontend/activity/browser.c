@@ -49,8 +49,9 @@ enum IndexOptionItem
 {
     INDEX_OPTION_ITEM_LOAD_GAME,
     INDEX_OPTION_ITEM_DELETE_GAME,
-    INDEX_OPTION_ITEM_DELETE_AUTO_STATE,
-    INDEX_OPTION_ITEM_DELETE_SAVEFILE,
+    INDEX_OPTION_ITEM_DELETE_AUTO_SAVESTATE,
+    INDEX_OPTION_ITEM_DELETE_AUTO_SAVEFILE,
+    INDEX_OPTION_ITEM_DELETE_CACHE_FILES,
 };
 
 static int option_items[] = {
@@ -58,6 +59,7 @@ static int option_items[] = {
     LANG_OPTION_MENU_DELETE_GAME,
     LANG_OPTION_MENU_DELETE_AUTO_SAVESTATE,
     LANG_OPTION_MENU_DELETE_AUTO_SAVEFILE,
+    LANG_OPTION_MENU_DELETE_CACHE_FILES,
 };
 #define N_OPTION_ITEMS (sizeof(option_items) / sizeof(int))
 
@@ -645,9 +647,18 @@ static void deleteAutoStateCallback(GUI_Dialog *dialog)
     Browser_RequestRefreshPreview(0);
 }
 
-static void deleteSrmCallback(GUI_Dialog *dialog)
+static void deleteAutoSrmCallback(GUI_Dialog *dialog)
 {
     Emu_DeleteSrm();
+    GUI_CloseDialog(dialog->prev);
+    AlertDialog_Dismiss(dialog);
+}
+
+static void deleteCacheFilesCallback(GUI_Dialog *dialog)
+{
+    char path[MAX_PATH_LENGTH];
+    MakeCurrentFilePath(path);
+    Archive_CleanCacheByPath(path);
     GUI_CloseDialog(dialog->prev);
     AlertDialog_Dismiss(dialog);
 }
@@ -686,7 +697,7 @@ static void optionMenuPositiveCallback(GUI_Dialog *dialog)
         }
     }
     break;
-    case INDEX_OPTION_ITEM_DELETE_AUTO_STATE:
+    case INDEX_OPTION_ITEM_DELETE_AUTO_SAVESTATE:
     {
         if (CurrentPathIsFile())
         {
@@ -699,14 +710,27 @@ static void optionMenuPositiveCallback(GUI_Dialog *dialog)
         }
     }
     break;
-    case INDEX_OPTION_ITEM_DELETE_SAVEFILE:
+    case INDEX_OPTION_ITEM_DELETE_AUTO_SAVEFILE:
     {
         if (CurrentPathIsFile())
         {
             GUI_Dialog *tip_dialog = AlertDialog_Create();
             AlertDialog_SetTitle(tip_dialog, cur_lang[LANG_TIP]);
             AlertDialog_SetMessage(tip_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_AUTO_SAVEFILE]);
-            AlertDialog_SetPositiveButton(tip_dialog, cur_lang[LANG_CONFIRM], deleteSrmCallback);
+            AlertDialog_SetPositiveButton(tip_dialog, cur_lang[LANG_CONFIRM], deleteAutoSrmCallback);
+            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], NULL);
+            AlertDialog_Show(tip_dialog);
+        }
+    }
+    break;
+    case INDEX_OPTION_ITEM_DELETE_CACHE_FILES:
+    {
+        if (CurrentPathIsFile())
+        {
+            GUI_Dialog *tip_dialog = AlertDialog_Create();
+            AlertDialog_SetTitle(tip_dialog, cur_lang[LANG_TIP]);
+            AlertDialog_SetMessage(tip_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_CACHE_FILES]);
+            AlertDialog_SetPositiveButton(tip_dialog, cur_lang[LANG_CONFIRM], deleteCacheFilesCallback);
             AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], NULL);
             AlertDialog_Show(tip_dialog);
         }
