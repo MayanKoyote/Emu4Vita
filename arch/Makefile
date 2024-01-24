@@ -109,13 +109,16 @@ STRIP   := $(PREFIX)-strip
 NM      := $(PREFIX)-nm
 LD      := $(CXX)
 
-all: clean_files create_dirs build-cores build-app
+all: clean_files create_dirs build-cores build-vita2d build-app
 
 clean_files:
 	@rm -rf $(CORES_DIR) $(TARGET_PATH) $(EBOOT_PATH) $(SFO_PATH) $(BUILD_DIR)/$(TARGET).velf $(BUILD_DIR)/$(TARGET).elf
 
 create_dirs:
 	@mkdir -p $(BUILD_DIR)
+
+build-vita2d: 
+	cd $(ROOT_DIR) && make -f Makefile.libvita2d
 
 build-app: $(EBOOT_PATH) $(SFO_PATH)
 	@rm -rf $(TARGET_PATH)
@@ -147,7 +150,10 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 
 clean: clean-app
 
-clean-all: clean-cores clean-app
+clean-all: clean-cores clean-vita2d clean-app
+
+clean-vita2d: 
+	cd $(ROOT_DIR) && make -f Makefile.libvita2d clean
 
 clean-app:
 	rm -rf $(BUILD_DIR) $(TARGET_PATH) $(EBOOT_PATH) $(SFO_PATH)

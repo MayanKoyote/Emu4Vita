@@ -6,9 +6,13 @@ ROOT_DIR                   := $(patsubst %/,%, $(MAKEFILE_DIR))
 
 DEPS_DIR                   := $(ROOT_DIR)/../DEPS
 SRC_DIR                    := $(DEPS_DIR)/minizip
-BUILD_DIR                  := $(ROOT_DIR)/../build/minizip
+BUILD_DIR                  := $(ROOT_DIR)/../build/$(TARGET)
 
-TARGET_PATH                := $(ROOT_DIR)/imports/lib/$(TARGET).a
+EXPORTS_DIR                := $(ROOT_DIR)/imports
+EXPORTS_LIB_DIR            := $(EXPORTS_DIR)/lib
+EXPORTS_INCLUDE_DIR        := $(EXPORTS_DIR)/include
+
+TARGET_PATH                := $(BUILD_DIR)/$(TARGET).a
 
 LIBDIRS := 
 
@@ -47,9 +51,17 @@ STRIP   := $(PREFIX)-strip
 NM      := $(PREFIX)-nm
 LD      := $(CXX)
 
-all: $(TARGET_PATH)
+all: $(TARGET_PATH) install
+
+install:
+	@mkdir -p $(EXPORTS_LIB_DIR)
+	@cp -u $(TARGET_PATH) $(EXPORTS_LIB_DIR)
+
+uninstall:
+	@rm $(EXPORTS_LIB_DIR)/$(TARGET).a
 
 $(TARGET_PATH): $(OBJS)
+	@mkdir -p $(dir $@)
 	$(AR) -rc $@ $^
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
@@ -68,7 +80,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
 	@mkdir -p $(dir $@)
 	$(CC) -c $(ASFLAGS) $< -o $@
 
-clean: 
+clean: uninstall
 	rm -rf $(BUILD_DIR) $(TARGET_PATH)
 
 .PHONY: clean all

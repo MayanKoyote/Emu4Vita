@@ -1,3 +1,4 @@
 .vscode
+imports/include/*.h
 imports/lib/*.a
 !imports/lib/libvitashaders.a
