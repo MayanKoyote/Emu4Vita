@@ -13,10 +13,10 @@ TARGET_PATH                := $(ROOT_DIR)/imports/lib/$(TARGET).a
 LIBDIRS := 
 
 INCDIRS := \
-	-I$(DEPS_DIR) \
-	-I$(SRC_DIR)
+	-I$(SRC_DIR) \
+	-I$(DEPS_DIR)
 
-SRC_C += \
+SRC_C := \
 	7zAlloc.c \
 	7zArcIn.c \
 	7zBuf.c \

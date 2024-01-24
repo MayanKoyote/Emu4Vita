@@ -1,0 +1,79 @@
+TARGET = libvita2d_ext
+
+MAKEFILE_PATH              := $(abspath $(lastword $(MAKEFILE_LIST)))
+MAKEFILE_DIR               := $(dir $(MAKEFILE_PATH))
+ROOT_DIR                   := $(patsubst %/,%, $(MAKEFILE_DIR))
+
+DEPS_DIR                   := $(ROOT_DIR)/../DEPS
+VITA2D_EXT_DIR             := $(DEPS_DIR)/libvita2d_ext/libvita2d_ext
+SRC_DIR                    := $(VITA2D_EXT_DIR)/source
+INCLUDE_DIR                := $(VITA2D_EXT_DIR)/include
+BUILD_DIR                  := $(ROOT_DIR)/../build/libvita2d
+
+TARGET_PATH                := $(ROOT_DIR)/imports/lib/$(TARGET).a
+
+LIBDIRS := 
+
+INCDIRS := \
+	-I$(SRC_DIR) \
+	-I$(INCLUDE_DIR)
+
+SRC_C := \
+	vita2d_ext.c \
+	vita2d_ext_draw.c \
+	utils.c
+
+OBJS := $(SRC_C:.c=.o)
+OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
+
+DEFINES := 
+
+WARNINGS := \
+	-Wall
+
+ARCHFLAGS := -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=hard -DVITA
+CFLAGS    += $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
+CFLAGS    += -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables -ftree-vectorize
+CFLAGS    += -O3
+ASFLAGS   := $(CFLAGS) $(WARNINGS) $(INCDIRS)
+
+CFLAGS    += -ffast-math $(WARNINGS) $(INCDIRS) $(DEFINES)
+CXXFLAGS  := $(CFLAGS) -fno-rtti -fno-exceptions
+LDFLAGS   := -Wl,-q $(LIBDIRS)
+
+PREFIX  := arm-vita-eabi
+CC      := $(PREFIX)-gcc
+CXX     := $(PREFIX)-g++
+AS      := $(PREFIX)-as
+AR      := $(PREFIX)-ar
+OBJCOPY := $(PREFIX)-objcopy
+STRIP   := $(PREFIX)-strip
+NM      := $(PREFIX)-nm
+LD      := $(CXX)
+
+all: $(TARGET_PATH)
+
+$(TARGET_PATH): $(OBJS)
+	$(AR) -rc $@ $^
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) -c $(CXXFLAGS) $< -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) -c $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.S
+	@mkdir -p $(dir $@)
+	$(CC) -c $(ASFLAGS) $< -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
+	@mkdir -p $(dir $@)
+	$(CC) -c $(ASFLAGS) $< -o $@
+
+clean: 
+	rm -rf $(BUILD_DIR) $(TARGET_PATH)
+
+.PHONY: clean all
+	

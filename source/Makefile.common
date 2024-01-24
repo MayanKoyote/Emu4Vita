@@ -223,16 +223,20 @@ clean_files:
 create_dirs:
 	@mkdir -p $(BUILD_DIR)
 
-build-deps: build-libretro_comm build-7zip build-minizip
+build-deps: build-vita2d build-libretro_comm build-7zip build-minizip
 
+build-vita2d: 
+	cd $(SOURCE_DIR) && make -f Makefile.libvita2d
+	cd $(SOURCE_DIR) && make -f Makefile.libvita2d_ext
+ 
 build-libretro_comm:
 	cd $(SOURCE_DIR) && make -f Makefile.libretro_comm
 
 build-7zip:
-	cd $(SOURCE_DIR) && make -f Makefile.7zip EXT_DEFINES=$(SEVENZ_DEFINES)
+	cd $(SOURCE_DIR) && make -f Makefile.lib7zip EXT_DEFINES=$(SEVENZ_DEFINES)
 
 build-minizip:
-	cd $(SOURCE_DIR) && make -f Makefile.minizip
+	cd $(SOURCE_DIR) && make -f Makefile.libminizip
 
 build-core:
 	cd $(CORE_MAKEFILE_DIR) && make -f $(CORE_MAKEFILE_NAME) $(CORE_ARGS)
@@ -272,16 +276,20 @@ $(BUILD_DIR)/%.o: $(FRONTEND_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) -c $(CFLAGS) $< -o $@
 
-clean-deps: clean-libretro_comm clean-7zip clean-minizip
+clean-deps: clean-vita2d clean-libretro_comm clean-7zip clean-minizip
+
+clean-vita2d: 
+	cd $(SOURCE_DIR) && make -f Makefile.libvita2d clean
+	cd $(SOURCE_DIR) && make -f Makefile.libvita2d_ext clean
 
 clean-libretro_comm:
 	cd $(SOURCE_DIR) && make -f Makefile.libretro_comm clean
 
 clean-7zip:
-	cd $(SOURCE_DIR) && make -f Makefile.7zip clean EXT_DEFINES=$(SEVENZ_DEFINES)
+	cd $(SOURCE_DIR) && make -f Makefile.lib7zip clean EXT_DEFINES=$(SEVENZ_DEFINES)
 
 clean-minizip:
-	cd $(SOURCE_DIR) && make -f Makefile.minizip clean
+	cd $(SOURCE_DIR) && make -f Makefile.libminizip clean
 
 clean-core:
 	cd $(CORE_MAKEFILE_DIR) && make -f $(CORE_MAKEFILE_NAME) clean $(CORE_ARGS)

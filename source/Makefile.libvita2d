@@ -1,0 +1,103 @@
+TARGET = libvita2d
+
+MAKEFILE_PATH              := $(abspath $(lastword $(MAKEFILE_LIST)))
+MAKEFILE_DIR               := $(dir $(MAKEFILE_PATH))
+ROOT_DIR                   := $(patsubst %/,%, $(MAKEFILE_DIR))
+
+DEPS_DIR                   := $(ROOT_DIR)/../DEPS
+VITA2D_DIR                 := $(DEPS_DIR)/libvita2d/libvita2d
+SRC_DIR                    := $(VITA2D_DIR)/source
+INCLUDE_DIR                := $(VITA2D_DIR)/include
+SHADER_COMPILED_DIR        := $(VITA2D_DIR)/shader/compiled
+BUILD_DIR                  := $(ROOT_DIR)/../build/libvita2d
+
+VITASDK_INCLUDE_DIR        := $(VITASDK)/arm-vita-eabi/include
+FREETYPE2_DIR              := $(VITASDK_INCLUDE_DIR)/freetype2
+
+TARGET_PATH                := $(ROOT_DIR)/imports/lib/$(TARGET).a
+
+LIBDIRS := 
+
+INCDIRS := \
+	-I$(SRC_DIR) \
+	-I$(INCLUDE_DIR) \
+	-I$(FREETYPE2_DIR)
+
+SHADER_O := \
+	$(SHADER_COMPILED_DIR)/clear_v_gxp.o \
+	$(SHADER_COMPILED_DIR)/clear_f_gxp.o \
+	$(SHADER_COMPILED_DIR)/color_v_gxp.o \
+	$(SHADER_COMPILED_DIR)/color_f_gxp.o \
+	$(SHADER_COMPILED_DIR)/texture_v_gxp.o \
+	$(SHADER_COMPILED_DIR)/texture_f_gxp.o \
+	$(SHADER_COMPILED_DIR)/texture_tint_f_gxp.o
+
+SRC_C := \
+	vita2d.c \
+	vita2d_texture.c \
+	vita2d_draw.c \
+	utils.c \
+	vita2d_image_png.c \
+	vita2d_image_jpeg.c \
+	vita2d_image_bmp.c \
+	vita2d_font.c \
+	vita2d_pgf.c \
+	vita2d_pvf.c \
+	texture_atlas.c \
+	int_htab.c
+
+OBJS := $(SRC_C:.c=.o)
+OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
+OBJS += $(SHADER_O)
+
+DEFINES := 
+
+WARNINGS := \
+	-Wall
+
+ARCHFLAGS := -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=hard -DVITA
+CFLAGS    += $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
+CFLAGS    += -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables -ftree-vectorize
+CFLAGS    += -O3
+ASFLAGS   := $(CFLAGS) $(WARNINGS) $(INCDIRS)
+
+CFLAGS    += -ffast-math $(WARNINGS) $(INCDIRS) $(DEFINES)
+CXXFLAGS  := $(CFLAGS) -fno-rtti -fno-exceptions
+LDFLAGS   := -Wl,-q $(LIBDIRS)
+
+PREFIX  := arm-vita-eabi
+CC      := $(PREFIX)-gcc
+CXX     := $(PREFIX)-g++
+AS      := $(PREFIX)-as
+AR      := $(PREFIX)-ar
+OBJCOPY := $(PREFIX)-objcopy
+STRIP   := $(PREFIX)-strip
+NM      := $(PREFIX)-nm
+LD      := $(CXX)
+
+all: $(TARGET_PATH)
+
+$(TARGET_PATH): $(OBJS)
+	$(AR) -rc $@ $^
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) -c $(CXXFLAGS) $< -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) -c $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.S
+	@mkdir -p $(dir $@)
+	$(CC) -c $(ASFLAGS) $< -o $@
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
+	@mkdir -p $(dir $@)
+	$(CC) -c $(ASFLAGS) $< -o $@
+
+clean: 
+	rm -rf $(BUILD_DIR) $(TARGET_PATH)
+
+.PHONY: clean all
+	
