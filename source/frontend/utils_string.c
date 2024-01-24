@@ -72,13 +72,14 @@ int StringGetLine(const char *buf, int size, char **pline)
         n++;
     }
 
-    if (n > 0)
+    if (pline && n > 0)
     {
-        *pline = malloc(n + 1);
-        if (*pline)
+        char *line = malloc(n + 1);
+        if (line)
         {
-            strncpy(*pline, buf, n);
-            (*pline)[n] = '\0';
+            strncpy(line, buf, n);
+            line[n] = '\0';
+            *pline = line;
         }
     }
 
@@ -185,33 +186,44 @@ char *StringMakeShortByWidth(const char *string, int limit_w)
     int cut = 0;
     int max_w = 0;
     char ch;
-    int i, count;
-    for (i = 0; i < len; i += count)
+    int i, j, count;
+    for (i = 0; i < len;)
     {
         if (buf[i] == '\n')
             break;
 
-        if (max_w <= cut_w)
-            cut = i;
-
         count = GetUTF8Count(&buf[i]);
-        if (i + count > len)
+        j = i + count;
+        if (j > len)
             break;
-        ch = buf[i + count];
-        buf[i + count] = '\0';
+        ch = buf[j];
+        buf[j] = '\0';
         max_w += GUI_GetTextWidth(&buf[i]);
-        buf[i + count] = ch;
+        buf[j] = ch;
 
+        if (max_w <= cut_w)
+            cut = j;
         if (max_w > limit_w)
             break;
+
+        i = j;
     }
 
     if (max_w > limit_w)
     {
-        res = (char *)malloc(cut + 4);
         buf[cut] = '\0';
-        sprintf(res, "%s...", buf);
-        free(buf);
+        if (cut + 4 > len)
+        {
+            res = (char *)malloc(cut + 4);
+            sprintf(res, "%s...", buf);
+            free(buf);
+        }
+        else
+        {
+            res = buf;
+            strcat(res, "...");
+        }
+            
     }
     else
     {

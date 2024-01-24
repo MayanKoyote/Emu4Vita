@@ -227,7 +227,7 @@ int AllocateReadFile(const char *file, void **buffer, size_t *buffersize)
 
 int64_t ReadFileEx(const char *file, const void *buffer, size_t buffersize)
 {
-    SceUID fd = sceIoOpen(file, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
+    SceUID fd = sceIoOpen(file, SCE_O_RDONLY, 0);
     if (fd < 0)
         return fd;
 
@@ -317,6 +317,7 @@ int64_t AllocateReadFileEx(const char *file, void **buffer, size_t *buffersize)
     }
 
     sceIoLseek(fd, 0, SCE_SEEK_SET);
+    char *pbuf = buf;
     size_t remaining = size;
     int transfer = TRANSFER_SIZE;
 
@@ -327,7 +328,7 @@ int64_t AllocateReadFileEx(const char *file, void **buffer, size_t *buffersize)
         else
             transfer = TRANSFER_SIZE;
 
-        int read = sceIoRead(fd, buf, transfer);
+        int read = sceIoRead(fd, pbuf, transfer);
         if (read < 0)
         {
             free(buf);
@@ -337,7 +338,7 @@ int64_t AllocateReadFileEx(const char *file, void **buffer, size_t *buffersize)
         if (read == 0)
             break;
 
-        buf += read;
+        pbuf += read;
         remaining -= read;
     }
     sceIoClose(fd);
