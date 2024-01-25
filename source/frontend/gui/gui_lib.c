@@ -13,50 +13,58 @@
 #include "config.h"
 #include "utils.h"
 
+typedef struct GUI_Font
+{
+    vita2d_pgf *font;
+    int font_size;
+    int line_height;
+    int line_space;
+} GUI_Font;
+
 extern float _vita2d_ortho_matrix[4 * 4];
 
-#define DEFAULT_PGF_FONT_HEIGHT 17.402f
-#define DEFAULT_PGF_FONT_SCALE 1.0f
-#define DEFAULT_FONT_SIZE 21
+#define DEFAULT_FONT_SIZE 17
+#define DEFAULT_LINE_HEIGHT 21
 #define DEFAULT_LINE_SPACE 2
 
 static GUI_Texture *rendertarget_texture = NULL;
-
-static vita2d_pgf *gui_font = NULL;
-static float gui_font_scale = DEFAULT_PGF_FONT_SCALE;
-static float gui_font_height = DEFAULT_PGF_FONT_HEIGHT;
-static int gui_font_size = DEFAULT_FONT_SIZE;
-static int gui_line_space = DEFAULT_LINE_SPACE;
-
 static LinkedList *gui_clip_list = NULL;
+static GUI_Font *gui_font = NULL;
 
 static int initFont()
 {
     char path[MAX_PATH_LENGTH];
 
+    if (gui_font)
+        return 0;
+
+    gui_font = calloc(1, sizeof(GUI_Font));
+    if (!gui_font)
+        return -1;
+
     if (private_assets_dir)
     {
         snprintf(path, MAX_PATH_LENGTH, "%s/%s", private_assets_dir, FONT_PGF_NAME);
-        gui_font = vita2d_load_custom_pgf(path);
+        gui_font->font = vita2d_load_custom_pgf(path);
     }
-    if (!gui_font && public_assets_dir)
+    if (!gui_font->font && public_assets_dir)
     {
         snprintf(path, MAX_PATH_LENGTH, "%s/%s", public_assets_dir, FONT_PGF_NAME);
-        gui_font = vita2d_load_custom_pgf(path);
+        gui_font->font = vita2d_load_custom_pgf(path);
     }
-    if (!gui_font)
-        gui_font = vita2d_load_default_pgf();
+    if (!gui_font->font)
+        gui_font->font = vita2d_load_default_pgf();
 
-    if (!gui_font)
+    if (!gui_font->font)
     {
         AppLog("[GUI] Failed to init font!\n");
         return -1;
     }
 
-    gui_font_scale = DEFAULT_PGF_FONT_SCALE;
-    gui_font_height = vita2d_pgf_font_height(gui_font, gui_font_scale);
-    gui_font_size = DEFAULT_FONT_SIZE * gui_font_scale;
-    // printf("gui_font_height: %.2f\n", gui_font_height);
+    GUI_SetFontSize(DEFAULT_FONT_SIZE);
+    GUI_SetLineSpace(DEFAULT_LINE_SPACE);
+
+    AppLog("[GUI] Init font OK.\n");
 
     return 0;
 }
@@ -64,35 +72,46 @@ static int initFont()
 static void deinitFont()
 {
     if (gui_font)
-        vita2d_free_pgf(gui_font);
-    gui_font = NULL;
+    {
+        if (gui_font->font)
+            vita2d_free_pgf(gui_font->font);
+        free(gui_font);
+        gui_font = NULL;
+        AppLog("[GUI] Deinit font OK.\n");
+    }
 }
 
 int GUI_GetFontSize()
 {
-    return gui_font_size;
+    return gui_font->font_size;
 }
 
 void GUI_SetFontSize(int size)
 {
-    gui_font_size = size;
-    gui_font_scale = (float)size / DEFAULT_FONT_SIZE;
-    gui_font_height = vita2d_pgf_font_height(gui_font, gui_font_scale);
+    float scale = (float)size / (float)DEFAULT_FONT_SIZE;
+    gui_font->font_size = size;
+    gui_font->line_height = scale * DEFAULT_LINE_HEIGHT;
+}
+
+int GUI_GetLineHeight()
+{
+    return gui_font->line_height;
 }
 
 int GUI_GetLineSpace()
 {
-    return gui_line_space;
+    return gui_font->line_space;
 }
 
 void GUI_SetLineSpace(int space)
 {
-    gui_line_space = space;
+    gui_font->line_space = space;
+    vita2d_pgf_set_linespace(gui_font->font, space);
 }
 
 int GUI_DrawText(int x, int y, unsigned int color, const char *text)
 {
-    return vita2d_pgf_draw_text_ls(gui_font, x, y + gui_font_height, gui_line_space, color, gui_font_scale, text);
+    return vita2d_pgf_draw_text(gui_font->font, x, y, color, gui_font->font_size, text);
 }
 
 int GUI_DrawTextf(int x, int y, unsigned int color, const char *text, ...)
@@ -108,12 +127,12 @@ int GUI_DrawTextf(int x, int y, unsigned int color, const char *text, ...)
 
 int GUI_GetTextWidth(const char *text)
 {
-    return vita2d_pgf_text_width(gui_font, gui_font_scale, text);
+    return vita2d_pgf_text_width(gui_font->font, gui_font->font_size, text);
 }
 
 int GUI_GetTextHeight(const char *text)
 {
-    return vita2d_pgf_text_height(gui_font, gui_font_scale, text);
+    return vita2d_pgf_text_height(gui_font->font, gui_font->font_size, text);
 }
 
 void GUI_DrawEmptyRectangle(float x, float y, float w, float h, float line_size, unsigned int color)

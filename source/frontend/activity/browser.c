@@ -170,7 +170,7 @@ static int refreshLayout()
             return -1;
         LayoutParamSetAutoFree(path_textview, 0);
     }
-    LayoutParamSetLayoutSize(path_textview, TYPE_LAYOUT_MATH_PARENT, GUI_GetFontSize() + PATH_VIEW_PADDING_T * 2);
+    LayoutParamSetLayoutSize(path_textview, TYPE_LAYOUT_MATH_PARENT, GUI_GetLineHeight() + PATH_VIEW_PADDING_T * 2);
     LayoutParamSetPadding(path_textview, PATH_VIEW_PADDING_L, PATH_VIEW_PADDING_L, PATH_VIEW_PADDING_T, PATH_VIEW_PADDING_T);
     TextViewSetSingleLine(path_textview, 1);
     TextViewSetBgColor(path_textview, GUI_DEF_COLOR_BG);

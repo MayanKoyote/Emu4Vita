@@ -29,6 +29,7 @@ typedef struct vita2d_pvf {
 	texture_atlas *atlas;
 	SceKernelLwMutexWork mutex;
 	float vsize;
+	int linespace;
 } vita2d_pvf;
 
 static void *pvf_alloc_func(void *userdata, unsigned int size)
@@ -51,9 +52,8 @@ static void vita2d_load_pvf_post(vita2d_pvf *font)
 	ScePvfFontInfo fontinfo;
 
 	scePvfGetFontInfo(font->font_handle_list->font_handle, &fontinfo);
-	//font->vsize = (fontinfo.fontStyleInfo.fontV / fontinfo.fontStyleInfo.fontVRes)
-		//* SCREEN_DPI;
-	font->vsize = 10.125f;
+	font->vsize = (10.125f / 128.0f) * SCREEN_DPI;
+	// font->vsize = 10.125f;
 
 	font->atlas = texture_atlas_create(ATLAS_DEFAULT_W, ATLAS_DEFAULT_H,
 		SCE_GXM_TEXTURE_FORMAT_U8_R111);
@@ -68,7 +68,6 @@ static vita2d_pvf *vita2d_load_pvf_pre(int numFonts)
 	vita2d_pvf *font = malloc(sizeof(*font));
 	if (!font)
 		return NULL;
-
 	memset(font, 0, sizeof(vita2d_pvf));
 
 	ScePvfInitRec params = {
@@ -257,7 +256,7 @@ static int atlas_add_glyph(vita2d_pvf *font, ScePvfFontId font_handle, unsigned 
 		char_info.glyphMetrics.horizontalBearingY64 >> 6,
 		char_info.glyphMetrics.horizontalAdvance64,
 		char_info.glyphMetrics.verticalAdvance64,
-		0
+		font->vsize
 	};
 
 	if (!texture_atlas_insert(font->atlas, character, &size, &data,
@@ -279,9 +278,10 @@ static int atlas_add_glyph(vita2d_pvf *font, ScePvfFontId font_handle, unsigned 
 	return scePvfGetCharGlyphImage(font_handle, character, &glyph_image) == 0;
 }
 
-int generic_pvf_draw_text(vita2d_pvf *font, int draw, int *height,
-			  int x, int y, float linespace, unsigned int color, float scale,
-			  const char *text)
+static int generic_pvf_draw_text(vita2d_pvf *font, int draw, int *height,
+									int x, int y, unsigned int color,
+									unsigned int size,
+									const char *text)
 {
 	sceKernelLockLwMutex(&font->mutex, 1, NULL);
 
@@ -305,7 +305,7 @@ int generic_pvf_draw_text(vita2d_pvf *font, int draw, int *height,
 			if (pen_x > max_x)
 				max_x = pen_x;
 			pen_x = start_x;
-			pen_y += font->vsize * scale;
+			pen_y += size + font->linespace;
 			continue;
 		}
 
@@ -326,18 +326,20 @@ int generic_pvf_draw_text(vita2d_pvf *font, int draw, int *height,
 			}
 		}
 
+		const float draw_scale = size / (float)data.glyph_size;
+
 		if (draw) {
 			vita2d_draw_texture_tint_part_scale(tex,
-				pen_x + data.bitmap_left * scale,
-				pen_y - data.bitmap_top * scale,
+				pen_x + data.bitmap_left * draw_scale,
+				pen_y + size - data.bitmap_top * draw_scale,
 				rect.x + PVF_GLYPH_MARGIN / 2.0f, rect.y + PVF_GLYPH_MARGIN / 2.0f,
 				rect.w - PVF_GLYPH_MARGIN / 2.0f, rect.h - PVF_GLYPH_MARGIN / 2.0f,
-				scale,
-				scale,
+				draw_scale,
+				draw_scale,
 				color);
 		}
 
-		pen_x += (data.advance_x >> 6) * scale;
+		pen_x += (data.advance_x >> 6) * draw_scale;
 		old_character = character;
 	}
 
@@ -345,7 +347,7 @@ int generic_pvf_draw_text(vita2d_pvf *font, int draw, int *height,
 		max_x = pen_x;
 
 	if (height)
-		*height = pen_y + font->vsize * scale - y;
+		*height = pen_y + size - y;
 
 	sceKernelUnlockLwMutex(&font->mutex, 1);
 
@@ -353,14 +355,14 @@ int generic_pvf_draw_text(vita2d_pvf *font, int draw, int *height,
 }
 
 int vita2d_pvf_draw_text(vita2d_pvf *font, int x, int y,
-			 unsigned int color, float scale,
+			 unsigned int color, unsigned int size,
 			 const char *text)
 {
-	return generic_pvf_draw_text(font, 1, NULL, x, y, 0.0f, color, scale, text);
+	return generic_pvf_draw_text(font, 1, NULL, x, y, color, size, text);
 }
 
 int vita2d_pvf_draw_textf(vita2d_pvf *font, int x, int y,
-			  unsigned int color, float scale,
+			  unsigned int color, unsigned int size,
 			  const char *text, ...)
 {
 	char buf[1024];
@@ -368,53 +370,39 @@ int vita2d_pvf_draw_textf(vita2d_pvf *font, int x, int y,
 	va_start(argptr, text);
 	vsnprintf(buf, sizeof(buf), text, argptr);
 	va_end(argptr);
-	return vita2d_pvf_draw_text(font, x, y, color, scale, buf);
+	return vita2d_pvf_draw_text(font, x, y, color, size, buf);
 }
 
-int vita2d_pvf_draw_text_ls(vita2d_pvf *font, int x, int y, float linespace,
-			 unsigned int color, float scale,
-			 const char *text)
-{
-	return generic_pvf_draw_text(font, 1, NULL, x, y, linespace, color, scale, text);
-}
-
-int vita2d_pvf_draw_textf_ls(vita2d_pvf *font, int x, int y, float linespace,
-			  unsigned int color, float scale,
-			  const char *text, ...)
-{
-	char buf[1024];
-	va_list argptr;
-	va_start(argptr, text);
-	vsnprintf(buf, sizeof(buf), text, argptr);
-	va_end(argptr);
-	return vita2d_pvf_draw_text_ls(font, x, y, linespace, color, scale, buf);
-}
-
-void vita2d_pvf_text_dimensions(vita2d_pvf *font, float scale,
+void vita2d_pvf_text_dimensions(vita2d_pvf *font, unsigned int size,
 				const char *text, int *width, int *height)
 {
 	int w;
-	w = generic_pvf_draw_text(font, 0, height, 0.0f, 0, 0, 0, scale, text);
+	w = generic_pvf_draw_text(font, 0, height, 0, 0, 0, size, text);
 
 	if (width)
 		*width = w;
 }
 
-int vita2d_pvf_text_width(vita2d_pvf *font, float scale, const char *text)
+int vita2d_pvf_text_width(vita2d_pvf *font, unsigned int size, const char *text)
 {
 	int width;
-	vita2d_pvf_text_dimensions(font, scale, text, &width, NULL);
+	vita2d_pvf_text_dimensions(font, size, text, &width, NULL);
 	return width;
 }
 
-int vita2d_pvf_text_height(vita2d_pvf *font, float scale, const char *text)
+int vita2d_pvf_text_height(vita2d_pvf *font, unsigned int size, const char *text)
 {
 	int height;
-	vita2d_pvf_text_dimensions(font, scale, text, NULL, &height);
+	vita2d_pvf_text_dimensions(font, size, text, NULL, &height);
 	return height;
 }
 
-float vita2d_pvf_font_height(vita2d_pvf *font, float scale)
+void vita2d_pvf_set_linespace(vita2d_pvf *font, int linespace)
 {
-	return font->vsize * scale;
+	font->linespace = linespace;
+}
+
+int vita2d_pvf_get_linespace(vita2d_pvf *font)
+{
+	return font->linespace;
 }

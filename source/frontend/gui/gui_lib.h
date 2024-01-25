@@ -33,6 +33,7 @@ int GUI_DisableClipping();
 // Draw text
 int GUI_GetFontSize();
 void GUI_SetFontSize(int size);
+int GUI_GetLineHeight();
 int GUI_GetLineSpace();
 void GUI_SetLineSpace(int space);
 
