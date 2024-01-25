@@ -50,9 +50,9 @@ SRC_C := \
 	browser.c \
 	config.c \
 	file.c \
-	graphics.c \
 	init.c \
 	main.c \
+	gui_lib.c \
 	gui.c \
 	utils.c \
 	boot.c

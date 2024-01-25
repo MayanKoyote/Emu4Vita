@@ -172,13 +172,13 @@ static void deinitImages()
 void GUI_init()
 {
     initImagesThread();
-    GUI_initFonts();
+    GUI_initLib();
     refreshLayout();
     initBrowser();
 }
 
 void GUI_deinit()
 {
-    GUI_deinitFonts();
+    GUI_deinitLib();
     deinitImages();
 }
