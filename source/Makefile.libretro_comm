@@ -96,7 +96,7 @@ install:
 	@cp -u $(TARGET_PATH) $(EXPORTS_LIB_DIR)
 
 uninstall:
-	@rm $(EXPORTS_LIB_DIR)/$(TARGET).a
+	@rm -f $(EXPORTS_LIB_DIR)/$(TARGET).a
 
 $(TARGET_PATH): $(OBJS)
 	@mkdir -p $(dir $@)

@@ -4,7 +4,7 @@ MAKEFILE_PATH              := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR               := $(dir $(MAKEFILE_PATH))
 ROOT_DIR                   := $(patsubst %/,%, $(MAKEFILE_DIR))
 
-DEPS_DIR                   := $(ROOT_DIR)/../DEPS
+DEPS_DIR                   := $(ROOT_DIR)/../deps
 SRC_DIR                    := $(DEPS_DIR)/7zip
 BUILD_DIR                  := $(ROOT_DIR)/../build/$(TARGET)
 
@@ -81,7 +81,7 @@ install:
 	@cp -u $(TARGET_PATH) $(EXPORTS_LIB_DIR)
 
 uninstall:
-	@rm $(EXPORTS_LIB_DIR)/$(TARGET).a
+	@rm -f $(EXPORTS_LIB_DIR)/$(TARGET).a
 
 $(TARGET_PATH): $(OBJS)
 	@mkdir -p $(dir $@)

@@ -4,7 +4,7 @@ MAKEFILE_PATH              := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR               := $(dir $(MAKEFILE_PATH))
 ROOT_DIR                   := $(patsubst %/,%, $(MAKEFILE_DIR))
 
-DEPS_DIR                   := $(ROOT_DIR)/../DEPS
+DEPS_DIR                   := $(ROOT_DIR)/../deps
 VITA2D_EXT_DIR             := $(DEPS_DIR)/libvita2d_ext/libvita2d_ext
 SRC_DIR                    := $(VITA2D_EXT_DIR)/source
 INCLUDE_DIR                := $(VITA2D_EXT_DIR)/include
@@ -61,8 +61,8 @@ install:
 	@cp -u $(TARGET_PATH) $(EXPORTS_LIB_DIR)
 
 uninstall:
-	@rm $(EXPORTS_INCLUDE_DIR)/vita2d_ext.h
-	@rm $(EXPORTS_LIB_DIR)/$(TARGET).a
+	@rm -f $(EXPORTS_INCLUDE_DIR)/vita2d_ext.h
+	@rm -f $(EXPORTS_LIB_DIR)/$(TARGET).a
 
 $(TARGET_PATH): $(OBJS)
 	@mkdir -p $(dir $@)
