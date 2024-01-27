@@ -2,3 +2,4 @@
 *.o
 *.elf
 *.velf
+!libvita2d/shader/compiled/*.o
