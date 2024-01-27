@@ -35,10 +35,7 @@ DEFINES :=
 WARNINGS := \
 	-Wall
 
-ARCHFLAGS := -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=hard -DVITA
-CFLAGS    += $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
-CFLAGS    += -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables -ftree-vectorize
-CFLAGS    += -O3
+CFLAGS    += -DVITA -O3
 ASFLAGS   := $(CFLAGS) $(WARNINGS) $(INCDIRS)
 
 CFLAGS    += -ffast-math $(WARNINGS) $(INCDIRS) $(DEFINES)
