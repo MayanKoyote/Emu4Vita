@@ -99,8 +99,7 @@ SRC_C += \
 	setting/setting.c
 
 SRC_C += \
-	archive/7z_archive.c \
-	archive/zip_archive.c
+	archive/archive_rom.c
 
 SRC_C += \
 	boot.c \
@@ -228,7 +227,7 @@ clean_files:
 create_dirs:
 	@mkdir -p $(BUILD_DIR)
 
-build-deps: build-vita2d build-libretro_comm build-7zip build-minizip
+build-deps: build-vita2d build-libretro_comm build-7zip
 
 build-vita2d: 
 	cd $(SOURCE_DIR) && make -f Makefile.libvita2d
@@ -239,9 +238,6 @@ build-libretro_comm:
 
 build-7zip:
 	cd $(SOURCE_DIR) && make -f Makefile.lib7zip EXT_DEFINES=$(SEVENZ_DEFINES)
-
-build-minizip:
-	cd $(SOURCE_DIR) && make -f Makefile.libminizip
 
 build-core:
 	cd $(CORE_MAKEFILE_DIR) && make -f $(CORE_MAKEFILE_NAME) $(CORE_ARGS)

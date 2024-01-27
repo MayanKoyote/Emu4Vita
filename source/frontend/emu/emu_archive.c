@@ -6,8 +6,7 @@
 #include <psp2/kernel/processmgr.h>
 #include <psp2/io/fcntl.h>
 
-#include "archive/zip_archive.h"
-#include "archive/7z_archive.h"
+#include "archive/archive_rom.h"
 #include "emu/emu.h"
 #include "file.h"
 #include "config.h"
@@ -70,15 +69,9 @@ int Archive_CleanCacheByPath(const char *path)
         return 0;
 
     int n = 0;
-    int ret = -1;
     char entry_name[MAX_PATH_LENGTH];
 
-    if (archive_mode == ARCHIVE_MODE_ZIP)
-        ret = ZIP_OpenRom(path, NULL, entry_name);
-    else if (archive_mode == ARCHIVE_MODE_7Z)
-        ret = SevenZ_OpenRom(path, NULL, entry_name);
-
-    if (ret <= 0)
+    if (ArchiveRom_Open(path, NULL, entry_name) <= 0)
         goto END;
 
     // 缓存文件名：例GBA: game1.zip ==> game1.gba（忽略压缩包内的rom文件名，以zip文件名为rom名）
@@ -100,10 +93,8 @@ int Archive_CleanCacheByPath(const char *path)
     }
 
 END:
-    if (archive_mode == ARCHIVE_MODE_ZIP)
-        ZIP_CloseRom();
-    else if (archive_mode == ARCHIVE_MODE_7Z)
-        SevenZ_CloseRom();
+    ArchiveRom_Close();
+
     return n;
 }
 
@@ -274,35 +265,20 @@ static int Archive_AddCacheEntry(int crc, const char *rom_name)
 
 int Archive_GetRomMemory(const char *archive_path, void **buf, size_t *size, int archive_mode)
 {
-    int ret = -1;
+    int ret = ArchiveRom_Open(archive_path, NULL, NULL);
+    if (ret <= 0)
+        goto END;
 
-    if (archive_mode == ARCHIVE_MODE_ZIP)
-    {
-        if (ZIP_OpenRom(archive_path, NULL, NULL) <= 0)
-            goto FAILED;
-        ret = ZIP_ExtractRomMemory(buf, size);
-    }
-    else if (archive_mode == ARCHIVE_MODE_7Z)
-    {
-        if (SevenZ_OpenRom(archive_path, NULL, NULL) <= 0)
-            goto FAILED;
-        ret = SevenZ_ExtractRomMemory(buf, size);
-    }
+    ret = ArchiveRom_ExtractToMemory(buf, size);
 
-END:
-    if (archive_mode == ARCHIVE_MODE_ZIP)
-        ZIP_CloseRom();
-    else if (archive_mode == ARCHIVE_MODE_7Z)
-        SevenZ_CloseRom();
+    ArchiveRom_Close();
+
     if (ret < 0)
         AppLog("[ARCHIVE] Archive_GetRomMemory failed!\n");
     else
         AppLog("[ARCHIVE] Archive_GetRomMemory OK!\n");
+END:
     return ret;
-
-FAILED:
-    ret = -1;
-    goto END;
 }
 
 int Archive_GetRomPath(const char *archive_path, char *rom_path, int archive_mode)
@@ -310,11 +286,7 @@ int Archive_GetRomPath(const char *archive_path, char *rom_path, int archive_mod
     int ret = -1;
     uint32_t rom_crc;
     char entry_name[MAX_PATH_LENGTH];
-
-    if (archive_mode == ARCHIVE_MODE_ZIP)
-        ret = ZIP_OpenRom(archive_path, &rom_crc, entry_name);
-    else if (archive_mode == ARCHIVE_MODE_7Z)
-        ret = SevenZ_OpenRom(archive_path, &rom_crc, entry_name);
+    ret = ArchiveRom_Open(archive_path, &rom_crc, entry_name);
 
     if (ret <= 0)
         goto FAILED;
@@ -329,12 +301,8 @@ int Archive_GetRomPath(const char *archive_path, char *rom_path, int archive_mod
     int index = Archive_FindRomCache(rom_crc, rom_name, rom_path);
     if (index < 0)
     {
-        ret = -1;
         // 未找到cache，执行解压
-        if (archive_mode == ARCHIVE_MODE_ZIP)
-            ret = ZIP_ExtractRom(rom_name, rom_path);
-        else if (archive_mode == ARCHIVE_MODE_7Z)
-            ret = SevenZ_ExtractRom(rom_name, rom_path);
+        ret = ArchiveRom_Extract(rom_name, rom_path);
 
         if (ret < 0)
             goto FAILED;
@@ -349,14 +317,13 @@ int Archive_GetRomPath(const char *archive_path, char *rom_path, int archive_mod
     }
 
 END:
-    if (archive_mode == ARCHIVE_MODE_ZIP)
-        ZIP_CloseRom();
-    else if (archive_mode == ARCHIVE_MODE_7Z)
-        SevenZ_CloseRom();
+    ArchiveRom_Close();
+
     if (ret < 0)
         AppLog("[ARCHIVE] Archive_GetRomPath failed!\n");
     else
         AppLog("[ARCHIVE] Archive_GetRomPath OK: %s\n", rom_path);
+
     return ret;
 
 FAILED:
