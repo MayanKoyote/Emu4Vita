@@ -2,3 +2,5 @@
 cores
 **/param.sfo
 **/eboot.bin
+imports/lib/*.a
+imports/include/*.h

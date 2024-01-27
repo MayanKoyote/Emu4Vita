@@ -18,8 +18,6 @@
 #include <psp2/vshbridge.h>
 #include <psp2/common_dialog.h>
 
-#include <vita2d.h>
-
 #include "init.h"
 #include "utils.h"
 #include "file.h"
@@ -55,17 +53,6 @@ int checkVitatvModel()
         is_vitatv_model = 1;
 
     return is_vitatv_model;
-}
-
-static void initVita2dLib()
-{
-    vita2d_init();
-    vita2d_set_vblank_wait(0);
-}
-
-static void finishVita2dLib()
-{
-    vita2d_fini();
 }
 
 static void initSceAppUtil()
@@ -115,7 +102,6 @@ int initMain()
     checkVitatvModel();
     checkSafeMode();
 
-    initVita2dLib();
     GUI_init();
 
     lockUsbConnection();
@@ -126,7 +112,6 @@ int initMain()
 int finishMain()
 {
     GUI_deinit();
-    finishVita2dLib();
     finishSceAppUtil();
 
     return 0;

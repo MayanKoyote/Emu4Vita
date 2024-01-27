@@ -40,7 +40,7 @@ endif
 MAKE_ARGS := arch_build=1 ARCH_DIR=$(ROOT_DIR)
 
 INCDIRS := \
-	-ISRC_DIR \
+	-I$(SRC_DIR) \
 	-I$(INCLUDE_DIR)
 
 LIBDIRS := \
@@ -50,9 +50,9 @@ SRC_C := \
 	browser.c \
 	config.c \
 	file.c \
-	graphics.c \
 	init.c \
 	main.c \
+	gui_lib.c \
 	gui.c \
 	utils.c \
 	boot.c
@@ -89,15 +89,16 @@ DEFINES := \
 	-DAPP_DIR_NAME=\"$(APP_DIR_NAME)\" \
 	-DBUILD_DATE=\"$(BUILD_DATE)\"
 
-DEFINES += -DVITA
-
 WARNINGS := \
 	-Wall \
 	-Wno-format-truncation
 
-CFLAGS   := -O3 $(WARNINGS) $(INCDIRS) $(DEFINES)
-CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
-LDFLAGS  := -Wl,-q $(LIBDIRS)
+CFLAGS    += -DVITA -O3
+ASFLAGS   := $(CFLAGS) $(WARNINGS) $(INCDIRS)
+
+CFLAGS    += -ffast-math $(WARNINGS) $(INCDIRS) $(DEFINES)
+CXXFLAGS  := $(CFLAGS) -fno-rtti -fno-exceptions
+LDFLAGS   := -Wl,-q $(LIBDIRS)
 
 PREFIX  := arm-vita-eabi
 CC      := $(PREFIX)-gcc
@@ -109,14 +110,16 @@ STRIP   := $(PREFIX)-strip
 NM      := $(PREFIX)-nm
 LD      := $(CXX)
 
-#all: clean_files create_dirs build-app
-all: clean_files create_dirs build-cores build-app
+all: clean_files create_dirs build-cores build-vita2d build-app
 
 clean_files:
 	@rm -rf $(CORES_DIR) $(TARGET_PATH) $(EBOOT_PATH) $(SFO_PATH) $(BUILD_DIR)/$(TARGET).velf $(BUILD_DIR)/$(TARGET).elf
 
 create_dirs:
 	@mkdir -p $(BUILD_DIR)
+
+build-vita2d: 
+	cd $(ROOT_DIR) && make -f Makefile.libvita2d
 
 build-app: $(EBOOT_PATH) $(SFO_PATH)
 	@rm -rf $(TARGET_PATH)
@@ -131,24 +134,32 @@ $(SFO_PATH):
 		-d ATTRIBUTE2=12 $@
 
 $(EBOOT_PATH): $(BUILD_DIR)/$(TARGET).velf
+	@mkdir -p $(dir $@)
 	vita-make-fself -c -a 0x2800000000000001 $< $@
 
 $(BUILD_DIR)/$(TARGET).velf: $(BUILD_DIR)/$(TARGET).elf
+	@mkdir -p $(dir $@)
 	$(STRIP) -g $<
 	vita-elf-create $< $@
 
 $(BUILD_DIR)/$(TARGET).elf: $(OBJS)
+	@mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(dir $@)
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean: clean-app
 
-clean-all: clean-cores clean-app
+clean-all: clean-cores clean-vita2d clean-app
+
+clean-vita2d: 
+	cd $(ROOT_DIR) && make -f Makefile.libvita2d clean
 
 clean-app:
 	rm -rf $(BUILD_DIR) $(TARGET_PATH) $(EBOOT_PATH) $(SFO_PATH)

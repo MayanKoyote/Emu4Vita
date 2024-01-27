@@ -1,4 +1,4 @@
 .vscode
-imports/lib/libretro_comm.a
-imports/lib/lib7zip.a
-imports/lib/libminizip.a
+imports/include/*.h
+imports/lib/*.a
+!imports/lib/libvitashaders.a

@@ -176,7 +176,7 @@ int SevenZ_ExtractRom(const char *rom_name, char *rom_path)
     }
 
     sprintf(rom_path, "%s/%s", CORE_CACHE_DIR, rom_name);
-    int res = WriteFile(rom_path, buf, size) > 0 ? 0 : -1;
+    int res = WriteFileEx(rom_path, buf, size) > 0 ? 0 : -1;
     free(buf);
 
     AppLog(res == 0 ? "[7Z] SevenZ_ExtractRom OK\n" : "[7Z] SevenZ_ExtractRom write file failed!\n");

@@ -41,7 +41,7 @@ GUI_Dialog setting_dialog = {
 static void refreshSettingLayout()
 {
     menu_tab_view_width = WINDOW_WIDTH - WINDOW_PADDING * 2;
-    menu_tab_view_height = GUI_GetFontSize() + MENU_TAB_VIEW_PADDING_T * 2;
+    menu_tab_view_height = GUI_GetLineHeight() + MENU_TAB_VIEW_PADDING_T * 2;
     menu_tab_view_sx = WINDOW_SX;
     menu_tab_view_sy = WINDOW_SY;
     menu_tab_view_dx = menu_tab_view_sx + menu_tab_view_width;
@@ -61,7 +61,7 @@ static void refreshSettingLayout()
     menu_listview_dx = menu_listview_sx + menu_listview_width;
     menu_listview_dy = menu_listview_sy + menu_listview_height;
     menu_itemview_width = menu_listview_width - MENU_LISTVIEW_PADDING_L * 2;
-    menu_itemview_height = GUI_GetFontSize() + MENU_ITEMVIEW_PADDING_T * 2;
+    menu_itemview_height = GUI_GetLineHeight() + MENU_ITEMVIEW_PADDING_T * 2;
     menu_listview_n_draw_items = (menu_listview_height - MENU_LISTVIEW_PADDING_T * 2) / menu_itemview_height;
 
     menu_scrollbar_track_x = menu_listview_dx - GUI_DEF_SCROLLBAR_SIZE - 2;
@@ -758,7 +758,7 @@ static void drawMenu()
                         char *turbo_str = cur_lang[LANG_TURBO];
                         int turbo_text_width = GUI_GetTextWidth(turbo_str);
                         x = dx - turbo_text_width;
-                        GUI_DrawFillRectangle(x, sy, turbo_text_width, GUI_GetFontSize(), bg_color);
+                        GUI_DrawFillRectangle(x, sy, turbo_text_width, GUI_GetLineHeight(), bg_color);
                         GUI_DrawText(x, sy, text_color, turbo_str);
                     }
                     const char *option_name = GetLangString(&option->name);

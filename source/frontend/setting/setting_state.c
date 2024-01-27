@@ -286,7 +286,7 @@ void Setting_DrawState()
         int preview_sx = itemview_sx + STATE_ITEMVIEW_PADDING;
         int preview_sy = itemview_sy + STATE_ITEMVIEW_PADDING;
         int info_sx = preview_sx + state_preview_width + STATE_INFO_MARGIN_L;
-        int info_sy = preview_sy + state_preview_height - GUI_GetFontSize();
+        int info_sy = preview_sy + state_preview_height - GUI_GetLineHeight();
 
         if (state_list[i].exist)
         {
@@ -306,7 +306,7 @@ void Setting_DrawState()
             char time_string[16];
             GetTimeString(time_string, time_format, &state_list[i].time);
             GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %s", date_string, time_string);
-            info_sy -= (GUI_GetFontSize() + STATE_INFO_LINE_SPACE);
+            info_sy -= (GUI_GetLineHeight() + STATE_INFO_LINE_SPACE);
             GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %d", cur_lang[LANG_STATE_EXISTENT_STATE], i);
         }
         else
@@ -329,7 +329,7 @@ void Setting_DrawState()
                     uint32_t color = (j == option_focus_pos) ? COLOR_GREEN : COLOR_WHITE;
                     char *name = cur_lang[state_menu[j].name];
                     GUI_DrawTextf(menu_dx - GUI_GetTextWidth(name), menu_sy, color, name);
-                    menu_sy += (GUI_GetFontSize() + MENU_LINE_SPACE);
+                    menu_sy += (GUI_GetLineHeight() + MENU_LINE_SPACE);
                 }
             }
         }

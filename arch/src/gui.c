@@ -19,13 +19,13 @@
 
 #define STATUS_BAR_PADDING_T 10
 #define STATUS_BAR_PADDING_L 10
-#define STATUS_BAR_BG_COLOR COLOR_SET_ALPHA(0x1F1F1F, 0x4F)
+#define STATUS_BAR_BG_COLOR 0x4F1F1F1F
 
 #define SCROLL_BAR_MIN_HEIGHT 4
 #define SCROLL_BAR_COLOR COLOR_SET_ALPHA(LITEGRAY, 0x8F)
 #define SCROLL_BAR_BG_COLOR COLOR_SET_ALPHA(DARKGRAY, 0x8F)
 
-#define MAIN_BG_COLOR COLOR_SET_ALPHA(0x1F1F1F, 0x4F)
+#define MAIN_BG_COLOR 0x4F1F1F1F
 
 #define MAIN_TITLE APP_NAME_STR " " APP_VER_STR
 
@@ -144,8 +144,8 @@ static int initImagesThreadCallback(SceSize args, void *argp)
     vita2d_texture *texture = vita2d_load_PNG_file(WALLPAPER_PNG_PATH);
     if (texture)
     {
-        wallpaper_x_scale = SCREEN_WIDTH / (float)vita2d_texture_get_width(texture);
-        wallpaper_y_scale = SCREEN_HEIGHT / (float)vita2d_texture_get_height(texture);
+        wallpaper_x_scale = (float)SCREEN_WIDTH / (float)vita2d_texture_get_width(texture);
+        wallpaper_y_scale = (float)SCREEN_HEIGHT / (float)vita2d_texture_get_height(texture);
         wallpaper_tex = texture;
     }
 
@@ -153,14 +153,14 @@ static int initImagesThreadCallback(SceSize args, void *argp)
     return 0;
 }
 
-static void initImagesThread()
+void GUI_initImages()
 {
     SceUID thid = sceKernelCreateThread("init_images_thread", initImagesThreadCallback, 0x10000100, 0x10000, 0, 0, NULL);
     if (thid >= 0)
         sceKernelStartThread(thid, 0, NULL);
 }
 
-static void deinitImages()
+void GUI_deinitImages()
 {
     if (wallpaper_tex)
     {
@@ -171,14 +171,14 @@ static void deinitImages()
 
 void GUI_init()
 {
-    initImagesThread();
-    GUI_initFonts();
+    GUI_initLib();
+    GUI_initImages();
     refreshLayout();
     initBrowser();
 }
 
 void GUI_deinit()
 {
-    GUI_deinitFonts();
-    deinitImages();
+    GUI_deinitImages();
+    GUI_deinitLib();
 }

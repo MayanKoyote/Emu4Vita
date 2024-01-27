@@ -1,7 +1,7 @@
 #ifndef __M_GUI_H__
 #define __M_GUI_H__
 
-#include "graphics.h"
+#include "gui_lib.h"
 
 enum Colors
 {

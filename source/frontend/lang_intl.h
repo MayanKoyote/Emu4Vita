@@ -178,6 +178,8 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "Delete auto savestate",
     // LANG_OPTION_MENU_DELETE_AUTO_SAVEFILE
     "Delete auto savefile",
+    // LANG_OPTION_MENU_DELETE_CACHE_FILES
+    "Delete cache files",
 
     // LANG_MESSAGE_ASK_DELETE_GAME
     "Are you sure you want to delete this game?",
@@ -185,6 +187,8 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "Are you sure you want to delete the auto savestate of this game?",
     // LANG_MESSAGE_ASK_DELETE_AUTO_SAVEFILE
     "Are you sure you want to delete the auto savefile of this game?",
+    // LANG_MESSAGE_ASK_DELETE_CACHE_FILES
+    "Are you sure you want to delete the cache files of this game?",
     // LANG_MESSAGE_START_GAME_FAILED
     "Failed to start this game!",
 
@@ -553,6 +557,8 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "删除自动即时存档",
     // LANG_OPTION_MENU_DELETE_AUTO_SAVEFILE
     "删除自动模拟存档",
+    // LANG_OPTION_MENU_DELETE_CACHE_FILES
+    "删除缓存文件",
 
     // LANG_MESSAGE_ASK_DELETE_GAME
     "确认要删除这个游戏？",
@@ -560,6 +566,8 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "确认要删除这个游戏的自动即时存档？",
     // LANG_MESSAGE_ASK_DELETE_AUTO_SAVEFILE
     "确认要删除这个游戏的自动模拟存档？",
+    // LANG_MESSAGE_ASK_DELETE_CACHE_FILES
+    "确认要删除这个游戏的缓存文件？",
     // LANG_MESSAGE_START_GAME_FAILED
     "启动游戏失败！",
 
@@ -928,6 +936,8 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     "刪除自動即時存檔",
     // LANG_OPTION_MENU_DELETE_AUTO_SAVEFILE
     "刪除自動模擬存檔",
+    // LANG_OPTION_MENU_DELETE_CACHE_FILES
+    "刪除緩存文件",
 
     // LANG_MESSAGE_ASK_DELETE_GAME
     "確認要刪除這個遊戲？",
@@ -935,6 +945,8 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     "確認要刪除這個遊戲的自動即時存檔？",
     // LANG_MESSAGE_ASK_DELETE_AUTO_SAVEFILE
     "確認要刪除這個遊戲的自動模擬存檔？",
+    // LANG_MESSAGE_ASK_DELETE_CACHE_FILES
+    "確認要刪除這個遊戲的緩存文件？",
     // LANG_MESSAGE_START_GAME_FAILED
     "啟動遊戲失敗！",
 

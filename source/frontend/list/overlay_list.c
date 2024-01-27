@@ -302,9 +302,9 @@ int OverlayListGetEntries(LinkedList *list, const char *path)
         return -1;
 
     void *buffer = NULL;
-    int size = AllocateReadFile(path, &buffer);
-    if (size < 0)
-        return size;
+    size_t size = 0;
+    if (AllocateReadFile(path, &buffer, &size) < 0)
+        return -1;
 
     OverlayListGetEntriesFromBuffer(list, buffer, size);
 

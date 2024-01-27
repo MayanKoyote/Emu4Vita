@@ -171,31 +171,31 @@ int MakeBaseName(char *name, const char *path, int size)
     return MakeBaseNameEx(name, size, path, strlen(path));
 }
 
-int ReadFile(const char *file, void *buf, int size)
+int ReadFile(const char *file, void *buffer, size_t buffersize)
 {
     SceUID fd = sceIoOpen(file, SCE_O_RDONLY, 0);
     if (fd < 0)
         return fd;
 
-    int read = sceIoRead(fd, buf, size);
+    int read = sceIoRead(fd, buffer, buffersize);
 
     sceIoClose(fd);
     return read;
 }
 
-int WriteFile(const char *file, const void *buf, int size)
+int WriteFile(const char *file, const void *buffer, size_t buffersize)
 {
     SceUID fd = sceIoOpen(file, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
     if (fd < 0)
         return fd;
 
-    int written = sceIoWrite(fd, buf, size);
+    int written = sceIoWrite(fd, buffer, buffersize);
 
     sceIoClose(fd);
     return written;
 }
 
-int AllocateReadFile(const char *file, void **buffer)
+int AllocateReadFile(const char *file, void **buffer, size_t *buffersize)
 {
     SceUID fd = sceIoOpen(file, SCE_O_RDONLY, 0);
     if (fd < 0)
@@ -203,42 +203,37 @@ int AllocateReadFile(const char *file, void **buffer)
 
     int size = sceIoLseek32(fd, 0, SCE_SEEK_END);
     sceIoLseek32(fd, 0, SCE_SEEK_SET);
-
-    *buffer = malloc(size);
-    if (!*buffer)
+    if (size <= 0)
     {
         sceIoClose(fd);
         return -1;
     }
 
-    int read = sceIoRead(fd, *buffer, size);
+    char *buf = (char *)malloc(size);
+    if (!buf)
+    {
+        sceIoClose(fd);
+        return -1;
+    }
+
+    int read = sceIoRead(fd, buf, size);
     sceIoClose(fd);
 
+    *buffer = buf;
+    if (buffersize)
+        *buffersize = size;
     return read;
 }
 
-int AllocateReadFileEX(const char *file, void **buffer, size_t *buffersize)
+int64_t ReadFileEx(const char *file, const void *buffer, size_t buffersize)
 {
     SceUID fd = sceIoOpen(file, SCE_O_RDONLY, 0);
     if (fd < 0)
         return fd;
 
-    int64_t size = sceIoLseek32(fd, 0, SCE_SEEK_END);
-    sceIoLseek32(fd, 0, SCE_SEEK_SET);
-
-    *buffersize = size;
-    *buffer = malloc(size);
-    if (!*buffer)
-    {
-        sceIoClose(fd);
-        return -1;
-    }
-
-    sceIoLseek(fd, 0, SCE_SEEK_SET);
-    char *buf = (char *)*buffer;
-    int64_t remaining = size;
+    char *buf = (char *)buffer;
+    size_t remaining = buffersize;
     int transfer = TRANSFER_SIZE;
-    int read = 0;
 
     while (remaining > 0)
     {
@@ -247,12 +242,9 @@ int AllocateReadFileEX(const char *file, void **buffer, size_t *buffersize)
         else
             transfer = TRANSFER_SIZE;
 
-        read = sceIoRead(fd, buf, transfer);
+        int read = sceIoRead(fd, buf, transfer);
         if (read < 0)
         {
-            free(*buffer);
-            *buffer = NULL;
-            *buffersize = 0;
             sceIoClose(fd);
             return read;
         }
@@ -264,7 +256,97 @@ int AllocateReadFileEX(const char *file, void **buffer, size_t *buffersize)
     }
     sceIoClose(fd);
 
-    // printf("AllocateReadFile: size: %lld, remaining: %lld\n", size, remaining);
+    // printf("ReadFileEx: size: %lld, remaining: %lld\n", size, remaining);
+    return buffersize - remaining;
+}
+
+int64_t WriteFileEx(const char *file, const void *buffer, size_t buffersize)
+{
+    SceUID fd = sceIoOpen(file, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
+    if (fd < 0)
+        return fd;
+
+    char *buf = (char *)buffer;
+    size_t remaining = buffersize;
+    int transfer = TRANSFER_SIZE;
+
+    while (remaining > 0)
+    {
+        if (remaining < TRANSFER_SIZE)
+            transfer = remaining;
+        else
+            transfer = TRANSFER_SIZE;
+
+        int written = sceIoWrite(fd, buf, transfer);
+        if (written < 0)
+        {
+            sceIoClose(fd);
+            return written;
+        }
+        if (written == 0)
+            break;
+
+        buf += written;
+        remaining -= written;
+    }
+    sceIoClose(fd);
+
+    // printf("WriteFileEx: size: %lld, remaining: %lld\n", size, remaining);
+    return buffersize - remaining;
+}
+
+int64_t AllocateReadFileEx(const char *file, void **buffer, size_t *buffersize)
+{
+    SceUID fd = sceIoOpen(file, SCE_O_RDONLY, 0);
+    if (fd < 0)
+        return fd;
+
+    int64_t size = sceIoLseek32(fd, 0, SCE_SEEK_END);
+    sceIoLseek32(fd, 0, SCE_SEEK_SET);
+    if (size <= 0)
+    {
+        sceIoClose(fd);
+        return -1;
+    }
+
+    char *buf = (char *)malloc(size);
+    if (!buf)
+    {
+        sceIoClose(fd);
+        return -1;
+    }
+
+    sceIoLseek(fd, 0, SCE_SEEK_SET);
+    char *pbuf = buf;
+    size_t remaining = size;
+    int transfer = TRANSFER_SIZE;
+
+    while (remaining > 0)
+    {
+        if (remaining < TRANSFER_SIZE)
+            transfer = remaining;
+        else
+            transfer = TRANSFER_SIZE;
+
+        int read = sceIoRead(fd, pbuf, transfer);
+        if (read < 0)
+        {
+            free(buf);
+            sceIoClose(fd);
+            return read;
+        }
+        if (read == 0)
+            break;
+
+        pbuf += read;
+        remaining -= read;
+    }
+    sceIoClose(fd);
+
+    // printf("AllocateReadFileEx: size: %lld, remaining: %lld\n", size, remaining);
+    *buffer = buf;
+    if (buffersize)
+        *buffersize = size;
     return size - remaining;
 }
 

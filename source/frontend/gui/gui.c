@@ -17,7 +17,7 @@
 #define STATUS_BAR_PADDING_T 10
 #define STATUS_BAR_PADDING_L 10
 #define STATUS_BAR_WIDTH GUI_SCREEN_WIDTH
-#define STATUS_BAR_HEIGHT (GUI_GetFontSize() + STATUS_BAR_PADDING_T * 2)
+#define STATUS_BAR_HEIGHT (GUI_GetLineHeight() + STATUS_BAR_PADDING_T * 2)
 
 extern GUI_Activity browser_activity;
 extern GUI_Dialog setting_dialog;
