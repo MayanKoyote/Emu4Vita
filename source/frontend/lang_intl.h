@@ -191,6 +191,8 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "Are you sure you want to delete the cache files of this game?",
     // LANG_MESSAGE_START_GAME_FAILED
     "Failed to start this game!",
+    // LANG_MESSAGE_WAIT_EXITING
+    "Exiting, please wait......",
 
     /**************  About  *****************/
     // LANG_ABOUT_TITLE
@@ -570,6 +572,8 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "确认要删除这个游戏的缓存文件？",
     // LANG_MESSAGE_START_GAME_FAILED
     "启动游戏失败！",
+    // LANG_MESSAGE_WAIT_EXITING
+    "正在退出，请稍候......",
 
     /**************  About  *****************/
     // LANG_ABOUT_TITLE
@@ -949,6 +953,8 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     "確認要刪除這個遊戲的緩存文件？",
     // LANG_MESSAGE_START_GAME_FAILED
     "啟動遊戲失敗！",
+    // LANG_MESSAGE_WAIT_EXITING
+    "正在退出，請稍候......",
 
     /**************  About  *****************/
     // LANG_ABOUT_TITLE

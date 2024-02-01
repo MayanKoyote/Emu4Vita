@@ -272,7 +272,7 @@ void Emu_ExitGame()
         GUI_StartThreadRun();
         SetControlEventEnabled(0);
         GUI_Dialog *dialog = AlertDialog_Create();
-        AlertDialog_SetMessage(dialog, "正在退出，请稍候......");
+        AlertDialog_SetMessage(dialog, cur_lang[LANG_MESSAGE_WAIT_EXITING]);
         AlertDialog_Show(dialog);
 
         Emu_SaveSrm(); // Auto save srm
