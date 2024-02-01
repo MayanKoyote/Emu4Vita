@@ -13,6 +13,12 @@
 #include "utils.h"
 #include "utils_string.h"
 
+#define ASYNC_WRITE_ROM_CACHE
+
+#ifdef ASYNC_WRITE_ROM_CACHE
+static void Archive_AsyncWriteRomCache(uint32_t crc, const char *rom_name, const char *buf, size_t size);
+#endif
+
 typedef struct
 {
     int exist;                  // 缓存存在
@@ -263,8 +269,56 @@ static int Archive_AddCacheEntry(int crc, const char *rom_name)
     return index;
 }
 
+static void Archive_GetCacheRomName(const char *archive_path, const char *entry_name, char *rom_name, size_t rom_name_size)
+{
+    MakeBaseName(rom_name, archive_path, rom_name_size);
+    const char *ext = strrchr(entry_name, '.');
+    if (ext)
+        strcat(rom_name, ext);
+}
+
 int Archive_GetRomMemory(const char *archive_path, void **buf, size_t *size, int archive_mode)
 {
+#ifdef ASYNC_WRITE_ROM_CACHE
+    int ret = -1;
+    uint32_t rom_crc;
+    char entry_name[MAX_PATH_LENGTH];
+    ret = ArchiveRom_Open(archive_path, &rom_crc, entry_name);
+
+    if (ret <= 0)
+        goto END;
+
+    // 缓存文件名：例GBA: game1.zip ==> game1.gba（忽略压缩包内的rom文件名，以zip文件名为rom名）
+    char rom_name[MAX_NAME_LENGTH];
+    char rom_path[MAX_NAME_LENGTH];
+
+    Archive_GetCacheRomName(archive_path, entry_name, rom_name, sizeof(rom_name));
+
+    int index = Archive_FindRomCache(rom_crc, rom_name, rom_path);
+    if (index < 0)
+    {
+        // 未找到cache，执行解压
+        ret = ArchiveRom_ExtractToMemory(buf, size);
+        // 异步存储解压的rom
+        Archive_AsyncWriteRomCache(rom_crc, rom_name, *buf, *size);
+    }
+    else
+    {
+        archive_cache_entries[index].ltime = sceKernelGetProcessTimeWide();
+        *size = GetFileSize(rom_path);
+        ret = ReadFile(rom_path, buf, *size);
+    }
+    ArchiveRom_Close();
+
+END:
+    if (ret < 0)
+        AppLog("[ARCHIVE] Archive_GetRomMemory failed!\n");
+    else
+        AppLog("[ARCHIVE] Archive_GetRomMemory OK!\n");
+
+    return ret;
+
+#else
     int ret = ArchiveRom_Open(archive_path, NULL, NULL);
     if (ret <= 0)
         goto END;
@@ -279,6 +333,7 @@ int Archive_GetRomMemory(const char *archive_path, void **buf, size_t *size, int
         AppLog("[ARCHIVE] Archive_GetRomMemory OK!\n");
 END:
     return ret;
+#endif
 }
 
 int Archive_GetRomPath(const char *archive_path, char *rom_path, int archive_mode)
@@ -293,10 +348,7 @@ int Archive_GetRomPath(const char *archive_path, char *rom_path, int archive_mod
 
     // 缓存文件名：例GBA: game1.zip ==> game1.gba（忽略压缩包内的rom文件名，以zip文件名为rom名）
     char rom_name[MAX_NAME_LENGTH];
-    MakeBaseName(rom_name, archive_path, sizeof(rom_name));
-    const char *ext = strrchr(entry_name, '.');
-    if (ext)
-        strcat(rom_name, ext);
+    Archive_GetCacheRomName(archive_path, entry_name, rom_name, sizeof(rom_name));
 
     int index = Archive_FindRomCache(rom_crc, rom_name, rom_path);
     if (index < 0)
@@ -331,7 +383,7 @@ FAILED:
     goto END;
 }
 
-/*
+#ifdef ASYNC_WRITE_ROM_CACHE
 typedef struct
 {
     char name[256];
@@ -348,7 +400,7 @@ int WriteRomCahceThread(SceSize args, void *argp)
     strcat(rom_path, arg->name);
     if (WriteFile(rom_path, arg->buf, arg->size) > 0)
     {
-        Archive_InsertRomCache(arg->crc, arg->name);
+        Archive_AddCacheEntry(arg->crc, arg->name);
     }
 
     free(arg->buf);
@@ -358,7 +410,7 @@ int WriteRomCahceThread(SceSize args, void *argp)
     return 0;
 }
 
-void Archive_AsyncWriteRomCache(uint32_t crc, const char *rom_name, const char *buf, size_t size)
+static void Archive_AsyncWriteRomCache(uint32_t crc, const char *rom_name, const char *buf, size_t size)
 {
     AppLog("[ARCHIVE] AsyncWriteRomCache start\n");
     int write_thread = sceKernelCreateThread("write_rom_cache_thread", WriteRomCahceThread, 0x10000100 + 20, 0x10000, 0, 0, NULL);
@@ -375,4 +427,5 @@ void Archive_AsyncWriteRomCache(uint32_t crc, const char *rom_name, const char *
             sceKernelStartThread(write_thread, sizeof(args), &args);
         }
     }
-}*/
+}
+#endif
