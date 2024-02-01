@@ -199,6 +199,11 @@ static void drawActivityCallback(GUI_Activity *activity)
 
 static void ctrlActivityCallback(GUI_Activity *activity)
 {
+    if (released_pad[PAD_CANCEL])
+    {
+        GUI_ExitActivity(&splash_activity);
+    }
+
     if (!log_enabled || !log_list)
         return;
 
@@ -228,11 +233,6 @@ static void ctrlActivityCallback(GUI_Activity *activity)
         else if (hold_pad[PAD_RIGHT])
         {
             MoveListPosNoFocus(TYPE_MOVE_RIGHT, &listview_top_pos, l_length, listview_n_draw_items);
-        }
-
-        if (released_pad[PAD_CANCEL])
-        {
-            GUI_ExitActivity(&splash_activity);
         }
     }
 

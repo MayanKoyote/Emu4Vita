@@ -219,6 +219,8 @@ int Emu_StartGame(EmuGameInfo *info)
     Splash_SetAutoScrollListview(0);
     if (ret < 0)
     {
+        if (!app_config.show_log)
+            GUI_ExitActivity(&splash_activity);
         AlertDialog_ShowSimpleTipDialog(cur_lang[LANG_TIP], cur_lang[LANG_MESSAGE_START_GAME_FAILED]);
         return -1;
     }
