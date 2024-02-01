@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include <psp2/kernel/threadmgr.h>
+
 #include <vita2d.h>
 #include <vita2d_ext.h>
 
@@ -27,7 +29,7 @@ extern float _vita2d_ortho_matrix[4 * 4];
 #define DEFAULT_LINE_HEIGHT 21
 #define DEFAULT_LINE_SPACE 2
 
-static GUI_Texture *rendertarget_texture = NULL;
+static SceKernelLwMutexWork drawing_mutex;
 static LinkedList *gui_clip_list = NULL;
 static GUI_Font *gui_font = NULL;
 
@@ -173,15 +175,11 @@ void GUI_DrawTextureShaderPartScalRotate(const GUI_Texture *texture, const GUI_S
     vita2d_draw_texture_part_scale_rotate_generic(texture, x, y, tex_x, tex_y, tex_w, tex_h, x_scale, y_scale, rad);
 }
 
-void GUI_SetRendertarget(GUI_Texture *texture)
+void GUI_StartDrawing(GUI_Texture *texture)
 {
-    rendertarget_texture = texture;
-}
-
-void GUI_StartDrawing()
-{
+    sceKernelLockLwMutex(&drawing_mutex, 1, NULL);
     vita2d_pool_reset();
-    vita2d_start_drawing_advanced(rendertarget_texture, 0);
+    vita2d_start_drawing_advanced(texture, 0);
     vita2d_clear_screen();
 }
 
@@ -190,6 +188,7 @@ void GUI_EndDrawing()
     vita2d_end_drawing();
     // vita2d_common_dialog_update();
     vita2d_swap_buffers();
+    sceKernelUnlockLwMutex(&drawing_mutex, 1);
 }
 
 static int initRenderClip()
@@ -203,7 +202,7 @@ static int initRenderClip()
     return 0;
 }
 
-int GUI_EnableClipping(int x, int y, int w, int h)
+int GUI_SetClipping(int x, int y, int w, int h)
 {
     if (!gui_clip_list)
         return -1;
@@ -247,7 +246,7 @@ int GUI_EnableClipping(int x, int y, int w, int h)
     return 0;
 }
 
-int GUI_DisableClipping()
+int GUI_UnsetClipping()
 {
     if (!gui_clip_list)
         return -1;
@@ -271,6 +270,7 @@ int GUI_DisableClipping()
 
 int GUI_InitLib()
 {
+    sceKernelCreateLwMutex(&drawing_mutex, "drawing_mutex", 2, 0, NULL);
     vita2d_init();
     vita2d_ext_init(vita2d_get_context(), vita2d_get_shader_patcher());
     vita2d_set_vblank_wait(1);
@@ -284,5 +284,6 @@ int GUI_DeinitLib()
     vita2d_ext_fini();
     vita2d_fini();
     deinitFont();
+    sceKernelDeleteLwMutex(&drawing_mutex);
     return 0;
 }

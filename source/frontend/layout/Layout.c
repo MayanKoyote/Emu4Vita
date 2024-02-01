@@ -150,7 +150,7 @@ void LayoutDraw(void *view, int x, int y)
     int child_max_w = child_max_x - child_min_x;
     int child_max_h = child_max_y - child_min_y;
 
-    GUI_EnableClipping(child_min_x, child_min_y, child_max_w, child_max_h);
+    GUI_SetClipping(child_min_x, child_min_y, child_max_w, child_max_h);
 
     int child_x = child_min_x;
     int child_y = child_min_y;
@@ -166,7 +166,7 @@ void LayoutDraw(void *view, int x, int y)
         entry = LinkedListNext(entry);
     }
 
-    GUI_DisableClipping();
+    GUI_UnsetClipping();
 }
 
 int LayoutSetOrientation(Layout *layout, int orientation)

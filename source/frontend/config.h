@@ -44,6 +44,7 @@
 #define CORE_SCREENSHOTS_DIR APP_DATA_DIR "/screenshots"
 #define CORE_CHEATS_DIR APP_DATA_DIR "/cheats"
 #define CORE_CACHE_DIR APP_DATA_DIR "/cache"
+#define CORE_SPLASHS_DIR APP_DATA_DIR "/splashs"
 
 #define APP_LOG_PATH APP_DATA_DIR "/app_log.txt"
 #define CORE_LOG_PATH APP_DATA_DIR "/core_log.txt"

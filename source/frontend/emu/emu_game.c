@@ -7,7 +7,7 @@
 #include <psp2/io/fcntl.h>
 
 #include "activity/browser.h"
-#include "activity/loading.h"
+#include "activity/splash.h"
 #include "setting/setting.h"
 #include "emu/emu.h"
 #include "file.h"
@@ -19,18 +19,28 @@
 #define MAX_GAME_RUN_SPEED 2.0f
 #define STEP_GAME_RUN_SPEED 0.5f
 
-extern GUI_Activity loading_activity;
+extern GUI_Activity splash_activity;
 extern GUI_Dialog setting_dialog;
 
-static int game_loading = 0, game_loaded = 0, game_reloading = 0, game_run = 0;
+static int game_loading = 0, game_loaded = 0, game_reloading = 0, game_running = 0, game_exiting = 0;
 static int game_run_event_action_type = TYPE_GAME_RUN_EVENT_ACTION_NONE;
 static float game_run_speed = 1.0f;
 static double game_cur_fps = 0;
 static void *game_rom_data = NULL;
 
-int Emu_IsGameRun()
+static int makeSplashPicPath(char *path)
 {
-    return game_run;
+    char name[MAX_NAME_LENGTH];
+    MakeCurrentFileName(name);
+    char base_name[MAX_NAME_LENGTH];
+    MakeBaseName(base_name, name, MAX_NAME_LENGTH);
+    snprintf(path, MAX_PATH_LENGTH, "%s/%s.png", (CORE_SPLASHS_DIR), base_name);
+    return 0;
+}
+
+int Emu_IsGameRunning()
+{
+    return game_running;
 }
 
 int Emu_IsGameLoading()
@@ -41,6 +51,11 @@ int Emu_IsGameLoading()
 int Emu_IsGameLoaded()
 {
     return game_loaded;
+}
+
+int Emu_IsGameExiting()
+{
+    return game_exiting;
 }
 
 double Emu_GetCurrentFps()
@@ -184,23 +199,30 @@ int Emu_StartGame(EmuGameInfo *info)
 
     game_loading = 1;
 
-    Loading_SetAutoScrollListview(1);
-    Loading_StartActivityThread();
+    // 过场图片（在线程中显示）
+    GUI_StartThreadRun();
+    SetControlEventEnabled(0);
+    Splash_SetAutoScrollListview(1);
+    Splash_SetLogEnabled(app_config.show_log);
+    char splash_path[MAX_PATH_LENGTH];
+    makeSplashPicPath(splash_path);
+    GUI_Texture *texture = GUI_LoadPNGFile(splash_path);
+    Splash_SetBgTexture(texture);
+    GUI_StartActivity(&splash_activity);
 
-    if (loadGame(info->path) < 0)
-    {
-        game_loading = 0;
-        Loading_SetAutoScrollListview(0);
-        AlertDialog_ShowSimpleTipDialog(cur_lang[LANG_TIP], cur_lang[LANG_MESSAGE_START_GAME_FAILED]);
-        if (app_config.show_log)
-            Loading_WaitActivityThreadEnd();
-        else
-            Loading_ExitActivityThread();
-        return -1;
-    }
-
+    int ret = loadGame(info->path);
     game_loading = 0;
     game_reloading = 0;
+
+    GUI_ExitThreadRun();
+    SetControlEventEnabled(1);
+    Splash_SetAutoScrollListview(0);
+    if (ret < 0)
+    {
+        AlertDialog_ShowSimpleTipDialog(cur_lang[LANG_TIP], cur_lang[LANG_MESSAGE_START_GAME_FAILED]);
+        return -1;
+    }
+    GUI_ExitActivity(&splash_activity);
     WriteFile((LASTFILE_PATH), info->path, strlen(info->path) + 1);
 
     AppLog("[GAME] Start game...\n");
@@ -226,14 +248,12 @@ int Emu_StartGame(EmuGameInfo *info)
     Emu_InitVideo();
     Emu_InitInput();
 
-    GUI_CleanPad();
     Emu_RequestUpdateVideoDisplay();
     Retro_UpdateCoreOptionsDisplay();
     Setting_RequestUpdateMenu();
 
     game_loaded = 1;
     Emu_ResumeGame();
-    Loading_ExitActivityThread();
 
     AppLog("[GAME] Start game OK!\n");
 
@@ -246,7 +266,15 @@ void Emu_ExitGame()
 
     if (game_loaded)
     {
+        game_exiting = 1;
         Emu_PauseGame();
+
+        GUI_StartThreadRun();
+        SetControlEventEnabled(0);
+        GUI_Dialog *dialog = AlertDialog_Create();
+        AlertDialog_SetMessage(dialog, "正在退出，请稍候......");
+        AlertDialog_Show(dialog);
+
         Emu_SaveSrm(); // Auto save srm
         if (!game_reloading && misc_config.auto_save_load)
         { // Auto save state
@@ -255,11 +283,6 @@ void Emu_ExitGame()
         }
         retro_unload_game();
         retro_deinit();
-        game_loaded = 0;
-        Emu_DeinitCheat();
-        Emu_DeinitAudio();
-        Emu_DeinitVideo();
-        Emu_DeinitInput();
 
         if (!game_reloading)
         {
@@ -271,6 +294,17 @@ void Emu_ExitGame()
             Retro_UpdateCoreOptionsDisplay();
             Setting_RequestUpdateMenu();
         }
+
+        GUI_CloseDialog(dialog);
+        GUI_ExitThreadRun();
+        SetControlEventEnabled(1);
+
+        Emu_DeinitCheat();
+        Emu_DeinitAudio();
+        Emu_DeinitVideo();
+        Emu_DeinitInput();
+        game_exiting = 0;
+        game_loaded = 0;
     }
 
     if (game_rom_data)
@@ -286,7 +320,7 @@ void Emu_PauseGame()
 {
     if (game_loaded)
     {
-        game_run = 0;
+        game_running = 0;
         Emu_PauseCheat();
         Emu_PauseAudio();
         Emu_PauseVideo();
@@ -299,7 +333,7 @@ void Emu_ResumeGame()
 {
     if (game_loaded)
     {
-        game_run = 1;
+        game_running = 1;
         Emu_ResumeCheat();
         Emu_ResumeAudio();
         Emu_ResumeVideo();

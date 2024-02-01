@@ -116,6 +116,11 @@ void GUI_DrawMain();
 void GUI_CtrlMain();
 void GUI_RunMain();
 
+int GUI_StartThreadRun();
+int GUI_StopThreadRun();
+int GUI_WaitThreadRunEnd();
+int GUI_ExitThreadRun();
+
 #include "layout/Layout.h"
 #include "dialog/dialog.h"
 

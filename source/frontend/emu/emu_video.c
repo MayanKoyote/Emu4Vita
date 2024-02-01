@@ -284,8 +284,8 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
     if (!rendert_tex)
         goto END;
 
-    GUI_SetRendertarget(rendert_tex);
-    GUI_StartDrawing();
+    GUI_WaitRenderingDone();
+    GUI_StartDrawing(rendert_tex);
     if (video_shader && use_shader)
         GUI_DrawTextureShaderPartScalRotate(video_texture, video_shader, conver_width / 2, conver_height / 2, 0, 0,
                                             video_width, video_height, x_scale, y_scale, rotate_rad);
@@ -293,7 +293,6 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
         GUI_DrawTexturePartScaleRotate(video_texture, conver_width / 2, conver_height / 2, 0, 0,
                                        video_width, video_height, x_scale, y_scale, rotate_rad);
     GUI_EndDrawing();
-    GUI_SetRendertarget(NULL);
     GUI_WaitRenderingDone();
 
     // Malloc and copy data for return
@@ -603,7 +602,7 @@ static void checkFrameDelay()
 
 static void displayVideo()
 {
-    GUI_StartDrawing();
+    GUI_StartDrawing(NULL);
     Emu_DrawVideo();
 
     if (graphics_config.show_fps)

@@ -51,7 +51,7 @@ LIBDIRS := \
 SRC_C += \
 	activity/about.c \
 	activity/browser.c \
-	activity/loading.c
+	activity/splash.c
 
 SRC_C += \
 	emu/emu_archive.c \

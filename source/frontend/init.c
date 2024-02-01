@@ -117,7 +117,7 @@ void AppRunLoop()
 {
     while (!app_exit)
     {
-        if (Emu_IsGameRun())
+        if (Emu_IsGameRunning())
             Emu_RunGame();
         else
             GUI_RunMain();
@@ -130,6 +130,7 @@ int AppInit(int argc, char *const argv[])
     sceIoRemove(CORE_LOG_PATH);
     CreateFolder(APP_DATA_DIR);
     CreateFolder(CORE_CHEATS_DIR);
+    CreateFolder(CORE_SPLASHS_DIR);
 
     scePowerSetArmClockFrequency(444);
     scePowerSetBusClockFrequency(222);

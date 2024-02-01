@@ -61,6 +61,8 @@ void UnlockOledDimming();
 
 void InitPowerTickThread();
 
+void SetControlEventEnabled(int enable);
+int IsControlEventEnabled();
 void SetPSbuttonEventEnabled(int enable);
 int IsPSbuttonEventEnabled();
 

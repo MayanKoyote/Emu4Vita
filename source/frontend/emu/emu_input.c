@@ -345,6 +345,12 @@ void Emu_PollInput()
 
     memset(emu_mapping_keys, 0, sizeof(emu_mapping_keys));
 
+    if (!IsControlEventEnabled())
+    {
+        cleanInputKeys();
+        return;
+    }
+
     for (local_port = 0; local_port < N_CTRL_PORTS; local_port++)
     {
         if (local_port == 0)

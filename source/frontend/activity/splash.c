@@ -8,7 +8,7 @@
 
 #include "list/string_list.h"
 #include "gui/gui.h"
-#include "loading.h"
+#include "splash.h"
 #include "utils.h"
 #include "config.h"
 #include "lang.h"
@@ -18,7 +18,7 @@ static int exitActivityCallback(GUI_Activity *activity);
 static void drawActivityCallback(GUI_Activity *activity);
 static void ctrlActivityCallback(GUI_Activity *activity);
 
-GUI_Activity loading_activity = {
+GUI_Activity splash_activity = {
     LANG_NULL,             // Title
     NULL,                  // Button instructions
     NULL,                  // Wallpaper
@@ -51,10 +51,9 @@ GUI_Activity loading_activity = {
 #define LISTVIEW_COLOR_BG COLOR_ALPHA(COLOR_BLACK, 0xCF)
 #define TEXT_COLOR COLOR_WHITE
 
-static SceUID loading_thid = -1;
-static int loading_thread_run = 0;
-static SceKernelLwMutexWork laoding_mutex;
+static SceKernelLwMutexWork splash_mutex;
 static LinkedList *log_list = NULL;
+static int log_enabled = 0;
 
 static int listview_auto_scroll = 0;
 static int listview_n_draw_items = 0;
@@ -73,8 +72,8 @@ static int scrollbar_track_height;
 
 static void refreshLayout()
 {
-    GUI_GetActivityLayoutXY(&loading_activity, &layout_x, &layout_y);
-    GUI_GetActivityLayoutWH(&loading_activity, &layout_w, &layout_h);
+    GUI_GetActivityLayoutXY(&splash_activity, &layout_x, &layout_y);
+    GUI_GetActivityLayoutWH(&splash_activity, &layout_w, &layout_h);
 
     listview_x = layout_x;
     listview_y = layout_y;
@@ -90,12 +89,12 @@ static void refreshLayout()
     scrollbar_track_height = listview_h - 4;
 }
 
-void Loading_AddLog(const char *text)
+void Splash_AddLog(const char *text)
 {
-    if (!text)
+    if (!log_enabled || !text)
         return;
 
-    sceKernelLockLwMutex(&laoding_mutex, 1, NULL);
+    sceKernelLockLwMutex(&splash_mutex, 1, NULL);
 
     char *string = malloc(strlen(text) + 1);
     if (string)
@@ -104,34 +103,56 @@ void Loading_AddLog(const char *text)
         LinkedListAdd(log_list, string);
     }
 
-    sceKernelUnlockLwMutex(&laoding_mutex, 1);
+    sceKernelUnlockLwMutex(&splash_mutex, 1);
 }
 
-void Loading_AddLogf(const char *text, ...)
+void Splash_AddLogf(const char *text, ...)
 {
+    if (!log_enabled || !text)
+        return;
+
     char buf[1024];
     va_list argptr;
     va_start(argptr, (void *)text);
     vsnprintf(buf, sizeof(buf), text, argptr);
     va_end(argptr);
 
-    Loading_AddLog(buf);
+    Splash_AddLog(buf);
 }
 
-void Loading_SetAutoScrollListview(int enable)
+void Splash_SetAutoScrollListview(int enable)
 {
     listview_auto_scroll = enable;
 }
 
+void Splash_SetBgTexture(GUI_Texture *texture)
+{
+    if (splash_activity.wallpaper && splash_activity.wallpaper != GUI_GetDefaultSplash())
+    {
+        GUI_WaitRenderingDone();
+        GUI_DestroyTexture(splash_activity.wallpaper);
+        splash_activity.wallpaper = NULL;
+    }
+    if (texture)
+        splash_activity.wallpaper = texture;
+    else
+        splash_activity.wallpaper = GUI_GetDefaultSplash();
+}
+
+void Splash_SetLogEnabled(int enabled)
+{
+    log_enabled = enabled;
+}
+
 static void drawActivityCallback(GUI_Activity *activity)
 {
-    if (!app_config.show_log || !log_list)
+    if (!log_enabled || !log_list)
         return;
+
+    sceKernelLockLwMutex(&splash_mutex, 1, NULL);
 
     // Listview bg
     GUI_DrawFillRectangle(listview_x, listview_y, listview_w, listview_h, LISTVIEW_COLOR_BG);
-
-    sceKernelLockLwMutex(&laoding_mutex, 1, NULL);
 
     int l_length = LinkedListGetLength(log_list);
     LinkedListEntry *entry = LinkedListFindByNum(log_list, listview_top_pos);
@@ -162,9 +183,9 @@ static void drawActivityCallback(GUI_Activity *activity)
             clip_h = itemview_h;
             if (clip_h > itemview_max_dy - itemview_y)
                 clip_h = itemview_max_dy - itemview_y;
-            GUI_EnableClipping(x, itemview_y, clip_w, clip_h);
+            GUI_SetClipping(x, itemview_y, clip_w, clip_h);
             GUI_DrawText(x, y, TEXT_COLOR, text);
-            GUI_DisableClipping();
+            GUI_UnsetClipping();
             itemview_y += itemview_h;
             entry = LinkedListNext(entry);
         }
@@ -173,15 +194,15 @@ static void drawActivityCallback(GUI_Activity *activity)
         GUI_DrawVerticalScrollbar(scrollbar_track_x, scrollbar_track_y, scrollbar_track_height, l_length, listview_n_draw_items, listview_top_pos, 0);
     }
 
-    sceKernelUnlockLwMutex(&laoding_mutex, 1);
+    sceKernelUnlockLwMutex(&splash_mutex, 1);
 }
 
 static void ctrlActivityCallback(GUI_Activity *activity)
 {
-    if (!app_config.show_log || !log_list)
+    if (!log_enabled || !log_list)
         return;
 
-    sceKernelLockLwMutex(&laoding_mutex, 1, NULL);
+    sceKernelLockLwMutex(&splash_mutex, 1, NULL);
 
     int l_length = LinkedListGetLength(log_list);
 
@@ -211,82 +232,39 @@ static void ctrlActivityCallback(GUI_Activity *activity)
 
         if (released_pad[PAD_CANCEL])
         {
-            GUI_ExitActivity(&loading_activity);
+            GUI_ExitActivity(&splash_activity);
         }
     }
 
-    sceKernelUnlockLwMutex(&laoding_mutex, 1);
+    sceKernelUnlockLwMutex(&splash_mutex, 1);
 }
 
 static int startActivityCallback(GUI_Activity *activity)
 {
-    loading_activity.wallpaper = GUI_GetDefaultSplash();
     refreshLayout();
 
     if (log_list)
         LinkedListDestroy(log_list);
     log_list = NewStringList();
 
-    sceKernelCreateLwMutex(&laoding_mutex, "laoding_mutex", 2, 0, NULL);
+    sceKernelCreateLwMutex(&splash_mutex, "splash_mutex", 2, 0, NULL);
     return 0;
 }
 
 static int exitActivityCallback(GUI_Activity *activity)
 {
-    loading_thread_run = 0;
-    sceKernelLockLwMutex(&laoding_mutex, 1, NULL);
+    sceKernelLockLwMutex(&splash_mutex, 1, NULL);
     if (log_list)
         LinkedListDestroy(log_list);
     log_list = NULL;
-    sceKernelUnlockLwMutex(&laoding_mutex, 1);
-    sceKernelDeleteLwMutex(&laoding_mutex);
-    return 0;
-}
-
-static int loadingThreadFunc(SceSize args, void *argp)
-{
-    GUI_StartActivity(&loading_activity);
-
-    while (loading_thread_run)
+    if (splash_activity.wallpaper && splash_activity.wallpaper != GUI_GetDefaultSplash())
     {
-        GUI_RunMain();
+        // printf("[SPLASHS] Destroy splash texture.\n");
+        GUI_WaitRenderingDone();
+        GUI_DestroyTexture(splash_activity.wallpaper);
+        splash_activity.wallpaper = NULL;
     }
-
-    GUI_ExitActivity(&loading_activity);
-
-    sceKernelExitDeleteThread(0);
-    return 0;
-}
-
-void Loading_WaitActivityThreadEnd()
-{
-    if (loading_thid >= 0)
-    {
-        sceKernelWaitThreadEnd(loading_thid, NULL, NULL);
-        sceKernelDeleteThread(loading_thid);
-        loading_thid = -1;
-    }
-}
-
-int Loading_StartActivityThread()
-{
-    loading_thread_run = 0;
-    Loading_WaitActivityThreadEnd();
-
-    loading_thid = sceKernelCreateThread("loading_thread", loadingThreadFunc, 0x10000100, 0x10000, 0, 0, NULL);
-    if (loading_thid >= 0)
-    {
-        loading_thread_run = 1;
-        sceKernelStartThread(loading_thid, 0, NULL);
-    }
-
-    return loading_thid;
-}
-
-int Loading_ExitActivityThread()
-{
-    loading_thread_run = 0;
-    Loading_WaitActivityThreadEnd();
-
+    sceKernelUnlockLwMutex(&splash_mutex, 1);
+    sceKernelDeleteLwMutex(&splash_mutex);
     return 0;
 }

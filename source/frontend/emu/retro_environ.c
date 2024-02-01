@@ -6,7 +6,7 @@
 
 #include <psp2/io/fcntl.h>
 
-#include "activity/loading.h"
+#include "activity/splash.h"
 #include "setting/setting.h"
 #include "gui/gui.h"
 #include "emu/emu.h"
@@ -46,7 +46,7 @@ void retroLogCallback(enum retro_log_level level, const char *fmt, ...)
 #endif
 
     if (enable_loading_log)
-        Loading_AddLog(string);
+        Splash_AddLog(string);
 
     if (!app_config.core_log)
         return;

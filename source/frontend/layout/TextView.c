@@ -105,7 +105,7 @@ void TextViewDraw(void *view, int x, int y)
         int text_max_h = params->measured_h - params->padding_top - params->padding_bottom;
         uint32_t color = textView->text_color;
 
-        GUI_EnableClipping(text_x, text_y, text_max_w, text_max_h);
+        GUI_SetClipping(text_x, text_y, text_max_w, text_max_h);
 
         if (textView->text_scoll_enable && textView->text_w > text_max_w)
         {
@@ -143,7 +143,7 @@ void TextViewDraw(void *view, int x, int y)
         if (text)
             GUI_DrawText(text_x, text_y, color, text);
 
-        GUI_DisableClipping();
+        GUI_UnsetClipping();
     }
 }
 

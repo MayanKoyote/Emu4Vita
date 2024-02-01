@@ -18,11 +18,20 @@ static uint64_t disable_psbutton_micros = 0;
 
 void GUI_ReadPad()
 {
-    SceCtrlData ctrlData;
+    SceCtrlData ctrl_data;
     int port, i;
 
     memcpy(old_pad, current_pad, sizeof(Pad));
     memset(current_pad, 0, sizeof(Pad));
+
+    if (!IsControlEventEnabled())
+    {
+        memset(&pressed_pad, 0, sizeof(Pad));
+        memset(&released_pad, 0, sizeof(Pad));
+        memset(&hold_pad, 0, sizeof(Pad));
+        memset(&hold2_pad, 0, sizeof(Pad));
+        return;
+    }
 
     for (i = 0; i < N_CTRL_PORTS; i++)
     {
@@ -31,64 +40,63 @@ void GUI_ReadPad()
         else
             port = 0;
 
-        memset(&ctrlData, 0, sizeof(SceCtrlData));
-        int ret = sceCtrlPeekBufferPositiveExt2(port, &ctrlData, 1);
-        if (ret < 0)
+        memset(&ctrl_data, 0, sizeof(SceCtrlData));
+        if (sceCtrlPeekBufferPositiveExt2(port, &ctrl_data, 1) < 0)
             continue;
 
-        if (ctrlData.buttons & SCE_CTRL_UP)
+        if (ctrl_data.buttons & SCE_CTRL_UP)
             current_pad[PAD_UP] = 1;
-        if (ctrlData.buttons & SCE_CTRL_DOWN)
+        if (ctrl_data.buttons & SCE_CTRL_DOWN)
             current_pad[PAD_DOWN] = 1;
-        if (ctrlData.buttons & SCE_CTRL_LEFT)
+        if (ctrl_data.buttons & SCE_CTRL_LEFT)
             current_pad[PAD_LEFT] = 1;
-        if (ctrlData.buttons & SCE_CTRL_RIGHT)
+        if (ctrl_data.buttons & SCE_CTRL_RIGHT)
             current_pad[PAD_RIGHT] = 1;
-        if (ctrlData.buttons & SCE_CTRL_TRIANGLE)
+        if (ctrl_data.buttons & SCE_CTRL_TRIANGLE)
             current_pad[PAD_TRIANGLE] = 1;
-        if (ctrlData.buttons & SCE_CTRL_CIRCLE)
+        if (ctrl_data.buttons & SCE_CTRL_CIRCLE)
             current_pad[PAD_CIRCLE] = 1;
-        if (ctrlData.buttons & SCE_CTRL_CROSS)
+        if (ctrl_data.buttons & SCE_CTRL_CROSS)
             current_pad[PAD_CROSS] = 1;
-        if (ctrlData.buttons & SCE_CTRL_SQUARE)
+        if (ctrl_data.buttons & SCE_CTRL_SQUARE)
             current_pad[PAD_SQUARE] = 1;
-        if (ctrlData.buttons & SCE_CTRL_L1)
+        if (ctrl_data.buttons & SCE_CTRL_L1)
             current_pad[PAD_L1] = 1;
-        if (ctrlData.buttons & SCE_CTRL_R1)
+        if (ctrl_data.buttons & SCE_CTRL_R1)
             current_pad[PAD_R1] = 1;
-        if (ctrlData.buttons & SCE_CTRL_L2)
+        if (ctrl_data.buttons & SCE_CTRL_L2)
             current_pad[PAD_L2] = 1;
-        if (ctrlData.buttons & SCE_CTRL_R2)
+        if (ctrl_data.buttons & SCE_CTRL_R2)
             current_pad[PAD_R2] = 1;
-        if (ctrlData.buttons & SCE_CTRL_L3)
+        if (ctrl_data.buttons & SCE_CTRL_L3)
             current_pad[PAD_L3] = 1;
-        if (ctrlData.buttons & SCE_CTRL_R3)
+        if (ctrl_data.buttons & SCE_CTRL_R3)
             current_pad[PAD_R3] = 1;
-        if (ctrlData.buttons & SCE_CTRL_START)
+        if (ctrl_data.buttons & SCE_CTRL_START)
             current_pad[PAD_START] = 1;
-        if (ctrlData.buttons & SCE_CTRL_SELECT)
+        if (ctrl_data.buttons & SCE_CTRL_SELECT)
             current_pad[PAD_SELECT] = 1;
-        if (ctrlData.buttons & SCE_CTRL_PSBUTTON)
+        if (ctrl_data.buttons & SCE_CTRL_PSBUTTON)
             current_pad[PAD_PSBUTTON] = 1;
 
-        if (ctrlData.lx < ANALOG_CENTER - ANALOG_THRESHOLD)
+        if (ctrl_data.lx < ANALOG_CENTER - ANALOG_THRESHOLD)
             current_pad[PAD_LEFT_ANALOG_LEFT] = 1;
-        else if (ctrlData.lx > ANALOG_CENTER + ANALOG_THRESHOLD)
+        else if (ctrl_data.lx > ANALOG_CENTER + ANALOG_THRESHOLD)
             current_pad[PAD_LEFT_ANALOG_RIGHT] = 1;
 
-        if (ctrlData.ly < ANALOG_CENTER - ANALOG_THRESHOLD)
+        if (ctrl_data.ly < ANALOG_CENTER - ANALOG_THRESHOLD)
             current_pad[PAD_LEFT_ANALOG_UP] = 1;
-        else if (ctrlData.ly > ANALOG_CENTER + ANALOG_THRESHOLD)
+        else if (ctrl_data.ly > ANALOG_CENTER + ANALOG_THRESHOLD)
             current_pad[PAD_LEFT_ANALOG_DOWN] = 1;
 
-        if (ctrlData.rx < ANALOG_CENTER - ANALOG_THRESHOLD)
+        if (ctrl_data.rx < ANALOG_CENTER - ANALOG_THRESHOLD)
             current_pad[PAD_RIGHT_ANALOG_LEFT] = 1;
-        else if (ctrlData.rx > ANALOG_CENTER + ANALOG_THRESHOLD)
+        else if (ctrl_data.rx > ANALOG_CENTER + ANALOG_THRESHOLD)
             current_pad[PAD_RIGHT_ANALOG_RIGHT] = 1;
 
-        if (ctrlData.ry < ANALOG_CENTER - ANALOG_THRESHOLD)
+        if (ctrl_data.ry < ANALOG_CENTER - ANALOG_THRESHOLD)
             current_pad[PAD_RIGHT_ANALOG_UP] = 1;
-        else if (ctrlData.ry > ANALOG_CENTER + ANALOG_THRESHOLD)
+        else if (ctrl_data.ry > ANALOG_CENTER + ANALOG_THRESHOLD)
             current_pad[PAD_RIGHT_ANALOG_DOWN] = 1;
     }
 

@@ -18,9 +18,10 @@ typedef struct EmuGameInfo
     int state_num;
 } EmuGameInfo;
 
-int Emu_IsGameRun();
+int Emu_IsGameRunning();
 int Emu_IsGameLoading();
 int Emu_IsGameLoaded();
+int Emu_IsGameExiting();
 double Emu_GetCurrentFps();
 float Emu_GetCurrentRunSpeed();
 void Emu_SetRunSpeed(float speed);

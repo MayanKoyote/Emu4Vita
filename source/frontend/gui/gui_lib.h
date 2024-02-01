@@ -21,14 +21,13 @@ int GUI_DeinitLib();
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 // Renderer
-void GUI_StartDrawing();
+void GUI_StartDrawing(GUI_Texture *texture);
 void GUI_EndDrawing();
-void GUI_SetRendertarget(GUI_Texture *texture);
 #define GUI_SetVblankWait(enable) vita2d_set_vblank_wait(enable)
 #define GUI_WaitRenderingDone vita2d_wait_rendering_done
 
-int GUI_EnableClipping(int x, int y, int w, int h);
-int GUI_DisableClipping();
+int GUI_SetClipping(int x, int y, int w, int h);
+int GUI_UnsetClipping();
 
 // Draw text
 int GUI_GetFontSize();

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <psp2/kernel/threadmgr.h>
 #include <psp2/system_param.h>
 #include <psp2/power.h>
 #include <psp2/ctrl.h>
@@ -22,6 +23,8 @@
 extern GUI_Activity browser_activity;
 extern GUI_Dialog setting_dialog;
 
+static int gui_thread_run = 0;
+static SceUID gui_thread_run_thid = -1;
 static GUI_Activity *current_activity = NULL;
 static GUI_Dialog *main_dialog = NULL, *current_dialog = NULL;
 
@@ -300,7 +303,7 @@ void GUI_SetWallpaperTexture(GUI_Texture *texture)
 {
     GUI_WaitRenderingDone();
     if (wallpaper_texture)
-        vita2d_free_texture(wallpaper_texture);
+        GUI_DestroyTexture(wallpaper_texture);
     wallpaper_texture = texture;
 }
 
@@ -308,7 +311,7 @@ void GUI_SetSplashTexture(GUI_Texture *texture)
 {
     GUI_WaitRenderingDone();
     if (splash_texture)
-        vita2d_free_texture(splash_texture);
+        GUI_DestroyTexture(splash_texture);
     splash_texture = texture;
 }
 
@@ -412,12 +415,72 @@ void GUI_CtrlMain()
     }
 }
 
-void GUI_RunMain()
+void GUI_RunMainBase()
 {
-    GUI_StartDrawing();
+    GUI_StartDrawing(NULL);
     GUI_DrawMain();
     GUI_EndDrawing();
     GUI_ReadPad();
     GUI_CtrlMain();
     AutoUnlockQuickMenu();
+}
+
+void GUI_RunMain()
+{
+    if (gui_thread_run_thid >= 0)
+    {
+        sceKernelDelayThread(1000);
+        return;
+    }
+    GUI_RunMainBase();
+}
+
+static int threadRunFunc(SceSize args, void *argp)
+{
+    while (gui_thread_run)
+    {
+        GUI_RunMainBase();
+    }
+
+    sceKernelExitDeleteThread(0);
+    return 0;
+}
+
+int GUI_StartThreadRun()
+{
+    if (gui_thread_run_thid < 0)
+    {
+        gui_thread_run_thid = sceKernelCreateThread("gui_run_thread", threadRunFunc, 0x10000100, 0x10000, 0, 0, NULL);
+        if (gui_thread_run_thid >= 0)
+        {
+            gui_thread_run = 1;
+            sceKernelStartThread(gui_thread_run_thid, 0, NULL);
+        }
+    }
+
+    return gui_thread_run_thid;
+}
+
+int GUI_StopThreadRun()
+{
+    gui_thread_run = 0;
+    return 0;
+}
+
+int GUI_WaitThreadRunEnd()
+{
+    if (gui_thread_run_thid >= 0)
+    {
+        sceKernelWaitThreadEnd(gui_thread_run_thid, NULL, NULL);
+        sceKernelDeleteThread(gui_thread_run_thid);
+        gui_thread_run_thid = -1;
+    }
+    return 0;
+}
+
+int GUI_ExitThreadRun()
+{
+    GUI_StopThreadRun();
+    GUI_WaitThreadRunEnd();
+    return 0;
 }

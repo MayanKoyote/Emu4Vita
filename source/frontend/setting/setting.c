@@ -631,7 +631,7 @@ static void drawOption()
         return;
 
     int clip_width = option_listview_dx - option_listview_scroll_sx;
-    GUI_EnableClipping(option_listview_scroll_sx, option_listview_sy, clip_width, option_listview_height);
+    GUI_SetClipping(option_listview_scroll_sx, option_listview_sy, clip_width, option_listview_height);
 
     GUI_DrawFillRectangle(option_listview_scroll_sx, option_listview_sy, option_listview_width, option_listview_height, COLOR_ALPHA(COLOR_BLACK, 0xBF));
 
@@ -645,7 +645,7 @@ static void drawOption()
     int checkbox_sx = item_dx - OPTION_ITEMVIEW_PADDING_L - option_itemview_checkbox_width;
 
     int clip_height = option_listview_height - OPTION_LISTVIEW_PADDING_T * 2;
-    GUI_EnableClipping(option_listview_scroll_sx, option_listview_sy, clip_width, clip_height);
+    GUI_SetClipping(option_listview_scroll_sx, option_listview_sy, clip_width, clip_height);
 
     int i;
     for (i = option_top_pos; i < n_items; i++)
@@ -668,12 +668,12 @@ static void drawOption()
         item_sy += option_itemview_height;
     }
 
-    GUI_DisableClipping();
+    GUI_UnsetClipping();
 
     int scrollbar_track_x = option_listview_scroll_sx + option_listview_width - GUI_DEF_SCROLLBAR_SIZE - 2;
     GUI_DrawVerticalScrollbar(scrollbar_track_x, option_scrollbar_track_y, option_scrollbar_track_height, n_items, option_listview_n_draw_items, option_top_pos, 0);
 
-    GUI_DisableClipping();
+    GUI_UnsetClipping();
 }
 
 static void drawMenu()
@@ -709,7 +709,7 @@ static void drawMenu()
 
             sy = item_sy + MENU_ITEMVIEW_PADDING_T;
 
-            GUI_EnableClipping(item_sx, item_sy, menu_itemview_width, clip_height);
+            GUI_SetClipping(item_sx, item_sy, menu_itemview_width, clip_height);
 
             // Focus
             if (i == menu_focus_pos)
@@ -767,7 +767,7 @@ static void drawMenu()
                 }
             }
 
-            GUI_DisableClipping();
+            GUI_UnsetClipping();
             item_sy += menu_itemview_height;
         }
 

@@ -20,6 +20,7 @@ static int home_locked = 0, usb_connection_locked = 0, quick_menu_locked = 0;
 static int suspend_locked = 0, oled_off_locked = 0, oled_dimming_locked = 0;
 
 static int psbutton_event_enabled = 1;
+static int control_event_enabled = 1;
 
 int AppLog(const char *text, ...)
 {
@@ -361,6 +362,16 @@ void UnlockOledDimming()
         oled_dimming_locked--;
     else if (oled_dimming_locked < 0)
         oled_dimming_locked = 0;
+}
+
+void SetControlEventEnabled(int enable)
+{
+    control_event_enabled = enable;
+}
+
+int IsControlEventEnabled()
+{
+    return control_event_enabled;
 }
 
 void SetPSbuttonEventEnabled(int enable)
