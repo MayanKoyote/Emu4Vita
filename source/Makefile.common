@@ -152,7 +152,6 @@ LIBS := \
 	-lSceHid_stub \
 	-lSceFiber_stub \
 	-lzstd \
-	-lz \
 	-llzma
 
 DEFINES := \

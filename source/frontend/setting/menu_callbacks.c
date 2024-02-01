@@ -41,14 +41,16 @@ static void exitGameCallback()
         BootLoadParentExec();
 }
 
-static void diskControlOptionMenuPositiveCallback(GUI_Dialog *dialog)
+static int diskControlOptionMenuPositiveCallback(GUI_Dialog *dialog)
 {
     if (!dialog || !dialog->userdata)
-        return;
+        return -1;
 
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
     Emu_DiskChangeImageIndex(data->focus_pos);
     GUI_CloseAllDialogs(TYPE_GUI_DIALOG_ANY);
+
+    return 0;
 }
 
 static void diskControlCallback()
@@ -73,7 +75,7 @@ static void diskControlCallback()
 
     AlertDialog_SetItems(dialog, items, n_items);
     AlertDialog_SetPositiveButton(dialog, cur_lang[LANG_CONFIRM], diskControlOptionMenuPositiveCallback);
-    AlertDialog_SetNegativeButton(dialog, cur_lang[LANG_CANCEL], NULL);
+    AlertDialog_SetNegativeButton(dialog, cur_lang[LANG_CANCEL], AlertDialog_Dismiss);
     AlertDialog_Show(dialog);
 }
 

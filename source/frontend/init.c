@@ -68,9 +68,11 @@ int checkVitatvModel()
     return is_vitatv_model;
 }
 
-static void safeModeDialogNegativeCallback(GUI_Dialog *dialog)
+static int safeModeDialogNegativeCallback(GUI_Dialog *dialog)
 {
     AppExit();
+
+    return 0;
 }
 
 static void showSafeModeDialog()

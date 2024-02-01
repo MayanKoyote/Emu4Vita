@@ -618,11 +618,14 @@ static void drawActivityCallback(GUI_Activity *activity)
     LayoutDraw(browser_layout, layout_x, layout_y);
 }
 
-static void deleteGameCallback(GUI_Dialog *dialog)
+static int deleteGameCallback(GUI_Dialog *dialog)
 {
+    if (!dialog || !dialog->userdata)
+        return -1;
+
     char path[MAX_PATH_LENGTH];
     if (MakeCurrentFilePath(path) < 0)
-        return;
+        return -1;
 
     sceIoRemove(path);
 #ifdef FBA_BUILD
@@ -637,36 +640,53 @@ static void deleteGameCallback(GUI_Dialog *dialog)
     refreshFileList(file_list);
     ListViewRefreshtList(broeser_listview);
     Browser_RequestRefreshPreview(0);
+
+    return 0;
 }
 
-static void deleteAutoStateCallback(GUI_Dialog *dialog)
+static int deleteAutoStateCallback(GUI_Dialog *dialog)
 {
+    if (!dialog || !dialog->userdata)
+        return -1;
+
     Emu_DeleteState(-1);
     GUI_CloseDialog(dialog->prev);
     AlertDialog_Dismiss(dialog);
     Browser_RequestRefreshPreview(0);
+
+    return 0;
 }
 
-static void deleteAutoSrmCallback(GUI_Dialog *dialog)
+static int deleteAutoSrmCallback(GUI_Dialog *dialog)
 {
+    if (!dialog || !dialog->userdata)
+        return -1;
+
     Emu_DeleteSrm();
     GUI_CloseDialog(dialog->prev);
     AlertDialog_Dismiss(dialog);
+
+    return 0;
 }
 
-static void deleteCacheFilesCallback(GUI_Dialog *dialog)
+static int deleteCacheFilesCallback(GUI_Dialog *dialog)
 {
+    if (!dialog || !dialog->userdata)
+        return -1;
+
     char path[MAX_PATH_LENGTH];
     MakeCurrentFilePath(path);
     Archive_CleanCacheByPath(path);
     GUI_CloseDialog(dialog->prev);
     AlertDialog_Dismiss(dialog);
+
+    return 0;
 }
 
-static void optionMenuPositiveCallback(GUI_Dialog *dialog)
+static int optionMenuPositiveCallback(GUI_Dialog *dialog)
 {
     if (!dialog || !dialog->userdata)
-        return;
+        return -1;
 
     int focus_pos = ListViewGetFocusPos(broeser_listview);
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
@@ -692,7 +712,7 @@ static void optionMenuPositiveCallback(GUI_Dialog *dialog)
             AlertDialog_SetTitle(tip_dialog, cur_lang[LANG_TIP]);
             AlertDialog_SetMessage(tip_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_GAME]);
             AlertDialog_SetPositiveButton(tip_dialog, cur_lang[LANG_CONFIRM], deleteGameCallback);
-            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], NULL);
+            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], AlertDialog_Dismiss);
             AlertDialog_Show(tip_dialog);
         }
     }
@@ -705,7 +725,7 @@ static void optionMenuPositiveCallback(GUI_Dialog *dialog)
             AlertDialog_SetTitle(tip_dialog, cur_lang[LANG_TIP]);
             AlertDialog_SetMessage(tip_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_AUTO_STATE]);
             AlertDialog_SetPositiveButton(tip_dialog, cur_lang[LANG_CONFIRM], deleteAutoStateCallback);
-            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], NULL);
+            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], AlertDialog_Dismiss);
             AlertDialog_Show(tip_dialog);
         }
     }
@@ -718,7 +738,7 @@ static void optionMenuPositiveCallback(GUI_Dialog *dialog)
             AlertDialog_SetTitle(tip_dialog, cur_lang[LANG_TIP]);
             AlertDialog_SetMessage(tip_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_AUTO_SAVEFILE]);
             AlertDialog_SetPositiveButton(tip_dialog, cur_lang[LANG_CONFIRM], deleteAutoSrmCallback);
-            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], NULL);
+            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], AlertDialog_Dismiss);
             AlertDialog_Show(tip_dialog);
         }
     }
@@ -731,7 +751,7 @@ static void optionMenuPositiveCallback(GUI_Dialog *dialog)
             AlertDialog_SetTitle(tip_dialog, cur_lang[LANG_TIP]);
             AlertDialog_SetMessage(tip_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_CACHE_FILES]);
             AlertDialog_SetPositiveButton(tip_dialog, cur_lang[LANG_CONFIRM], deleteCacheFilesCallback);
-            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], NULL);
+            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], AlertDialog_Dismiss);
             AlertDialog_Show(tip_dialog);
         }
     }
@@ -739,6 +759,8 @@ static void optionMenuPositiveCallback(GUI_Dialog *dialog)
     default:
         break;
     }
+
+    return 0;
 }
 
 static void openOptionMenu()
@@ -756,7 +778,7 @@ static void openOptionMenu()
     AlertDialog_SetItems(dialog, items, n_items);
     free(items);
     AlertDialog_SetPositiveButton(dialog, cur_lang[LANG_CONFIRM], optionMenuPositiveCallback);
-    AlertDialog_SetNegativeButton(dialog, cur_lang[LANG_CANCEL], NULL);
+    AlertDialog_SetNegativeButton(dialog, cur_lang[LANG_CANCEL], AlertDialog_Dismiss);
     AlertDialog_Show(dialog);
 }
 
