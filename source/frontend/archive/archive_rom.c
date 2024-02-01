@@ -76,7 +76,7 @@ int ArchiveRom_ExtractToMemory(void **buf, size_t *size)
         return -1;
     }
 
-    return archive_read_data(current_archive, buf, *size) == *size ? 0 : -1;
+    return archive_read_data(current_archive, *buf, *size) == *size ? 0 : -1;
 }
 
 int ArchiveRom_Extract(const char *rom_name, char *rom_path)
