@@ -121,7 +121,6 @@ LIBS := \
 	$(CORE_MAKEFILE_DIR)/$(CORE_FILE_NAME)_libretro_vita.a \
 	-lretro_comm\
 	-l7zip \
-	-lminizip \
 	-lvitashaders \
 	-lvita2d \
 	-lvita2d_ext \
