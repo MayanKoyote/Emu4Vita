@@ -66,7 +66,8 @@ void ListViewDestroy(void *view);
 int ListViewUpdate(void *view, int remaining_w, int remaining_h);
 void ListViewDraw(void *view, int x, int y);
 
-int ListViewRemoveItem(ListView *listView, int n);
+int ListViewAddItem(ListView *listView, void *entry, int index);
+int ListViewRemoveItem(ListView *listView, int index);
 int ListViewEmptyItems(ListView *listView);
 int ListViewRefreshtList(ListView *listView);
 int ListViewSetList(ListView *listView, void *list, ListViewCallbacks *callbacks);

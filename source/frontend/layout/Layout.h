@@ -79,6 +79,7 @@ int LayoutParamSetMargin(void *view, int left, int right, int top, int bottom);
 int LayoutParamSetPadding(void *view, int left, int right, int top, int bottom);
 int LayoutParamSetLayoutSize(void *view, int layout_w, int layout_h);
 int LayoutParamSetAutoFree(void *view, int auto_free);
+int LayoutParamGetMeasured(void *view, int *measured_w, int *measured_h);
 
 int RootViewUpdate(void *view);
 int ViewRefresh(void *view);

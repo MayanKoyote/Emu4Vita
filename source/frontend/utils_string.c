@@ -281,3 +281,100 @@ char *StringBreakLineByWidth(const char *string, int limit_w)
 
     return res;
 }
+
+int StringToListByWidthEx(LinkedList *list, char *buffer, size_t size, int limit_width)
+{
+    if (!list || !buffer)
+        return 0;
+
+    char *string;
+    char *start = buffer;
+    char *finish = buffer + size;
+    char *last_space_p = start;
+    char *p = start;
+    int width = 0;
+    int max_width = 0;
+    int last_space_w = 0;
+    int count;
+    int ch_w;
+    char ch;
+    while (p < finish)
+    {
+        count = GetUTF8Count(p);
+        ch = *(p + count);
+        *(p + count) = '\0';
+        ch_w = GUI_GetTextWidth(p);
+        *(p + count) = ch;
+
+        if (*p == ' ' || *p == '\t')
+        {
+            last_space_p = p;
+            last_space_w = width;
+        }
+
+        if (*p == '\n' || width + ch_w > limit_width)
+        {
+            // Check english word truncated (if current character and space is not in the line's first)
+            if ((p > start && last_space_p > start) && (IS_ENGLISH_CHARACTER(*p) && IS_ENGLISH_CHARACTER(*(p - 1))))
+            {
+                // Go back to the last space, current word will be in the next line
+                p = last_space_p + 1;
+                count = 0;            // Set to zero for skip auto step
+                ch_w = 0;             // Set to zero for skip auto step
+                width = last_space_w; // Set to last space width
+                last_space_w = 0;
+            }
+            ch = *p;
+            *p = '\0';
+            string = malloc(strlen(start) + 1);
+            if (string)
+            {
+                strcpy(string, start);
+                LinkedListAdd(list, string);
+            }
+            *p = ch;
+            if (*p == '\n')
+                p++;
+            start = p;
+            if (width > max_width)
+                max_width = width;
+            width = ch_w;
+        }
+        else
+        {
+            width += ch_w;
+        }
+        p += count;
+    }
+    if (start < finish)
+    {
+        string = malloc(strlen(start) + 1);
+        if (string)
+        {
+            strcpy(string, start);
+            LinkedListAdd(list, string);
+        }
+    }
+
+    if (width > max_width)
+        max_width = width;
+
+    return max_width;
+}
+
+int StringToListByWidth(LinkedList *list, const char *str, int limit_width)
+{
+    if (!list || !str)
+        return 0;
+
+    int len = strlen(str);
+    char *buf = malloc(len + 1);
+    if (!buf)
+        return 0;
+    strcpy(buf, str);
+
+    int ret = StringToListByWidthEx(list, buf, len, limit_width);
+    free(buf);
+
+    return ret;
+}

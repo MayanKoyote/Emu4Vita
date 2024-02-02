@@ -7,18 +7,19 @@
 #include "gui/gui.h"
 #include "alert_dialog.h"
 #include "utils.h"
+#include "utils_string.h"
 #include "lang.h"
 
 #define STATEBAR_PADDING_L 10
 #define STATEBAR_PADDING_T 6
 
 #define TIP_LISTVIEW_PADDING_L 6
-#define TIP_LISTVIEW_PADDING_T 13
+#define TIP_LISTVIEW_PADDING_T 12
 #define TIP_ITEMVIEW_PADDING_L 10
-#define TIP_ITEMVIEW_PADDING_T 3
+#define TIP_ITEMVIEW_PADDING_T 4
 
 #define MENU_LISTVIEW_PADDING_L 6
-#define MENU_LISTVIEW_PADDING_T 10
+#define MENU_LISTVIEW_PADDING_T 6
 #define MENU_ITEMVIEW_PADDING_L 10
 #define MENU_ITEMVIEW_PADDING_T 6
 
@@ -37,7 +38,7 @@
 #define DIALOG_COLOR_BG 0xFF6F480A
 #define ITEMVIEW_COLOR_FOCUS_BG COLOR_ALPHA(COLOR_ORANGE, 0xDF)
 #define DIALOG_COLOR_TEXT COLOR_WHITE
-#define DIALOG_COLOR_BUTTON COLOR_SPRING_GREEN
+#define DIALOG_COLOR_TITLE COLOR_SPRING_GREEN
 
 #define MAX_DIALOG_GRADUAL_COUNT 10
 
@@ -45,14 +46,6 @@ static void drawDialogCallback(GUI_Dialog *dialog);
 static void ctrlDialogCallback(GUI_Dialog *dialog);
 static int openDialogCallback(GUI_Dialog *dialog);
 static int closeDialogCallback(GUI_Dialog *dialog);
-
-static int isEnglishCharacter(char ch)
-{
-    if ((ch >= 0x41 && ch <= 0x5A) || (ch >= 0x61 && ch <= 0x7A))
-        return 1;
-    else
-        return 0;
-}
 
 static int getGradualSize(int size, int gradual, int max)
 {
@@ -65,93 +58,6 @@ static uint32_t getGradualColor(uint32_t color, int gradual, int max)
     uint8_t a = color >> 24;
     a = a * ((float)gradual / (float)max);
     return (rgb | (a << 24));
-}
-
-static int convertStringToListByWidth(LinkedList *list, const char *str, int limit_width)
-{
-    if (!list || !str)
-        return 0;
-
-    int len = strlen(str);
-    char *buf = malloc(len + 1);
-    if (!buf)
-        return 0;
-    strcpy(buf, str);
-
-    char *string;
-    char *start = buf;
-    char *last_space_p = buf;
-    char *finish = buf + len;
-    char *p = buf;
-    int width = 0;
-    int max_width = 0;
-    int last_space_w = 0;
-    int count;
-    int ch_w;
-    char ch;
-    while (p < finish)
-    {
-        count = GetUTF8Count(p);
-        ch = *(p + count);
-        *(p + count) = '\0';
-        ch_w = GUI_GetTextWidth(p);
-        *(p + count) = ch;
-
-        if (*p == ' ')
-        {
-            last_space_p = p;
-            last_space_w = width;
-        }
-
-        if (*p == '\n' || width + ch_w > limit_width)
-        {
-            // Check english word truncated (if current character and space is not in the line's first)
-            if ((p > start && last_space_p > start) && (isEnglishCharacter(*p) && isEnglishCharacter(*(p - 1))))
-            {
-                // Go back to the last space, current word will be in the next line
-                p = last_space_p + 1;
-                count = 0; // Set to zero for skip auto step
-                ch_w = 0;  // Set to zero for skip auto step
-                width = last_space_w; // Set to last space width
-            }
-            ch = *p;
-            *p = '\0';
-            string = malloc(strlen(start) + 1);
-            if (string)
-            {
-                strcpy(string, start);
-                LinkedListAdd(list, string);
-            }
-            *p = ch;
-            if (*p == '\n')
-                p++;
-            start = p;
-            last_space_p = p;
-            last_space_w = 0;
-            if (width > max_width)
-                max_width = width;
-            width = ch_w;
-        }
-        else
-        {
-            width += ch_w;
-        }
-        p += count;
-    }
-    if (start < finish)
-    {
-        string = malloc(strlen(start) + 1);
-        if (string)
-        {
-            strcpy(string, start);
-            LinkedListAdd(list, string);
-        }
-    }
-
-    if (width > max_width)
-        max_width = width;
-    free(buf);
-    return max_width;
 }
 
 GUI_Dialog *AlertDialog_Create()
@@ -273,7 +179,8 @@ void AlertDialog_SetMessage(GUI_Dialog *dialog, char *message)
     int max_listview_width = DIALOG_MAX_WIDTH;
     int min_listview_width = DIALOG_MIN_WIDTH;
     int limit_width = max_listview_width - TIP_LISTVIEW_PADDING_L * 2 - TIP_ITEMVIEW_PADDING_L * 2;
-    int listview_width = convertStringToListByWidth(data->list, message, limit_width) + TIP_ITEMVIEW_PADDING_L * 2 + TIP_LISTVIEW_PADDING_L * 2;
+    int message_width = StringToListByWidth(data->list, message, limit_width);
+    int listview_width = message_width + TIP_ITEMVIEW_PADDING_L * 2 + TIP_LISTVIEW_PADDING_L * 2;
     if (listview_width > max_listview_width)
         listview_width = max_listview_width;
     else if (listview_width < min_listview_width)
@@ -493,7 +400,7 @@ static void drawDialogCallback(GUI_Dialog *dialog)
     uint32_t dialog_color = getGradualColor(DIALOG_COLOR_BG, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
     uint32_t statebar_color = getGradualColor(STATEBAR_COLOR_BG, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
     uint32_t text_color = getGradualColor(DIALOG_COLOR_TEXT, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
-    uint32_t button_color = getGradualColor(DIALOG_COLOR_BUTTON, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
+    uint32_t title_color = getGradualColor(DIALOG_COLOR_TITLE, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
     uint32_t focus_color = getGradualColor(ITEMVIEW_COLOR_FOCUS_BG, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
 
     int x, y;
@@ -522,7 +429,7 @@ static void drawDialogCallback(GUI_Dialog *dialog)
         clip_w = statebar_w - STATEBAR_PADDING_L * 2;
         clip_h = statebar_h;
         GUI_SetClipping(x, top_bar_y, clip_w, clip_h);
-        GUI_DrawText(x, y, text_color, data->title);
+        GUI_DrawText(x, y, title_color, data->title);
         GUI_UnsetClipping();
     }
 
@@ -608,7 +515,7 @@ static void drawDialogCallback(GUI_Dialog *dialog)
         GUI_DrawText(x, y, text_color, data->positive_text);
         snprintf(buf, 24, "%s:", cur_lang[LANG_BUTTON_ENTER]);
         x -= GUI_GetTextWidth(buf);
-        GUI_DrawText(x, y, button_color, buf);
+        GUI_DrawText(x, y, title_color, buf);
         x -= STATEBAR_PADDING_L;
     }
     if (data->neutral_text)
@@ -617,7 +524,7 @@ static void drawDialogCallback(GUI_Dialog *dialog)
         GUI_DrawText(x, y, text_color, data->neutral_text);
         snprintf(buf, 24, "%s:", cur_lang[LANG_BUTTON_TRIANGLE]);
         x -= GUI_GetTextWidth(buf);
-        GUI_DrawText(x, y, button_color, buf);
+        GUI_DrawText(x, y, title_color, buf);
         x -= STATEBAR_PADDING_L;
     }
     if (data->negative_text)
@@ -626,7 +533,7 @@ static void drawDialogCallback(GUI_Dialog *dialog)
         GUI_DrawText(x, y, text_color, data->negative_text);
         snprintf(buf, 24, "%s:", cur_lang[LANG_BUTTON_CANCEL]);
         x -= GUI_GetTextWidth(buf);
-        GUI_DrawText(x, y, button_color, buf);
+        GUI_DrawText(x, y, title_color, buf);
         x -= STATEBAR_PADDING_L;
     }
 

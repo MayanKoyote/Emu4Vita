@@ -179,16 +179,45 @@ void ListViewDraw(void *view, int x, int y)
     GUI_UnsetClipping();
 }
 
-int ListViewRemoveItem(ListView *listView, int n)
+int ListViewAddItem(ListView *listView, void *entry, int index)
 {
     if (!listView || !listView->items)
         return 0;
 
-    LinkedListEntry *entry = LinkedListFindByNum(listView->items, n);
-    if (!entry)
+    ListViewItemData *data = calloc(1, sizeof(ListViewItemData));
+    if (!data)
         return 0;
 
-    return LinkedListRemove(listView->items, entry);
+    data->textView = NewTextView();
+    if (!data->textView)
+    {
+        free(data);
+        return 0;
+    }
+
+    data->entry = entry;
+    data->index = index;
+
+    char *name = NULL;
+    if (listView->callbacks.getName)
+        name = listView->callbacks.getName(listView->list, data->entry, data->index);
+    TextViewSetText(data->textView, name);
+
+    if (!LinkedListAdd(listView->items, data))
+        return 0;
+
+    return 1;
+}
+
+int ListViewRemoveItem(ListView *listView, int index)
+{
+    if (!listView || !listView->items)
+        return 0;
+
+    LinkedListEntry *entry = LinkedListFindByNum(listView->items, index);
+    int ret = LinkedListRemove(listView->items, entry);
+
+    return ret;
 }
 
 int ListViewEmptyItems(ListView *listView)
@@ -219,28 +248,7 @@ int ListViewRefreshtList(ListView *listView)
     int i;
     for (i = 0; entry; i++)
     {
-        ListViewItemData *data = calloc(1, sizeof(ListViewItemData));
-        if (!data)
-            goto NEXT;
-
-        data->textView = NewTextView();
-        if (!data->textView)
-        {
-            free(data);
-            goto NEXT;
-        }
-
-        data->entry = entry;
-        data->index = i;
-
-        char *name = NULL;
-        if (callbacks->getName)
-            name = callbacks->getName(listView->list, entry, i);
-        TextViewSetText(data->textView, name);
-
-        LinkedListAdd(listView->items, data);
-
-    NEXT:
+        ListViewAddItem(listView, entry, i);
         if (!callbacks->getNextListEntry)
             break;
         entry = callbacks->getNextListEntry(listView->list, entry, i);

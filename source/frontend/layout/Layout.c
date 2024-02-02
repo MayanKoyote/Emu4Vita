@@ -194,8 +194,10 @@ int LayoutGetRemaining(Layout *layout, int *remaining_w, int *remaining_h)
     if (!layout)
         return -1;
 
-    *remaining_w = layout->remaining_w;
-    *remaining_h = layout->remaining_h;
+    if (remaining_w)
+        *remaining_w = layout->remaining_w;
+    if (remaining_h)
+        *remaining_h = layout->remaining_h;
 
     return 0;
 }
@@ -319,6 +321,20 @@ int LayoutParamSetLayoutSize(void *view, int layout_w, int layout_h)
     LayoutParam *params = (LayoutParam *)view;
     params->layout_w = layout_w;
     params->layout_h = layout_h;
+
+    return 0;
+}
+
+int LayoutParamGetMeasured(void *view, int *measured_w, int *measured_h)
+{
+    if (!view)
+        return -1;
+
+    LayoutParam *params = (LayoutParam *)view;
+    if (measured_w)
+        *measured_w = params->measured_w;
+    if (measured_h)
+        *measured_h = params->measured_h;
 
     return 0;
 }

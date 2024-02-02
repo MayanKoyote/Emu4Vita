@@ -19,7 +19,7 @@ static GUI_ButtonInstruction button_instructions[] = {
 };
 
 GUI_Activity about_activity = {
-    LANG_ABOUT_TITLE,           // Title
+    LANG_ABOUT_TITLE,      // Title
     button_instructions,   // Button instructions
     NULL,                  // Wallpaper
     startActivityCallback, // Start callback

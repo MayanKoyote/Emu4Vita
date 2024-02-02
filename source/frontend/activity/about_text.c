@@ -58,9 +58,9 @@ char *about_texts[] = {
     " * libretro (core)",
     " * frangarcj (vita shader)",
     " * 永爱水原ありさ (图标及素材)",
+    " * 百度·psvita破解吧",
     " * ......",
     "",
-    "(百度psvita破解吧)",
 };
 
 #define N_ABOUT_TEXTS (sizeof(about_texts) / sizeof(char *))
