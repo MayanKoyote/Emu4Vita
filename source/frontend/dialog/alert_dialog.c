@@ -26,9 +26,9 @@
 #define TIP_ITEMVIEW_HEIGHT (GUI_GetLineHeight() + TIP_ITEMVIEW_PADDING_T * 2)
 #define MENU_ITEMVIEW_HEIGHT (GUI_GetLineHeight() + MENU_ITEMVIEW_PADDING_T * 2)
 
-#define DIALOG_MAX_WIDTH (GUI_SCREEN_WIDTH * 4.f / 5.f)
-#define DIALOG_MAX_HEIGHT (GUI_SCREEN_HEIGHT * 4.f / 5.f)
-#define DIALOG_MIN_WIDTH (GUI_SCREEN_WIDTH / 2.f)
+#define DIALOG_MAX_WIDTH (GUI_SCREEN_WIDTH * 0.7f)
+#define DIALOG_MAX_HEIGHT (GUI_SCREEN_HEIGHT * 0.8f)
+#define DIALOG_MIN_WIDTH (GUI_SCREEN_WIDTH * 0.5f)
 #define TIP_DIALOG_MIN_HEIGHT (TIP_ITEMVIEW_HEIGHT * 4 + TIP_LISTVIEW_PADDING_T * 2)
 #define MENU_DIALOG_MIN_HEIGHT (MENU_ITEMVIEW_HEIGHT * 4 + MENU_LISTVIEW_PADDING_T * 2)
 
@@ -80,11 +80,12 @@ static int convertStringToListByWidth(LinkedList *list, const char *str, int lim
 
     char *string;
     char *start = buf;
-    char *space = buf;
+    char *last_space_p = buf;
     char *finish = buf + len;
     char *p = buf;
     int width = 0;
     int max_width = 0;
+    int last_space_w = 0;
     int count;
     int ch_w;
     char ch;
@@ -97,17 +98,21 @@ static int convertStringToListByWidth(LinkedList *list, const char *str, int lim
         *(p + count) = ch;
 
         if (*p == ' ')
-            space = p;
+        {
+            last_space_p = p;
+            last_space_w = width;
+        }
 
         if (*p == '\n' || width + ch_w > limit_width)
         {
             // Check english word truncated (if current character and space is not in the line's first)
-            if ((p > start && space > start) && (isEnglishCharacter(*p) && isEnglishCharacter(*(p - 1))))
+            if ((p > start && last_space_p > start) && (isEnglishCharacter(*p) && isEnglishCharacter(*(p - 1))))
             {
                 // Go back to the last space, current word will be in the next line
-                p = space + 1;
+                p = last_space_p + 1;
                 count = 0; // Set to zero for skip auto step
                 ch_w = 0;  // Set to zero for skip auto step
+                width = last_space_w; // Set to last space width
             }
             ch = *p;
             *p = '\0';
@@ -121,7 +126,8 @@ static int convertStringToListByWidth(LinkedList *list, const char *str, int lim
             if (*p == '\n')
                 p++;
             start = p;
-            space = p;
+            last_space_p = p;
+            last_space_w = 0;
             if (width > max_width)
                 max_width = width;
             width = ch_w;
@@ -129,8 +135,6 @@ static int convertStringToListByWidth(LinkedList *list, const char *str, int lim
         else
         {
             width += ch_w;
-            if (width > max_width)
-                max_width = width;
         }
         p += count;
     }
@@ -144,6 +148,8 @@ static int convertStringToListByWidth(LinkedList *list, const char *str, int lim
         }
     }
 
+    if (width > max_width)
+        max_width = width;
     free(buf);
     return max_width;
 }

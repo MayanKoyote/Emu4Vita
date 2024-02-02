@@ -21,11 +21,11 @@ int MakeBaseDirectory(char *base_dir, const char *path, int size);
 int MakeFileName(char *name, const char *path, int size);
 int MakeBaseName(char *name, const char *path, int size);
 
-int ReadFile(const char *file, void *buffer, size_t buffersize);
-int WriteFile(const char *file, const void *buffer, size_t buffersize);
+int ReadFile(const char *file, void *buffer, size_t size);
+int WriteFile(const char *file, const void *buffer, size_t size);
 int AllocateReadFile(const char *file, void **buffer, size_t *buffersize);
-int64_t ReadFileEx(const char *file, const void *buffer, size_t buffersize);
-int64_t WriteFileEx(const char *file, const void *buffer, size_t buffersize);
+int64_t ReadFileEx(const char *file, const void *buffer, size_t size);
+int64_t WriteFileEx(const char *file, const void *buffer, size_t size);
 int64_t AllocateReadFileEx(const char *file, void **buffer, size_t *buffersize);
 
 int CheckFileExist(const char *file);

@@ -223,7 +223,6 @@ char *StringMakeShortByWidth(const char *string, int limit_w)
             res = buf;
             strcat(res, "...");
         }
-            
     }
     else
     {

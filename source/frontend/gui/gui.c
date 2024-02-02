@@ -448,17 +448,19 @@ static int threadRunFunc(SceSize args, void *argp)
 
 int GUI_StartThreadRun()
 {
+    int ret = 0;
+
     if (gui_thread_run_thid < 0)
     {
-        gui_thread_run_thid = sceKernelCreateThread("gui_run_thread", threadRunFunc, 0x10000100, 0x10000, 0, 0, NULL);
+        ret = gui_thread_run_thid = sceKernelCreateThread("gui_run_thread", threadRunFunc, 0x10000100, 0x10000, 0, 0, NULL);
         if (gui_thread_run_thid >= 0)
         {
             gui_thread_run = 1;
-            sceKernelStartThread(gui_thread_run_thid, 0, NULL);
+            ret = sceKernelStartThread(gui_thread_run_thid, 0, NULL);
         }
     }
 
-    return gui_thread_run_thid;
+    return ret;
 }
 
 int GUI_StopThreadRun()

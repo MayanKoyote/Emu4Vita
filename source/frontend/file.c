@@ -171,25 +171,25 @@ int MakeBaseName(char *name, const char *path, int size)
     return MakeBaseNameEx(name, size, path, strlen(path));
 }
 
-int ReadFile(const char *file, void *buffer, size_t buffersize)
+int ReadFile(const char *file, void *buffer, size_t size)
 {
     SceUID fd = sceIoOpen(file, SCE_O_RDONLY, 0);
     if (fd < 0)
         return fd;
 
-    int read = sceIoRead(fd, buffer, buffersize);
+    int read = sceIoRead(fd, buffer, size);
 
     sceIoClose(fd);
     return read;
 }
 
-int WriteFile(const char *file, const void *buffer, size_t buffersize)
+int WriteFile(const char *file, const void *buffer, size_t size)
 {
     SceUID fd = sceIoOpen(file, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
     if (fd < 0)
         return fd;
 
-    int written = sceIoWrite(fd, buffer, buffersize);
+    int written = sceIoWrite(fd, buffer, size);
 
     sceIoClose(fd);
     return written;
@@ -225,14 +225,14 @@ int AllocateReadFile(const char *file, void **buffer, size_t *buffersize)
     return read;
 }
 
-int64_t ReadFileEx(const char *file, const void *buffer, size_t buffersize)
+int64_t ReadFileEx(const char *file, const void *buffer, size_t size)
 {
     SceUID fd = sceIoOpen(file, SCE_O_RDONLY, 0);
     if (fd < 0)
         return fd;
 
     char *buf = (char *)buffer;
-    size_t remaining = buffersize;
+    size_t remaining = size;
     int transfer = TRANSFER_SIZE;
 
     while (remaining > 0)
@@ -256,18 +256,18 @@ int64_t ReadFileEx(const char *file, const void *buffer, size_t buffersize)
     }
     sceIoClose(fd);
 
-    // printf("ReadFileEx: size: %lld, remaining: %lld\n", size, remaining);
-    return buffersize - remaining;
+    // AppLog("[FILE] ReadFileEx: size: %u, remaining: %u\n", size, remaining);
+    return size - remaining;
 }
 
-int64_t WriteFileEx(const char *file, const void *buffer, size_t buffersize)
+int64_t WriteFileEx(const char *file, const void *buffer, size_t size)
 {
     SceUID fd = sceIoOpen(file, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
     if (fd < 0)
         return fd;
 
     char *buf = (char *)buffer;
-    size_t remaining = buffersize;
+    size_t remaining = size;
     int transfer = TRANSFER_SIZE;
 
     while (remaining > 0)
@@ -291,8 +291,8 @@ int64_t WriteFileEx(const char *file, const void *buffer, size_t buffersize)
     }
     sceIoClose(fd);
 
-    // printf("WriteFileEx: size: %lld, remaining: %lld\n", size, remaining);
-    return buffersize - remaining;
+    // AppLog("[FILE] WriteFileEx: size: %u, remaining: %u\n", size, remaining);
+    return size - remaining;
 }
 
 int64_t AllocateReadFileEx(const char *file, void **buffer, size_t *buffersize)
@@ -343,7 +343,7 @@ int64_t AllocateReadFileEx(const char *file, void **buffer, size_t *buffersize)
     }
     sceIoClose(fd);
 
-    // printf("AllocateReadFileEx: size: %lld, remaining: %lld\n", size, remaining);
+    // AppLog("[FILE] AllocateReadFileEx: size: %lld, remaining: %u\n", size, remaining);
     *buffer = buf;
     if (buffersize)
         *buffersize = size;

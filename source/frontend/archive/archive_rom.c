@@ -25,6 +25,9 @@ int ArchiveRom_Open(const char *archive_path, uint32_t *crc, char *name)
     archive_read_support_filter_all(current_archive);
     archive_read_support_format_all(current_archive);
 
+    // archive_read_support_format_7zip(current_archive);
+    // archive_read_support_format_zip(current_archive);
+
     if (archive_read_open_filename(current_archive, archive_path, ARCHIVE_BLOCK_SIZE) != ARCHIVE_OK)
     {
         AppLog("[ARCHIVE] Archive_OpenRom failed: cannot open file!\n");
@@ -34,7 +37,7 @@ int ArchiveRom_Open(const char *archive_path, uint32_t *crc, char *name)
     while (archive_read_next_header(current_archive, &current_entry) == ARCHIVE_OK)
     {
         const char *entry_name = archive_entry_pathname_utf8(current_entry);
-        AppLog("%s\n", entry_name);
+        AppLog("[ARCHIVE] Archive_OpenRom: entry_name = %s\n", entry_name);
         if (entry_name && IsValidFile(entry_name))
         {
             if (name)
@@ -72,7 +75,7 @@ int ArchiveRom_ExtractToMemory(void **buf, size_t *size)
     *buf = malloc(*size);
     if (!*buf)
     {
-        AppLog("[ARCHIVE] Archive_ExtractRom failed: connot alloc buf!\n");
+        AppLog("[ARCHIVE] Archive_ExtractRom failed: cannot alloc buf!\n");
         return -1;
     }
 
@@ -98,7 +101,7 @@ int ArchiveRom_Extract(const char *rom_name, char *rom_path)
     char *buf = malloc(ARCHIVE_BUF_SIZE);
     if (!buf)
     {
-        AppLog("[ARCHIVE] Archive_ExtractRom failed: connot alloc buf!\n");
+        AppLog("[ARCHIVE] Archive_ExtractRom failed: cannot alloc buf!\n");
         goto END;
     }
 

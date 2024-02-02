@@ -121,8 +121,13 @@ static int loadGameFromFile(const char *path, int archive_mode)
 static int loadGameFromMemory(const char *path, int archive_mode)
 {
     if (game_rom_data)
+    {
+#ifdef WANT_SAVE_MEM_ROM_CACHE
+        Archive_WaitThreadEnd();
+#endif
         free(game_rom_data);
-    game_rom_data = NULL;
+        game_rom_data = NULL;
+    }
 
     size_t size = 0;
 
@@ -311,6 +316,9 @@ void Emu_ExitGame()
 
     if (game_rom_data)
     {
+#ifdef WANT_SAVE_MEM_ROM_CACHE
+        Archive_WaitThreadEnd();
+#endif
         free(game_rom_data);
         game_rom_data = NULL;
     }
