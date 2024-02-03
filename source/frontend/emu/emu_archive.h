@@ -12,7 +12,7 @@ typedef struct
     int (*extractRom)(char *extract_path);
 } ArchiveRomDriver;
 
-#define WANT_SAVE_MEM_ROM_CACHE
+// #define WANT_SAVE_MEM_ROM_CACHE
 
 int Archive_GetDriverIndex(const char *ext);
 ArchiveRomDriver *Archive_GetDriver(int index);

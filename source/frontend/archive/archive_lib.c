@@ -15,7 +15,7 @@
 #define ARCHIVE_BLOCK_SIZE 10240
 #define ARCHIVE_BUF_SIZE (128 * 1024)
 
-LibarchiveObj *Libarchive_OpenRom(const char *archive_path, int format_code, uint32_t *crc, char *name)
+LibarchiveObj *Libarchive_OpenRom(const char *archive_path, int (*read_support_format)(struct archive *), uint32_t *crc, char *name)
 {
     LibarchiveObj *obj = (LibarchiveObj *)calloc(1, sizeof(LibarchiveObj));
     if (!obj)
@@ -31,7 +31,7 @@ LibarchiveObj *Libarchive_OpenRom(const char *archive_path, int format_code, uin
         goto FAILED;
     }
 
-    archive_read_support_format_by_code(obj->archive, format_code);
+    read_support_format(obj->archive);
 
     if (archive_read_open_filename(obj->archive, archive_path, ARCHIVE_BLOCK_SIZE) != ARCHIVE_OK)
     {

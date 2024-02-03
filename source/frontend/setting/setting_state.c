@@ -532,7 +532,7 @@ int initStateThread()
     if (state_thid >= 0)
         ret = sceKernelStartThread(state_thid, 0, NULL);
 
-    return state_thid;
+    return ret;
 }
 
 void deinitStateThread()

@@ -12,7 +12,7 @@ static LibarchiveObj *current_archive = NULL;
 static int openRom(const char *archive_path, uint32_t *crc, char *name)
 {
     Libarchive_CloseRom(current_archive);
-    current_archive = Libarchive_OpenRom(archive_path, archive_read_support_format_zip, crc, name);
+    current_archive = Libarchive_OpenRom(archive_path, archive_read_support_format_rar, crc, name);
     return current_archive ? 1 : 0;
 }
 
@@ -33,8 +33,8 @@ static int extractRom(char *extract_path)
     return Libarchive_ExtractRom(current_archive, extract_path);
 }
 
-ArchiveRomDriver archive_zip_driver = {
-    "zip",
+ArchiveRomDriver archive_rar_driver = {
+    "rar",
     openRom,
     closeRom,
     extractRomMemory,

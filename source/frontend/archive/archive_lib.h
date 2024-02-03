@@ -12,7 +12,7 @@ typedef struct
     struct archive_entry *entry;
 } LibarchiveObj;
 
-LibarchiveObj *Libarchive_OpenRom(const char *archive_path, int format_code, uint32_t *crc, char *name);
+LibarchiveObj *Libarchive_OpenRom(const char *archive_path, int (*read_support_format)(struct archive *), uint32_t *crc, char *name);
 void Libarchive_CloseRom(LibarchiveObj *obj);
 int Libarchive_ExtractRomMemory(LibarchiveObj *obj, void **buf, size_t *size);
 int Libarchive_ExtractRom(LibarchiveObj *obj, const char *extract_path);

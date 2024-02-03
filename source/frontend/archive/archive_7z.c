@@ -12,7 +12,7 @@ static LibarchiveObj *current_archive = NULL;
 static int openRom(const char *archive_path, uint32_t *crc, char *name)
 {
     Libarchive_CloseRom(current_archive);
-    current_archive = Libarchive_OpenRom(archive_path, ARCHIVE_FORMAT_7ZIP, crc, name);
+    current_archive = Libarchive_OpenRom(archive_path, archive_read_support_format_7zip, crc, name);
     return current_archive ? 1 : 0;
 }
 

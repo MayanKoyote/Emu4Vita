@@ -6,8 +6,9 @@
 #include <psp2/kernel/processmgr.h>
 #include <psp2/io/fcntl.h>
 
-#include "archive/archive_7z.h"
 #include "archive/archive_zip.h"
+#include "archive/archive_7z.h"
+#include "archive/archive_rar.h"
 #include "emu/emu.h"
 #include "file.h"
 #include "config.h"
@@ -30,6 +31,7 @@ static ArchiveEntry archive_cache_entries[MAX_CACHE_SIZE];
 static ArchiveRomDriver *archiver_rom_drivers[] = {
     &archive_zip_driver,
     &archive_7z_driver,
+    &archive_rar_driver,
 };
 #define N_ARCHIVER_ROM_DRIVERS (sizeof(archiver_rom_drivers) / sizeof(ArchiveRomDriver *))
 

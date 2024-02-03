@@ -100,8 +100,9 @@ SRC_C += \
 
 SRC_C += \
 	archive/archive_lib.c \
+	archive/archive_zip.c \
 	archive/archive_7z.c \
-	archive/archive_zip.c
+	archive/archive_rar.c
 
 SRC_C += \
 	boot.c \
