@@ -42,7 +42,7 @@
 
 ## 程序截图
 
-|                                                 |                                                 |
-| :---------------------------------------------: | :---------------------------------------------: |
 | ![screenshot_0](./screenshots/screenshot_0.jpg) | ![screenshot_1](./screenshots/screenshot_1.jpg) |
+| :---------------------------------------------: | :---------------------------------------------: |
 | ![screenshot_2](./screenshots/screenshot_2.jpg) | ![screenshot_3](./screenshots/screenshot_3.jpg) |
+
