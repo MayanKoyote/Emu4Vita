@@ -109,8 +109,7 @@ int Archive_CleanCacheByPath(const char *path)
         if (archive_cache_entries[i].exist && strcasecmp(archive_cache_entries[i].name, rom_name) == 0)
         {
             Archive_CleanCache(i);
-            n = 1;
-            break;
+            n++;
         }
     }
 
@@ -355,21 +354,18 @@ int Archive_GetRomPath(const char *archive_path, char *rom_path, ArchiveRomDrive
     CreateFolder(CORE_CACHE_DIR);
 
     int index = Archive_FindRomCache(rom_crc, rom_name);
-    if (index < 0)
-    {
-        // 未找到cache，执行解压
-        ret = driver->extractRom(rom_path);
-        if (ret < 0)
-            goto FAILED;
-
-        // 添加新的cache条目
-        Archive_AddCacheEntry(rom_crc, rom_name);
-    }
-    else
+    if (index >= 0)
     {
         // 更新ltime为当前线程时间
         archive_cache_entries[index].ltime = sceKernelGetProcessTimeWide();
+        ret = 0;
+        goto END;
     }
+
+    // 未找到cache，执行解压
+    ret = driver->extractRom(rom_path);
+    if (ret >= 0) // 添加新的cache条目
+        Archive_AddCacheEntry(rom_crc, rom_name);
 
 END:
     if (driver)
@@ -405,8 +401,6 @@ static int saveMemRomCacheThreadFunc(SceSize args, void *argp)
     MemRomInfo *rom_info = (MemRomInfo *)argp;
     char rom_path[MAX_PATH_LENGTH];
     snprintf(rom_path, sizeof(rom_path), "%s/%s", CORE_CACHE_DIR, rom_info->name);
-    // AppLog("[ARCHIVE] Archive_SaveMemRomCache: rom_path = %s, rom_size = %u\n", rom_path, rom_info->size);
-
     CreateFolder(CORE_CACHE_DIR);
 
     if (WriteFileEx(rom_path, rom_info->buf, rom_info->size) == rom_info->size)
