@@ -322,7 +322,7 @@ int SaveGraphicsConfig(int type)
     MakeConfigPath(path, GRAPHICS_CONFIG_NAME, type);
 
     char parent_path[MAX_PATH_LENGTH];
-    MakeBaseDirectory(parent_path, path, MAX_PATH_LENGTH);
+    MakeParentDir(parent_path, path, MAX_PATH_LENGTH);
     CreateFolder(parent_path);
 
     return WriteFile(path, &graphics_config, sizeof(GraphicsConfig));
@@ -334,7 +334,7 @@ int SaveControlConfig(int type)
     MakeConfigPath(path, CONTROL_CONFIG_NAME, type);
 
     char parent_path[MAX_PATH_LENGTH];
-    MakeBaseDirectory(parent_path, path, MAX_PATH_LENGTH);
+    MakeParentDir(parent_path, path, MAX_PATH_LENGTH);
     CreateFolder(parent_path);
 
     return WriteFile(path, &control_config, sizeof(ControlConfig));
@@ -346,7 +346,7 @@ int SaveHotkeyConfig(int type)
     MakeConfigPath(path, HOTKEY_CONFIG_NAME, type);
 
     char parent_path[MAX_PATH_LENGTH];
-    MakeBaseDirectory(parent_path, path, MAX_PATH_LENGTH);
+    MakeParentDir(parent_path, path, MAX_PATH_LENGTH);
     CreateFolder(parent_path);
 
     return WriteFile(path, &hotkey_config, sizeof(HotkeyConfig));
@@ -358,7 +358,7 @@ int SaveMiscConfig(int type)
     MakeConfigPath(path, MISC_CONFIG_NAME, type);
 
     char parent_path[MAX_PATH_LENGTH];
-    MakeBaseDirectory(parent_path, path, MAX_PATH_LENGTH);
+    MakeParentDir(parent_path, path, MAX_PATH_LENGTH);
     CreateFolder(parent_path);
 
     return WriteFile(path, &misc_config, sizeof(MiscConfig));
@@ -370,7 +370,7 @@ int SaveAppConfig(int type)
     MakeConfigPath(path, APP_CONFIG_NAME, type);
 
     char parent_path[MAX_PATH_LENGTH];
-    MakeBaseDirectory(parent_path, path, MAX_PATH_LENGTH);
+    MakeParentDir(parent_path, path, MAX_PATH_LENGTH);
     CreateFolder(parent_path);
 
     return WriteFile(path, &app_config, sizeof(AppConfig));
@@ -411,7 +411,7 @@ int SaveCoreConfig(int type)
     MakeConfigPath(path, CORE_CONFIG_NAME, type);
 
     char parent_path[MAX_PATH_LENGTH];
-    MakeBaseDirectory(parent_path, path, MAX_PATH_LENGTH);
+    MakeParentDir(parent_path, path, MAX_PATH_LENGTH);
     CreateFolder(parent_path);
 
     return OptionListSaveConfig(core_option_list, path);

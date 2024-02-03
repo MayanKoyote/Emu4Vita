@@ -16,10 +16,10 @@ extern int n_core_valid_extensions;
 int IsValidFile(const char *path);
 int GetFileType(const char *filename);
 
-int MakeBaseDirectoryEx(char *base, int base_size, const char *path, int path_len);
+int MakeParentDirEx(char *parent, int parent_size, const char *path, int path_len);
 int MakeFileNameEx(char *name, int name_size, const char *path, int path_len);
 int MakeBaseNameEx(char *name, int name_size, const char *path, int path_len);
-int MakeBaseDirectory(char *base_dir, const char *path, int size);
+int MakeParentDir(char *parent_dir, const char *path, int size);
 int MakeFileName(char *name, const char *path, int size);
 int MakeBaseName(char *name, const char *path, int size);
 

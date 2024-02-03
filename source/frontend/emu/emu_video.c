@@ -329,7 +329,7 @@ int Emu_SaveVideoScreenshot(char *path)
     int ret = 0;
 
     char parent_path[MAX_PATH_LENGTH];
-    MakeBaseDirectory(parent_path, path, MAX_PATH_LENGTH);
+    MakeParentDir(parent_path, path, MAX_PATH_LENGTH);
     CreateFolder(parent_path);
 
     uint32_t base_width, base_height;

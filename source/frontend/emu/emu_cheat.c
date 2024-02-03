@@ -27,6 +27,16 @@ static int makeCheatPath(char *path)
     return 0;
 }
 
+static int makeCheatPath2(char *path)
+{
+    MakeCurrentFilePath(path);
+    char *p = strrchr(path, '.');
+    if (!p++)
+        p = path + strlen(path);
+    strcpy(p, "cht");
+    return 0;
+}
+
 void Emu_PauseCheat()
 {
     cheat_pause = 1;
@@ -61,15 +71,24 @@ int Emu_LoadCheatOption()
 {
     Emu_CleanCheatOption();
 
-    char path[1024];
-    makeCheatPath(path);
     core_cheat_list = NewCheatList();
     if (!core_cheat_list)
         goto FAILED;
 
-    CheatListGetEntries(core_cheat_list, path);
+    char path[1024];
+    makeCheatPath2(path);
+    if (CheatListGetEntries(core_cheat_list, path) < 0)
+    {
+        AppLog("[CHEAT] CheatListGetEntries failed: %s\n", path);
+        makeCheatPath(path);
+        CheatListGetEntries(core_cheat_list, path);
+    }
     if (LinkedListGetLength(core_cheat_list) <= 0)
+    {
+        AppLog("[CHEAT] CheatListGetEntries failed: %s\n", path);
         goto FAILED;
+    }
+    AppLog("[CHEAT] CheatListGetEntries OK: %s\n", path);
 
     MakeConfigPath(path, CHEAT_CONFIG_NAME, TYPE_CONFIG_GAME);
     CheatListLoadConfig(core_cheat_list, path);

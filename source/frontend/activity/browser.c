@@ -487,7 +487,7 @@ int Browser_ChangeDirByFilePath(const char *path)
     int ret;
 
     char lastdir[MAX_PATH_LENGTH];
-    ret = MakeBaseDirectory(lastdir, path, MAX_PATH_LENGTH);
+    ret = MakeParentDir(lastdir, path, MAX_PATH_LENGTH);
     if (ret < 0)
         return ret;
 

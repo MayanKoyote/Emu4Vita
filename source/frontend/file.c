@@ -65,21 +65,21 @@ int GetFileType(const char *filename)
     return -1;
 }
 
-int MakeBaseDirectoryEx(char *base, int base_size, const char *path, int path_len)
+int MakeParentDirEx(char *parent, int parent_size, const char *path, int path_len)
 {
-    if (!base || base_size <= 0)
+    if (!parent || parent_size <= 0)
         return -1;
-    base[0] = '\0';
+    parent[0] = '\0';
 
     if (!path || path_len <= 0)
         return -1;
 
     if ((path_len == 1 && path[0] == '/') || path[path_len - 1] == ':')
     {
-        if (base_size > path_len)
+        if (parent_size > path_len)
         {
-            strncpy(base, path, path_len);
-            base[path_len] = '\0';
+            strncpy(parent, path, path_len);
+            parent[path_len] = '\0';
         }
         return -1;
     }
@@ -102,11 +102,11 @@ int MakeBaseDirectoryEx(char *base, int base_size, const char *path, int path_le
         return -1;
 
     int new_len = sep + 1;
-    if (new_len > base_size - 1)
-        new_len = base_size - 1;
+    if (new_len > parent_size - 1)
+        new_len = parent_size - 1;
     if (new_len > 0)
-        strncpy(base, path, new_len);
-    base[new_len] = '\0';
+        strncpy(parent, path, new_len);
+    parent[new_len] = '\0';
 
     return 0;
 }
@@ -183,9 +183,9 @@ int MakeBaseNameEx(char *name, int name_size, const char *path, int path_len)
     return 0;
 }
 
-int MakeBaseDirectory(char *base_dir, const char *path, int size)
+int MakeParentDir(char *parent_dir, const char *path, int size)
 {
-    return MakeBaseDirectoryEx(base_dir, size, path, strlen(path));
+    return MakeParentDirEx(parent_dir, size, path, strlen(path));
 }
 
 int MakeFileName(char *name, const char *path, int size)
