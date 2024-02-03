@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #include "emu/emu_archive.h"
-#include "archive_zip.h"
+#include "archive_rar.h"
 #include "archive_lib.h"
 
 static LibarchiveObj *current_archive = NULL;
@@ -19,7 +19,7 @@ static int openRom(const char *archive_path, uint32_t *crc, char *name)
 {
     Libarchive_CloseRom(current_archive);
     current_archive = Libarchive_OpenRom(archive_path, readSupportFormatCallback, crc, name);
-    return current_archive ? 1 : 0;
+    return current_archive != NULL ? 1 : 0;
 }
 
 static int closeRom()

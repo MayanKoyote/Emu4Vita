@@ -13,7 +13,7 @@ static int openRom(const char *archive_path, uint32_t *crc, char *name)
 {
     Libarchive_CloseRom(current_archive);
     current_archive = Libarchive_OpenRom(archive_path, archive_read_support_format_zip, crc, name);
-    return current_archive ? 1 : 0;
+    return current_archive != NULL ? 1 : 0;
 }
 
 static int closeRom()
