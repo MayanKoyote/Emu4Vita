@@ -23,15 +23,17 @@
 
 ## 感谢人员
 
-[Libretro](https://github.com/libretro)
+[Vitasdk](https://github.com/vitasdk) contributors.
 
-[Vitasdk](https://github.com/vitasdk)
+[Libretro](https://github.com/libretro) for core and API.
 
-[TheFlow](https://github.com/TheOfficialFloW)
+[TheFlow](https://github.com/TheOfficialFloW) for some snippets i used and some ideas i borrowed.
 
-[xerpi](https://github.com/xerpi)
+[xerpi](https://github.com/xerpi) for vita2d.
 
-[水原ありさ](https://space.bilibili.com/3476)
+[frangarcj](https://github.com/frangarcj) for vitashaders.
+
+[水原ありさ](https://space.bilibili.com/3476) for 图片素材等.
 
 感谢不知名的网友提供的素材，如遮罩图，背景图等。
 感谢百度psvita破解吧的吧主lxg好费劲以及众多吧友。
@@ -40,11 +42,7 @@
 
 ## 程序截图
 
-![](screenshots/screenshot_0.jpg)
-
-![](screenshots/screenshot_1.jpg)
-
-![](screenshots/screenshot_2.jpg)
-
-![](screenshots/screenshot_3.jpg)
-
+|                                                 |                                                 |
+| :---------------------------------------------: | :---------------------------------------------: |
+| ![screenshot_0](./screenshots/screenshot_0.jpg) | ![screenshot_1](./screenshots/screenshot_1.jpg) |
+| ![screenshot_2](./screenshots/screenshot_2.jpg) | ![screenshot_3](./screenshots/screenshot_3.jpg) |
