@@ -42,6 +42,10 @@ LibarchiveObj *Libarchive_OpenRom(const char *archive_path, int (*read_support_f
     while (archive_read_next_header(obj->archive, &obj->entry) == ARCHIVE_OK)
     {
         const char *entry_name = archive_entry_pathname_utf8(obj->entry);
+        if (!entry_name)
+        {
+            entry_name = archive_entry_pathname(obj->entry);
+        }
         AppLog("[ARCHIVE] Libarchive_OpenRom: entry_name = %s\n", entry_name);
         if (entry_name && IsValidFile(entry_name))
         {
