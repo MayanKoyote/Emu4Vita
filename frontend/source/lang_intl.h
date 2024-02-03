@@ -339,6 +339,8 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "[Hotkey] Game speed up",
     // LANG_HOTKEY_GAME_SPEED_DOWN
     "[Hotkey] Game speed down",
+    // LANG_HOTKEY_GAME_REWIND
+    "[Hotkey] Game rewind",
     // LANG_HOTKEY_CONTROL_PLAYER_UP
     "[Hotkey] Control player +",
     // LANG_HOTKEY_CONTROL_PLAYER_DOWN
@@ -720,6 +722,8 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "[快捷键] 加速游戏",
     // LANG_HOTKEY_GAME_SPEED_DOWN
     "[快捷键] 减速游戏",
+    // LANG_HOTKEY_GAME_REWIND
+    "[快捷键] 回溯",
     // LANG_HOTKEY_CONTROL_PLAYER_UP
     "[快捷键] 切换玩家+",
     // LANG_HOTKEY_CONTROL_PLAYER_DOWN
@@ -1101,6 +1105,8 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     "[快捷鍵] 加速遊戲",
     // LANG_HOTKEY_GAME_SPEED_DOWN
     "[快捷鍵] 減速遊戲",
+    // LANG_HOTKEY_GAME_REWIND
+    "[快捷鍵] 倒帶"
     // LANG_HOTKEY_CONTROL_PLAYER_UP
     "[快捷鍵] 切換玩家+",
     // LANG_HOTKEY_CONTROL_PLAYER_DOWN

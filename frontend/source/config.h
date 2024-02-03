@@ -173,10 +173,11 @@ typedef struct
     uint32_t hk_savestate;   // 0x08
     uint32_t hk_speed_up;    // 0x0C
     uint32_t hk_speed_down;  // 0x10
-    uint32_t hk_player_up;   // 0x14
-    uint32_t hk_player_down; // 0x18
-    uint32_t hk_exit_game;   // 0x1C
-    char reserved[0x60];     // 0x20
+    uint32_t hk_rewind;      // 0x14
+    uint32_t hk_player_up;   // 0x18
+    uint32_t hk_player_down; // 0x1c
+    uint32_t hk_exit_game;   // 0x20
+    char reserved[0x5c];     // 0x24
 } HotkeyConfig;              // 0x80
 
 typedef struct

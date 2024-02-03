@@ -119,9 +119,10 @@ CheckBoxOptionMenu hk_loadstate_option = STD_HOT_KEY_MAPPER_OPTION(0, hk_loadsta
 CheckBoxOptionMenu hk_savestate_option = STD_HOT_KEY_MAPPER_OPTION(1, hk_savestate);
 CheckBoxOptionMenu hk_speed_up_option = STD_HOT_KEY_MAPPER_OPTION(2, hk_speed_up);
 CheckBoxOptionMenu hk_speed_down_option = STD_HOT_KEY_MAPPER_OPTION(3, hk_speed_down);
-CheckBoxOptionMenu hk_player_up_option = STD_HOT_KEY_MAPPER_OPTION(4, hk_player_up);
-CheckBoxOptionMenu hk_player_down_option = STD_HOT_KEY_MAPPER_OPTION(5, hk_player_down);
-CheckBoxOptionMenu hk_exit_game_option = STD_HOT_KEY_MAPPER_OPTION(6, hk_exit_game);
+CheckBoxOptionMenu hk_rewind_option = STD_HOT_KEY_MAPPER_OPTION(4, hk_rewind);
+CheckBoxOptionMenu hk_player_up_option = STD_HOT_KEY_MAPPER_OPTION(5, hk_player_up);
+CheckBoxOptionMenu hk_player_down_option = STD_HOT_KEY_MAPPER_OPTION(6, hk_player_down);
+CheckBoxOptionMenu hk_exit_game_option = STD_HOT_KEY_MAPPER_OPTION(7, hk_exit_game);
 
 // 杂项 (菜单条目)
 StrArrayOption auto_save_load_option = {&misc_config.auto_save_load, no_yes_values, sizeof(no_yes_values) / sizeof(LangString), miscOptionUpdateCallback, NULL};
@@ -202,14 +203,15 @@ static SettingMenu control_menu = {{LANG_MENU_CONTROL, NULL}, &visibility_visibl
 
 // 热键
 static SettingMenuItem hotkey_menu_items[] = {
-    {{LANG_HOTKEY_SAVESTATE, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_loadstate_option},      // 0
-    {{LANG_HOTKEY_LOADSTATE, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_savestate_option},      // 1
-    {{LANG_HOTKEY_GAME_SPEED_UP, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_speed_up_option},        // 2
-    {{LANG_HOTKEY_GAME_SPEED_DOWN, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_speed_down_option},    // 3
-    {{LANG_HOTKEY_CONTROL_PLAYER_UP, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_player_up_option},      // 4
-    {{LANG_HOTKEY_CONTROL_PLAYER_DOWN, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_player_down_option},  // 5
-    {{LANG_HOTKEY_EXIT_GAME, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_exit_game_option},      // 6
-    {{LANG_RESET_CONFIGS, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetHotkeyConfigCallback}, // 7
+    {{LANG_HOTKEY_SAVESTATE, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_loadstate_option},             // 0
+    {{LANG_HOTKEY_LOADSTATE, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_savestate_option},             // 1
+    {{LANG_HOTKEY_GAME_SPEED_UP, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_speed_up_option},          // 2
+    {{LANG_HOTKEY_GAME_SPEED_DOWN, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_speed_down_option},      // 3
+    {{LANG_HOTKEY_GAME_REWIND, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_rewind_option},              // 4
+    {{LANG_HOTKEY_CONTROL_PLAYER_UP, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_player_up_option},     // 5
+    {{LANG_HOTKEY_CONTROL_PLAYER_DOWN, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_player_down_option}, // 6
+    {{LANG_HOTKEY_EXIT_GAME, NULL}, &visibility_visible, TYPE_OPTION_CHECK_BOX, &hk_exit_game_option},             // 7
+    {{LANG_RESET_CONFIGS, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetHotkeyConfigCallback},            // 8
 };
 static SettingMenu hotkey_menu = {{LANG_MENU_HOTKEY, NULL}, &visibility_visible, hotkey_menu_items, sizeof(hotkey_menu_items) / sizeof(SettingMenuItem), NULL, hotkeyMenuExitCallback};
 

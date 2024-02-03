@@ -174,6 +174,7 @@ int ResetHotkeyConfig()
     hotkey_config.hk_savestate = (SCE_CTRL_PSBUTTON | SCE_CTRL_TRIANGLE | ENABLE_KEY_BITMASK);
     hotkey_config.hk_speed_up = (SCE_CTRL_PSBUTTON | SCE_CTRL_R1 | ENABLE_KEY_BITMASK);
     hotkey_config.hk_speed_down = (SCE_CTRL_PSBUTTON | SCE_CTRL_L1 | ENABLE_KEY_BITMASK);
+    hotkey_config.hk_rewind = (SCE_CTRL_PSBUTTON | SCE_CTRL_CROSS | ENABLE_KEY_BITMASK);
     hotkey_config.hk_player_up = (SCE_CTRL_PSBUTTON | EXT_CTRL_RIGHT_ANLOG_RIGHT | ENABLE_KEY_BITMASK);
     hotkey_config.hk_player_down = (SCE_CTRL_PSBUTTON | EXT_CTRL_RIGHT_ANLOG_LEFT | ENABLE_KEY_BITMASK);
     hotkey_config.hk_exit_game = (SCE_CTRL_PSBUTTON | SCE_CTRL_CROSS | ENABLE_KEY_BITMASK);
