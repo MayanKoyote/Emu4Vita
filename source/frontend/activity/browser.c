@@ -33,7 +33,7 @@ static GUI_ButtonInstruction button_instructions[] = {
 };
 
 GUI_Activity browser_activity = {
-    LANG_APP_TITLE,             // Title
+    LANG_APP_TITLE,        // Title
     button_instructions,   // Button instructions
     NULL,                  // Wallpaper
     startActivityCallback, // Start callback
@@ -228,6 +228,17 @@ int CurrentPathIsFile()
         return !data->is_folder;
 
     return 0;
+}
+
+int GetCurrentFileType()
+{
+    int focus_pos = ListViewGetFocusPos(broeser_listview);
+    LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
+    FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
+    if (!data)
+        return -1;
+
+    return data->type;
 }
 
 int MakeCurrentFileName(char *name)
@@ -542,6 +553,7 @@ static void startGame(LinkedListEntry *entry)
 
     EmuGameInfo info;
     snprintf(info.path, MAX_PATH_LENGTH, "%s%s", ls_data->path, e_data->name);
+    info.type = e_data->type;
     info.state_num = -2;
     Emu_StartGame(&info);
 }

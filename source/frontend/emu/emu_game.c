@@ -95,13 +95,13 @@ void Emu_SpeedDownGame()
     Emu_SetRunSpeed(speed);
 }
 
-static int loadGameFromFile(const char *path, int archive_mode)
+static int loadGameFromFile(const char *path, int type)
 {
     const char *rom_path = path;
     char cache_path[MAX_PATH_LENGTH];
-    if (archive_mode != ARCHIVE_MODE_NO)
+    if (type >= n_core_valid_extensions)
     {
-        if (Archive_GetRomPath(path, cache_path, archive_mode) < 0)
+        if (Archive_GetRomPath(path, cache_path, Archive_GetDriver(type - n_core_valid_extensions)) < 0)
             return -1;
         rom_path = cache_path;
     }
@@ -118,7 +118,7 @@ static int loadGameFromFile(const char *path, int archive_mode)
     return 0;
 }
 
-static int loadGameFromMemory(const char *path, int archive_mode)
+static int loadGameFromMemory(const char *path, int type)
 {
     if (game_rom_data)
     {
@@ -131,9 +131,9 @@ static int loadGameFromMemory(const char *path, int archive_mode)
 
     size_t size = 0;
 
-    if (archive_mode != ARCHIVE_MODE_NO)
+    if (type >= n_core_valid_extensions)
     {
-        if (Archive_GetRomMemory(path, &game_rom_data, &size, archive_mode) < 0)
+        if (Archive_GetRomMemory(path, &game_rom_data, &size, Archive_GetDriver(type - n_core_valid_extensions)) < 0)
             return -1;
     }
     else
@@ -159,7 +159,7 @@ static int loadGameFromMemory(const char *path, int archive_mode)
     return 0;
 }
 
-static int loadGame(const char *path)
+static int loadGame(const char *path, int type)
 {
     int ret;
 
@@ -178,12 +178,10 @@ static int loadGame(const char *path)
     core_display_rotate = 0;
     retro_init();
 
-    int archive_mode = Archive_GetMode(path);
-
     if (core_system_info.need_fullpath)
-        ret = loadGameFromFile(path, archive_mode);
+        ret = loadGameFromFile(path, type);
     else
-        ret = loadGameFromMemory(path, archive_mode);
+        ret = loadGameFromMemory(path, type);
 
     if (ret < 0)
     {
@@ -215,7 +213,7 @@ int Emu_StartGame(EmuGameInfo *info)
     Splash_SetBgTexture(texture);
     GUI_StartActivity(&splash_activity);
 
-    int ret = loadGame(info->path);
+    int ret = loadGame(info->path, info->type);
     game_loading = 0;
     game_reloading = 0;
 
@@ -368,6 +366,7 @@ int Emu_ReloadGame()
 
     EmuGameInfo info;
     MakeCurrentFilePath(info.path);
+    info.type = GetCurrentFileType();
     info.state_num = -3;
     Emu_StartGame(&info);
 

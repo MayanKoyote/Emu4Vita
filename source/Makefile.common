@@ -99,7 +99,9 @@ SRC_C += \
 	setting/setting.c
 
 SRC_C += \
-	archive/archive_rom.c
+	archive/archive_lib.c \
+	archive/archive_7z.c \
+	archive/archive_zip.c
 
 SRC_C += \
 	boot.c \

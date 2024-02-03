@@ -34,6 +34,7 @@ int BootLoadGame()
 
     EmuGameInfo info;
     strcpy(info.path, boot_game_path);
+    info.type = GetFileType(boot_game_path);
     info.state_num = -2;
     Emu_StartGame(&info);
 

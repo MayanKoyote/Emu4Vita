@@ -6,7 +6,8 @@
 #include <psp2/kernel/processmgr.h>
 #include <psp2/io/fcntl.h>
 
-#include "archive/archive_rom.h"
+#include "archive/archive_7z.h"
+#include "archive/archive_zip.h"
 #include "emu/emu.h"
 #include "file.h"
 #include "config.h"
@@ -26,6 +27,12 @@ typedef struct
 
 static ArchiveEntry archive_cache_entries[MAX_CACHE_SIZE];
 
+static ArchiveRomDriver *archiver_rom_drivers[] = {
+    &archive_zip_driver,
+    &archive_7z_driver,
+};
+#define N_ARCHIVER_ROM_DRIVERS (sizeof(archiver_rom_drivers) / sizeof(ArchiveRomDriver *))
+
 static void makeCacheRomName(const char *archive_path, const char *entry_name, char *rom_name, size_t rom_name_size)
 {
     MakeBaseName(rom_name, archive_path, rom_name_size);
@@ -34,24 +41,28 @@ static void makeCacheRomName(const char *archive_path, const char *entry_name, c
         strcat(rom_name, ext);
 }
 
-int Archive_GetMode(const char *path)
+int Archive_GetDriverIndex(const char *ext)
 {
-    int mode = ARCHIVE_MODE_NO;
-
-    if (core_want_ext_zip_mode || core_want_ext_7z_mode)
+    int i;
+    for (i = 0; i < N_ARCHIVER_ROM_DRIVERS; i++)
     {
-        const char *ext = strrchr(path, '.');
-        if (ext++)
-        {
-            if (core_want_ext_zip_mode && strcasecmp(ext, "zip") == 0)
-                mode = ARCHIVE_MODE_ZIP;
-
-            if (mode == ARCHIVE_MODE_NO && core_want_ext_7z_mode && strcasecmp(ext, "7z") == 0)
-                mode = ARCHIVE_MODE_7Z;
-        }
+        if (strcasecmp(ext, archiver_rom_drivers[i]->extension) == 0)
+            return i;
     }
 
-    return mode;
+    return -1;
+}
+
+ArchiveRomDriver *Archive_GetDriver(int index)
+{
+    ArchiveRomDriver *driver = NULL;
+
+    if (index >= 0 && index < N_ARCHIVER_ROM_DRIVERS)
+    {
+        driver = archiver_rom_drivers[index];
+    }
+
+    return driver;
 }
 
 int Archive_CleanCache(int index)
@@ -72,14 +83,18 @@ int Archive_CleanCache(int index)
 
 int Archive_CleanCacheByPath(const char *path)
 {
-    int archive_mode = Archive_GetMode(path);
-    if (archive_mode == ARCHIVE_MODE_NO)
+    int type = GetFileType(path);
+    if (type < n_core_valid_extensions)
         return 0;
 
     int n = 0;
     char entry_name[MAX_PATH_LENGTH];
 
-    if (ArchiveRom_Open(path, NULL, entry_name) <= 0)
+    ArchiveRomDriver *driver = Archive_GetDriver(type - n_core_valid_extensions);
+    if (!driver)
+        return 0;
+
+    if (driver->openRom(path, NULL, entry_name) <= 0)
         goto END;
 
     // 缓存文件名：例GBA: game1.zip ==> game1.gba（忽略压缩包内的rom文件名，以zip文件名为rom名）
@@ -98,7 +113,7 @@ int Archive_CleanCacheByPath(const char *path)
     }
 
 END:
-    ArchiveRom_Close();
+    driver->closeRom();
 
     return n;
 }
@@ -148,12 +163,12 @@ int Archive_LoadCacheConfig()
     do
     {
         res = StringGetLine(p, size, &line);
-        // printf("StringGetLine: line = %s\n", line);
         if (res > 0)
         {
+            // printf("StringGetLine: line = %s\n", line);
             if (StringReadConfigLine(line, &name, &value) >= 0)
             {
-                // printf("StringGetLine: name = %s, value = %s\n", name, value);
+                // printf("StringReadConfigLine: name = %s, value = %s\n", name, value);
                 sprintf(path, "%s/%s", CORE_CACHE_DIR, value);
                 if (CheckFileExist(path))
                 {
@@ -210,20 +225,19 @@ int Archive_SaveCacheConfig()
     return ret;
 }
 
-static int Archive_FindRomCache(int rom_crc, const char *rom_name, char *rom_path)
+static int Archive_FindRomCache(int rom_crc, const char *rom_name)
 {
     int i;
     for (i = 0; i < MAX_CACHE_SIZE; i++)
     {
         if (archive_cache_entries[i].exist && archive_cache_entries[i].crc == rom_crc && strcasecmp(archive_cache_entries[i].name, rom_name) == 0)
         {
-            sprintf(rom_path, "%s/%s", CORE_CACHE_DIR, rom_name);
             AppLog("[ARCHIVE] Archive_FindRomCache OK: index = %d, crc = %08X, name = %s\n", i, rom_crc, rom_name);
             return i;
         }
     }
 
-    AppLog("[ARCHIVE] FindRomCache failed: %s\n", rom_name);
+    AppLog("[ARCHIVE] Archive_FindRomCache failed: %s\n", rom_name);
     return -1;
 }
 
@@ -268,13 +282,16 @@ static int Archive_AddCacheEntry(int crc, const char *rom_name)
     return index;
 }
 
-int Archive_GetRomMemory(const char *archive_path, void **buf, size_t *size, int archive_mode)
+int Archive_GetRomMemory(const char *archive_path, void **buf, size_t *size, ArchiveRomDriver *driver)
 {
     int ret = -1;
     uint32_t rom_crc;
     char entry_name[MAX_NAME_LENGTH];
 
-    ret = ArchiveRom_Open(archive_path, &rom_crc, entry_name);
+    if (!driver)
+        goto FAILED;
+
+    ret = driver->openRom(archive_path, &rom_crc, entry_name);
     if (ret <= 0)
         goto FAILED;
 
@@ -283,8 +300,9 @@ int Archive_GetRomMemory(const char *archive_path, void **buf, size_t *size, int
     char rom_name[MAX_NAME_LENGTH];
     char rom_path[MAX_PATH_LENGTH];
     makeCacheRomName(archive_path, entry_name, rom_name, sizeof(rom_name));
+    sprintf(rom_path, "%s/%s", CORE_CACHE_DIR, rom_name);
 
-    int index = Archive_FindRomCache(rom_crc, rom_name, rom_path);
+    int index = Archive_FindRomCache(rom_crc, rom_name);
     if (index >= 0)
     {
         archive_cache_entries[index].ltime = sceKernelGetProcessTimeWide();
@@ -293,14 +311,15 @@ int Archive_GetRomMemory(const char *archive_path, void **buf, size_t *size, int
     }
 #endif
 
-    ret = ArchiveRom_ExtractToMemory(buf, size);
+    ret = driver->extractRomMemory(buf, size);
 #ifdef WANT_SAVE_MEM_ROM_CACHE
     if (ret >= 0) // 保存memory rom cache
         Archive_SaveMemRomCache(rom_crc, rom_name, *buf, *size);
 #endif
 
 END:
-    ArchiveRom_Close();
+    if (driver)
+        driver->closeRom();
 
     if (ret < 0)
         AppLog("[ARCHIVE] Archive_GetRomMemory failed!\n");
@@ -314,26 +333,30 @@ FAILED:
     goto END;
 }
 
-int Archive_GetRomPath(const char *archive_path, char *rom_path, int archive_mode)
+int Archive_GetRomPath(const char *archive_path, char *rom_path, ArchiveRomDriver *driver)
 {
     int ret = -1;
     uint32_t rom_crc;
     char entry_name[MAX_NAME_LENGTH];
-    ret = ArchiveRom_Open(archive_path, &rom_crc, entry_name);
 
+    if (!driver)
+        goto FAILED;
+
+    ret = driver->openRom(archive_path, &rom_crc, entry_name);
     if (ret <= 0)
         goto FAILED;
 
     // 缓存文件名：例GBA: game1.zip ==> game1.gba（忽略压缩包内的rom文件名，以zip文件名为rom名）
     char rom_name[MAX_NAME_LENGTH];
     makeCacheRomName(archive_path, entry_name, rom_name, sizeof(rom_name));
+    sprintf(rom_path, "%s/%s", CORE_CACHE_DIR, rom_name);
+    CreateFolder(CORE_CACHE_DIR);
 
-    int index = Archive_FindRomCache(rom_crc, rom_name, rom_path);
+    int index = Archive_FindRomCache(rom_crc, rom_name);
     if (index < 0)
     {
         // 未找到cache，执行解压
-        ret = ArchiveRom_Extract(rom_name, rom_path);
-
+        ret = driver->extractRom(rom_path);
         if (ret < 0)
             goto FAILED;
 
@@ -347,7 +370,8 @@ int Archive_GetRomPath(const char *archive_path, char *rom_path, int archive_mod
     }
 
 END:
-    ArchiveRom_Close();
+    if (driver)
+        driver->closeRom();
 
     if (ret < 0)
         AppLog("[ARCHIVE] Archive_GetRomPath failed!\n");
@@ -374,26 +398,27 @@ static SceUID archive_save_thread = -1;
 
 static int saveMemRomCacheThreadFunc(SceSize args, void *argp)
 {
-    AppLog("[ARCHIVE] SaveMemRomCacheThread start.\n");
+    AppLog("[ARCHIVE] Archive_SaveMemRomCache thread start.\n");
 
     MemRomInfo *rom_info = (MemRomInfo *)argp;
     char rom_path[MAX_PATH_LENGTH];
     snprintf(rom_path, sizeof(rom_path), "%s/%s", CORE_CACHE_DIR, rom_info->name);
+    // AppLog("[ARCHIVE] Archive_SaveMemRomCache: rom_path = %s, rom_size = %u\n", rom_path, rom_info->size);
+
     CreateFolder(CORE_CACHE_DIR);
-    // printf("SaveMemRomCache: %s, buf: %p, size: %u\n", rom_path, rom_info->buf, rom_info->size);
 
     if (WriteFileEx(rom_path, rom_info->buf, rom_info->size) == rom_info->size)
     {
         Archive_AddCacheEntry(rom_info->crc, rom_info->name);
-        AppLog("[ARCHIVE] SaveMemRomCache OK!\n");
+        AppLog("[ARCHIVE] Archive_SaveMemRomCache OK!\n");
     }
     else
     {
         sceIoRemove(rom_path);
-        AppLog("[ARCHIVE] SaveMemRomCache Failed!\n");
+        AppLog("[ARCHIVE] Archive_SaveMemRomCache failed!\n");
     }
 
-    AppLog("[ARCHIVE] SaveMemRomCacheThread exit.\n");
+    AppLog("[ARCHIVE] Archive_SaveMemRomCache thread exit.\n");
     sceKernelExitDeleteThread(0);
     return 0;
 }
@@ -421,7 +446,7 @@ int Archive_WaitThreadEnd()
 {
     if (archive_save_thread >= 0)
     {
-        AppLog("[ARCHIVE] Wait SaveMemRomCacheThread end...\n");
+        AppLog("[ARCHIVE] Wait Archive_SaveMemRomCache thread end...\n");
         sceKernelWaitThreadEnd(archive_save_thread, NULL, NULL);
         sceKernelDeleteThread(archive_save_thread);
         archive_save_thread = -1;

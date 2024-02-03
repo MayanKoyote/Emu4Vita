@@ -15,6 +15,7 @@ enum TypeGameRunAction
 typedef struct EmuGameInfo
 {
     char path[MAX_PATH_LENGTH];
+    int type;
     int state_num;
 } EmuGameInfo;
 

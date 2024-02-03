@@ -243,10 +243,11 @@ int Setting_LoadState(int num)
     {
         EmuGameInfo info;
         MakeCurrentFilePath(info.path);
+        info.type = GetCurrentFileType();
         info.state_num = num;
         return Emu_StartGame(&info);
     }
-    
+
     return Emu_LoadState(num);
 }
 
@@ -524,10 +525,12 @@ static int stateThreadFunc(SceSize args, void *argp)
 
 int initStateThread()
 {
+    int ret = 0;
+
     state_thread_stop = 0;
-    state_thid = sceKernelCreateThread("state_thread", stateThreadFunc, 0x10000100, 0x10000, 0, 0, NULL);
+    ret = state_thid = sceKernelCreateThread("state_thread", stateThreadFunc, 0x10000100, 0x10000, 0, 0, NULL);
     if (state_thid >= 0)
-        sceKernelStartThread(state_thid, 0, NULL);
+        ret = sceKernelStartThread(state_thid, 0, NULL);
 
     return state_thid;
 }

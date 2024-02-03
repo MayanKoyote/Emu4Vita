@@ -155,23 +155,6 @@ static int ApplyCheatOptionThreadFunc(SceSize args, void *argp)
     return 0;
 }
 
-static int StartApplyCheatOptionThread()
-{
-    int ret = -1;
-
-    if (cheat_thid >= 0)
-        Setting_WaitOverlayInitEnd();
-
-    ret = cheat_thid = sceKernelCreateThread("cheat_thread", ApplyCheatOptionThreadFunc, 0x10000100, 0x10000, 0, 0, NULL);
-    if (cheat_thid >= 0)
-    {
-        cheat_run = 1;
-        ret = sceKernelStartThread(cheat_thid, 0, NULL);
-    }
-
-    return ret;
-}
-
 static int ExitApplyCheatOptiontThread()
 {
     if (cheat_thid >= 0)
@@ -185,13 +168,31 @@ static int ExitApplyCheatOptiontThread()
     return 0;
 }
 
+static int StartApplyCheatOptionThread()
+{
+    int ret = -1;
+
+    if (cheat_thid >= 0)
+        ExitApplyCheatOptiontThread();
+
+    ret = cheat_thid = sceKernelCreateThread("cheat_thread", ApplyCheatOptionThreadFunc, 0x10000100, 0x10000, 0, 0, NULL);
+    if (cheat_thid >= 0)
+    {
+        cheat_run = 1;
+        ret = sceKernelStartThread(cheat_thid, 0, NULL);
+    }
+
+    return ret;
+}
+
 int Emu_InitCheat()
 {
+    retro_cheat_reset();
+    cheat_reset = 0;
+    cheat_pause = 1;
+
     if (Emu_LoadCheatOption() < 0)
         return -1;
-
-    cheat_pause = 1;
-    cheat_reset = 1;
 
     return StartApplyCheatOptionThread();
 }

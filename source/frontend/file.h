@@ -10,9 +10,11 @@
 #define DIRECTORY_SIZE (4 * 1024)
 #define TRANSFER_SIZE (128 * 1024)
 
-extern char **file_valid_exts;
+extern char **core_valid_extensions;
+extern int n_core_valid_extensions;
 
 int IsValidFile(const char *path);
+int GetFileType(const char *filename);
 
 int MakeBaseDirectoryEx(char *base, int base_size, const char *path, int path_len);
 int MakeFileNameEx(char *name, int name_size, const char *path, int path_len);

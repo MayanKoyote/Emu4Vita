@@ -4,6 +4,7 @@
 #include "gui/gui.h"
 
 int CurrentPathIsFile();
+int GetCurrentFileType();
 int MakeCurrentFileName(char *name);
 int MakeCurrentFilePath(char *path);
 int MakePreviewPath(char *path);

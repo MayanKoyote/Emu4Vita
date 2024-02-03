@@ -177,18 +177,26 @@ int FileListGetDirectoryEntries(LinkedList *list, const char *path, int sort)
         if (res > 0)
         {
             int is_folder = SCE_S_ISDIR(dir.d_stat.st_mode);
+            int type = -1;
 
-            if (is_folder && strcasecmp(dir.d_name, PREVIEW_DIR_NAME) == 0)
-                continue;
-
-            if (!is_folder && !IsValidFile(dir.d_name))
-                continue;
+            if (is_folder)
+            {
+                if (strcasecmp(dir.d_name, PREVIEW_DIR_NAME) == 0)
+                    continue;
+            }
+            else
+            {
+                type = GetFileType(dir.d_name);
+                if (type < 0)
+                    continue;
+            }
 
             FileListEntryData *e_data = malloc(sizeof(FileListEntryData));
             if (!e_data)
                 continue;
 
             e_data->is_folder = is_folder;
+            e_data->type = type;
 
             if (is_folder)
             {

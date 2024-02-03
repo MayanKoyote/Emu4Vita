@@ -24,8 +24,7 @@ extern enum retro_pixel_format core_pixel_format;
 extern GuiPixelFormat core_video_pixel_format;
 extern int core_display_rotate;
 extern int core_input_supports_bitmasks;
-extern int core_want_ext_zip_mode;
-extern int core_want_ext_7z_mode;
+extern int core_want_ext_archive_rom;
 
 int Retro_InitLib();
 int Retro_DeinitLib();

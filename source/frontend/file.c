@@ -10,32 +10,59 @@
 #include <psp2/io/stat.h>
 #include <png.h>
 
+#include "emu/emu.h"
 #include "file.h"
 #include "utils.h"
 
 #define SCE_ERROR_ERRNO_EEXIST 0x80010011
 #define SCE_ERROR_ERRNO_ENODEV 0x80010013
 
-char **file_valid_exts = NULL;
+char **core_valid_extensions = NULL;
+int n_core_valid_extensions = 0;
 
 int IsValidFile(const char *path)
 {
-    if (!file_valid_exts)
+    if (!core_valid_extensions)
         return 0;
 
     char *ext = strrchr(path, '.');
     if (!ext++)
         return 0;
 
-    int i = 0;
-    while (file_valid_exts[i])
+    int i;
+    for (i = 0; i < n_core_valid_extensions; i++)
     {
-        if (strcasecmp(ext, file_valid_exts[i]) == 0)
+        if (strcasecmp(ext, core_valid_extensions[i]) == 0)
             return 1;
-        i++;
     }
 
     return 0;
+}
+
+int GetFileType(const char *filename)
+{
+    if (!core_valid_extensions)
+        return -1;
+
+    char *ext = strrchr(filename, '.');
+    if (!ext++)
+        return -1;
+
+    int i;
+    for (i = 0; i < n_core_valid_extensions; i++)
+    {
+        if (strcasecmp(ext, core_valid_extensions[i]) == 0)
+            return i;
+    }
+
+    if (core_want_ext_archive_rom)
+    {
+        i = Archive_GetDriverIndex(ext);
+        if (i >= 0)
+            return i + n_core_valid_extensions;
+    }
+
+    return -1;
 }
 
 int MakeBaseDirectoryEx(char *base, int base_size, const char *path, int path_len)

@@ -32,8 +32,12 @@ enum retro_pixel_format core_pixel_format = RETRO_PIXEL_FORMAT_RGB565;
 GuiPixelFormat core_video_pixel_format = GUI_PIXEL_FORMAT_U5U6U5_RGB;
 int core_input_supports_bitmasks = 0;
 int core_display_rotate = 0;
-int core_want_ext_zip_mode = 0;
-int core_want_ext_7z_mode = 0;
+#if defined(FC_BUILD) || defined(SFC_BUILD) || defined(GBC_BUILD) || defined(GBA_BUILD) || \
+    defined(MD_BUILD) || defined(NGP_BUILD) || defined(WSC_BUILD) || defined(PCE_BUILD)
+int core_want_ext_archive_rom = 1;
+#else
+int core_want_ext_archive_rom = 0;
+#endif
 
 static unsigned int emu_device_type = RETRO_DEVICE_JOYPAD;
 
@@ -49,36 +53,26 @@ static int makeCoreSystemDirPath(char *path)
     return 0;
 }
 
-static void freeValidFileExts()
+static void freeCoreValidExtensions()
 {
-    if (file_valid_exts)
+    if (core_valid_extensions)
     {
         int i;
-        for (i = 0; file_valid_exts[i]; i++)
-            free(file_valid_exts[i]);
-        free(file_valid_exts);
-        file_valid_exts = NULL;
+        for (i = 0; i < n_core_valid_extensions; i++)
+        {
+            free(core_valid_extensions[i]);
+        }
+        free(core_valid_extensions);
+        core_valid_extensions = NULL;
     }
 }
 
-static int creatValidFileExts()
+static int creatCoreValidExtensions()
 {
     int ret = 0;
     const char *exts = core_system_info.valid_extensions;
     int exts_len;
-    int n_exts;
     int i;
-    const char *zip_ext = "zip";
-    const char *sevenz_ext = "7z";
-
-#if defined(FC_BUILD) || defined(SFC_BUILD) || defined(GBC_BUILD) || defined(GBA_BUILD) || \
-    defined(MD_BUILD) || defined(NGP_BUILD) || defined(WSC_BUILD) || defined(PCE_BUILD)
-    core_want_ext_zip_mode = 1;
-    core_want_ext_7z_mode = 1;
-#else
-    core_want_ext_zip_mode = 0;
-    core_want_ext_7z_mode = 0;
-#endif
 
     if (!exts)
         return -1;
@@ -89,64 +83,40 @@ static int creatValidFileExts()
     if (exts_len == 0)
         return -1;
 
-    n_exts = 1;
+    n_core_valid_extensions = 1;
     for (i = 0; i < exts_len; i++)
     {
         if (exts[i] == '|')
-            n_exts++;
+            n_core_valid_extensions++;
     }
-    // printf("n_exts: %d\n", n_exts);
 
-    if (file_valid_exts)
-        freeValidFileExts();
-    // +3 for "zip" + "7z" + NULL
-    file_valid_exts = (char **)calloc((n_exts + 3), sizeof(char *));
-    if (!file_valid_exts)
+    if (core_valid_extensions)
+        freeCoreValidExtensions();
+    core_valid_extensions = (char **)calloc(n_core_valid_extensions, sizeof(char *));
+    if (!core_valid_extensions)
         return -1;
 
     const char *p = exts;
     const char *sep;
     int len;
-    for (i = 0; i < n_exts; i++)
+    for (i = 0; i < n_core_valid_extensions; i++)
     {
         sep = strchr(p, '|');
         if (!sep)
             sep = exts + exts_len;
         len = sep - p;
-        file_valid_exts[i] = (char *)malloc(len + 1);
-        if (file_valid_exts[i])
+        core_valid_extensions[i] = (char *)malloc(len + 1);
+        if (core_valid_extensions[i])
         {
-            strncpy(file_valid_exts[i], p, len);
-            file_valid_exts[i][len] = '\0';
-
-            // If the core native support zip rom, skip ext zip mode
-            if (core_want_ext_zip_mode && strcasecmp(file_valid_exts[i], zip_ext) == 0)
-                core_want_ext_zip_mode = 0;
-            // If the core native support 7z rom, skip ext 7z mode
-            if (core_want_ext_7z_mode && strcasecmp(file_valid_exts[i], sevenz_ext) == 0)
-                core_want_ext_7z_mode = 0;
+            strncpy(core_valid_extensions[i], p, len);
+            core_valid_extensions[i][len] = '\0';
         }
         p = sep + 1;
     }
 
-    if (core_want_ext_zip_mode)
-    {
-        file_valid_exts[i] = (char *)malloc(strlen(zip_ext) + 1);
-        strcpy(file_valid_exts[i], zip_ext);
-        i++;
-    }
-
-    if (core_want_ext_7z_mode)
-    {
-        file_valid_exts[i] = (char *)malloc(strlen(sevenz_ext) + 1);
-        strcpy(file_valid_exts[i], sevenz_ext);
-        i++;
-    }
-
-    file_valid_exts[i] = NULL;
-
-    // for (i = 0; i < n_exts; i++)
-    //     printf("exts[%d]: %s\n", i, file_valid_exts[i]);
+    // printf("n_core_valid_extensions: %d\n", n_core_valid_extensions);
+    // for (i = 0; i < n_core_valid_extensions; i++)
+    //     printf("core_valid_extensions[%d]: %s\n", i, core_valid_extensions[i]);
 
     return ret;
 }
@@ -179,7 +149,7 @@ int Retro_InitLib()
 
     setRetroCallbacks();
     retro_get_system_info(&core_system_info);
-    creatValidFileExts();
+    creatCoreValidExtensions();
 
     AppLog("[RETRO] Init retro lib OK!\n");
 
@@ -192,7 +162,7 @@ int Retro_DeinitLib()
 
     rtime_deinit();
     pthread_terminate();
-    freeValidFileExts();
+    freeCoreValidExtensions();
 
     AppLog("[RETRO] Deinit retro lib OK!\n");
 
