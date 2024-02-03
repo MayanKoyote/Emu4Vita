@@ -9,10 +9,16 @@
 
 static LibarchiveObj *current_archive = NULL;
 
+static int readSupportFormatCallback(struct archive *a)
+{
+    archive_read_support_format_rar(a);
+    return archive_read_support_format_rar5(a);
+}
+
 static int openRom(const char *archive_path, uint32_t *crc, char *name)
 {
     Libarchive_CloseRom(current_archive);
-    current_archive = Libarchive_OpenRom(archive_path, archive_read_support_format_rar, crc, name);
+    current_archive = Libarchive_OpenRom(archive_path, readSupportFormatCallback, crc, name);
     return current_archive ? 1 : 0;
 }
 
