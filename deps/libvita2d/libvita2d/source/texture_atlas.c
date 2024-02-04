@@ -70,6 +70,7 @@ int texture_atlas_insert(texture_atlas *atlas, unsigned int character,
 	{
 		atlas->texture_data.rect.x = 0;
 		atlas->texture_data.rect.y += atlas->texture_data.y_space;
+		atlas->texture_data.y_space = size->h;
 	}
 
 	if (atlas->texture_data.rect.y + size->h > atlas->texture_data.rect.h)
