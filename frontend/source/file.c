@@ -55,12 +55,11 @@ int GetFileType(const char *filename)
             return i;
     }
 
-    if (core_want_ext_archive_rom)
-    {
-        i = Archive_GetDriverIndex(ext);
-        if (i >= 0)
-            return i + n_core_valid_extensions;
-    }
+#if defined(WANT_EXT_ARCHIVE_ROM)
+    i = Archive_GetDriverIndex(ext);
+    if (i >= 0)
+        return i + n_core_valid_extensions;
+#endif
 
     return -1;
 }

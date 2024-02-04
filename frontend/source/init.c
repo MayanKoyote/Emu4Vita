@@ -172,7 +172,9 @@ int AppInit(int argc, char *const argv[])
     Retro_InitLib();
     Setting_Init();
 
+#if defined(WANT_EXT_ARCHIVE_ROM)
     Archive_LoadCacheConfig();
+#endif
 
     // Lock USB connection and PS button
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_USB_CONNECTION | SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN_2);

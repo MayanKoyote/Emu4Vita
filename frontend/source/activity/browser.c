@@ -686,9 +686,11 @@ static int deleteCacheFilesCallback(GUI_Dialog *dialog)
     if (!dialog || !dialog->userdata)
         return -1;
 
+#if defined(WANT_EXT_ARCHIVE_ROM)
     char path[MAX_PATH_LENGTH];
     MakeCurrentFilePath(path);
     Archive_CleanCacheByPath(path);
+#endif
     GUI_CloseDialog(dialog->prev);
     AlertDialog_Dismiss(dialog);
 

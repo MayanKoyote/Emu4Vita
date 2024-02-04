@@ -296,27 +296,7 @@ int Archive_GetRomMemory(const char *archive_path, void **buf, size_t *size, Arc
     if (ret <= 0)
         goto FAILED;
 
-#ifdef WANT_SAVE_MEM_ROM_CACHE
-    // 缓存文件名：例GBA: game1.zip ==> game1.gba（忽略压缩包内的rom文件名，以zip文件名为rom名）
-    char rom_name[MAX_NAME_LENGTH];
-    char rom_path[MAX_PATH_LENGTH];
-    makeCacheRomName(archive_path, entry_name, rom_name, sizeof(rom_name));
-    sprintf(rom_path, "%s/%s", CORE_CACHE_DIR, rom_name);
-
-    int index = Archive_FindRomCache(rom_crc, rom_name);
-    if (index >= 0)
-    {
-        archive_cache_entries[index].ltime = sceKernelGetProcessTimeWide();
-        ret = AllocateReadFileEx(rom_path, buf, size);
-        goto END;
-    }
-#endif
-
     ret = driver->extractRomMemory(buf, size);
-#ifdef WANT_SAVE_MEM_ROM_CACHE
-    if (ret >= 0) // 保存memory rom cache
-        Archive_SaveMemRomCache(rom_crc, rom_name, *buf, *size);
-#endif
 
 END:
     if (driver)
@@ -382,71 +362,3 @@ FAILED:
     ret = -1;
     goto END;
 }
-
-#ifdef WANT_SAVE_MEM_ROM_CACHE
-typedef struct
-{
-    uint32_t crc;               // crc32
-    char name[MAX_NAME_LENGTH]; // rom名称
-    const void *buf;            // 缓存
-    size_t size;                // 缓存大小
-} MemRomInfo;
-
-static SceUID archive_save_thread = -1;
-
-static int saveMemRomCacheThreadFunc(SceSize args, void *argp)
-{
-    AppLog("[ARCHIVE] Archive_SaveMemRomCache thread start.\n");
-
-    MemRomInfo *rom_info = (MemRomInfo *)argp;
-    char rom_path[MAX_PATH_LENGTH];
-    snprintf(rom_path, sizeof(rom_path), "%s/%s", CORE_CACHE_DIR, rom_info->name);
-    CreateFolder(CORE_CACHE_DIR);
-
-    if (WriteFileEx(rom_path, rom_info->buf, rom_info->size) == rom_info->size)
-    {
-        Archive_AddCacheEntry(rom_info->crc, rom_info->name);
-        AppLog("[ARCHIVE] Archive_SaveMemRomCache OK!\n");
-    }
-    else
-    {
-        sceIoRemove(rom_path);
-        AppLog("[ARCHIVE] Archive_SaveMemRomCache failed!\n");
-    }
-
-    AppLog("[ARCHIVE] Archive_SaveMemRomCache thread exit.\n");
-    sceKernelExitDeleteThread(0);
-    return 0;
-}
-
-int Archive_SaveMemRomCache(uint32_t crc, const char *rom_name, const void *buf, size_t size)
-{
-    Archive_WaitThreadEnd();
-
-    archive_save_thread = sceKernelCreateThread("save_rom_cache_thread", saveMemRomCacheThreadFunc, 0x10000100 + 20, 0x10000, 0, 0, NULL);
-    if (archive_save_thread < 0)
-        return -1;
-
-    MemRomInfo rom_info;
-    strcpy(rom_info.name, rom_name);
-    rom_info.crc = crc;
-    rom_info.size = size;
-    rom_info.buf = buf;
-    rom_info.size = size;
-
-    return sceKernelStartThread(archive_save_thread, sizeof(rom_info), &rom_info);
-}
-
-// 防止未写完cache时，缓存就被其它函数清除
-int Archive_WaitThreadEnd()
-{
-    if (archive_save_thread >= 0)
-    {
-        AppLog("[ARCHIVE] Wait Archive_SaveMemRomCache thread end...\n");
-        sceKernelWaitThreadEnd(archive_save_thread, NULL, NULL);
-        sceKernelDeleteThread(archive_save_thread);
-        archive_save_thread = -1;
-    }
-    return 0;
-}
-#endif

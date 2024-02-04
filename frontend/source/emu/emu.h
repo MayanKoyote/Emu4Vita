@@ -10,6 +10,9 @@
 #include "emu_state.h"
 #include "emu_disk.h"
 #include "emu_cheat.h"
+
+#if defined(WANT_EXT_ARCHIVE_ROM)
 #include "emu_archive.h"
+#endif
 
 #endif

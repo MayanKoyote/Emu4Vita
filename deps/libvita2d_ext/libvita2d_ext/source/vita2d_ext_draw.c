@@ -26,7 +26,7 @@ void vita2d_set_vertex_uniform(const vita2d_shader *shader, const char * param, 
 	void *vertex_wvp_buffer;
 	const SceGxmProgram *program = sceGxmVertexProgramGetProgram(shader->vertexProgram);
 	const SceGxmProgramParameter *program_parameter = sceGxmProgramFindParameterByName(program, param);
-	if (program_parameter > 0)
+	if (program_parameter)
 	{
 		sceGxmReserveVertexDefaultUniformBuffer(_vita2d_ext_context, &vertex_wvp_buffer);
 		sceGxmSetUniformDataF(vertex_wvp_buffer, program_parameter, 0, length, value);
@@ -38,7 +38,7 @@ void vita2d_set_fragment_uniform(const vita2d_shader *shader, const char * param
 	void *fragment_wvp_buffer;
 	const SceGxmProgram *program = sceGxmFragmentProgramGetProgram(shader->fragmentProgram);
 	const SceGxmProgramParameter *program_parameter = sceGxmProgramFindParameterByName(program, param);
-	if (program_parameter > 0)
+	if (program_parameter)
 	{
 		sceGxmReserveFragmentDefaultUniformBuffer(_vita2d_ext_context, &fragment_wvp_buffer);
 		sceGxmSetUniformDataF(fragment_wvp_buffer, program_parameter, 0, length, value);

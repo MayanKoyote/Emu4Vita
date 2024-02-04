@@ -58,7 +58,6 @@ SRC_C += \
 	activity/splash.c
 
 SRC_C += \
-	emu/emu_archive.c \
 	emu/emu_audio.c \
 	emu/emu_cheat.c \
 	emu/emu_disk.c \
@@ -103,12 +102,6 @@ SRC_C += \
 	setting/setting.c
 
 SRC_C += \
-	archive/archive_lib.c \
-	archive/archive_zip.c \
-	archive/archive_7z.c \
-	archive/archive_rar.c
-
-SRC_C += \
 	boot.c \
 	config.c \
 	file.c \
@@ -120,9 +113,14 @@ SRC_C += \
 	utils_string.c \
 	utils.c
 
-OBJS := $(patsubst %.c,%.o, $(SRC_C))
-OBJS += $(patsubst %.cpp,%.o, $(SRC_CPP))
-OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
+ifeq ($(WANT_EXT_ARCHIVE_ROM), 1)
+	SRC_C += \
+		emu/emu_archive.c \
+		archive/archive_lib.c \
+		archive/archive_zip.c \
+		archive/archive_7z.c \
+		archive/archive_rar.c
+endif
 
 LIBS := \
 	$(CORE_MAKEFILE_DIR)/$(CORE_FILE_NAME)_libretro_vita.a \
@@ -139,9 +137,7 @@ LIBS := \
 	-lz \
 	-lm \
 	-lc \
-	-larchive \
 	-lScePgf_stub \
-	-lScePvf_stub \
 	-lSceDisplay_stub \
 	-lSceGxm_stub \
 	-lSceCtrl_stub \
@@ -156,9 +152,14 @@ LIBS := \
 	-lSceShellSvc_stub \
 	-lSceMotion_stub \
 	-lSceHid_stub \
-	-lSceFiber_stub \
-	-lzstd \
-	-llzma
+	-lSceFiber_stub
+
+ifeq ($(WANT_EXT_ARCHIVE_ROM), 1)
+	LIBS += \
+		-larchive \
+		-llzma \
+		-lzstd
+endif
 
 DEFINES := \
 	-DAPP_NAME_STR=\"$(APP_NAME_STR)\" \
@@ -178,10 +179,6 @@ DEFINES += $(SEVENZ_DEFINES)
 
 DEFINES += -DVITA
 
-ifeq ($(WANT_DISPLAY_ROTATE), 1)
-	DEFINES += -DWANT_DISPLAY_ROTATE
-endif
-
 ifeq ($(DEBUG), 1)
 	DEFINES += -DDEBUG
 endif
@@ -192,6 +189,10 @@ endif
 
 ifeq ($(WANT_DISPLAY_ROTATE), 1)
 	DEFINES += -DWANT_DISPLAY_ROTATE
+endif
+
+ifeq ($(WANT_EXT_ARCHIVE_ROM), 1)
+	DEFINES += -DWANT_EXT_ARCHIVE_ROM
 endif
 
 CORE_ARGS += platform=vita EXTERNAL_ZLIB=1
@@ -213,6 +214,10 @@ ASFLAGS   := $(CFLAGS) $(INCDIRS)
 CFLAGS    += -ffast-math $(WARNINGS) $(INCDIRS) $(DEFINES)
 CXXFLAGS  := $(CFLAGS) -fno-rtti -fno-exceptions
 LDFLAGS   := -Wl,-q $(LIBDIRS)
+
+OBJS := $(patsubst %.c,%.o, $(SRC_C))
+OBJS += $(patsubst %.cpp,%.o, $(SRC_CPP))
+OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
 
 PREFIX  := arm-vita-eabi
 CC      := $(PREFIX)-gcc
