@@ -98,6 +98,8 @@ void Emu_SpeedDownGame()
 static int loadGameFromFile(const char *path, int type)
 {
     const char *rom_path = path;
+
+#if defined(WANT_EXT_ARCHIVE_ROM)
     char cache_path[MAX_PATH_LENGTH];
     if (type >= n_core_valid_extensions)
     {
@@ -105,6 +107,7 @@ static int loadGameFromFile(const char *path, int type)
             return -1;
         rom_path = cache_path;
     }
+#endif
 
     struct retro_game_info game_info;
     game_info.path = rom_path;
@@ -122,21 +125,20 @@ static int loadGameFromMemory(const char *path, int type)
 {
     if (game_rom_data)
     {
-#ifdef WANT_SAVE_MEM_ROM_CACHE
-        Archive_WaitThreadEnd();
-#endif
         free(game_rom_data);
         game_rom_data = NULL;
     }
 
     size_t size = 0;
 
+#if defined(WANT_EXT_ARCHIVE_ROM)
     if (type >= n_core_valid_extensions)
     {
         if (Archive_GetRomMemory(path, &game_rom_data, &size, Archive_GetDriver(type - n_core_valid_extensions)) < 0)
             return -1;
     }
     else
+#endif
     {
         if (AllocateReadFileEx(path, &game_rom_data, &size) < 0)
             return -1;
@@ -314,9 +316,6 @@ void Emu_ExitGame()
 
     if (game_rom_data)
     {
-#ifdef WANT_SAVE_MEM_ROM_CACHE
-        Archive_WaitThreadEnd();
-#endif
         free(game_rom_data);
         game_rom_data = NULL;
     }

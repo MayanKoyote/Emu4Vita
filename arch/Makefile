@@ -60,9 +60,6 @@ SRC_C := \
 	utils.c \
 	boot.c
 
-OBJS := $(patsubst %.c,%.o, $(SRC_C))
-OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
-
 LIBS := \
 	-lvita2d \
 	-lfreetype \
@@ -102,6 +99,9 @@ ASFLAGS   := $(CFLAGS) $(WARNINGS) $(INCDIRS)
 CFLAGS    += -ffast-math $(WARNINGS) $(INCDIRS) $(DEFINES)
 CXXFLAGS  := $(CFLAGS) -fno-rtti -fno-exceptions
 LDFLAGS   := -Wl,-q $(LIBDIRS)
+
+OBJS := $(patsubst %.c,%.o, $(SRC_C))
+OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
 
 PREFIX  := arm-vita-eabi
 CC      := $(PREFIX)-gcc

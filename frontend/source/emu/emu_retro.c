@@ -32,12 +32,6 @@ enum retro_pixel_format core_pixel_format = RETRO_PIXEL_FORMAT_RGB565;
 GUI_PixelFormat core_video_pixel_format = GUI_PIXEL_FORMAT_U5U6U5_RGB;
 int core_input_supports_bitmasks = 0;
 int core_display_rotate = 0;
-#if defined(FC_BUILD) || defined(SFC_BUILD) || defined(GBC_BUILD) || defined(GBA_BUILD) || \
-    defined(MD_BUILD) || defined(NGP_BUILD) || defined(WSC_BUILD) || defined(PCE_BUILD)
-int core_want_ext_archive_rom = 1;
-#else
-int core_want_ext_archive_rom = 0;
-#endif
 
 static unsigned int emu_device_type = RETRO_DEVICE_JOYPAD;
 
