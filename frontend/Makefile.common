@@ -290,7 +290,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
 	@mkdir -p $(dir $@)
 	$(CC) -c -o $@ $< $(ASFLAGS)
 
-clean-deps: clean-vita2d clean-libretro_comm clean-7zip clean-minizip
+clean-deps: clean-vita2d clean-libretro_comm clean-7zip
 
 clean-vita2d: 
 	cd $(FRONTEND_DIR) && make -f Makefile.libvita2d clean
@@ -301,9 +301,6 @@ clean-libretro_comm:
 
 clean-7zip:
 	cd $(FRONTEND_DIR) && make -f Makefile.lib7zip clean EXT_DEFINES=$(SEVENZ_DEFINES)
-
-clean-minizip:
-	cd $(FRONTEND_DIR) && make -f Makefile.libminizip clean
 
 clean-core:
 	cd $(CORE_MAKEFILE_DIR) && make -f $(CORE_MAKEFILE_NAME) clean $(CORE_ARGS)
