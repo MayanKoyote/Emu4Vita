@@ -1,27 +1,31 @@
-APP_VER := 1.03
+MAJOR_VER := 1
+MINOR_VER := 3
 
-SFO_APP_VER      := 0$(APP_VER)
+PADDED_MAJOR_VER  := $(shell printf "%02d" $(MAJOR_VER))
+PADDED_MINOR_VER  := $(shell printf "%02d" $(MINOR_VER))
+APP_VER           := $(MAJOR_VER).$(PADDED_MINOR_VER)
+SFO_APP_VER       := $(PADDED_MAJOR_VER).$(PADDED_MINOR_VER)
 
-APP_NAME_STR     := $(APP_NAME)
-APP_NAME_EXT_STR := $(APP_NAME_EXT)
-APP_VER_STR      := $(APP_VER)
+APP_NAME_STR      := $(APP_NAME)
+APP_NAME_EXT_STR  := $(APP_NAME_EXT)
+APP_VER_STR       := $(APP_VER)
 
-BUILD_DATE       := $(shell date +"%Y/%m/%d")
-BUILD_DATE2      := $(shell date +"%Y_%m_%d")
+BUILD_DATE        := $(shell date +"%Y/%m/%d")
+BUILD_DATE2       := $(shell date +"%Y_%m_%d")
 
 PRIVATE_PKG_DIR            := $(APP_DIR)/pkg
-PUBLIC_PKG_DIR             := $(SOURCE_DIR)/pkgs/vita
-IMPORTS_DIR                := $(SOURCE_DIR)/imports
-BUILD_DIR                  := $(SOURCE_DIR)/../build/$(CORE_FILE_NAME)
-RELEASES_DIR               := $(SOURCE_DIR)/../releases
-NIGHTLIES_DIR              := $(SOURCE_DIR)/../nightlies
+PUBLIC_PKG_DIR             := $(FRONTEND_DIR)/pkgs/vita
+IMPORTS_DIR                := $(FRONTEND_DIR)/imports
+BUILD_DIR                  := $(FRONTEND_DIR)/../build/$(CORE_FILE_NAME)
+RELEASES_DIR               := $(FRONTEND_DIR)/../releases
+NIGHTLIES_DIR              := $(FRONTEND_DIR)/../nightlies
 
-FRONTEND_DIR               := $(SOURCE_DIR)/frontend
-FRONTEND_INCLUDE_DIR       := $(IMPORTS_DIR)/include
-FRONTEND_LIB_DIR           := $(IMPORTS_DIR)/lib
+SRC_DIR                    := $(FRONTEND_DIR)/source
+INCLUDE_DIR                := $(IMPORTS_DIR)/include
+LIB_DIR                    := $(IMPORTS_DIR)/lib
 
-DEPS_DIR                   := $(SOURCE_DIR)/../deps
-LIBRETRO_COMM_DIR          := $(SOURCE_DIR)/../libretro-common
+DEPS_DIR                   := $(FRONTEND_DIR)/../deps
+LIBRETRO_COMM_DIR          := $(FRONTEND_DIR)/../libretro-common
 LIBRETRO_COMM_INCLUDE_DIR  := $(LIBRETRO_COMM_DIR)/include
 
 EBOOT_PATH         := $(PRIVATE_PKG_DIR)/eboot.bin
@@ -40,13 +44,13 @@ ifeq ($(arch_build), 1)
 endif
 
 INCDIRS := \
-	-I$(FRONTEND_DIR) \
-	-I$(FRONTEND_INCLUDE_DIR) \
+	-I$(SRC_DIR) \
+	-I$(INCLUDE_DIR) \
 	-I$(LIBRETRO_COMM_INCLUDE_DIR) \
 	-I$(DEPS_DIR)
 
 LIBDIRS := \
-	-L$(FRONTEND_LIB_DIR)
+	-L$(LIB_DIR)
 
 SRC_C += \
 	activity/about.c \
@@ -116,8 +120,8 @@ SRC_C += \
 	utils_string.c \
 	utils.c
 
-OBJS := $(SRC_C:.c=.o)
-OBJS += $(SRC_CPP:.cpp=.o)
+OBJS := $(patsubst %.c,%.o, $(SRC_C))
+OBJS += $(patsubst %.cpp,%.o, $(SRC_CPP))
 OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
 
 LIBS := \
@@ -231,14 +235,14 @@ create_dirs:
 build-deps: build-vita2d build-libretro_comm build-7zip
 
 build-vita2d: 
-	cd $(SOURCE_DIR) && make -f Makefile.libvita2d
-	cd $(SOURCE_DIR) && make -f Makefile.libvita2d_ext
+	cd $(FRONTEND_DIR) && make -f Makefile.libvita2d
+	cd $(FRONTEND_DIR) && make -f Makefile.libvita2d_ext
  
 build-libretro_comm:
-	cd $(SOURCE_DIR) && make -f Makefile.libretro_comm
+	cd $(FRONTEND_DIR) && make -f Makefile.libretro_comm
 
 build-7zip:
-	cd $(SOURCE_DIR) && make -f Makefile.lib7zip EXT_DEFINES=$(SEVENZ_DEFINES)
+	cd $(FRONTEND_DIR) && make -f Makefile.lib7zip EXT_DEFINES=$(SEVENZ_DEFINES)
 
 build-core:
 	cd $(CORE_MAKEFILE_DIR) && make -f $(CORE_MAKEFILE_NAME) $(CORE_ARGS)
@@ -268,30 +272,38 @@ $(BUILD_DIR)/$(TARGET).velf: $(BUILD_DIR)/$(TARGET).elf
 
 $(BUILD_DIR)/$(TARGET).elf: $(OBJS)
 	@mkdir -p $(dir $@)
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(LD) -o $@ $^ $(LIBS) $(LDFLAGS)
 
-$(BUILD_DIR)/%.o: $(FRONTEND_DIR)/%.cpp
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) -c $(CXXFLAGS) $< -o $@
+	$(CXX) -c -o $@ $< $(CXXFLAGS)
 
-$(BUILD_DIR)/%.o: $(FRONTEND_DIR)/%.c
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.S
+	@mkdir -p $(dir $@)
+	$(CC) -c -o $@ $< $(ASFLAGS)
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
+	@mkdir -p $(dir $@)
+	$(CC) -c -o $@ $< $(ASFLAGS)
 
 clean-deps: clean-vita2d clean-libretro_comm clean-7zip clean-minizip
 
 clean-vita2d: 
-	cd $(SOURCE_DIR) && make -f Makefile.libvita2d clean
-	cd $(SOURCE_DIR) && make -f Makefile.libvita2d_ext clean
+	cd $(FRONTEND_DIR) && make -f Makefile.libvita2d clean
+	cd $(FRONTEND_DIR) && make -f Makefile.libvita2d_ext clean
 
 clean-libretro_comm:
-	cd $(SOURCE_DIR) && make -f Makefile.libretro_comm clean
+	cd $(FRONTEND_DIR) && make -f Makefile.libretro_comm clean
 
 clean-7zip:
-	cd $(SOURCE_DIR) && make -f Makefile.lib7zip clean EXT_DEFINES=$(SEVENZ_DEFINES)
+	cd $(FRONTEND_DIR) && make -f Makefile.lib7zip clean EXT_DEFINES=$(SEVENZ_DEFINES)
 
 clean-minizip:
-	cd $(SOURCE_DIR) && make -f Makefile.libminizip clean
+	cd $(FRONTEND_DIR) && make -f Makefile.libminizip clean
 
 clean-core:
 	cd $(CORE_MAKEFILE_DIR) && make -f $(CORE_MAKEFILE_NAME) clean $(CORE_ARGS)

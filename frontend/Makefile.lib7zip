@@ -46,7 +46,7 @@ SRC_C := \
 	MtDec.c \
 	Threads.c
 
-OBJS := $(SRC_C:.c=.o)
+OBJS := $(patsubst %.c,%.o, $(SRC_C))
 OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
 
 DEFINES := \
@@ -89,19 +89,19 @@ $(TARGET_PATH): $(OBJS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) -c $(CXXFLAGS) $< -o $@
+	$(CXX) -c -o $@ $< $(CXXFLAGS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.S
 	@mkdir -p $(dir $@)
-	$(CC) -c $(ASFLAGS) $< -o $@
+	$(CC) -c -o $@ $< $(ASFLAGS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
 	@mkdir -p $(dir $@)
-	$(CC) -c $(ASFLAGS) $< -o $@
+	$(CC) -c -o $@ $< $(ASFLAGS)
 
 clean: uninstall
 	rm -rf $(BUILD_DIR) $(TARGET_PATH)

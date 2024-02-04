@@ -10,8 +10,8 @@
 #include "utils_string.h"
 #include "lang.h"
 
-#define STATEBAR_PADDING_L 10
-#define STATEBAR_PADDING_T 6
+#define STATEBAR_PADDING_L 16
+#define STATEBAR_PADDING_T 10
 
 #define TIP_LISTVIEW_PADDING_L 6
 #define TIP_LISTVIEW_PADDING_T 12
@@ -33,9 +33,9 @@
 #define TIP_DIALOG_MIN_HEIGHT (TIP_ITEMVIEW_HEIGHT * 4 + TIP_LISTVIEW_PADDING_T * 2)
 #define MENU_DIALOG_MIN_HEIGHT (MENU_ITEMVIEW_HEIGHT * 4 + MENU_LISTVIEW_PADDING_T * 2)
 
-#define OVERLAY_COLOR COLOR_ALPHA(COLOR_BLACK, 0x5F)
-#define STATEBAR_COLOR_BG 0xFF7E5719
-#define DIALOG_COLOR_BG 0xFF6F480A
+#define OVERLAY_COLOR COLOR_ALPHA(COLOR_BLACK, 0x7F)
+#define DIALOG_COLOR_BORDER 0xFF6F480A
+#define DIALOG_COLOR_BG 0xFF5F380A
 #define ITEMVIEW_COLOR_FOCUS_BG COLOR_ALPHA(COLOR_ORANGE, 0xDF)
 #define DIALOG_COLOR_TEXT COLOR_WHITE
 #define DIALOG_COLOR_TITLE COLOR_SPRING_GREEN
@@ -398,7 +398,7 @@ static void drawDialogCallback(GUI_Dialog *dialog)
 
     uint32_t overlay_color = getGradualColor(OVERLAY_COLOR, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
     uint32_t dialog_color = getGradualColor(DIALOG_COLOR_BG, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
-    uint32_t statebar_color = getGradualColor(STATEBAR_COLOR_BG, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
+    uint32_t border_color = getGradualColor(DIALOG_COLOR_BORDER, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
     uint32_t text_color = getGradualColor(DIALOG_COLOR_TEXT, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
     uint32_t title_color = getGradualColor(DIALOG_COLOR_TITLE, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
     uint32_t focus_color = getGradualColor(ITEMVIEW_COLOR_FOCUS_BG, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
@@ -416,15 +416,14 @@ static void drawDialogCallback(GUI_Dialog *dialog)
 
     // Draw dialog bg
     GUI_DrawFillRectangle(dialog_x, dialog_y, dialog_w, dialog_h, dialog_color);
+    GUI_DrawEmptyRectangle(dialog_x, dialog_y, dialog_w, dialog_h, 1, border_color);
 
-    // Draw title
+    // Draw top bar
     if (data->title)
     {
-        GUI_DrawFillRectangle(top_bar_x, top_bar_y, statebar_w, statebar_h, statebar_color); // Draw top bar bg
+        GUI_DrawFillRectangle(top_bar_x, top_bar_y + statebar_h - 1, statebar_w, 1, border_color); // Draw top bar margin line
 
-        x = top_bar_x + (statebar_w - GUI_GetTextWidth(data->title)) / 2;
-        if (x < top_bar_x + STATEBAR_PADDING_L)
-            x = top_bar_x + STATEBAR_PADDING_L;
+        x = top_bar_x + STATEBAR_PADDING_L;
         y = top_bar_y + STATEBAR_PADDING_T;
         clip_w = statebar_w - STATEBAR_PADDING_L * 2;
         clip_h = statebar_h;
@@ -502,39 +501,41 @@ static void drawDialogCallback(GUI_Dialog *dialog)
         GUI_DrawVerticalScrollbar(track_x, track_y, track_h, l_length, data->listview_n_draw_items, data->top_pos, 0);
     }
 
-    // Draw button
+    // Draw bottom bar
     if (data->positive_text || data->negative_text || data->neutral_text)
-        GUI_DrawFillRectangle(bottom_bar_x, bottom_bar_y, statebar_w, statebar_h, statebar_color); // Draw bottom bar bg
+    {
+        GUI_DrawFillRectangle(bottom_bar_x, bottom_bar_y, statebar_w, 1, border_color); // Draw bottom bar margin line
 
-    char buf[24];
-    x = dialog_x + dialog_w - STATEBAR_PADDING_L;
-    y = bottom_bar_y + STATEBAR_PADDING_T;
-    if (data->positive_text)
-    {
-        x -= GUI_GetTextWidth(data->positive_text);
-        GUI_DrawText(x, y, text_color, data->positive_text);
-        snprintf(buf, 24, "%s:", cur_lang[LANG_BUTTON_ENTER]);
-        x -= GUI_GetTextWidth(buf);
-        GUI_DrawText(x, y, title_color, buf);
-        x -= STATEBAR_PADDING_L;
-    }
-    if (data->neutral_text)
-    {
-        x -= GUI_GetTextWidth(data->neutral_text);
-        GUI_DrawText(x, y, text_color, data->neutral_text);
-        snprintf(buf, 24, "%s:", cur_lang[LANG_BUTTON_TRIANGLE]);
-        x -= GUI_GetTextWidth(buf);
-        GUI_DrawText(x, y, title_color, buf);
-        x -= STATEBAR_PADDING_L;
-    }
-    if (data->negative_text)
-    {
-        x -= GUI_GetTextWidth(data->negative_text);
-        GUI_DrawText(x, y, text_color, data->negative_text);
-        snprintf(buf, 24, "%s:", cur_lang[LANG_BUTTON_CANCEL]);
-        x -= GUI_GetTextWidth(buf);
-        GUI_DrawText(x, y, title_color, buf);
-        x -= STATEBAR_PADDING_L;
+        char buf[24];
+        x = bottom_bar_x + statebar_w - STATEBAR_PADDING_L;
+        y = bottom_bar_y + STATEBAR_PADDING_T;
+        if (data->positive_text)
+        {
+            x -= GUI_GetTextWidth(data->positive_text);
+            GUI_DrawText(x, y, text_color, data->positive_text);
+            snprintf(buf, 24, "%s:", cur_lang[LANG_BUTTON_ENTER]);
+            x -= GUI_GetTextWidth(buf);
+            GUI_DrawText(x, y, title_color, buf);
+            x -= STATEBAR_PADDING_L;
+        }
+        if (data->neutral_text)
+        {
+            x -= GUI_GetTextWidth(data->neutral_text);
+            GUI_DrawText(x, y, text_color, data->neutral_text);
+            snprintf(buf, 24, "%s:", cur_lang[LANG_BUTTON_TRIANGLE]);
+            x -= GUI_GetTextWidth(buf);
+            GUI_DrawText(x, y, title_color, buf);
+            x -= STATEBAR_PADDING_L;
+        }
+        if (data->negative_text)
+        {
+            x -= GUI_GetTextWidth(data->negative_text);
+            GUI_DrawText(x, y, text_color, data->negative_text);
+            snprintf(buf, 24, "%s:", cur_lang[LANG_BUTTON_CANCEL]);
+            x -= GUI_GetTextWidth(buf);
+            GUI_DrawText(x, y, title_color, buf);
+            x -= STATEBAR_PADDING_L;
+        }
     }
 
     GUI_UnsetClipping();

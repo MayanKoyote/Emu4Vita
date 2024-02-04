@@ -1,0 +1,6 @@
+.vscode
+imports/include/*.h
+!imports/include/archive*.h
+imports/lib/*.a
+!imports/lib/libvitashaders.a
+!imports/lib/libarchive.a

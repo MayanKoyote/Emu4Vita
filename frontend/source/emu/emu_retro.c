@@ -29,7 +29,7 @@ struct retro_disk_control_ext_callback *core_disk_control_ext_callback = NULL;
 struct retro_system_info core_system_info = {0};
 struct retro_system_av_info core_system_av_info = {0};
 enum retro_pixel_format core_pixel_format = RETRO_PIXEL_FORMAT_RGB565;
-GuiPixelFormat core_video_pixel_format = GUI_PIXEL_FORMAT_U5U6U5_RGB;
+GUI_PixelFormat core_video_pixel_format = GUI_PIXEL_FORMAT_U5U6U5_RGB;
 int core_input_supports_bitmasks = 0;
 int core_display_rotate = 0;
 #if defined(FC_BUILD) || defined(SFC_BUILD) || defined(GBC_BUILD) || defined(GBA_BUILD) || \

@@ -9,12 +9,12 @@
 #include "utils_string.h"
 #include "file.h"
 
-#define APP_CONFIG_VERSION 4      // v1.03
-#define GRAPHICS_CONFIG_VERSION 2 // v1.01
-#define CONTROL_CONFIG_VERSION 2  // v1.01
-#define CORE_CONFIG_VERSION 1     // v1.00
-#define HOTKEY_CONFIG_VERSION 1   // v1.00
-#define MISC_CONFIG_VERSION 1     // v1.00
+#define APP_CONFIG_VERSION 0x0103      // v1.03
+#define GRAPHICS_CONFIG_VERSION 0x0101 // v1.01
+#define CONTROL_CONFIG_VERSION 0x0101  // v1.01
+#define CORE_CONFIG_VERSION 0x0100     // v1.00
+#define HOTKEY_CONFIG_VERSION 0x0100   // v1.00
+#define MISC_CONFIG_VERSION 0x0100     // v1.00
 
 #define APP_CONFIG_NAME "app.cfg"
 #define GRAPHICS_CONFIG_NAME "graphics.cfg"

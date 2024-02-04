@@ -1,9 +1,13 @@
 TARGET     := Emu4VitaArch
-APP_VER    := 1.08
+MAJOR_VER  := 1
+MINOR_VER  := 8
 
+PADDED_MAJOR_VER  := $(shell printf "%02d" $(MAJOR_VER))
+PADDED_MINOR_VER  := $(shell printf "%02d" $(MINOR_VER))
+APP_VER           := $(MAJOR_VER).$(PADDED_MINOR_VER)
+SFO_APP_VER       := $(PADDED_MAJOR_VER).$(PADDED_MINOR_VER)
 SFO_TITLE_ID      := EMUARCH01
 SFO_TITLE_NAME    := Emu4Vita Arch
-SFO_APP_VER       := 0$(APP_VER)
 
 APP_NAME_STR      := Emu4Vita\ Arch
 APP_VER_STR       := $(APP_VER)
@@ -15,18 +19,17 @@ MAKEFILE_PATH     := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR      := $(dir $(MAKEFILE_PATH))
 ROOT_DIR          := $(patsubst %/,%, $(MAKEFILE_DIR))
 
-IMPORTS_DIR       := $(ROOT_DIR)/imports
-INCLUDE_DIR       := $(IMPORTS_DIR)/include
-LIB_DIR           := $(IMPORTS_DIR)/lib
-
 CORES_DIR         := $(ROOT_DIR)/cores
 APPS_DIR          := $(ROOT_DIR)/../apps
 PKG_DIR           := $(ROOT_DIR)/pkg
-SRC_DIR           := $(ROOT_DIR)/src
+IMPORTS_DIR       := $(ROOT_DIR)/imports
 BUILD_DIR         := $(ROOT_DIR)/../build/arch
-
 RELEASES_DIR      := $(ROOT_DIR)/../releases
 NIGHTLIES_DIR     := $(ROOT_DIR)/../nightlies
+
+SRC_DIR           := $(ROOT_DIR)/source
+INCLUDE_DIR       := $(IMPORTS_DIR)/include
+LIB_DIR           := $(IMPORTS_DIR)/lib
 
 EBOOT_PATH        := $(PKG_DIR)/eboot.bin
 SFO_PATH          := $(PKG_DIR)/sce_sys/param.sfo
@@ -57,7 +60,7 @@ SRC_C := \
 	utils.c \
 	boot.c
 
-OBJS := $(SRC_C:.c=.o)
+OBJS := $(patsubst %.c,%.o, $(SRC_C))
 OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
 
 LIBS := \
@@ -144,15 +147,23 @@ $(BUILD_DIR)/$(TARGET).velf: $(BUILD_DIR)/$(TARGET).elf
 
 $(BUILD_DIR)/$(TARGET).elf: $(OBJS)
 	@mkdir -p $(dir $@)
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(LD) -o $@ $^ $(LIBS) $(LDFLAGS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) -c $(CXXFLAGS) $< -o $@
+	$(CXX) -c -o $@ $< $(CXXFLAGS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.S
+	@mkdir -p $(dir $@)
+	$(CC) -c -o $@ $< $(ASFLAGS)
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
+	@mkdir -p $(dir $@)
+	$(CC) -c -o $@ $< $(ASFLAGS)
 
 clean: clean-app
 

@@ -1,13 +1,11 @@
-TARGET = libvita2d_ext
+TARGET = libretro_comm
 
 MAKEFILE_PATH              := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR               := $(dir $(MAKEFILE_PATH))
 ROOT_DIR                   := $(patsubst %/,%, $(MAKEFILE_DIR))
 
-DEPS_DIR                   := $(ROOT_DIR)/../deps
-VITA2D_EXT_DIR             := $(DEPS_DIR)/libvita2d_ext/libvita2d_ext
-SRC_DIR                    := $(VITA2D_EXT_DIR)/source
-INCLUDE_DIR                := $(VITA2D_EXT_DIR)/include
+SRC_DIR                    := $(ROOT_DIR)/../libretro-common
+INCLUDE_DIR                := $(SRC_DIR)/include
 BUILD_DIR                  := $(ROOT_DIR)/../build/$(TARGET)
 
 EXPORTS_DIR                := $(ROOT_DIR)/imports
@@ -23,14 +21,53 @@ INCDIRS := \
 	-I$(INCLUDE_DIR)
 
 SRC_C := \
-	vita2d_ext.c \
-	vita2d_ext_draw.c \
-	utils.c
+	string/stdstring.c \
+	encodings/encoding_utf.c \
+	encodings/encoding_crc32.c \
+	compat/fopen_utf8.c \
+	compat/compat_strl.c \
+	compat/compat_snprintf.c \
+	compat/compat_strcasestr.c \
+	compat/compat_posix_string.c \
+	file/file_path.c \
+	file/file_path_io.c \
+	streams/file_stream.c \
+	streams/file_stream_transforms.c \
+	streams/memory_stream.c \
+	lists/string_list.c \
+	lists/file_list.c \
+	lists/dir_list.c \
+	file/retro_dirent.c \
+	memmap/memalign.c \
+	vfs/vfs_implementation.c \
+	time/rtime.c
 
-OBJS := $(SRC_C:.c=.o)
+SRC_C += \
+	streams/interface_stream.c \
+	streams/rzip_stream.c \
+	streams/stdin_stream.c \
+	streams/trans_stream.c \
+	streams/trans_stream_pipe.c \
+	streams/trans_stream_zlib.c \
+
+SRC_C += \
+	features/features_cpu.c \
+	file/config_file.c \
+	file/config_file_userdata.c \
+	rthreads/rthreads.c
+
+SRC_C += \
+	utils/md5.c
+
+OBJS := $(patsubst %.c,%.o, $(SRC_C))
 OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
 
-DEFINES := 
+DEFINES := \
+	-DHAVE_NEON \
+	-DHAVE_THREADS \
+	-DHAVE_COMPRESSION \
+	-DHAVE_ZLIB \
+	-DHAVE_7ZIP
 
 WARNINGS := \
 	-Wall
@@ -55,13 +92,10 @@ LD      := $(CXX)
 all: $(TARGET_PATH) install
 
 install:
-	@mkdir -p $(EXPORTS_INCLUDE_DIR)
-	@cp -u $(INCLUDE_DIR)/vita2d_ext.h $(EXPORTS_INCLUDE_DIR)
 	@mkdir -p $(EXPORTS_LIB_DIR)
 	@cp -u $(TARGET_PATH) $(EXPORTS_LIB_DIR)
 
 uninstall:
-	@rm -f $(EXPORTS_INCLUDE_DIR)/vita2d_ext.h
 	@rm -f $(EXPORTS_LIB_DIR)/$(TARGET).a
 
 $(TARGET_PATH): $(OBJS)
@@ -70,19 +104,19 @@ $(TARGET_PATH): $(OBJS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) -c $(CXXFLAGS) $< -o $@
+	$(CXX) -c -o $@ $< $(CXXFLAGS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.S
 	@mkdir -p $(dir $@)
-	$(CC) -c $(ASFLAGS) $< -o $@
+	$(CC) -c -o $@ $< $(ASFLAGS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
 	@mkdir -p $(dir $@)
-	$(CC) -c $(ASFLAGS) $< -o $@
+	$(CC) -c -o $@ $< $(ASFLAGS)
 
 clean: uninstall
 	rm -rf $(BUILD_DIR) $(TARGET_PATH)

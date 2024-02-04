@@ -282,7 +282,10 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
     // Use gpu to conver image
     rendert_tex = GUI_CreateTextureRendertarget(GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, GUI_PIXEL_FORMAT_U8U8U8U8_ABGR);
     if (!rendert_tex)
+    {
+        AppLog("[VIDEO] Emu_GetVideoScreenshotData failed: cannot creat the rendertarget texture!\n");
         goto END;
+    }
 
     GUI_WaitRenderingDone();
     GUI_StartDrawing(rendert_tex);
@@ -295,7 +298,7 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
     GUI_EndDrawing();
     GUI_WaitRenderingDone();
 
-    // Malloc and copy data for return
+    // Alloc and copy screenshot data
     uint64_t conver_size = conver_width * conver_height * 4;
     conver_data = (uint32_t *)malloc(conver_size);
     if (!conver_data)

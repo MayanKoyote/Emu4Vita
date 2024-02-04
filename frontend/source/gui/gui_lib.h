@@ -4,6 +4,16 @@
 #include <vita2d.h>
 #include <vita2d_ext.h>
 
+typedef SceGxmTextureFormat GUI_PixelFormat;
+#define GUI_PIXEL_FORMAT_U8U8U8U8_ABGR SCE_GXM_TEXTURE_FORMAT_U8U8U8U8_ABGR
+#define GUI_PIXEL_FORMAT_X8U8U8U8_1RGB SCE_GXM_TEXTURE_FORMAT_X8U8U8U8_1RGB
+#define GUI_PIXEL_FORMAT_U5U6U5_RGB SCE_GXM_TEXTURE_FORMAT_U5U6U5_RGB
+#define GUI_PIXEL_FORMAT_X1U5U5U5_1RGB SCE_GXM_TEXTURE_FORMAT_X1U5U5U5_1RGB
+
+typedef SceGxmTextureFilter GUI_TextureFilter;
+#define GUI_TEXTURE_FILTER_POINT SCE_GXM_TEXTURE_FILTER_POINT
+#define GUI_TEXTURE_FILTER_LINEAR SCE_GXM_TEXTURE_FILTER_LINEAR
+
 typedef vita2d_texture GUI_Texture;
 typedef vita2d_shader GUI_Shader;
 
@@ -13,23 +23,19 @@ typedef struct GUI_Rect
     int w, h;
 } GUI_Rect;
 
-//------------------------------------------------------------------------------------------------------------------------------------------
-
+// Init
 int GUI_InitLib();
 int GUI_DeinitLib();
-
-//------------------------------------------------------------------------------------------------------------------------------------------
 
 // Renderer
 void GUI_StartDrawing(GUI_Texture *texture);
 void GUI_EndDrawing();
-#define GUI_SetVblankWait(enable) vita2d_set_vblank_wait(enable)
 #define GUI_WaitRenderingDone vita2d_wait_rendering_done
-
+#define GUI_SetVblankWait(enable) vita2d_set_vblank_wait(enable)
 int GUI_SetClipping(int x, int y, int w, int h);
 int GUI_UnsetClipping();
 
-// Draw text
+// Font
 int GUI_GetFontSize();
 void GUI_SetFontSize(int size);
 int GUI_GetLineHeight();
@@ -41,7 +47,7 @@ int GUI_DrawTextf(int x, int y, unsigned int color, const char *text, ...);
 int GUI_GetTextWidth(const char *text);
 int GUI_GetTextHeight(const char *text);
 
-// Draw geometric figure
+// Geometric
 #define GUI_DrawPixel(x, y, color) vita2d_draw_pixel(x, y, color)
 #define GUI_DrawLine(x0, y0, x1, y1, color) vita2d_draw_line(x, y, color)
 #define GUI_DrawFillRectangle(x, y, w, h, color) vita2d_draw_rectangle(x, y, w, h, color)
@@ -57,16 +63,6 @@ void GUI_DrawEmptyRectangle(float x, float y, float w, float h, float line_size,
 #define GUI_LoadBMPBuffer(buffer) vita2d_load_BMP_buffer(buffer)
 
 // Texture
-typedef SceGxmTextureFormat GuiPixelFormat;
-#define GUI_PIXEL_FORMAT_U8U8U8U8_ABGR SCE_GXM_TEXTURE_FORMAT_U8U8U8U8_ABGR
-#define GUI_PIXEL_FORMAT_X8U8U8U8_1RGB SCE_GXM_TEXTURE_FORMAT_X8U8U8U8_1RGB
-#define GUI_PIXEL_FORMAT_U5U6U5_RGB SCE_GXM_TEXTURE_FORMAT_U5U6U5_RGB
-#define GUI_PIXEL_FORMAT_X1U5U5U5_1RGB SCE_GXM_TEXTURE_FORMAT_X1U5U5U5_1RGB
-
-typedef SceGxmTextureFilter GuiTextureFilter;
-#define GUI_TEXTURE_FILTER_POINT SCE_GXM_TEXTURE_FILTER_POINT
-#define GUI_TEXTURE_FILTER_LINEAR SCE_GXM_TEXTURE_FILTER_LINEAR
-
 #define GUI_CreateTexture vita2d_create_empty_texture(w, h)
 #define GUI_CreateTextureFormat(w, h, format) vita2d_create_empty_texture_format(w, h, format)
 #define GUI_CreateTextureRendertarget(w, h, format) vita2d_create_empty_texture_rendertarget(w, h, format)
