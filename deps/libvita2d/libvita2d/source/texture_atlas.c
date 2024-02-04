@@ -59,10 +59,10 @@ void texture_atlas_free(texture_atlas *atlas)
 }
 
 int texture_atlas_insert(texture_atlas *atlas, unsigned int character,
-			 const atlas_size *size,
+			 const vita2d_size *size,
 			 const texture_atlas_entry_data *data,
 			 vita2d_texture **tex,
-			 atlas_position *inserted_pos)
+			 vita2d_position *inserted_pos)
 {
 	atlas_htab_entry *entry = malloc(sizeof(*entry));
 
@@ -129,7 +129,7 @@ int texture_atlas_exists(texture_atlas *atlas, unsigned int character)
 }
 
 int texture_atlas_get(texture_atlas *atlas, unsigned int character, vita2d_texture **tex, 
-		      atlas_rectangle *rect, texture_atlas_entry_data *data)
+		      vita2d_rectangle *rect, texture_atlas_entry_data *data)
 {
 	atlas_htab_entry *entry = int_htab_find(atlas->htab, character);
 	if (!entry)

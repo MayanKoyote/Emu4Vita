@@ -13,6 +13,18 @@ extern "C" {
 
 #define RGBA8(r,g,b,a) ((((a)&0xFF)<<24) | (((b)&0xFF)<<16) | (((g)&0xFF)<<8) | (((r)&0xFF)<<0))
 
+typedef struct vita2d_position {
+	int x, y;
+} vita2d_position;
+
+typedef struct vita2d_size {
+	int w, h;
+} vita2d_size;
+
+typedef struct vita2d_rectangle {
+	int x, y, w, h;
+} vita2d_rectangle;
+
 typedef struct vita2d_clear_vertex {
 	float x;
 	float y;
@@ -103,6 +115,7 @@ void vita2d_texture_set_alloc_memblock_type(SceKernelMemBlockType type);
 SceKernelMemBlockType vita2d_texture_get_alloc_memblock_type();
 vita2d_texture *vita2d_create_empty_texture(unsigned int w, unsigned int h);
 vita2d_texture *vita2d_create_empty_texture_format(unsigned int w, unsigned int h, SceGxmTextureFormat format);
+vita2d_texture *vita2d_create_empty_texture_data(unsigned int w, unsigned int h, void *texture_data, SceGxmTextureFormat format);
 vita2d_texture *vita2d_create_empty_texture_rendertarget(unsigned int w, unsigned int h, SceGxmTextureFormat format);
 
 void vita2d_free_texture(vita2d_texture *texture);

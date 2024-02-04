@@ -236,7 +236,7 @@ static int atlas_add_glyph(vita2d_pvf *font, ScePvfFontId font_handle, unsigned 
 {
 	ScePvfCharInfo char_info;
 	ScePvfIrect char_image_rect;
-	atlas_position position;
+	vita2d_position position;
 	void *texture_data;
 	vita2d_texture *tex = NULL;
 
@@ -246,7 +246,7 @@ static int atlas_add_glyph(vita2d_pvf *font, ScePvfFontId font_handle, unsigned 
 	if (scePvfGetCharImageRect(font_handle, character, &char_image_rect) < 0)
 		return 0;
 
-	atlas_size size = {
+	vita2d_size size = {
 		char_image_rect.width + 2 * PVF_GLYPH_MARGIN,
 		char_image_rect.height + 2 * PVF_GLYPH_MARGIN
 	};
@@ -288,7 +288,7 @@ static int generic_pvf_draw_text(vita2d_pvf *font, int draw, int *height,
 	int i;
 	unsigned int character;
 	ScePvfFontId fontid;
-	atlas_rectangle rect;
+	vita2d_rectangle rect;
 	texture_atlas_entry_data data;
 	ScePvfKerningInfo kerning_info;
 	unsigned int old_character = 0;

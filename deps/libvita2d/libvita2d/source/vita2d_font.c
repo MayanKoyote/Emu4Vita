@@ -165,7 +165,7 @@ static int atlas_add_glyph(texture_atlas *atlas, unsigned int glyph_index,
 {
 	int ret;
 	int i, j;
-	atlas_position position;
+	vita2d_position position;
 	vita2d_texture *tex = NULL;
 	void *texture_data;
 	unsigned int tex_width;
@@ -174,7 +174,7 @@ static int atlas_add_glyph(texture_atlas *atlas, unsigned int glyph_index,
 	unsigned int h = bitmap->rows;
 	unsigned char buffer[w * h];
 
-	atlas_size size = {
+	vita2d_size size = {
 		bitmap->width,
 		bitmap->rows
 	};
@@ -236,7 +236,7 @@ static int generic_font_draw_text(vita2d_font *font, int draw, int *height,
 	int max_x = 0;
 	int pen_x = x;
 	int pen_y = y;
-	atlas_rectangle rect;
+	vita2d_rectangle rect;
 	texture_atlas_entry_data data;
 
 	FTC_ScalerRec scaler;

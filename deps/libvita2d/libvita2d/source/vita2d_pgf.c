@@ -218,7 +218,7 @@ static int atlas_add_glyph(vita2d_pgf *font, unsigned int character)
 {
 	SceFontHandle font_handle = font->font_handle_list->font_handle;
 	SceFontCharInfo char_info;
-	atlas_position position;
+	vita2d_position position;
 	void *texture_data;
 	vita2d_texture *tex = NULL;
 
@@ -234,7 +234,7 @@ static int atlas_add_glyph(vita2d_pgf *font, unsigned int character)
 	if (sceFontGetCharInfo(font_handle, character, &char_info) < 0)
 		return 0;
 
-	atlas_size size = {
+	vita2d_size size = {
 		char_info.bitmapWidth,
 		char_info.bitmapHeight
 	};
@@ -275,7 +275,7 @@ static int generic_pgf_draw_text(vita2d_pgf *font, int draw, int *height,
 
 	int i;
 	unsigned int character;
-	atlas_rectangle rect;
+	vita2d_rectangle rect;
 	texture_atlas_entry_data data;
 	vita2d_texture *tex = NULL;
 	int start_x = x;

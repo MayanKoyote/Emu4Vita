@@ -47,12 +47,7 @@ SceKernelMemBlockType vita2d_texture_get_alloc_memblock_type()
 	return MemBlockType;
 }
 
-vita2d_texture *vita2d_create_empty_texture(unsigned int w, unsigned int h)
-{
-	return vita2d_create_empty_texture_format(w, h, SCE_GXM_TEXTURE_FORMAT_A8B8G8R8);
-}
-
-static vita2d_texture *_vita2d_create_empty_texture_format_advanced(unsigned int w, unsigned int h, SceGxmTextureFormat format, unsigned int isRenderTarget)
+static vita2d_texture *_vita2d_create_empty_texture_format_advanced(unsigned int w, unsigned int h, void *texture_data, SceGxmTextureFormat format, unsigned int isRenderTarget)
 {
 	if (w > GXM_TEX_MAX_SIZE || h > GXM_TEX_MAX_SIZE)
 		return NULL;
@@ -60,16 +55,24 @@ static vita2d_texture *_vita2d_create_empty_texture_format_advanced(unsigned int
 	vita2d_texture *texture = malloc(sizeof(*texture));
 	if (!texture)
 		return NULL;
+	memset(texture, 0, sizeof(vita2d_texture));
 
 	const int tex_size =  ((w + 7) & ~ 7) * h * tex_format_to_bytespp(format);
 
 	/* Allocate a GPU buffer for the texture */
-	void *texture_data = gpu_alloc(
-		MemBlockType,
-		tex_size,
-		SCE_GXM_TEXTURE_ALIGNMENT,
-		SCE_GXM_MEMORY_ATTRIB_READ | SCE_GXM_MEMORY_ATTRIB_WRITE,
-		&texture->data_UID);
+	if (!texture_data) {
+		texture_data = gpu_alloc(
+			MemBlockType,
+			tex_size,
+			SCE_GXM_TEXTURE_ALIGNMENT,
+			SCE_GXM_MEMORY_ATTRIB_READ | SCE_GXM_MEMORY_ATTRIB_WRITE,
+			&texture->data_UID);
+	}
+	else {
+		/* Allocate a GPU buffer for the texture */
+		sceGxmMapMemory(texture_data, tex_size, SCE_GXM_MEMORY_ATTRIB_READ | SCE_GXM_MEMORY_ATTRIB_WRITE);
+		texture->data_UID = 0;
+	}
 
 	if (!texture_data) {
 		free(texture);
@@ -187,14 +190,24 @@ static vita2d_texture *_vita2d_create_empty_texture_format_advanced(unsigned int
 	return texture;
 }
 
+vita2d_texture *vita2d_create_empty_texture(unsigned int w, unsigned int h)
+{
+	return _vita2d_create_empty_texture_format_advanced(w, h, NULL, SCE_GXM_TEXTURE_FORMAT_A8B8G8R8, 0);
+}
+
 vita2d_texture * vita2d_create_empty_texture_format(unsigned int w, unsigned int h, SceGxmTextureFormat format)
 {
-	return _vita2d_create_empty_texture_format_advanced(w, h, format, 0);
+	return _vita2d_create_empty_texture_format_advanced(w, h, NULL, format, 0);
+}
+
+vita2d_texture *vita2d_create_empty_texture_data(unsigned int w, unsigned int h, void *texture_data, SceGxmTextureFormat format)
+{
+	return _vita2d_create_empty_texture_format_advanced(w, h, texture_data, format, 0);
 }
 
 vita2d_texture * vita2d_create_empty_texture_rendertarget(unsigned int w, unsigned int h, SceGxmTextureFormat format)
 {
-	return _vita2d_create_empty_texture_format_advanced(w, h, format, 1);
+	return _vita2d_create_empty_texture_format_advanced(w, h, NULL, format, 1);
 }
 
 void vita2d_free_texture(vita2d_texture *texture)
@@ -209,7 +222,9 @@ void vita2d_free_texture(vita2d_texture *texture)
 		if (texture->palette_UID) {
 			gpu_free(texture->palette_UID);
 		}
-		gpu_free(texture->data_UID);
+		if (texture->data_UID) {
+			gpu_free(texture->data_UID);
+		}
 		free(texture);
 	}
 }
