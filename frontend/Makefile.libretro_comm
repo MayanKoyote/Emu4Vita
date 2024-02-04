@@ -4,7 +4,8 @@ MAKEFILE_PATH              := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR               := $(dir $(MAKEFILE_PATH))
 ROOT_DIR                   := $(patsubst %/,%, $(MAKEFILE_DIR))
 
-SRC_DIR                    := $(ROOT_DIR)/../libretro-common
+DEPS_DIR                   := $(ROOT_DIR)/../deps
+SRC_DIR                    := $(DEPS_DIR)/libretro-common
 INCLUDE_DIR                := $(SRC_DIR)/include
 BUILD_DIR                  := $(ROOT_DIR)/../build/$(TARGET)
 

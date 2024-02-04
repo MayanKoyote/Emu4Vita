@@ -25,7 +25,7 @@ INCLUDE_DIR                := $(IMPORTS_DIR)/include
 LIB_DIR                    := $(IMPORTS_DIR)/lib
 
 DEPS_DIR                   := $(FRONTEND_DIR)/../deps
-LIBRETRO_COMM_DIR          := $(FRONTEND_DIR)/../libretro-common
+LIBRETRO_COMM_DIR          := $(DEPS_DIR)/libretro-common
 LIBRETRO_COMM_INCLUDE_DIR  := $(LIBRETRO_COMM_DIR)/include
 
 EBOOT_PATH         := $(PRIVATE_PKG_DIR)/eboot.bin
