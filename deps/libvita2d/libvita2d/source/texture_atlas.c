@@ -47,7 +47,7 @@ void texture_atlas_free(texture_atlas *atlas)
 	atlas_texture_entry *tex_entry = atlas->texture_data.tex_entry;
 	while (tex_entry){
 		atlas_texture_entry *prev = tex_entry->prev;
-		// printf("[VITA2D] Free tex_entry: entry = %p, tex = %p\n", tex_entry, tex_entry->tex);
+		// printf("atlas texture_atlas_free: free tex_entry, entry = %p, texture = %p\n", tex_entry, tex_entry->tex);
 		if (tex_entry->tex)
 			vita2d_free_texture(tex_entry->tex);
 		free(tex_entry);
@@ -90,7 +90,7 @@ int texture_atlas_insert(texture_atlas *atlas, unsigned int character,
 			return 0;
 		}
 
-		// printf("[VITA2D] Creat tex_entry: entry = %p, tex = %p\n", tex_entry, tex_entry->tex);
+		// printf("texture_atlas_insert: creat tex_entry, entry = %p, texture = %p\n", tex_entry, tex_entry->tex);
 
 		vita2d_texture_set_filters(tex_entry->tex,
 				   SCE_GXM_TEXTURE_FILTER_POINT,
