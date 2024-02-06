@@ -99,11 +99,12 @@ HotKeyOption hot_key_options[] = {
     {&hotkey_config.hk_savestate, loadStateEventCallback, {0}},
     {&hotkey_config.hk_speed_up, Emu_SpeedUpGame, {0}},
     {&hotkey_config.hk_speed_down, Emu_SpeedDownGame, {0}},
+    {&hotkey_config.hk_rewind, Emu_RewindGame, {0}},
     {&hotkey_config.hk_player_up, changeMapPortUpCallback, {0}},
     {&hotkey_config.hk_player_down, changeMapPortDownCallback, {0}},
     {&hotkey_config.hk_exit_game, exitGameEventCallback, {0}},
 };
-#define N_HOT_KEY_MAPPER_OPTIONS 7 // (sizeof(hot_key_options) / sizeof(HotKeyOption))
+#define N_HOT_KEY_MAPPER_OPTIONS 8 // (sizeof(hot_key_options) / sizeof(HotKeyOption))
 
 static uint8_t psbutton_old_pressed[N_CTRL_PORTS];
 static uint64_t disable_psbutton_micros[N_CTRL_PORTS];

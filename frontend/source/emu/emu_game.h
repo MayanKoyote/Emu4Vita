@@ -36,6 +36,7 @@ void Emu_ResetGame();
 int Emu_ReloadGame();
 void Emu_SpeedUpGame();
 void Emu_SpeedDownGame();
+void Emu_RewindGame();
 
 void Emu_SetGameRunEventAction(int type);
 

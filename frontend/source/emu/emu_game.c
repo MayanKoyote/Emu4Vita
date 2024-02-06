@@ -95,7 +95,13 @@ void Emu_SpeedDownGame()
     Emu_SetRunSpeed(speed);
 }
 
-static int loadGameFromFile(const char *path, int type)
+void Emu_RewindGame()
+{
+    AppLog("Emu_RewindGame");
+}
+
+static int
+loadGameFromFile(const char *path, int type)
 {
     const char *rom_path = path;
 
