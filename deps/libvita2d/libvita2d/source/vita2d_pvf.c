@@ -59,7 +59,7 @@ static void vita2d_load_pvf_post(vita2d_pvf *font)
 	font->max_height = fontinfo.maxFGlyphMetrics.height;
 	font->max_ascender = fontinfo.maxFGlyphMetrics.ascender;
 	font->max_descender = fontinfo.maxFGlyphMetrics.descender;
-	printf("[VITA2D_PVF] font->max_height: %d, font->max_ascender = %d, font->max_descender = %d\n", font->max_height, font->max_ascender, font->max_descender);
+	// printf("[VITA2D_PVF] font->max_height: %d, font->max_ascender = %d, font->max_descender = %d\n", font->max_height, font->max_ascender, font->max_descender);
 
 	font->atlas = texture_atlas_create(ATLAS_DEFAULT_W, ATLAS_DEFAULT_H,
 		SCE_GXM_TEXTURE_FORMAT_U8_R111);
@@ -126,11 +126,9 @@ vita2d_pvf *vita2d_load_system_pvf(int numFonts, const vita2d_system_pvf_config 
 		if (error != 0)
 			goto cleanup;
 
-		ScePvfFontId handle = scePvfOpen(font->lib_handle, index, 0, &error);
+		ScePvfFontId font_handle = scePvfOpen(font->lib_handle, index, 0, &error);
 		if (error != 0)
 			goto cleanup;
-
-		scePvfSetCharSize(handle, 10.125f, 10.125f);
 
 		if (font->font_handle_list == NULL) {
 			tmp = font->font_handle_list = malloc(sizeof(vita2d_pvf_font_handle));
@@ -138,12 +136,14 @@ vita2d_pvf *vita2d_load_system_pvf(int numFonts, const vita2d_system_pvf_config 
 			tmp = tmp->next = malloc(sizeof(vita2d_pvf_font_handle));
 		}
 		if (!tmp) {
-			scePvfClose(handle);
+			scePvfClose(font_handle);
 			goto cleanup;
 		}
 
+		scePvfSetCharSize(font_handle, 10.125f, 10.125f);
+
 		memset(tmp, 0, sizeof(vita2d_pvf_font_handle));
-		tmp->font_handle = handle;
+		tmp->font_handle = font_handle;
 		tmp->in_font_group = configs[i].in_font_group;
 	}
 
@@ -194,6 +194,8 @@ vita2d_pvf *vita2d_load_custom_pvf(const char *path)
 		free(font);
 		return NULL;
 	}
+
+	scePvfSetCharSize(font_handle, 10.125f, 10.125f);
 
 	memset(handle, 0, sizeof(vita2d_pvf_font_handle));
 	handle->font_handle = font_handle;

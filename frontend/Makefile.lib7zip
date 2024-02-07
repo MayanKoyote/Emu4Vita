@@ -60,7 +60,7 @@ WARNINGS := \
 CFLAGS    += -DVITA -D__vita__ -O3
 ASFLAGS   := $(CFLAGS) $(WARNINGS) $(INCDIRS)
 
-CFLAGS    += -ffast-math $(WARNINGS) $(INCDIRS) $(DEFINES)
+CFLAGS    += $(WARNINGS) $(INCDIRS) $(DEFINES)
 CXXFLAGS  := $(CFLAGS) -fno-rtti -fno-exceptions
 LDFLAGS   := -Wl,-q $(LIBDIRS)
 

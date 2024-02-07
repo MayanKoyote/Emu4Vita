@@ -1,9 +1,9 @@
 #include <psp2/kernel/sysmem.h>
+#include <psp2/kernel/threadmgr.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
 #include <freetype2/ft2build.h>
-#include FT_CACHE_H
 #include FT_FREETYPE_H
 #include "vita2d.h"
 #include "texture_atlas.h"
@@ -32,6 +32,7 @@ typedef struct vita2d_font {
 	FT_Library ftlibrary;
 	FT_Face ftface;
 	texture_atlas *atlas;
+	SceKernelLwMutexWork mutex;
 	int font_size;
 	int max_height;
 	int max_ascender;
@@ -82,13 +83,15 @@ static int vita2d_load_font_post(vita2d_font *font)
 	font->max_height = font->ftface->size->metrics.height >> 6;
 	font->max_ascender = font->ftface->size->metrics.ascender >> 6;
 	font->max_descender = font->ftface->size->metrics.descender >> 6;
-	printf("[VITA2D_FONT] font->max_height: %d, font->max_ascender = %d, font->max_descender = %d\n", font->max_height, font->max_ascender, font->max_descender);
+	// printf("[VITA2D_FONT] font->max_height: %d, font->max_ascender = %d, font->max_descender = %d\n", font->max_height, font->max_ascender, font->max_descender);
 
 	font->atlas = texture_atlas_create(ATLAS_DEFAULT_W, ATLAS_DEFAULT_H,
 		SCE_GXM_TEXTURE_FORMAT_U8_R111);
 
 	if (!font->atlas)
 		return 0;
+
+	sceKernelCreateLwMutex(&font->mutex, "vita2d_pvf_mutex", 2, 0, NULL);
 
 	return 1;
 }
@@ -207,6 +210,8 @@ static int generic_font_draw_text(vita2d_font *font, int draw, int *height,
 									unsigned int size,
 									const char *text)
 {
+	sceKernelLockLwMutex(&font->mutex, 1, NULL);
+
 	int i;
 	unsigned int character;
 	vita2d_rectangle rect;
@@ -259,6 +264,8 @@ static int generic_font_draw_text(vita2d_font *font, int draw, int *height,
 
 	if (height)
 		*height = pen_y + size - y;
+
+	sceKernelUnlockLwMutex(&font->mutex, 1);
 
 	return max_x - x;
 }

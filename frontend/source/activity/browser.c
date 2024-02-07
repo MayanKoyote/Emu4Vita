@@ -71,10 +71,10 @@ static int option_items[] = {
 #define PATH_VIEW_PADDING_T 6
 #define PATH_TEXT_COLOR COLOR_SPRING_GREEN
 
-#define LISTVIEW_PADDING_L 4
-#define LISTVIEW_PADDING_T 4
-#define ITEMVIEW_PADDING_L 10
-#define ITEMVIEW_PADDING_T 6
+#define LISTVIEW_PADDING_L 2
+#define LISTVIEW_PADDING_T 2
+#define ITEMVIEW_PADDING_L 8
+#define ITEMVIEW_PADDING_T 7
 
 #define ITEMVIEW_COLOR_BG 0
 #define ITEMVIEW_COLOR_FOCUS GUI_DEF_COLOR_FOCUS
@@ -280,7 +280,7 @@ int MakePreviewPath(char *path)
     if (ret < 0)
         return -1;
 
-    snprintf(path, MAX_PATH_LENGTH, ("%s/%s/%s.png"), ls_data->path, PREVIEW_DIR_NAME, base_name);
+    snprintf(path, MAX_PATH_LENGTH, "%s%s/%s.png", ls_data->path, PREVIEW_DIR_NAME, base_name);
     return 0;
 }
 
@@ -625,8 +625,6 @@ static void drawActivityCallback(GUI_Activity *activity)
 {
     int layout_x = 0, layout_y = 0;
     GUI_GetActivityLayoutXY(&browser_activity, &layout_x, &layout_y);
-
-    onPreviewUpdateEvent();
     LayoutDraw(browser_layout, layout_x, layout_y);
 }
 
@@ -812,6 +810,8 @@ static void onItemClick()
 
 static void ctrlActivityCallback(GUI_Activity *activity)
 {
+    onPreviewUpdateEvent();
+
     if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
     {
         moveFileListPos(TYPE_MOVE_UP);

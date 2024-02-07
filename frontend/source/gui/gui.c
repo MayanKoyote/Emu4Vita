@@ -215,6 +215,9 @@ void GUI_DrawTopStatusBar(char *title)
 
     x = statusbar_x + STATUS_BAR_PADDING_L;
     y = statusbar_y + STATUS_BAR_PADDING_T;
+
+    GUI_SetClipping(x, y, statusbar_w - STATUS_BAR_PADDING_L * 2, statusbar_h - STATUS_BAR_PADDING_T);
+
     GUI_DrawText(x, y, COLOR_WHITE, title);
 
     x = statusbar_x + statusbar_w - STATUS_BAR_PADDING_L;
@@ -249,6 +252,8 @@ void GUI_DrawTopStatusBar(char *title)
     snprintf(string, sizeof(string), "%s  %s", date_string, time_string);
     int date_time_x = x - GUI_GetTextWidth(string);
     GUI_DrawText(date_time_x, y, GUI_DEF_COLOR_TEXT, string);
+
+    GUI_UnsetClipping();
 }
 
 void GUI_DrawBottomStatusBar(GUI_ButtonInstruction *instructions)
@@ -263,6 +268,8 @@ void GUI_DrawBottomStatusBar(GUI_ButtonInstruction *instructions)
     int x = statusbar_x + STATUS_BAR_PADDING_L;
     int y = statusbar_y + STATUS_BAR_PADDING_T;
 
+    GUI_SetClipping(x, y, statusbar_w - STATUS_BAR_PADDING_L * 2, statusbar_h - STATUS_BAR_PADDING_T);
+
     int i;
     for (i = 0; instructions[i].button != LANG_NULL; i++)
     {
@@ -272,6 +279,8 @@ void GUI_DrawBottomStatusBar(GUI_ButtonInstruction *instructions)
         x += GUI_DrawText(x, y, COLOR_WHITE, cur_lang[instructions[i].instruction]);
         x += STATUS_BAR_PADDING_L;
     }
+
+    GUI_UnsetClipping();
 }
 
 void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int list_len, int max_draw_len, int top_pos, int draw_track)
