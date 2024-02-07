@@ -72,7 +72,7 @@ int TextViewUpdate(void *view, int remaining_w, int remaining_h)
             else
                 textView->text_buf = StringBreakLineByWidth(textView->text, text_max_w);
             if (params->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
-                params->measured_h = GUI_GetTextHeight(textView->text_buf) + 4 + params->padding_top + params->padding_bottom;
+                params->measured_h = GUI_GetTextHeight(textView->text_buf) + params->padding_top + params->padding_bottom;
         }
     }
 
@@ -102,7 +102,7 @@ void TextViewDraw(void *view, int x, int y)
         int text_x = view_x + params->padding_left + textView->text_x;
         int text_y = view_y + params->padding_top + textView->text_y;
         int text_max_w = params->measured_w - params->padding_left - params->padding_right;
-        int text_max_h = params->measured_h - params->padding_top - params->padding_bottom;
+        int text_max_h = params->measured_h - params->padding_top; // - params->padding_bottom;
         uint32_t color = textView->text_color;
 
         GUI_SetClipping(text_x, text_y, text_max_w, text_max_h);
@@ -168,7 +168,7 @@ int TextViewSetText(TextView *textView, const char *text)
         {
             strcpy(textView->text, text);
             textView->text_w = GUI_GetTextWidth(textView->text);
-            textView->text_h = GUI_GetTextHeight(textView->text) + 4;
+            textView->text_h = GUI_GetTextHeight(textView->text);
         }
     }
 

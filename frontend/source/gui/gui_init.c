@@ -88,11 +88,13 @@ void GUI_Init()
     GUI_InitLib();
     GUI_InitImages();
     GUI_InitShaders();
+    GUI_InitFont();
 }
 
 void GUI_Deinit()
 {
     GUI_DeinitImages();
     GUI_DeinitShaders();
+    GUI_DeinitFont();
     GUI_DeinitLib();
 }

@@ -2,6 +2,7 @@
 #define __M_GUI_H__
 
 #include "gui_lib.h"
+#include "gui_font.h"
 #include "gui_ctrl.h"
 #include "gui_shader.h"
 #include "gui_init.h"

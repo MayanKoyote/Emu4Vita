@@ -72,6 +72,7 @@ SRC_C += \
 
 SRC_C += \
 	gui/gui_ctrl.c \
+	gui/gui_font.c \
 	gui/gui_init.c \
 	gui/gui_lib.c \
 	gui/gui_shader.c \
@@ -138,6 +139,7 @@ LIBS := \
 	-lm \
 	-lc \
 	-lScePgf_stub \
+	-lScePvf_stub \
 	-lSceDisplay_stub \
 	-lSceGxm_stub \
 	-lSceCtrl_stub \
@@ -205,7 +207,7 @@ WARNINGS := \
 #     -Wno-unused-variable \
 #     -Wno-unused-but-set-variable
 
-ARCHFLAGS := -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=hard -DVITA
+ARCHFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=hard -DVITA -D__vita__
 CFLAGS    := $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
 CFLAGS    += -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables -ftree-vectorize
 CFLAGS    += -O3

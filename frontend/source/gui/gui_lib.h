@@ -35,18 +35,6 @@ void GUI_EndDrawing();
 int GUI_SetClipping(int x, int y, int w, int h);
 int GUI_UnsetClipping();
 
-// Font
-int GUI_GetFontSize();
-void GUI_SetFontSize(int size);
-int GUI_GetLineHeight();
-int GUI_GetLineSpace();
-void GUI_SetLineSpace(int space);
-
-int GUI_DrawText(int x, int y, unsigned int color, const char *text);
-int GUI_DrawTextf(int x, int y, unsigned int color, const char *text, ...);
-int GUI_GetTextWidth(const char *text);
-int GUI_GetTextHeight(const char *text);
-
 // Geometric
 #define GUI_DrawPixel(x, y, color) vita2d_draw_pixel(x, y, color)
 #define GUI_DrawLine(x0, y0, x1, y1, color) vita2d_draw_line(x, y, color)
