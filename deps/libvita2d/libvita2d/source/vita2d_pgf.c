@@ -57,7 +57,7 @@ static int vita2d_load_pgf_post(vita2d_pgf *font) {
 
 	font->atlas = texture_atlas_create(ATLAS_DEFAULT_W, ATLAS_DEFAULT_H,
 		SCE_GXM_TEXTURE_FORMAT_U8_R111);
-	
+
 	if (!font->atlas)
 		return 0;
 
@@ -140,8 +140,7 @@ vita2d_pgf *vita2d_load_system_pgf(int numFonts, const vita2d_system_pgf_config 
 		tmp->in_font_group = configs[i].in_font_group;
 	}
 
-	if (!vita2d_load_pgf_post(font))
-	{
+	if (!vita2d_load_pgf_post(font)) {
 		vita2d_free_pgf(font);
 		return NULL;
 	}
@@ -151,8 +150,8 @@ vita2d_pgf *vita2d_load_system_pgf(int numFonts, const vita2d_system_pgf_config 
 cleanup:
 	tmp = font->font_handle_list;
 	while (tmp) {
-		sceFontClose(tmp->font_handle);
 		vita2d_pgf_font_handle *next = tmp->next;
+		sceFontClose(tmp->font_handle);
 		free(tmp);
 		tmp = next;
 	}
@@ -195,8 +194,7 @@ vita2d_pgf *vita2d_load_custom_pgf(const char *path)
 	handle->font_handle = font_handle;
 	font->font_handle_list = handle;
 
-	if (!vita2d_load_pgf_post(font))
-	{
+	if (!vita2d_load_pgf_post(font)) {
 		vita2d_free_pgf(font);
 		return NULL;
 	}
@@ -211,8 +209,8 @@ void vita2d_free_pgf(vita2d_pgf *font)
 
 		vita2d_pgf_font_handle *tmp = font->font_handle_list;
 		while (tmp) {
-			sceFontClose(tmp->font_handle);
 			vita2d_pgf_font_handle *next = tmp->next;
+			sceFontClose(tmp->font_handle);
 			free(tmp);
 			tmp = next;
 		}

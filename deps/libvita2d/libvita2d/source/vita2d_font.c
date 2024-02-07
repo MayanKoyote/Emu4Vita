@@ -91,8 +91,7 @@ static int vita2d_load_font_post(vita2d_font *font)
 	if (!font->atlas)
 		return 0;
 
-	sceKernelCreateLwMutex(&font->mutex, "vita2d_pvf_mutex", 2, 0, NULL);
-
+	sceKernelCreateLwMutex(&font->mutex, "vita2d_font_mutex", 2, 0, NULL);
 	return 1;
 }
 
@@ -136,11 +135,13 @@ vita2d_font *vita2d_load_font_mem(const void *buffer, unsigned int size)
 void vita2d_free_font(vita2d_font *font)
 {
 	if (font) {
+		sceKernelDeleteLwMutex(&font->mutex);
+
 		if (font->ftface)
 			FT_Done_Face(font->ftface);
 		if (font->ftlibrary)
 			FT_Done_FreeType(font->ftlibrary);
-		if (font->load_from == VITA2D_LOAD_FONT_FROM_FILE)
+		if (font->load_from == VITA2D_LOAD_FONT_FROM_FILE && font->filename)
 			free(font->filename);
 		if (font->atlas)
 			texture_atlas_free(font->atlas);
