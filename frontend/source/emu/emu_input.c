@@ -278,7 +278,7 @@ static int onHotKeyEvent(int port, uint32_t buttons)
         old_pressed = option->old_presseds[port];
         option->old_presseds[port] = cur_pressed;
 
-        if (!cur_pressed && old_pressed)
+        if ((cur_pressed && option->callback == Emu_RewindGame) || (!cur_pressed && old_pressed))
         {
             void (*callback)() = option->callback;
             if (callback)

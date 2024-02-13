@@ -97,7 +97,8 @@ void Emu_SpeedDownGame()
 
 void Emu_RewindGame()
 {
-    AppLog("Emu_RewindGame");
+    AppLog("Emu_RewindGame\n");
+    rewind_key_pressed = 1;
 }
 
 static int
@@ -260,6 +261,7 @@ int Emu_StartGame(EmuGameInfo *info)
     Emu_InitAudio();
     Emu_InitVideo();
     Emu_InitInput();
+    Emu_InitRewind(0x10 * 0x1000 * 0x1000);
 
     Emu_RequestUpdateVideoDisplay();
     Retro_UpdateCoreOptionsDisplay();
@@ -430,4 +432,5 @@ void Emu_RunGame()
     Emu_PollInput();
     retro_run();
     onGameRunEvent();
+    Emu_RewindCheck();
 }
