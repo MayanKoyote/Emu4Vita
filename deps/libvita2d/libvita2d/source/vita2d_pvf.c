@@ -55,11 +55,12 @@ static int vita2d_load_pvf_post(vita2d_pvf *font)
 	ScePvfFontInfo fontinfo;
 
 	scePvfGetFontInfo(font->font_handle_list->font_handle, &fontinfo);
-	font->font_size = fontinfo.maxFGlyphMetrics.height;
-	font->max_height = fontinfo.maxFGlyphMetrics.height;
-	font->max_ascender = fontinfo.maxFGlyphMetrics.ascender;
-	font->max_descender = fontinfo.maxFGlyphMetrics.descender;
-	// printf("[VITA2D_PVF] font->max_height: %d, font->max_ascender = %d, font->max_descender = %d\n", font->max_height, font->max_ascender, font->max_descender);
+	font->font_size = fontinfo.maxFGlyphMetrics.height + 0.5f;
+	font->max_height = fontinfo.maxFGlyphMetrics.height + 0.5f;
+	font->max_ascender = fontinfo.maxFGlyphMetrics.ascender + 0.5f;
+	font->max_descender = fontinfo.maxFGlyphMetrics.descender + 0.5f;
+	// printf("[VITA2D_PVF] font->font_size: %d, font->max_height: %d, font->max_ascender = %d, font->max_descender = %d\n",
+	//		font->font_size, font->max_height, font->max_ascender, font->max_descender);
 
 	font->atlas = texture_atlas_create(ATLAS_DEFAULT_W, ATLAS_DEFAULT_H,
 		SCE_GXM_TEXTURE_FORMAT_U8_R111);

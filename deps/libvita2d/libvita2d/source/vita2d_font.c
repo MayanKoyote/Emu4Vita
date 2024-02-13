@@ -80,10 +80,11 @@ static int vita2d_load_font_post(vita2d_font *font)
 		return 0;
 
 	font->font_size = 20;
-	font->max_height = font->ftface->size->metrics.height >> 6;
-	font->max_ascender = font->ftface->size->metrics.ascender >> 6;
-	font->max_descender = font->ftface->size->metrics.descender >> 6;
-	// printf("[VITA2D_FONT] font->max_height: %d, font->max_ascender = %d, font->max_descender = %d\n", font->max_height, font->max_ascender, font->max_descender);
+	font->max_height = (font->ftface->size->metrics.height >> 6) + 0.5f;
+	font->max_ascender = (font->ftface->size->metrics.ascender >> 6) + 0.5f;
+	font->max_descender = (font->ftface->size->metrics.descender >> 6) + 0.5f;
+	// printf("[VITA2D_FONT] font->font_size: %d, font->max_height: %d, font->max_ascender = %d, font->max_descender = %d\n",
+	//		font->font_size, font->max_height, font->max_ascender, font->max_descender);
 
 	font->atlas = texture_atlas_create(ATLAS_DEFAULT_W, ATLAS_DEFAULT_H,
 		SCE_GXM_TEXTURE_FORMAT_U8_R111);
