@@ -61,6 +61,9 @@
 #define ENABLE_BITMASK_RETRO_KEY(id) ((1 << id) | ENABLE_KEY_BITMASK)
 #define ENABLE_TURBO_BITMASK_RETRO_KEY(id) ((1 << id) | ENABLE_KEY_BITMASK | TURBO_KEY_BITMASK)
 
+#define MIN_REWIND_BUFFER_SIZE 2
+#define MAX_REWIND_BUFFER_SIZE 30
+
 enum TypeDisplaySize
 {
     TYPE_DISPLAY_SIZE_1X,
@@ -182,10 +185,12 @@ typedef struct
 
 typedef struct
 {
-    uint32_t version;        // 0x00
-    uint32_t auto_save_load; // 0x04
-    char reserved[0x78];     // 0x08
-} MiscConfig;                // 0x80
+    uint32_t version;           // 0x00
+    uint32_t auto_save_load;    // 0x04
+    uint32_t enable_rewind;     // 0x08
+    int32_t rewind_buffer_size; // 0x0c
+    char reserved[0x70];        // 0x10
+} MiscConfig;                   // 0x80
 
 typedef struct
 {

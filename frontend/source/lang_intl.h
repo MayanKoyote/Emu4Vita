@@ -325,6 +325,10 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     /**************  Menu misc  *****************/
     // LANG_AUTO_SAVE_LOAD_STATE
     "Auto save/load state",
+    // LANG_ENABLE_REWIND
+    "Enable game rewind",
+    // LANG_REWIND_BUFFER_SIZE
+    "Rewind Buffer Size (MB)",
     // LANG_SAVE_SCREENSHOT
     "Save screenshot",
     // LANG_SAVE_PREVIEW
@@ -708,6 +712,10 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     /**************  Menu misc  *****************/
     // LANG_AUTO_SAVE_LOAD_STATE
     "自动存读档",
+    // LANG_ENABLE_REWIND
+    "启用回溯",
+    // LANG_REWIND_BUFFER_SIZE
+    "回溯缓冲区大小 (MB)",
     // LANG_SAVE_SCREENSHOT
     "保存截图",
     // LANG_SAVE_PREVIEW
@@ -1091,6 +1099,10 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     /**************  Menu misc  *****************/
     // LANG_AUTO_SAVE_LOAD_STATE
     "自動存讀檔",
+    // LANG_ENABLE_REWIND
+    "開啟倒帶",
+    // LANG_REWIND_BUFFER_SIZE
+    "倒帶緩衝區大小 (MB)",
     // LANG_SAVE_SCREENSHOT
     "保存截圖",
     // LANG_SAVE_PREVIEW

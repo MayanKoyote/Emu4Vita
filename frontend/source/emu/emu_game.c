@@ -97,7 +97,7 @@ void Emu_SpeedDownGame()
 
 void Emu_RewindGame()
 {
-    AppLog("Emu_RewindGame\n");
+    // AppLog("Emu_RewindGame\n");
     rewind_key_pressed = 1;
 }
 
@@ -261,7 +261,9 @@ int Emu_StartGame(EmuGameInfo *info)
     Emu_InitAudio();
     Emu_InitVideo();
     Emu_InitInput();
-    Emu_InitRewind(0x10 * 0x1000 * 0x1000);
+
+    if (misc_config.enable_rewind)
+        Emu_InitRewind(misc_config.rewind_buffer_size << 20);
 
     Emu_RequestUpdateVideoDisplay();
     Retro_UpdateCoreOptionsDisplay();
@@ -318,6 +320,7 @@ void Emu_ExitGame()
         Emu_DeinitAudio();
         Emu_DeinitVideo();
         Emu_DeinitInput();
+        Emu_DeinitRewind();
         game_exiting = 0;
         game_loaded = 0;
     }
@@ -430,7 +433,8 @@ static void onGameRunEvent()
 void Emu_RunGame()
 {
     Emu_PollInput();
+    if (misc_config.enable_rewind)
+        Emu_RewindCheck();
     retro_run();
     onGameRunEvent();
-    Emu_RewindCheck();
 }

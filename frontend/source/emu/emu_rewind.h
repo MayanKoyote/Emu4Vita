@@ -6,6 +6,7 @@
 // 参考 RetroArch 的 state_manager.h/c
 
 extern int rewind_key_pressed;
+extern int in_rewinding;
 
 void Emu_InitRewind(size_t buffer_size);
 void Emu_DeinitRewind();

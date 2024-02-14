@@ -308,3 +308,15 @@ static void resetAppConfigCallback()
     Setting_UpdataLangOption();
     Browser_RequestRefreshPreview(1);
 }
+
+static void rewindMenuCallback()
+{
+    misc_option_changed = 1;
+    if (Emu_IsGameLoaded())
+    {
+        if (misc_config.enable_rewind)
+            Emu_InitRewind(misc_config.rewind_buffer_size << 20);
+        else
+            Emu_DeinitRewind();
+    }
+}

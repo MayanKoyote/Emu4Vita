@@ -14,6 +14,7 @@ typedef struct
 typedef struct
 {
     uint32_t *value;
+    uint32_t allow_holding;
     void (*callback)();
     uint8_t old_presseds[N_CTRL_PORTS];
 } HotKeyOption;

@@ -95,14 +95,14 @@ EmuKeyOption emu_key_options[] = {
 #define N_EMU_KEY_OPTIONS 24 // (sizeof(emu_key_options) / sizeof(EmuKeyOption))
 
 HotKeyOption hot_key_options[] = {
-    {&hotkey_config.hk_loadstate, saveStateEventCallback, {0}},
-    {&hotkey_config.hk_savestate, loadStateEventCallback, {0}},
-    {&hotkey_config.hk_speed_up, Emu_SpeedUpGame, {0}},
-    {&hotkey_config.hk_speed_down, Emu_SpeedDownGame, {0}},
-    {&hotkey_config.hk_rewind, Emu_RewindGame, {0}},
-    {&hotkey_config.hk_player_up, changeMapPortUpCallback, {0}},
-    {&hotkey_config.hk_player_down, changeMapPortDownCallback, {0}},
-    {&hotkey_config.hk_exit_game, exitGameEventCallback, {0}},
+    {&hotkey_config.hk_loadstate, 0, saveStateEventCallback, {0}},
+    {&hotkey_config.hk_savestate, 0, loadStateEventCallback, {0}},
+    {&hotkey_config.hk_speed_up, 0, Emu_SpeedUpGame, {0}},
+    {&hotkey_config.hk_speed_down, 0, Emu_SpeedDownGame, {0}},
+    {&hotkey_config.hk_rewind, 1, Emu_RewindGame, {0}},
+    {&hotkey_config.hk_player_up, 0, changeMapPortUpCallback, {0}},
+    {&hotkey_config.hk_player_down, 0, changeMapPortDownCallback, {0}},
+    {&hotkey_config.hk_exit_game, 0, exitGameEventCallback, {0}},
 };
 #define N_HOT_KEY_MAPPER_OPTIONS 8 // (sizeof(hot_key_options) / sizeof(HotKeyOption))
 
@@ -278,7 +278,7 @@ static int onHotKeyEvent(int port, uint32_t buttons)
         old_pressed = option->old_presseds[port];
         option->old_presseds[port] = cur_pressed;
 
-        if ((cur_pressed && option->callback == Emu_RewindGame) || (!cur_pressed && old_pressed))
+        if ((cur_pressed && option->allow_holding) || (!cur_pressed && old_pressed))
         {
             void (*callback)() = option->callback;
             if (callback)

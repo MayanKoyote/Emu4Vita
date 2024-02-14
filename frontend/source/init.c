@@ -117,7 +117,7 @@ void AppRunLoop()
 {
     while (!app_exit)
     {
-        if (Emu_IsGameRunning())
+        if (Emu_IsGameRunning() || in_rewinding)
             Emu_RunGame();
         else
             GUI_RunMain();

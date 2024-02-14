@@ -126,6 +126,8 @@ CheckBoxOptionMenu hk_exit_game_option = STD_HOT_KEY_MAPPER_OPTION(7, hk_exit_ga
 
 // 杂项 (菜单条目)
 StrArrayOption auto_save_load_option = {&misc_config.auto_save_load, no_yes_values, sizeof(no_yes_values) / sizeof(LangString), miscOptionUpdateCallback, NULL};
+StrArrayOption rewind_option = {&misc_config.enable_rewind, no_yes_values, sizeof(no_yes_values) / sizeof(LangString), rewindMenuCallback, NULL};
+IntRangeOption rewind_buffer_size_option = {&misc_config.rewind_buffer_size, MIN_REWIND_BUFFER_SIZE, MAX_REWIND_BUFFER_SIZE, 1, "%d", rewindMenuCallback, NULL};
 
 // 程序 (菜单条目)
 StrArrayOption preview_path_option = {&app_config.preview_path, preview_path_values, sizeof(preview_path_values) / sizeof(LangString), previewOptionUpdateCallback, NULL};
@@ -223,10 +225,12 @@ static SettingMenu cheat_menu = {{LANG_MENU_CHEAT, NULL}, &cheat_menu_visibility
 
 // 杂项
 static SettingMenuItem misc_menu_items[] = {
-    {{LANG_AUTO_SAVE_LOAD_STATE, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &auto_save_load_option}, // 0
-    {{LANG_SAVE_SCREENSHOT, NULL}, &game_is_loaded, TYPE_OPTION_CALLBACK, saveScreenshotCallback},           // 1
-    {{LANG_SAVE_PREVIEW, NULL}, &game_is_loaded, TYPE_OPTION_CALLBACK, saveScreenshotForPreviewCallback},    // 2
-    {{LANG_RESET_CONFIGS, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetMiscConfigCallback},        // 3
+    {{LANG_AUTO_SAVE_LOAD_STATE, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &auto_save_load_option},   // 0
+    {{LANG_ENABLE_REWIND, NULL}, &visibility_visible, TYPE_OPTION_STR_ARRAY, &rewind_option},                  // 1
+    {{LANG_REWIND_BUFFER_SIZE, NULL}, &visibility_visible, TYPE_OPTION_INT_RANGE, &rewind_buffer_size_option}, // 2
+    {{LANG_SAVE_SCREENSHOT, NULL}, &game_is_loaded, TYPE_OPTION_CALLBACK, saveScreenshotCallback},             // 3
+    {{LANG_SAVE_PREVIEW, NULL}, &game_is_loaded, TYPE_OPTION_CALLBACK, saveScreenshotForPreviewCallback},      // 4
+    {{LANG_RESET_CONFIGS, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetMiscConfigCallback},          // 5
 };
 static SettingMenu misc_menu = {{LANG_MENU_MISC, NULL}, &visibility_visible, misc_menu_items, sizeof(misc_menu_items) / sizeof(SettingMenuItem), NULL, miscMenuExitCallback};
 
