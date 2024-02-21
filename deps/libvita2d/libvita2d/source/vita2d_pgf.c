@@ -15,6 +15,8 @@
 #define ATLAS_DEFAULT_W 512
 #define ATLAS_DEFAULT_H 512
 
+#define FONT_GLYPH_MARGIN 2
+
 typedef struct vita2d_pgf_font_handle {
 	SceFontHandle font_handle;
 	int (*in_font_group)(unsigned int c);
@@ -26,8 +28,11 @@ typedef struct vita2d_pgf {
 	vita2d_pgf_font_handle *font_handle_list;
 	texture_atlas *atlas;
 	SceKernelLwMutexWork mutex;
-	float vsize;
-	int linespace;
+	int font_size;
+	int max_height;
+	int max_ascender;
+	int max_descender;
+	int line_space;
 } vita2d_pgf;
 
 static void *pgf_alloc_func(void *userdata, unsigned int size)
@@ -44,12 +49,16 @@ static int vita2d_load_pgf_post(vita2d_pgf *font) {
 	SceFontInfo fontinfo;
 
 	sceFontGetFontInfo(font->font_handle_list->font_handle, &fontinfo);
-	font->vsize = (fontinfo.fontStyle.fontV / fontinfo.fontStyle.fontVRes)
-		* SCREEN_DPI;
+	font->font_size = fontinfo.maxGlyphHeight;
+	font->max_height = fontinfo.maxGlyphHeightF + 0.5f;
+	font->max_ascender = fontinfo.maxGlyphAscenderF + 0.5f;
+	font->max_descender = fontinfo.maxGlyphDescenderF + 0.5f;
+	// printf("[VITA2D_PGF] font->font_size: %d, font->max_height: %d, font->max_ascender = %d, font->max_descender = %d\n",
+	//		font->font_size, font->max_height, font->max_ascender, font->max_descender);
 
 	font->atlas = texture_atlas_create(ATLAS_DEFAULT_W, ATLAS_DEFAULT_H,
 		SCE_GXM_TEXTURE_FORMAT_U8_R111);
-	
+
 	if (!font->atlas)
 		return 0;
 
@@ -132,8 +141,7 @@ vita2d_pgf *vita2d_load_system_pgf(int numFonts, const vita2d_system_pgf_config 
 		tmp->in_font_group = configs[i].in_font_group;
 	}
 
-	if (!vita2d_load_pgf_post(font))
-	{
+	if (!vita2d_load_pgf_post(font)) {
 		vita2d_free_pgf(font);
 		return NULL;
 	}
@@ -143,8 +151,8 @@ vita2d_pgf *vita2d_load_system_pgf(int numFonts, const vita2d_system_pgf_config 
 cleanup:
 	tmp = font->font_handle_list;
 	while (tmp) {
-		sceFontClose(tmp->font_handle);
 		vita2d_pgf_font_handle *next = tmp->next;
+		sceFontClose(tmp->font_handle);
 		free(tmp);
 		tmp = next;
 	}
@@ -187,8 +195,7 @@ vita2d_pgf *vita2d_load_custom_pgf(const char *path)
 	handle->font_handle = font_handle;
 	font->font_handle_list = handle;
 
-	if (!vita2d_load_pgf_post(font))
-	{
+	if (!vita2d_load_pgf_post(font)) {
 		vita2d_free_pgf(font);
 		return NULL;
 	}
@@ -203,13 +210,14 @@ void vita2d_free_pgf(vita2d_pgf *font)
 
 		vita2d_pgf_font_handle *tmp = font->font_handle_list;
 		while (tmp) {
-			sceFontClose(tmp->font_handle);
 			vita2d_pgf_font_handle *next = tmp->next;
+			sceFontClose(tmp->font_handle);
 			free(tmp);
 			tmp = next;
 		}
 		sceFontDoneLib(font->lib_handle);
-		texture_atlas_free(font->atlas);
+		if (font->atlas)
+			texture_atlas_free(font->atlas);
 		free(font);
 	}
 }
@@ -235,16 +243,16 @@ static int atlas_add_glyph(vita2d_pgf *font, unsigned int character)
 		return 0;
 
 	vita2d_size size = {
-		char_info.bitmapWidth,
-		char_info.bitmapHeight
+		char_info.bitmapWidth + FONT_GLYPH_MARGIN * 2,
+		char_info.bitmapHeight + FONT_GLYPH_MARGIN * 2
 	};
 
 	texture_atlas_entry_data data = {
 		char_info.bitmapLeft,
 		char_info.bitmapTop,
-		char_info.sfp26AdvanceH,
-		char_info.sfp26AdvanceV,
-		font->vsize
+		char_info.sfp26AdvanceH >> 6,
+		char_info.sfp26AdvanceV >> 6,
+		font->font_size
 	};
 
 	if (!texture_atlas_insert(font->atlas, character, &size, &data,
@@ -255,8 +263,8 @@ static int atlas_add_glyph(vita2d_pgf *font, unsigned int character)
 
 	SceFontGlyphImage glyph_image;
 	glyph_image.pixelFormat = SCE_FONT_PIXELFORMAT_8;
-	glyph_image.xPos64 = position.x << 6;
-	glyph_image.yPos64 = position.y << 6;
+	glyph_image.xPos64 = (position.x + FONT_GLYPH_MARGIN) << 6;
+	glyph_image.yPos64 = (position.y + FONT_GLYPH_MARGIN) << 6;
 	glyph_image.bufWidth = vita2d_texture_get_width(tex);
 	glyph_image.bufHeight = vita2d_texture_get_height(tex);
 	glyph_image.bytesPerLine = vita2d_texture_get_stride(tex);
@@ -278,10 +286,12 @@ static int generic_pgf_draw_text(vita2d_pgf *font, int draw, int *height,
 	vita2d_rectangle rect;
 	texture_atlas_entry_data data;
 	vita2d_texture *tex = NULL;
+	float scale;
 	int start_x = x;
 	int max_x = 0;
 	int pen_x = x;
 	int pen_y = y;
+	int line_height = vita2d_pgf_get_lineheight(font, size);
 
 	for (i = 0; text[i];) {
 		i += utf8_to_ucs2(&text[i], &character);
@@ -290,7 +300,7 @@ static int generic_pgf_draw_text(vita2d_pgf *font, int draw, int *height,
 			if (pen_x > max_x)
 				max_x = pen_x;
 			pen_x = start_x;
-			pen_y += size + font->linespace;
+			pen_y += (line_height + font->line_space);
 			continue;
 		}
 
@@ -302,19 +312,20 @@ static int generic_pgf_draw_text(vita2d_pgf *font, int draw, int *height,
 					continue;
 		}
 
-		const float draw_scale = size / (float)data.glyph_size;
+		scale = (float)size / (float)data.glyph_size;
 
 		if (draw) {
 			vita2d_draw_texture_tint_part_scale(tex,
-				pen_x + data.bitmap_left * draw_scale,
-				pen_y + size - data.bitmap_top * draw_scale,
-				rect.x, rect.y, rect.w, rect.h,
-				draw_scale,
-				draw_scale,
+				pen_x + data.bitmap_left * scale, 
+				pen_y + (font->max_ascender - data.bitmap_top) * scale,
+				rect.x + FONT_GLYPH_MARGIN / 2.0f, rect.y + FONT_GLYPH_MARGIN / 2.0f,
+				rect.w - FONT_GLYPH_MARGIN / 2.0f, rect.h - FONT_GLYPH_MARGIN / 2.0f,
+				scale,
+				scale,
 				color);
 		}
 
-		pen_x += (data.advance_x >> 6) * draw_scale;
+		pen_x += data.advance_x * scale;
 	}
 
 	if (pen_x > max_x)
@@ -371,12 +382,17 @@ int vita2d_pgf_text_height(vita2d_pgf *font, unsigned int size, const char *text
 	return height;
 }
 
-void vita2d_pgf_set_linespace(vita2d_pgf *font, int linespace)
+void vita2d_pgf_set_linespace(vita2d_pgf *font, int line_space)
 {
-	font->linespace = linespace;
+	font->line_space = line_space;
 }
 
 int vita2d_pgf_get_linespace(vita2d_pgf *font)
 {
-	return font->linespace;
+	return font->line_space;
+}
+
+int vita2d_pgf_get_lineheight(vita2d_pgf *font, int size)
+{
+	return size * (float)font->max_height / (float)font->font_size + 0.5f + FONT_GLYPH_MARGIN / 2.0f;
 }

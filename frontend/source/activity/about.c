@@ -33,8 +33,8 @@ GUI_Activity about_activity = {
 
 #define LISTVIEW_PADDING_L 4
 #define LISTVIEW_PADDING_T 4
-#define ITEMVIEW_PADDING_L 3
-#define ITEMVIEW_PADDING_T 3
+#define ITEMVIEW_PADDING_L 4
+#define ITEMVIEW_PADDING_T 4
 
 #define TEXT_COLOR COLOR_ORANGE
 

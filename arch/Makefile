@@ -93,10 +93,10 @@ WARNINGS := \
 	-Wall \
 	-Wno-format-truncation
 
-CFLAGS    += -DVITA -O3
+CFLAGS    += -DVITA -D__vita__ -O3
 ASFLAGS   := $(CFLAGS) $(WARNINGS) $(INCDIRS)
 
-CFLAGS    += -ffast-math $(WARNINGS) $(INCDIRS) $(DEFINES)
+CFLAGS    += $(WARNINGS) $(INCDIRS) $(DEFINES)
 CXXFLAGS  := $(CFLAGS) -fno-rtti -fno-exceptions
 LDFLAGS   := -Wl,-q $(LIBDIRS)
 

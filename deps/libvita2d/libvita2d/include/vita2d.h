@@ -168,8 +168,9 @@ int vita2d_font_draw_textf(vita2d_font *font, int x, int y, unsigned int color, 
 void vita2d_font_text_dimensions(vita2d_font *font, unsigned int size, const char *text, int *width, int *height);
 int vita2d_font_text_width(vita2d_font *font, unsigned int size, const char *text);
 int vita2d_font_text_height(vita2d_font *font, unsigned int size, const char *text);
-void vita2d_font_set_linespace(vita2d_font *font, int linespace);
+void vita2d_font_set_linespace(vita2d_font *font, int line_space);
 int vita2d_font_get_linespace(vita2d_font *font);
+int vita2d_font_get_lineheight(vita2d_font *font, int size);
 
 /* PGF functions are weak imports at the moment, they have to be resolved manually */
 vita2d_pgf *vita2d_load_system_pgf(int numFonts, const vita2d_system_pgf_config *configs);
@@ -181,8 +182,9 @@ int vita2d_pgf_draw_textf(vita2d_pgf *font, int x, int y, unsigned int color,  u
 void vita2d_pgf_text_dimensions(vita2d_pgf *font, unsigned int size, const char *text, int *width, int *height);
 int vita2d_pgf_text_width(vita2d_pgf *font, unsigned int size, const char *text);
 int vita2d_pgf_text_height(vita2d_pgf *font, unsigned int size, const char *text);
-void vita2d_pgf_set_linespace(vita2d_pgf *font, int linespace);
+void vita2d_pgf_set_linespace(vita2d_pgf *font, int line_space);
 int vita2d_pgf_get_linespace(vita2d_pgf *font);
+int vita2d_pgf_get_lineheight(vita2d_pgf *font, int size);
 
 vita2d_pvf *vita2d_load_system_pvf(int numFonts, const vita2d_system_pvf_config *configs);
 vita2d_pvf *vita2d_load_default_pvf();
@@ -193,8 +195,9 @@ int vita2d_pvf_draw_textf(vita2d_pvf *font, int x, int y, unsigned int color, un
 void vita2d_pvf_text_dimensions(vita2d_pvf *font, unsigned int size, const char *text, int *width, int *height);
 int vita2d_pvf_text_width(vita2d_pvf *font, unsigned int size, const char *text);
 int vita2d_pvf_text_height(vita2d_pvf *font, unsigned int size, const char *text);
-void vita2d_pvf_set_linespace(vita2d_pvf *font, int linespace);
+void vita2d_pvf_set_linespace(vita2d_pvf *font, int line_space);
 int vita2d_pvf_get_linespace(vita2d_pvf *font);
+int vita2d_pvf_get_lineheight(vita2d_pvf *font, int size);
 
 #ifdef __cplusplus
 }

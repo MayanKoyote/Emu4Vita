@@ -70,7 +70,7 @@ static void GUI_DeinitImages()
         gui_images_thid = -1;
     }
     GUI_SetWallpaperTexture(NULL);
-    GUI_SetWallpaperTexture(NULL);
+    GUI_SetSplashTexture(NULL);
 }
 
 void GUI_WaitInitEnd()
@@ -88,11 +88,13 @@ void GUI_Init()
     GUI_InitLib();
     GUI_InitImages();
     GUI_InitShaders();
+    GUI_InitFont();
 }
 
 void GUI_Deinit()
 {
     GUI_DeinitImages();
     GUI_DeinitShaders();
+    GUI_DeinitFont();
     GUI_DeinitLib();
 }
