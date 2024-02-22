@@ -7,8 +7,8 @@
 #include "emu_audio.h"
 #include "utils.h"
 
-// 每 0.1 秒记录一次
-#define NEXT_STATE_PERIOD 100000
+// 每 0.05 秒记录一次
+#define NEXT_STATE_PERIOD 50000
 // 如果差异的大小超过 THRESHOLD_RATE，则保存全部
 #define THRESHOLD_RATE 0.1
 // 最小差异单位
@@ -20,21 +20,25 @@ enum BlockType
     BLOCK_DIFF
 };
 
+typedef struct FullBlock FullBlock;
+
+#define BLOCK_HEADER                                          \
+    int type;              /* BLOCK_FULL 或 BLOCK_DIFF*/     \
+    size_t total_size;     /* 整个 block 完整的大小 */ \
+    void *prev;            /* 指向上一个 block */        \
+    FullBlock *full_block; /* type == BLOCK_FULL 时指向下一个 FullBlock, BLOCK_DIFF 时指向基础的 FullBlock */
+
 typedef struct
 {
-    int type;
-    size_t total_size;
-    void *prev;
-    void *next;
+    BLOCK_HEADER
 } BlockHeader;
 
 // 用于保存完整的状态信息
-typedef struct FullBlockStruct
+struct FullBlock
 {
-    BlockHeader header;
-    struct FullBlockStruct *next_full_block;
+    BLOCK_HEADER
     uint8_t buf[];
-} FullBlock;
+};
 
 // 用于保存差异的状态信息
 typedef struct
@@ -45,8 +49,7 @@ typedef struct
 
 typedef struct
 {
-    BlockHeader header;
-    FullBlock *full_block;
+    BLOCK_HEADER
     uint32_t num;
     DiffArea areas[];
     // uin8_t *diff_buf;
@@ -71,43 +74,46 @@ int in_rewinding = 0;
 
 static void *SetNextBlock(BlockHeader *bh)
 {
-    bh->next = (void *)bh + bh->total_size;
-    if (bh->next > rs.tail - rs.state_size - 0x20)
-        bh->next = rs.data;
+    void *next = (uint8_t *)bh + bh->total_size;
+    if (next > rs.tail - rs.state_size - 0x20)
+        next = rs.data;
 
-    if (bh->next >= (void *)rs.header && bh->next < (void *)rs.header + rs.header->header.total_size)
+    void *start1 = next;
+    void *end1 = (uint8_t *)next + sizeof(FullBlock) + rs.state_size;
+    void *start2 = rs.header;
+    void *end2 = (uint8_t *)rs.header + rs.header->total_size;
+
+    if (!(end1 < start2 || start1 >= end2))
     {
         // next 落入 header 的区域
-        if (rs.header->next_full_block)
-            rs.header = rs.header->next_full_block; // 指向下一个 FullBlock
+        if (rs.header->full_block)
+            rs.header = rs.header->full_block; // 指向下一个 FullBlock
         else
-            bh->next = NULL; // 只有一个 FullBlock
+            next = NULL; // 只有一个 FullBlock
     }
-    return bh->next;
+    return next;
 }
 
-static void SaveFullState(FullBlock *fb)
+static void SaveFullState(FullBlock *fullb)
 {
-    fb->header.type = BLOCK_FULL;
-    fb->header.total_size = sizeof(FullBlock) + rs.state_size;
-    fb->header.prev = 0;
-    fb->header.next = 0;
-    fb->next_full_block = NULL;
-    retro_serialize(&(fb->buf), rs.state_size);
+    fullb->type = BLOCK_FULL;
+    fullb->total_size = sizeof(FullBlock) + rs.state_size;
+    fullb->prev = 0;
+    fullb->full_block = NULL;
+    retro_serialize(fullb->buf, rs.state_size);
 }
 
 // 仅把需要复制的差异信息(地址, 大小)写入 areas，统计 total_size
-static void PreSaveDiffState(DiffBlock *db, FullBlock *fb)
+static void PreSaveDiffState(DiffBlock *diffb, FullBlock *fullb)
 {
-    db->header.type = BLOCK_DIFF;
-    db->header.total_size = sizeof(DiffBlock);
-    db->header.prev = 0;
-    db->header.next = 0;
-    db->full_block = fb;
-    db->num = 0;
+    diffb->type = BLOCK_DIFF;
+    diffb->total_size = sizeof(DiffBlock);
+    diffb->prev = 0;
+    diffb->full_block = fullb;
+    diffb->num = 0;
     retro_serialize(rs.tmp_state, rs.state_size);
 
-    uint8_t *old = fb->buf;
+    uint8_t *old = fullb->buf;
     uint8_t *new = rs.tmp_state;
     int last_state = 0; // 相同: 0, 不同: 1
     int offset = 0;
@@ -118,9 +124,9 @@ static void PreSaveDiffState(DiffBlock *db, FullBlock *fb)
             if (last_state == 1)
             {
                 last_state = 0;
-                db->areas[db->num].size = offset - db->areas[db->num].offset;
-                db->header.total_size += db->areas[db->num].size;
-                db->num++;
+                diffb->areas[diffb->num].size = offset - diffb->areas[diffb->num].offset;
+                diffb->total_size += diffb->areas[diffb->num].size;
+                diffb->num++;
             }
         }
         else
@@ -128,7 +134,7 @@ static void PreSaveDiffState(DiffBlock *db, FullBlock *fb)
             if (last_state == 0)
             {
                 last_state = 1;
-                db->areas[db->num].offset = offset;
+                diffb->areas[diffb->num].offset = offset;
             }
         }
     }
@@ -139,32 +145,32 @@ static void PreSaveDiffState(DiffBlock *db, FullBlock *fb)
     {
         if (last_state == 0)
         {
-            db->areas[db->num].offset = offset;
-            db->areas[db->num].size = tail_size;
+            diffb->areas[diffb->num].offset = offset;
+            diffb->areas[diffb->num].size = tail_size;
         }
         else
         {
-            db->areas[db->num].size = rs.state_size - db->areas[db->num].offset;
+            diffb->areas[diffb->num].size = rs.state_size - diffb->areas[diffb->num].offset;
         }
 
-        db->header.total_size += db->areas[db->num].size;
-        db->num++;
+        diffb->total_size += diffb->areas[diffb->num].size;
+        diffb->num++;
     }
     else if (last_state == 1)
     {
-        db->areas[db->num].size = offset - db->areas[db->num].offset;
-        db->header.total_size += db->areas[db->num].size;
-        db->num++;
+        diffb->areas[diffb->num].size = offset - diffb->areas[diffb->num].offset;
+        diffb->total_size += diffb->areas[diffb->num].size;
+        diffb->num++;
     }
 
-    db->header.total_size += db->num * sizeof(DiffArea);
+    diffb->total_size += diffb->num * sizeof(DiffArea);
 }
 
-static void SaveDiffState(DiffBlock *db)
+static void SaveDiffState(DiffBlock *diffb)
 {
-    uint8_t *buf = (uint8_t *)db + sizeof(DiffBlock) + db->num * sizeof(DiffArea);
-    DiffArea *area = db->areas;
-    for (int i = 0; i < db->num; i++)
+    uint8_t *buf = (uint8_t *)diffb + sizeof(DiffBlock) + diffb->num * sizeof(DiffArea);
+    DiffArea *area = diffb->areas;
+    for (int i = 0; i < diffb->num; i++)
     {
         memcpy(buf, rs.tmp_state + area->offset, area->size);
         buf += area->size;
@@ -174,17 +180,17 @@ static void SaveDiffState(DiffBlock *db)
 
 static const void *GetState()
 {
-    BlockHeader *bh = (BlockHeader *)rs.current;
+    BlockHeader *header = (BlockHeader *)rs.current;
 
-    if (bh->type == BLOCK_FULL)
-        return ((FullBlock *)bh)->buf;
+    if (header->type == BLOCK_FULL)
+        return ((FullBlock *)header)->buf;
 
-    DiffBlock *db = (DiffBlock *)bh;
-    uint8_t *buf = (uint8_t *)db + sizeof(DiffBlock) + db->num * sizeof(DiffArea);
-    DiffArea *area = db->areas;
+    DiffBlock *diffb = (DiffBlock *)header;
+    uint8_t *buf = (uint8_t *)diffb + sizeof(DiffBlock) + diffb->num * sizeof(DiffArea);
+    DiffArea *area = diffb->areas;
 
-    memcpy(rs.tmp_state, db->full_block->buf, rs.state_size);
-    for (int i = 0; i < db->num; i++)
+    memcpy(rs.tmp_state, diffb->full_block->buf, rs.state_size);
+    for (int i = 0; i < diffb->num; i++)
     {
         memcpy(rs.tmp_state + area->offset, buf, area->size);
         buf += area->size;
@@ -258,9 +264,9 @@ static void SaveState()
             {
                 SaveFullState((FullBlock *)next);
                 if (current->type == BLOCK_FULL)
-                    ((FullBlock *)current)->next_full_block = (FullBlock *)next;
+                    current->full_block = (FullBlock *)next;
                 else
-                    ((DiffBlock *)current)->full_block->next_full_block = (FullBlock *)next;
+                    current->full_block->full_block = (FullBlock *)next;
             }
             else
             {
