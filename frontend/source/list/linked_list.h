@@ -17,8 +17,6 @@ void LinkedListSetFreeEntryDataCallback(LinkedList *list, LinkedListFreeDataCall
 void LinkedListSetFreeListDataCallback(LinkedList *list, LinkedListFreeDataCallback callback);
 void LinkedListSetCompareCallback(LinkedList *list, LinkedListCompareCallback callback);
 
-void LinkedListFreeListData(LinkedList *list, void *data);
-
 LinkedListEntry *LinkedListHead(LinkedList *list);
 LinkedListEntry *LinkedListTail(LinkedList *list);
 LinkedListEntry *LinkedListNext(LinkedListEntry *entry);
