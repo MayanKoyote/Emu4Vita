@@ -282,7 +282,6 @@ int64_t ReadFileEx(const char *file, const void *buffer, size_t size)
     }
     sceIoClose(fd);
 
-    // AppLog("[FILE] ReadFileEx: size: %u, remaining: %u\n", size, remaining);
     return size - remaining;
 }
 
@@ -317,7 +316,6 @@ int64_t WriteFileEx(const char *file, const void *buffer, size_t size)
     }
     sceIoClose(fd);
 
-    // AppLog("[FILE] WriteFileEx: size: %u, remaining: %u\n", size, remaining);
     return size - remaining;
 }
 
@@ -369,7 +367,6 @@ int64_t AllocateReadFileEx(const char *file, void **buffer, size_t *buffersize)
     }
     sceIoClose(fd);
 
-    // AppLog("[FILE] AllocateReadFileEx: size: %lld, remaining: %u\n", size, remaining);
     *buffer = buf;
     if (buffersize)
         *buffersize = size;
@@ -390,22 +387,18 @@ int GetFileSize(const char *file)
 
 int CheckFileExist(const char *file)
 {
-    SceUID fd = sceIoOpen(file, SCE_O_RDONLY, 0);
-    if (fd < 0)
-        return 0;
-
-    sceIoClose(fd);
-    return 1;
+    SceIoStat st;
+    if (sceIoGetstat(file, &st) >= 0)
+        return SCE_S_ISREG(st.st_mode);
+    return 0;
 }
 
 int CheckFolderExist(const char *folder)
 {
-    SceUID dfd = sceIoDopen(folder);
-    if (dfd < 0)
-        return 0;
-
-    sceIoDclose(dfd);
-    return 1;
+    SceIoStat st;
+    if (sceIoGetstat(folder, &st) >= 0)
+        return SCE_S_ISDIR(st.st_mode);
+    return 0;
 }
 
 int CreateFolder(const char *path)
@@ -757,7 +750,7 @@ int MovePath(const char *src_path, const char *dst_path)
 int WritePngFile(const char *path, unsigned char *pixels, int width, int height, int bit_depth)
 {
     FILE *png_file = fopen(path, "wb");
-    if (!png_file)
+    if (png_file == NULL)
     {
         return -1;
     }
