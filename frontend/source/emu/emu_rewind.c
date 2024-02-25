@@ -13,6 +13,10 @@
 #define THRESHOLD_RATE 0.1
 // 最小差异单位
 #define DIFF_STEP 0x10
+// "REWD"
+#define REWIND_BLOCK_MAGIC 0x44574552
+// RewindBlock 的数量
+#define BLOCK_SIZE 0x400
 
 enum BlockType
 {
@@ -20,109 +24,127 @@ enum BlockType
     BLOCK_DIFF
 };
 
-typedef struct BlockBase BlockBase;
-typedef struct FullBlock FullBlock;
-typedef struct DiffBlock DiffBlock;
+typedef struct RewindBlock RewindBlock;
 
-#define BLOCK_HEADER                                      \
-    int type;              /* BLOCK_FULL 或 BLOCK_DIFF*/ \
-    BlockBase *next;       /* 指向下一个 block */    \
-    BlockBase *prev;       /* 指向上一个 block */    \
-    FullBlock *full_block; /* type == BLOCK_FULL 时指向下一个 FullBlock, BLOCK_DIFF 时指向基础的 FullBlock */
-
-struct BlockBase
+struct RewindBlock
 {
-    BLOCK_HEADER
+    uint32_t type;  // BLOCK_FULL 或 BLOCK_DIFF
+    uint32_t index; // 流水号
+    uint8_t *offset;
+    uint32_t size;
 };
 
-// 用于保存完整的状态信息
-struct FullBlock
+#define REWIND_BUF_HEADER \
+    uint32_t magic;       \
+    uint32_t index;
+
+typedef struct
 {
-    BLOCK_HEADER
+    REWIND_BUF_HEADER
+} RewindBufHeader;
+
+typedef struct
+{
+    REWIND_BUF_HEADER
     uint8_t buf[];
-};
+} RewindFullBuf;
 
-// 用于保存差异的状态信息
 typedef struct
 {
     uint32_t offset;
     uint32_t size;
 } DiffArea;
 
-struct DiffBlock
+typedef struct
 {
-    BLOCK_HEADER
+    REWIND_BUF_HEADER
+    RewindBlock *full_block;
     uint32_t num;
     DiffArea areas[];
-    // uin8_t *diff_buf;
-};
+    // 接 uint8_t *diff_buf;
+} RewindDiffBuf;
 
 // 缓存的全局状态
 typedef struct
 {
-    uint8_t *data;         // 分配得到的内存地址
-    BlockBase *current;    // 指向当前的状态
-    FullBlock *header;     // 指向最早的状态
-    uint8_t *tail;         // 指向 data 的尾部
-    size_t state_size;     // 完整状态的实际大小
-    size_t threshold_size; // state_size * THRESHOLD_RATE
-    size_t buf_size;       // 缓存大小，用于判断是否新开一个完全状态
-    uint64_t next_time;    // 下一次记录的时间
-    uint8_t *tmp_state;    // 用于保存差异状态
+    RewindBlock *blocks;          // RewindBlock[BLOCK_SIZE]
+    RewindBlock *current_block;   // 指向当前的状态
+    RewindBlock *last_full_block; // 最新的完整状态
+    uint8_t *buf;                 // 分配得到的内存地址
+    uint8_t *tmp_buf;             // 用于保存差异状态
+    size_t buf_size;              // data 缓存的大小
+    size_t threshold_size;        // state_size * THRESHOLD_RATE, 如果差异的数据大于 threshold_size, 则保存完全的状态
+    size_t state_size;            // 完整状态的实际大小
+    uint64_t next_time;           // 下一次记录的时间
+    uint32_t count;               // 用于设置 RewindBlock 中的 index
 } RewindState;
 
 RewindState rs = {0};
 int rewind_key_pressed = 0;
 int in_rewinding = 0;
 
-static void *GetNextBlock(BlockBase *block)
+static RewindBlock *GetNextBlock()
 {
-    uint8_t *next = (uint8_t *)(block->next);
-    if (next > rs.tail - sizeof(FullBlock) - rs.state_size)
-        next = rs.data;
-
-    if (next < (uint8_t *)rs.header->next && next + sizeof(FullBlock) + rs.state_size > (uint8_t *)rs.header)
-    {
-        // next 块落入 header 的区域
-        AppLog("SetNextBlock %08x %08x %08x\n", next, rs.header, rs.header->full_block);
-        if (rs.header->full_block)
-            rs.header = rs.header->full_block; // rs.header 指向下一个 FullBlock
-        else
-            next = NULL; // 只有一个 FullBlock
-    }
-    return next;
+    RewindBlock *block = rs.current_block + 1;
+    if (block - rs.blocks > BLOCK_SIZE)
+        block = rs.blocks;
+    return block;
 }
 
-static void SaveFullState(FullBlock *full, BlockBase *prev)
+static RewindBlock *GetPreviousBlock()
 {
-    full->type = BLOCK_FULL;
-    full->next = (BlockBase *)(((uint8_t *)full) + sizeof(FullBlock) + rs.state_size);
-    full->prev = prev;
-    full->full_block = NULL;
-    retro_serialize(full->buf, rs.state_size);
-    AppLog("SaveFullState %08x %08x\n", full, full->next);
+    RewindBlock *block = rs.current_block - 1;
+    if (block < rs.blocks)
+        block = rs.blocks + BLOCK_SIZE - 1;
+    return block;
+}
 
-    if (prev)
-    {
-        if (prev->type == BLOCK_FULL)
-            prev->full_block = full;
-        else
-            prev->full_block->full_block = full;
-    }
+static uint8_t *GetNextBuf()
+{
+    uint8_t *buf = rs.current_block->offset + rs.current_block->size;
+    if (buf > rs.buf + rs.buf_size - rs.state_size - sizeof(RewindFullBuf))
+        buf = rs.buf;
+    return buf;
+}
+
+static int IsValidBlock(const RewindBlock *block)
+{
+    RewindBufHeader *header = (RewindBufHeader *)block->offset;
+    return header && header->magic == REWIND_BLOCK_MAGIC && header->index == block->index;
+}
+
+static void SaveFullState(RewindBlock *block, uint8_t *buf_offset)
+{
+    block->type = BLOCK_FULL;
+    block->index = rs.count++;
+    block->offset = buf_offset;
+    block->size = sizeof(RewindFullBuf) + rs.state_size;
+    rs.last_full_block = block;
+    RewindFullBuf *full = (RewindFullBuf *)buf_offset;
+
+    full->magic = REWIND_BLOCK_MAGIC;
+    full->index = block->index;
+    retro_serialize(full->buf, rs.state_size);
+    AppLog("SaveFullState %08x %08x\n", block, buf_offset);
 }
 
 // 仅把需要复制的差异信息(地址, 大小)写入 areas，统计 total_size
-static void PreSaveDiffState(DiffBlock *diff, FullBlock *full)
+static void PreSaveDiffState(RewindBlock *block, uint8_t *buf_offset, RewindBlock *full_block)
 {
-    diff->type = BLOCK_DIFF;
-    size_t total_size = sizeof(DiffBlock);
-    diff->prev = NULL;
-    diff->full_block = full;
-    diff->num = 0;
-    retro_serialize(rs.tmp_state, rs.state_size);
+    block->type = BLOCK_DIFF;
+    block->index = rs.count++;
+    block->offset = buf_offset;
+    block->size = sizeof(RewindDiffBuf);
 
-    uint8_t *old = full->buf;
-    uint8_t *new = rs.tmp_state;
+    RewindDiffBuf *diff = (RewindDiffBuf *)buf_offset;
+    diff->magic = REWIND_BLOCK_MAGIC;
+    diff->index = block->index;
+    diff->full_block = full_block;
+    diff->num = 0;
+    retro_serialize(rs.tmp_buf, rs.state_size);
+
+    uint8_t *old = ((RewindFullBuf *)full_block->offset)->buf;
+    uint8_t *new = rs.tmp_buf;
     int last_state = 0; // 相同: 0, 不同: 1
     int offset = 0;
     for (; offset < rs.state_size; offset += DIFF_STEP)
@@ -133,7 +155,7 @@ static void PreSaveDiffState(DiffBlock *diff, FullBlock *full)
             {
                 last_state = 0;
                 diff->areas[diff->num].size = offset - diff->areas[diff->num].offset;
-                total_size += diff->areas[diff->num].size;
+                block->size += diff->areas[diff->num].size;
                 diff->num++;
             }
         }
@@ -161,52 +183,57 @@ static void PreSaveDiffState(DiffBlock *diff, FullBlock *full)
             diff->areas[diff->num].size = rs.state_size - diff->areas[diff->num].offset;
         }
 
-        total_size += diff->areas[diff->num].size;
+        block->size += diff->areas[diff->num].size;
         diff->num++;
     }
     else if (last_state == 1)
     {
         diff->areas[diff->num].size = offset - diff->areas[diff->num].offset;
-        total_size += diff->areas[diff->num].size;
+        block->size += diff->areas[diff->num].size;
         diff->num++;
     }
 
-    total_size += diff->num * sizeof(DiffArea);
-
-    diff->next = (BlockBase *)((uint8_t *)diff + total_size);
+    block->size += diff->num * sizeof(DiffArea);
 }
 
-static void SaveDiffState(DiffBlock *diff, BlockBase *prev)
+static void SaveDiffState(RewindBlock *block)
 {
-    diff->prev = prev;
-    uint8_t *buf = (uint8_t *)diff + sizeof(DiffBlock) + diff->num * sizeof(DiffArea);
+    RewindDiffBuf *diff = (RewindDiffBuf *)block->offset;
+    uint8_t *buf = (uint8_t *)diff + sizeof(RewindDiffBuf) + diff->num * sizeof(DiffArea);
     DiffArea *area = diff->areas;
     for (int i = 0; i < diff->num; i++)
     {
-        memcpy(buf, rs.tmp_state + area->offset, area->size);
+        memcpy(buf, rs.tmp_buf + area->offset, area->size);
         buf += area->size;
         area++;
     }
+    // AppLog("SaveDiffState %08x %08x %d\n", block, diff, diff->num);
 }
 
-static const void *GetState(BlockBase *block)
+static void *GetState(RewindBlock *block)
 {
+    if (!IsValidBlock(block))
+        return NULL;
+
     if (block->type == BLOCK_FULL)
-        return ((FullBlock *)block)->buf;
+        return ((RewindFullBuf *)block->offset)->buf;
 
-    DiffBlock *diff = (DiffBlock *)block;
-    uint8_t *buf = (uint8_t *)diff + sizeof(DiffBlock) + diff->num * sizeof(DiffArea);
+    RewindDiffBuf *diff = (RewindDiffBuf *)block->offset;
+    if (!IsValidBlock(diff->full_block))
+        return NULL;
+
+    uint8_t *buf = block->offset + sizeof(RewindDiffBuf) + diff->num * sizeof(DiffArea);
     DiffArea *area = diff->areas;
 
-    memcpy(rs.tmp_state, diff->full_block->buf, rs.state_size);
+    memcpy(rs.tmp_buf, ((RewindFullBuf *)diff->full_block->offset)->buf, rs.state_size);
     for (int i = 0; i < diff->num; i++)
     {
-        memcpy(rs.tmp_state + area->offset, buf, area->size);
+        memcpy(rs.tmp_buf + area->offset, buf, area->size);
         buf += area->size;
         area++;
     }
 
-    return rs.tmp_state;
+    return rs.tmp_buf;
 }
 
 void Emu_InitRewind(size_t buffer_size)
@@ -214,30 +241,29 @@ void Emu_InitRewind(size_t buffer_size)
     Emu_DeinitRewind();
 
     rs.state_size = retro_serialize_size();
+    rs.buf_size = buffer_size - sizeof(RewindBlock) * BLOCK_SIZE - rs.state_size;
     rs.threshold_size = rs.state_size * THRESHOLD_RATE;
-    rs.buf_size = buffer_size;
-    rs.data = malloc(buffer_size);
-    rs.header = NULL;
-    rs.current = NULL;
-    rs.tail = rs.data + buffer_size;
-    rs.tmp_state = malloc(rs.state_size);
-    rs.next_time = 0;
+    rs.blocks = malloc(sizeof(RewindBlock) * BLOCK_SIZE);
+    rs.buf = malloc(rs.buf_size);
+    rs.tmp_buf = malloc(rs.state_size);
 
-    AppLog("[REWIND] Rewind_Init: buf size: 0x%08x, state_size: 0x%08x data address: 0x%08x\n", buffer_size, rs.state_size, rs.data);
+    AppLog("[REWIND] Rewind_Init: buf size: 0x%08x, state_size: 0x%08x data address: 0x%08x\n", buffer_size, rs.state_size, rs.buf);
 }
 
 void Emu_DeinitRewind()
 {
-    if (rs.data)
-        free(rs.data);
-    if (rs.tmp_state)
-        free(rs.tmp_state);
+    if (rs.buf)
+        free(rs.buf);
+    if (rs.tmp_buf)
+        free(rs.tmp_buf);
+    if (rs.blocks)
+        free(rs.blocks);
     memset(&rs, 0, sizeof(rs));
 }
 
 static void Rewind()
 {
-    if (rs.current && rs.current != (BlockBase *)rs.header)
+    if (IsValidBlock(rs.current_block))
     {
         if (in_rewinding == 0 && Emu_GetCurrentRunSpeed() > 0.1)
         {
@@ -246,56 +272,52 @@ static void Rewind()
             in_rewinding = 1;
         }
 
-        retro_unserialize(GetState(rs.current), rs.state_size);
-        rs.current = rs.current->prev;
-        Emu_CleanAudioSound();
+        void *state = GetState(rs.current_block);
+        if (state)
+        {
+            retro_unserialize(state, rs.state_size);
+            rs.current_block = GetPreviousBlock();
+            Emu_CleanAudioSound();
+        }
     }
 
     rewind_key_pressed = 0;
 }
 
-static size_t GetDistance()
+static size_t GetBufDistance(size_t first, size_t second)
 {
-    if ((size_t)rs.current >= (size_t)rs.header)
-        return (size_t)rs.current - (size_t)rs.header;
+    if (second >= first)
+        return second - first;
     else
-        return rs.buf_size + (size_t)rs.header - (size_t)rs.current;
+        return rs.buf_size + first - second;
 }
 
 static void SaveState()
 {
-    if (rs.current == NULL)
+    if (rs.current_block == NULL)
     {
-    CREATE_NEW_STATE:
-        rs.current = (BlockBase *)rs.data;
-        rs.header = (FullBlock *)rs.data;
-        SaveFullState(rs.header, NULL);
+        rs.current_block = (RewindBlock *)rs.blocks;
+        SaveFullState(rs.current_block, rs.buf);
     }
     else
     {
-        BlockBase *current = rs.current;
-        BlockBase *next = GetNextBlock(current);
+        RewindBlock *current = rs.current_block;
+        RewindBlock *next = GetNextBlock();
+        uint8_t *next_buf = GetNextBuf();
 
-        if (next)
-        {
-            if ((!rs.header->full_block) && GetDistance() > rs.buf_size / 2)
-                SaveFullState((FullBlock *)next, current);
-            else
-            {
-                FullBlock *fb = current->type == BLOCK_FULL ? (FullBlock *)current : ((DiffBlock *)current)->full_block;
-                PreSaveDiffState((DiffBlock *)next, fb);
-                if ((size_t)(next->next) - (size_t)next > rs.threshold_size)
-                    SaveFullState((FullBlock *)next, current);
-                else
-                    SaveDiffState((DiffBlock *)next, current);
-            }
-
-            rs.current = next;
-        }
+        if (GetBufDistance((size_t)rs.last_full_block->offset, (size_t)next_buf) > rs.buf_size / 2)
+            SaveFullState(next, next_buf);
         else
         {
-            goto CREATE_NEW_STATE;
+            RewindBlock *full_block = current->type == BLOCK_FULL ? current : ((RewindDiffBuf *)(current->offset))->full_block;
+            PreSaveDiffState(next, next_buf, full_block);
+            if (next->size > rs.threshold_size)
+                SaveFullState(next, next_buf);
+            else
+                SaveDiffState(next);
         }
+
+        rs.current_block = next;
     }
 
     if (in_rewinding && Emu_GetCurrentRunSpeed() <= 0.15)
@@ -308,7 +330,7 @@ static void SaveState()
 
 void Emu_RewindCheck()
 {
-    if ((!Emu_IsGameLoaded()) || rs.data == NULL || sceKernelGetProcessTimeWide() < rs.next_time)
+    if ((!Emu_IsGameLoaded()) || rs.buf == NULL || sceKernelGetProcessTimeWide() < rs.next_time)
         return;
 
     if (rewind_key_pressed)
