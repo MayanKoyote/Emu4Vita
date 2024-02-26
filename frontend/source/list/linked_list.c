@@ -75,12 +75,6 @@ void LinkedListSetCompareCallback(LinkedList *list, LinkedListCompareCallback ca
         list->compare = callback;
 }
 
-void LinkedListFreeListData(LinkedList *list, void *data)
-{
-    if (list && data && list->freeListData)
-        list->freeListData(data);
-}
-
 LinkedListEntry *LinkedListHead(LinkedList *list)
 {
     return list ? list->head : NULL;
