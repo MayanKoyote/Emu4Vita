@@ -5,6 +5,7 @@
 #include "emu_rewind.h"
 #include "emu_game.h"
 #include "emu_audio.h"
+#include "emu_cheat.h"
 #include "utils.h"
 
 // 每 0.05 秒记录一次
@@ -125,7 +126,7 @@ static void SaveFullState(RewindBlock *block, uint8_t *buf_offset)
     full->magic = REWIND_BLOCK_MAGIC;
     full->index = block->index;
     retro_serialize(full->buf, rs.state_size);
-    AppLog("SaveFullState %08x %08x\n", block, buf_offset);
+    // AppLog("SaveFullState %08x %08x\n", block, buf_offset);
 }
 
 // 仅把需要复制的差异信息(地址, 大小)写入 areas，统计 total_size
@@ -236,38 +237,13 @@ static void *GetState(RewindBlock *block)
     return rs.tmp_buf;
 }
 
-void Emu_InitRewind(size_t buffer_size)
-{
-    Emu_DeinitRewind();
-
-    rs.state_size = retro_serialize_size();
-    rs.buf_size = buffer_size - sizeof(RewindBlock) * BLOCK_SIZE - rs.state_size;
-    rs.threshold_size = rs.state_size * THRESHOLD_RATE;
-    rs.blocks = malloc(sizeof(RewindBlock) * BLOCK_SIZE);
-    rs.buf = malloc(rs.buf_size);
-    rs.tmp_buf = malloc(rs.state_size);
-
-    AppLog("[REWIND] Rewind_Init: buf size: 0x%08x, state_size: 0x%08x data address: 0x%08x\n", buffer_size, rs.state_size, rs.buf);
-}
-
-void Emu_DeinitRewind()
-{
-    if (rs.buf)
-        free(rs.buf);
-    if (rs.tmp_buf)
-        free(rs.tmp_buf);
-    if (rs.blocks)
-        free(rs.blocks);
-    memset(&rs, 0, sizeof(rs));
-}
-
 static void Rewind()
 {
     if (IsValidBlock(rs.current_block))
     {
-        if (in_rewinding == 0 && Emu_GetCurrentRunSpeed() > 0.1)
+        if (in_rewinding == 0)
         {
-            Emu_SetRunSpeed(0.1);
+            Emu_PauseCheat();
             Emu_PauseAudio();
             in_rewinding = 1;
         }
@@ -320,12 +296,47 @@ static void SaveState()
         rs.current_block = next;
     }
 
-    if (in_rewinding && Emu_GetCurrentRunSpeed() <= 0.15)
+    if (in_rewinding)
     {
-        Emu_SetRunSpeed(1.f);
+        Emu_ResumeCheat();
         Emu_ResumeAudio();
         in_rewinding = 0;
     }
+}
+
+void Emu_InitRewind(size_t buffer_size)
+{
+    AppLog("[REWIND] rewind init...\n");
+    Emu_DeinitRewind();
+
+    rs.state_size = retro_serialize_size();
+    rs.buf_size = buffer_size - sizeof(RewindBlock) * BLOCK_SIZE - rs.state_size;
+    rs.threshold_size = rs.state_size * THRESHOLD_RATE;
+    rs.blocks = malloc(sizeof(RewindBlock) * BLOCK_SIZE);
+    rs.buf = malloc(rs.buf_size);
+    rs.tmp_buf = malloc(rs.state_size);
+
+    AppLog("[REWIND] buf size: 0x%08x, state_size: 0x%08x\n", buffer_size, rs.state_size);
+    AppLog("[REWIND] blocks: 0x%08x buf: 0x%08x tmp_buf: 0x%08x\n", rs.blocks, rs.buf, rs.tmp_buf);
+    AppLog("[REWIND] rewind init OK!\n");
+}
+
+void Emu_DeinitRewind()
+{
+    AppLog("[REWIND] rewind deinit...\n");
+    AppLog("[REWIND] blocks: 0x%08x buf: 0x%08x tmp_buf: 0x%08x\n", rs.blocks, rs.buf, rs.tmp_buf);
+    if (rs.blocks)
+        free(rs.blocks);
+    if (rs.buf)
+        free(rs.buf);
+    if (rs.tmp_buf)
+        free(rs.tmp_buf);
+
+    AppLog("[REWIND] free all\n");
+
+    memset(&rs, 0, sizeof(RewindState));
+
+    AppLog("[REWIND] rewind deinit OK!\n");
 }
 
 void Emu_RewindCheck()
