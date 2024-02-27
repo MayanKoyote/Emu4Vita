@@ -9,6 +9,7 @@ void Emu_SetMicrosPerFrame(uint64_t micros);
 void Emu_PauseVideo();
 void Emu_ResumeVideo();
 void Emu_RequestUpdateVideoDisplay();
+int Emu_IsVideoPaused();
 
 void Emu_DrawVideo();
 

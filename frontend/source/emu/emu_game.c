@@ -433,8 +433,8 @@ static void onGameRunEvent()
 void Emu_RunGame()
 {
     Emu_PollInput();
-    if (misc_config.enable_rewind)
-        Emu_RewindCheck();
     retro_run();
     onGameRunEvent();
+    if (misc_config.enable_rewind)
+        Emu_RewindCheck();
 }

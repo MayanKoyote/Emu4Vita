@@ -56,6 +56,11 @@ void Emu_ResumeVideo()
     GUI_SetVblankWait(0);
 }
 
+int Emu_IsVideoPaused()
+{
+    return video_pause;
+}
+
 void Emu_RequestUpdateVideoDisplay()
 {
     video_display_need_update = 1;
@@ -437,14 +442,14 @@ static GUI_Texture *createOverlayTexture()
     overlay_texture = GUI_LoadPNGFile(path);
 
     // Try load image from private assets dir
-    if (!overlay_texture && private_assets_dir) 
+    if (!overlay_texture && private_assets_dir)
     {
         snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s", private_assets_dir, OVERLAYS_DIR_NAME, overlay_data->image_name);
         overlay_texture = GUI_LoadPNGFile(path);
     }
 
     // Try load image from public assets dir
-    if (!overlay_texture && public_assets_dir) 
+    if (!overlay_texture && public_assets_dir)
     {
         snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s", public_assets_dir, OVERLAYS_DIR_NAME, overlay_data->image_name);
         overlay_texture = GUI_LoadPNGFile(path);

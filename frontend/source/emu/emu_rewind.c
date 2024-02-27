@@ -6,6 +6,7 @@
 #include "emu_game.h"
 #include "emu_audio.h"
 #include "emu_cheat.h"
+#include "emu_video.h"
 #include "utils.h"
 
 // 每 0.05 秒记录一次
@@ -87,7 +88,7 @@ int in_rewinding = 0;
 static RewindBlock *GetNextBlock()
 {
     RewindBlock *block = rs.current_block + 1;
-    if (block - rs.blocks > BLOCK_SIZE)
+    if (block - rs.blocks >= BLOCK_SIZE)
         block = rs.blocks;
     return block;
 }
@@ -103,18 +104,21 @@ static RewindBlock *GetPreviousBlock()
 static uint8_t *GetNextBuf()
 {
     uint8_t *buf = rs.current_block->offset + rs.current_block->size;
-    if (buf > rs.buf + rs.buf_size - rs.state_size - sizeof(RewindFullBuf))
+    if (buf + rs.state_size + sizeof(RewindFullBuf) >= rs.buf + rs.buf_size)
         buf = rs.buf;
     return buf;
 }
 
 static int IsValidBlock(const RewindBlock *block)
 {
+    if (!block)
+        return 0;
+
     RewindBufHeader *header = (RewindBufHeader *)block->offset;
     return header && header->magic == REWIND_BLOCK_MAGIC && header->index == block->index;
 }
 
-static void SaveFullState(RewindBlock *block, uint8_t *buf_offset)
+static int SaveFullState(RewindBlock *block, uint8_t *buf_offset)
 {
     block->type = BLOCK_FULL;
     block->index = rs.count++;
@@ -125,12 +129,12 @@ static void SaveFullState(RewindBlock *block, uint8_t *buf_offset)
 
     full->magic = REWIND_BLOCK_MAGIC;
     full->index = block->index;
-    retro_serialize(full->buf, rs.state_size);
+    return retro_serialize(full->buf, rs.state_size);
     // AppLog("SaveFullState %08x %08x\n", block, buf_offset);
 }
 
 // 仅把需要复制的差异信息(地址, 大小)写入 areas，统计 total_size
-static void PreSaveDiffState(RewindBlock *block, uint8_t *buf_offset, RewindBlock *full_block)
+static int PreSaveDiffState(RewindBlock *block, uint8_t *buf_offset, RewindBlock *full_block)
 {
     block->type = BLOCK_DIFF;
     block->index = rs.count++;
@@ -142,7 +146,8 @@ static void PreSaveDiffState(RewindBlock *block, uint8_t *buf_offset, RewindBloc
     diff->index = block->index;
     diff->full_block = full_block;
     diff->num = 0;
-    retro_serialize(rs.tmp_buf, rs.state_size);
+    if (!retro_serialize(rs.tmp_buf, rs.state_size))
+        return 0;
 
     uint8_t *old = ((RewindFullBuf *)full_block->offset)->buf;
     uint8_t *new = rs.tmp_buf;
@@ -195,6 +200,7 @@ static void PreSaveDiffState(RewindBlock *block, uint8_t *buf_offset, RewindBloc
     }
 
     block->size += diff->num * sizeof(DiffArea);
+    return 1;
 }
 
 static void SaveDiffState(RewindBlock *block)
@@ -239,24 +245,29 @@ static void *GetState(RewindBlock *block)
 
 static void Rewind()
 {
-    if (IsValidBlock(rs.current_block))
-    {
-        if (in_rewinding == 0)
-        {
-            Emu_PauseCheat();
-            Emu_PauseAudio();
-            in_rewinding = 1;
-        }
 
+    if (in_rewinding == 0)
+    {
+        Emu_PauseCheat();
+        Emu_PauseAudio();
+        in_rewinding = 1;
+    }
+
+    RewindBlock *prev = GetPreviousBlock();
+    // AppLog("%08x %08x\n", rs.current_block, prev);
+    if (IsValidBlock(prev))
+    {
         void *state = GetState(rs.current_block);
         if (state)
         {
             retro_unserialize(state, rs.state_size);
-            rs.current_block = GetPreviousBlock();
+            rs.current_block = prev;
             Emu_CleanAudioSound();
+            if (Emu_IsVideoPaused())
+                Emu_ResumeVideo();
         }
     }
-
+    // AppLog("Rewind End\n");
     rewind_key_pressed = 0;
 }
 
@@ -272,28 +283,32 @@ static void SaveState()
 {
     if (rs.current_block == NULL)
     {
-        rs.current_block = (RewindBlock *)rs.blocks;
-        SaveFullState(rs.current_block, rs.buf);
+        if (SaveFullState(rs.blocks, rs.buf))
+            rs.current_block = rs.blocks;
     }
     else
     {
         RewindBlock *current = rs.current_block;
         RewindBlock *next = GetNextBlock();
         uint8_t *next_buf = GetNextBuf();
-
+        int result = 0;
         if (GetBufDistance((size_t)rs.last_full_block->offset, (size_t)next_buf) > rs.buf_size / 2)
-            SaveFullState(next, next_buf);
+            result = SaveFullState(next, next_buf);
         else
         {
             RewindBlock *full_block = current->type == BLOCK_FULL ? current : ((RewindDiffBuf *)(current->offset))->full_block;
-            PreSaveDiffState(next, next_buf, full_block);
-            if (next->size > rs.threshold_size)
-                SaveFullState(next, next_buf);
-            else
-                SaveDiffState(next);
+            result = PreSaveDiffState(next, next_buf, full_block);
+            if (result)
+            {
+                if (next->size > rs.threshold_size)
+                    result = SaveFullState(next, next_buf);
+                else
+                    SaveDiffState(next);
+            }
         }
 
-        rs.current_block = next;
+        if (result)
+            rs.current_block = next;
     }
 
     if (in_rewinding)
@@ -341,6 +356,17 @@ void Emu_DeinitRewind()
 
 void Emu_RewindCheck()
 {
+    if (in_rewinding)
+    {
+        if (!Emu_IsVideoPaused())
+            Emu_PauseVideo();
+    }
+    else
+    {
+        if (Emu_IsVideoPaused())
+            Emu_ResumeVideo();
+    }
+
     if ((!Emu_IsGameLoaded()) || rs.buf == NULL || sceKernelGetProcessTimeWide() < rs.next_time)
         return;
 
