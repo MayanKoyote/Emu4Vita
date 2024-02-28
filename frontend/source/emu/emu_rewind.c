@@ -320,8 +320,13 @@ void Emu_InitRewind(size_t buffer_size)
     rs.state_size = retro_serialize_size();
     rs.buf_size = buffer_size - sizeof(RewindBlock) * BLOCK_SIZE - rs.state_size;
     rs.threshold_size = rs.state_size * THRESHOLD_RATE;
+
     rs.blocks = malloc(sizeof(RewindBlock) * BLOCK_SIZE);
+    memset(rs.blocks, 0, sizeof(RewindBlock) * BLOCK_SIZE);
+
     rs.buf = malloc(rs.buf_size);
+    memset(rs.buf, 0, sizeof(rs.buf_size));
+
     rs.tmp_buf = malloc(rs.state_size);
 
     AppLog("[REWIND] buf size: 0x%08x, state_size: 0x%08x\n", buffer_size, rs.state_size);
