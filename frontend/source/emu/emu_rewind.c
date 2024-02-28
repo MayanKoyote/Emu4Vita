@@ -310,13 +310,6 @@ static void SaveState()
         if (result)
             rs.current_block = next;
     }
-
-    if (in_rewinding)
-    {
-        Emu_ResumeCheat();
-        Emu_ResumeAudio();
-        in_rewinding = 0;
-    }
 }
 
 void Emu_InitRewind(size_t buffer_size)
@@ -361,11 +354,6 @@ void Emu_RewindCheck()
         if (!Emu_IsVideoPaused())
             Emu_PauseVideo();
     }
-    else
-    {
-        if (Emu_IsVideoPaused())
-            Emu_ResumeVideo();
-    }
 
     if ((!Emu_IsGameLoaded()) || rs.buf == NULL || sceKernelGetProcessTimeWide() < rs.next_time)
         return;
@@ -373,7 +361,16 @@ void Emu_RewindCheck()
     if (rewind_key_pressed)
         Rewind();
     else
+    {
         SaveState();
-
+        if (in_rewinding)
+        {
+            Emu_ResumeCheat();
+            Emu_ResumeAudio();
+            if (Emu_IsVideoPaused())
+                Emu_ResumeVideo();
+            in_rewinding = 0;
+        }
+    }
     rs.next_time = sceKernelGetProcessTimeWide() + NEXT_STATE_PERIOD;
 }
