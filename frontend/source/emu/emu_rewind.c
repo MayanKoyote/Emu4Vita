@@ -19,6 +19,8 @@
 #define REWIND_BLOCK_MAGIC 0x44574552
 // RewindBlock 的数量
 #define BLOCK_SIZE 0x400
+// 最小的 buf size
+#define MIN_STATE_RATE 10
 
 enum BlockType
 {
@@ -74,7 +76,7 @@ typedef struct
     RewindBlock *last_full_block; // 最新的完整状态
     uint8_t *buf;                 // 分配得到的内存地址
     uint8_t *tmp_buf;             // 用于保存差异状态
-    size_t buf_size;              // data 缓存的大小
+    size_t buf_size;              // buf 缓存的大小
     size_t threshold_size;        // state_size * THRESHOLD_RATE, 如果差异的数据大于 threshold_size, 则保存完全的状态
     size_t state_size;            // 完整状态的实际大小
     uint64_t next_time;           // 下一次记录的时间
@@ -318,6 +320,9 @@ void Emu_InitRewind(size_t buffer_size)
     Emu_DeinitRewind();
 
     rs.state_size = retro_serialize_size();
+    if (buffer_size < rs.state_size * MIN_STATE_RATE)
+        return;
+
     rs.buf_size = buffer_size - sizeof(RewindBlock) * BLOCK_SIZE - rs.state_size;
     rs.threshold_size = rs.state_size * THRESHOLD_RATE;
 
