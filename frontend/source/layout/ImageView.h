@@ -18,38 +18,16 @@ enum TypeImageViewScale
     TYPE_IMAGE_SCALE_MATRIX,
 };
 
-typedef struct
-{
-    LayoutParam params;
-    GUI_Texture *tex;
-    int tex_auto_free;
-    int scale_type;
-    int tex_w;
-    int tex_h;
-    int tex_dst_x;
-    int tex_dst_y;
-    int tex_src_x;
-    int tex_src_y;
-    int tex_src_w;
-    int tex_src_h;
-    float tex_scale_x;
-    float tex_scale_y;
-    uint32_t tint_color;
-    uint32_t bg_color;
-} ImageView;
+typedef struct ImageView ImageView;
 
-void ImageViewDestroy(void *view);
-int ImageViewUpdate(void *view, int remaining_w, int remaining_h);
-void ImageViewDraw(void *view, int x, int y);
-
+int ImageViewSetBgColor(ImageView *imageView, uint32_t color);
 int ImageViewSetScaleType(ImageView *imageView, int type);
 int ImageViewSetTintColor(ImageView *imageView, uint32_t color);
-int ImageViewSetBgColor(ImageView *imageView, uint32_t color);
-int ImageViewSetTexture(ImageView *imageView, GUI_Texture *tex, int auto_free);
-GUI_Texture *ImageViewGetTexture(ImageView *imageView);
+int ImageViewSetTexture(ImageView *imageView, const GUI_Texture *texture);
+
+const GUI_Texture *ImageViewGetTexture(ImageView *imageView);
 
 int ImageViewInit(ImageView *imageView);
 ImageView *NewImageView();
-ImageView *NewImageViewFrom(const char *path);
 
 #endif

@@ -30,7 +30,7 @@ int GUI_DeinitLib();
 // Renderer
 void GUI_StartDrawing(GUI_Texture *texture);
 void GUI_EndDrawing();
-#define GUI_WaitRenderingDone vita2d_wait_rendering_done
+#define GUI_WaitRenderingDone() vita2d_wait_rendering_done()
 #define GUI_SetVblankWait(enable) vita2d_set_vblank_wait(enable)
 int GUI_SetClipping(int x, int y, int w, int h);
 int GUI_UnsetClipping();
@@ -51,7 +51,7 @@ void GUI_DrawEmptyRectangle(float x, float y, float w, float h, float line_size,
 #define GUI_LoadBMPBuffer(buffer) vita2d_load_BMP_buffer(buffer)
 
 // Texture
-#define GUI_CreateTexture vita2d_create_empty_texture(w, h)
+#define GUI_CreateTexture(w, h) vita2d_create_empty_texture(w, h)
 #define GUI_CreateTextureFormat(w, h, format) vita2d_create_empty_texture_format(w, h, format)
 #define GUI_CreateTextureRendertarget(w, h, format) vita2d_create_empty_texture_rendertarget(w, h, format)
 #define GUI_DestroyTexture(texture) vita2d_free_texture(texture)
@@ -75,10 +75,10 @@ void GUI_DrawEmptyRectangle(float x, float y, float w, float h, float line_size,
 #define GUI_DrawTexturePartScaleRotate(texture, x, y, tex_x, tex_y, tex_w, tex_h, x_scale, y_scale, rad) \
     vita2d_draw_texture_part_scale_rotate(texture, x, y, tex_x, tex_y, tex_w, tex_h, x_scale, y_scale, rad)
 
-#define GUI_DrawTextureTint(texture, x, y, color) vita2d_draw_texture_tint(texture, x, y)
-#define GUI_DrawTextureTintRotate(texture, x, y, rad, color) vita2d_draw_texture_tint_rotate(texture, x, y, rad)
-#define GUI_DrawTextureTintScale(texture, x, y, x_scale, y_scale, color) vita2d_draw_texture_tint_scale(texture, x, y, x_scale, y_scale)
-#define GUI_DrawTextureTintPart(texture, x, y, tex_x, tex_y, tex_w, tex_h, color) vita2d_draw_texture_tint_part(texture, x, y, tex_x, tex_y, tex_w, tex_h)
+#define GUI_DrawTextureTint(texture, x, y, color) vita2d_draw_texture_tint(texture, x, y, color)
+#define GUI_DrawTextureTintRotate(texture, x, y, rad, color) vita2d_draw_texture_tint_rotate(texture, x, y, rad, color)
+#define GUI_DrawTextureTintScale(texture, x, y, x_scale, y_scale, color) vita2d_draw_texture_tint_scale(texture, x, y, x_scale, y_scale, color)
+#define GUI_DrawTextureTintPart(texture, x, y, tex_x, tex_y, tex_w, tex_h, color) vita2d_draw_texture_tint_part(texture, x, y, tex_x, tex_y, tex_w, tex_h, color)
 #define GUI_DrawTextureTintPartScale(texture, x, y, tex_x, tex_y, tex_w, tex_h, x_scale, y_scale, color) \
     vita2d_draw_texture_tint_part_scale(texture, x, y, tex_x, tex_y, tex_w, tex_h, x_scale, y_scale, color)
 #define GUI_DrawTextureTintPartScaleRotate(texture, x, y, tex_x, tex_y, tex_w, tex_h, x_scale, y_scale, rad, color) \

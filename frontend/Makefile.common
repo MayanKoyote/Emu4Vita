@@ -83,10 +83,12 @@ SRC_C += \
 	dialog/alert_dialog.c
 
 SRC_C += \
+	layout/LayoutParams.c \
 	layout/Layout.c \
 	layout/RectView.c \
 	layout/TextView.c \
 	layout/ImageView.c \
+	layout/ItemView.c \
 	layout/ListView.c
 
 SRC_C += \

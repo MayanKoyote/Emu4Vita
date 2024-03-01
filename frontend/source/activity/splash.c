@@ -60,7 +60,7 @@ static int listview_n_draw_items = 0;
 static int listview_top_pos = 0;
 
 static int layout_x, layout_y;
-static int layout_w, layout_h;
+static int available_w, available_h;
 
 static int listview_x, listview_y;
 static int listview_w, listview_h;
@@ -72,13 +72,13 @@ static int scrollbar_track_height;
 
 static void refreshLayout()
 {
-    GUI_GetActivityLayoutXY(&splash_activity, &layout_x, &layout_y);
-    GUI_GetActivityLayoutWH(&splash_activity, &layout_w, &layout_h);
+    GUI_GetActivityLayoutPosition(&splash_activity, &layout_x, &layout_y);
+    GUI_GetActivityAvailableSize(&splash_activity, &available_w, &available_h);
 
     listview_x = layout_x;
     listview_y = layout_y;
-    listview_w = layout_w;
-    listview_h = layout_h;
+    listview_w = available_w;
+    listview_h = available_h;
 
     itemview_w = listview_w - LISTVIEW_PADDING_L * 2;
     itemview_h = ITEMVIEW_HEIGHT;

@@ -183,7 +183,7 @@ char **GUI_GetStringArrayByIdArray(int *ids, int n_ids)
     return strs;
 }
 
-void GUI_GetActivityLayoutXY(GUI_Activity *activity, int *x, int *y)
+void GUI_GetActivityLayoutPosition(GUI_Activity *activity, int *x, int *y)
 {
     *x = 0;
     if (activity->nostatusbar)
@@ -192,7 +192,7 @@ void GUI_GetActivityLayoutXY(GUI_Activity *activity, int *x, int *y)
         *y = STATUS_BAR_HEIGHT;
 }
 
-void GUI_GetActivityLayoutWH(GUI_Activity *activity, int *w, int *h)
+void GUI_GetActivityAvailableSize(GUI_Activity *activity, int *w, int *h)
 {
     *w = GUI_SCREEN_WIDTH;
     if (activity->nostatusbar)
@@ -283,9 +283,9 @@ void GUI_DrawBottomStatusBar(GUI_ButtonInstruction *instructions)
     GUI_UnsetClipping();
 }
 
-void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int list_len, int max_draw_len, int top_pos, int draw_track)
+void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int max_len, int draw_len, int cur_len, int draw_track)
 {
-    if (track_height <= 0 || max_draw_len <= 0 || list_len <= max_draw_len)
+    if (track_height <= 0 || draw_len <= 0 || max_len <= draw_len)
         return;
 
     // Draw scroll track
@@ -293,13 +293,13 @@ void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int l
         GUI_DrawFillRectangle(track_x, track_y, GUI_DEF_SCROLLBAR_SIZE, track_height, GUI_DEF_SCROLLBAR_COLOR_TRACK);
 
     // Draw scroll thumb
-    float size_per_item = (float)track_height / (float)list_len;
-    int thumb_height = (float)max_draw_len * size_per_item;
+    float size_per_item = (float)track_height / (float)max_len;
+    int thumb_height = (float)draw_len * size_per_item;
     thumb_height = MAX(thumb_height, 1); // Fix
 
     int min_y = track_y;
     int max_y = track_y + track_height - thumb_height;
-    int thumb_y = track_y + (float)top_pos * size_per_item;
+    int thumb_y = track_y + (float)cur_len * size_per_item;
     if (thumb_y < min_y)
         thumb_y = min_y;
     else if (thumb_y > max_y)

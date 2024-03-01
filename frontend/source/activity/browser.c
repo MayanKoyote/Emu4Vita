@@ -98,7 +98,7 @@ static int preview_refresh_delay_frames = 0;
 
 static Layout *browser_layout = NULL;
 static TextView *path_textview = NULL;
-static ListView *broeser_listview = NULL;
+static ListView *browser_listview = NULL;
 static ImageView *preview_imageview = NULL;
 
 static int getListLength(void *list)
@@ -111,56 +111,73 @@ static void *getHeadListEntry(void *list)
     return LinkedListHead((LinkedList *)list);
 }
 
-static void *getTailListEntry(void *list)
-{
-    return LinkedListTail((LinkedList *)list);
-}
-
 static void *getNextListEntry(void *list, void *cur_entry, int cur_idx)
 {
     return LinkedListNext((LinkedListEntry *)cur_entry);
 }
 
-static void *getPrevListEntry(void *list, void *cur_entry, int cur_idx)
+static void *newItemView(void *data)
 {
-    return LinkedListPrev((LinkedListEntry *)cur_entry);
-}
-
-static char *getName(void *list, void *entry, int idx)
-{
-    if (!entry)
+    ItemView *itemView = NewItemView();
+    if (!itemView)
         return NULL;
 
-    FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData((LinkedListEntry *)entry);
-    return data->name;
+    LayoutParamsSetPadding(itemView, ITEMVIEW_PADDING_L, ITEMVIEW_PADDING_L, ITEMVIEW_PADDING_T, ITEMVIEW_PADDING_T);
+    LayoutParamsSetLayoutSize(itemView, TYPE_LAYOUT_MATH_PARENT, TYPE_LAYOUT_WRAP_CONTENT);
+
+    if (data)
+    {
+        FileListEntryData *e_data = (FileListEntryData *)LinkedListGetEntryData((LinkedListEntry *)data);
+        ItemViewSetName(itemView, e_data->name);
+        if (e_data->is_folder)
+            ItemViewSetNameColor(itemView, FOLDER_TEXT_COLOR);
+        else
+            ItemViewSetNameColor(itemView, FILE_TEXT_COLOR);
+    }
+
+    return itemView;
 }
 
-static uint32_t getNameColor(void *list, void *entry, int idx)
+static int setItemViewData(void *itemView, void *data)
 {
-    if (!entry)
-        return FOLDER_TEXT_COLOR;
+    return ItemViewSetData((ItemView *)itemView, data);
+}
 
-    FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData((LinkedListEntry *)entry);
-    return data->is_folder ? FOLDER_TEXT_COLOR : FILE_TEXT_COLOR;
+static int updateDrawItemView(ListView *listView, void *itemView, int n)
+{
+    if (!listView || !itemView)
+        return -1;
+
+    int focus_pos = ListViewGetFocusPos(listView);
+    if (focus_pos == n)
+        ItemViewSetBgColor((ItemView *)itemView, ITEMVIEW_COLOR_FOCUS);
+    else
+        ItemViewSetBgColor((ItemView *)itemView, ITEMVIEW_COLOR_BG);
+
+    return 0;
 }
 
 static int refreshLayout()
 {
-    int layout_w = 0, layout_h = 0;
-    int remaining_w = 0, remaining_h = 0;
+    int layout_x = 0, layout_y = 0;
+    int available_w = 0, available_h = 0;
+    int layout2_available_w = 0, layout2_available_h = 0;
 
-    GUI_GetActivityLayoutWH(&browser_activity, &layout_w, &layout_h);
+    GUI_GetActivityLayoutPosition(&about_activity, &layout_x, &layout_y);
+    GUI_GetActivityAvailableSize(&about_activity, &available_w, &available_h);
 
     if (!browser_layout)
     {
-        browser_layout = NewLayout(TYPE_LAYOUT_ORIENTATION_VERTICAL, layout_w, layout_h);
+        browser_layout = NewLayout();
         if (!browser_layout)
             return -1;
-        LayoutParamSetAutoFree(browser_layout, 0);
+        LayoutParamsSetAutoFree(browser_layout, 0);
     }
-    LayoutSetOrientation(browser_layout, TYPE_LAYOUT_ORIENTATION_VERTICAL);
-    LayoutParamSetLayoutSize(browser_layout, layout_w, layout_h);
-    LayoutParamSetPadding(browser_layout, GUI_DEF_MAIN_LAYOUT_PADDING, GUI_DEF_MAIN_LAYOUT_PADDING, GUI_DEF_MAIN_LAYOUT_PADDING, GUI_DEF_MAIN_LAYOUT_PADDING);
+    LayoutParamsSetOrientation(browser_layout, TYPE_LAYOUT_ORIENTATION_VERTICAL);
+    LayoutParamsSetLayoutPosition(browser_layout, layout_x, layout_y);
+    LayoutParamsSetAvailableSize(browser_layout, available_w, available_h);
+    LayoutParamsSetLayoutSize(browser_layout, TYPE_LAYOUT_MATH_PARENT, TYPE_LAYOUT_MATH_PARENT);
+    LayoutParamsSetPadding(browser_layout, GUI_DEF_MAIN_LAYOUT_PADDING, GUI_DEF_MAIN_LAYOUT_PADDING, GUI_DEF_MAIN_LAYOUT_PADDING, GUI_DEF_MAIN_LAYOUT_PADDING);
     LayoutEmpty(browser_layout);
 
     if (!path_textview)
@@ -168,60 +185,61 @@ static int refreshLayout()
         path_textview = NewTextView();
         if (!path_textview)
             return -1;
-        LayoutParamSetAutoFree(path_textview, 0);
+        LayoutParamsSetAutoFree(path_textview, 0);
+        TextViewSetText(path_textview, "");
     }
-    LayoutParamSetLayoutSize(path_textview, TYPE_LAYOUT_MATH_PARENT, GUI_GetLineHeight() + PATH_VIEW_PADDING_T * 2);
-    LayoutParamSetPadding(path_textview, PATH_VIEW_PADDING_L, PATH_VIEW_PADDING_L, PATH_VIEW_PADDING_T, PATH_VIEW_PADDING_T);
-    TextViewSetSingleLine(path_textview, 1);
+    LayoutParamsSetLayoutSize(path_textview, TYPE_LAYOUT_MATH_PARENT, GUI_GetLineHeight() + PATH_VIEW_PADDING_T * 2);
+    LayoutParamsSetPadding(path_textview, PATH_VIEW_PADDING_L, PATH_VIEW_PADDING_L, PATH_VIEW_PADDING_T, PATH_VIEW_PADDING_T);
     TextViewSetBgColor(path_textview, GUI_DEF_COLOR_BG);
+    TextViewSetSingleLine(path_textview, 1);
     TextViewSetTextColor(path_textview, PATH_TEXT_COLOR);
-    LayoutAdd(browser_layout, path_textview);
+    TextViewSetText(path_textview, "");
+    LayoutAddView(browser_layout, path_textview);
 
-    Layout *ls_layout = NewLayout();
-    LayoutSetOrientation(ls_layout, TYPE_LAYOUT_ORIENTATION_HORIZONTAL);
-    LayoutParamSetLayoutSize(ls_layout, TYPE_LAYOUT_MATH_PARENT, TYPE_LAYOUT_MATH_PARENT);
-    LayoutParamSetMargin(ls_layout, 0, 0, LAYOUT_CHILD_MARGIN, 0);
-    LayoutAdd(browser_layout, ls_layout);
+    Layout *layout2 = NewLayout();
+    LayoutParamsSetOrientation(layout2, TYPE_LAYOUT_ORIENTATION_HORIZONTAL);
+    LayoutParamsSetLayoutSize(layout2, TYPE_LAYOUT_MATH_PARENT, TYPE_LAYOUT_MATH_PARENT);
+    LayoutParamsSetMargin(layout2, 0, 0, LAYOUT_CHILD_MARGIN, 0);
+    LayoutAddView(browser_layout, layout2);
 
-    ViewRefresh(ls_layout);
-    LayoutGetRemaining(ls_layout, &remaining_w, &remaining_h);
+    // 先更新获取layout2的可用尺寸以确定预览图的视图尺寸
+    LayoutParamsUpdate(browser_layout);
+    LayoutParamsGetAvailableSize(layout2, &layout2_available_w, &layout2_available_h);
 
     if (!preview_imageview)
     {
         preview_imageview = NewImageView();
         if (!preview_imageview)
             return -1;
-        LayoutParamSetAutoFree(preview_imageview, 0);
+        LayoutParamsSetAutoFree(preview_imageview, 0);
     }
-    LayoutParamSetLayoutSize(preview_imageview, remaining_h, remaining_h);
-    LayoutParamSetPadding(preview_imageview, PREVIEW_VIEW_PADDING, PREVIEW_VIEW_PADDING, PREVIEW_VIEW_PADDING, PREVIEW_VIEW_PADDING);
+    LayoutParamsSetLayoutSize(preview_imageview, layout2_available_h, layout2_available_h);
+    LayoutParamsSetPadding(preview_imageview, PREVIEW_VIEW_PADDING, PREVIEW_VIEW_PADDING, PREVIEW_VIEW_PADDING, PREVIEW_VIEW_PADDING);
     ImageViewSetBgColor(preview_imageview, GUI_DEF_COLOR_BG);
-    LayoutAdd(ls_layout, preview_imageview);
+    LayoutAddView(layout2, preview_imageview);
 
-    if (!broeser_listview)
+    if (!browser_listview)
     {
-        broeser_listview = NewListView();
-        if (!broeser_listview)
+        browser_listview = NewListView();
+        if (!browser_listview)
             return -1;
-        LayoutParamSetAutoFree(broeser_listview, 0);
+        LayoutParamsSetAutoFree(browser_listview, 0);
     }
-    LayoutParamSetLayoutSize(broeser_listview, TYPE_LAYOUT_MATH_PARENT, TYPE_LAYOUT_MATH_PARENT);
-    LayoutParamSetMargin(broeser_listview, 0, LAYOUT_CHILD_MARGIN, 0, 0);
-    LayoutParamSetPadding(broeser_listview, LISTVIEW_PADDING_L, LISTVIEW_PADDING_L, LISTVIEW_PADDING_T, LISTVIEW_PADDING_T);
-    ListViewSetBgColor(broeser_listview, GUI_DEF_COLOR_BG);
-    ListViewSetItemPadding(broeser_listview, ITEMVIEW_PADDING_L, ITEMVIEW_PADDING_L, ITEMVIEW_PADDING_T, ITEMVIEW_PADDING_T);
-    ListViewSetItemFocusColor(broeser_listview, ITEMVIEW_COLOR_FOCUS);
-    ListViewSetFocusPosEnabled(broeser_listview, 1);
-    ViewAddAbove(preview_imageview, broeser_listview);
+    LayoutParamsSetOrientation(browser_listview, TYPE_LAYOUT_ORIENTATION_VERTICAL);
+    LayoutParamsSetLayoutSize(browser_listview, TYPE_LAYOUT_MATH_PARENT, TYPE_LAYOUT_MATH_PARENT);
+    LayoutParamsSetMargin(browser_listview, 0, LAYOUT_CHILD_MARGIN, 0, 0);
+    LayoutParamsSetPadding(browser_listview, LISTVIEW_PADDING_L, LISTVIEW_PADDING_L, LISTVIEW_PADDING_T, LISTVIEW_PADDING_T);
+    ListViewSetBgColor(browser_listview, GUI_DEF_COLOR_BG);
+    LayoutAddViewAbove(layout2, browser_listview, preview_imageview);
 
-    ViewRefresh(browser_layout);
+    LayoutParamsUpdate(browser_layout);
 
     return 0;
 }
 
 int CurrentPathIsFile()
 {
-    int focus_pos = ListViewGetFocusPos(broeser_listview);
+    int focus_pos = ListViewGetFocusPos(browser_listview);
     LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
     FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
     if (data)
@@ -232,7 +250,7 @@ int CurrentPathIsFile()
 
 int GetCurrentFileType()
 {
-    int focus_pos = ListViewGetFocusPos(broeser_listview);
+    int focus_pos = ListViewGetFocusPos(browser_listview);
     LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
     FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
     if (!data)
@@ -243,7 +261,7 @@ int GetCurrentFileType()
 
 int MakeCurrentFileName(char *name)
 {
-    int focus_pos = ListViewGetFocusPos(broeser_listview);
+    int focus_pos = ListViewGetFocusPos(browser_listview);
     LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
     FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
     if (!data || !data->name)
@@ -256,7 +274,7 @@ int MakeCurrentFileName(char *name)
 int MakeCurrentFilePath(char *path)
 {
     FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
-    int focus_pos = ListViewGetFocusPos(broeser_listview);
+    int focus_pos = ListViewGetFocusPos(browser_listview);
     LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
     FileListEntryData *e_data = (FileListEntryData *)LinkedListGetEntryData(entry);
     if (!ls_data || !e_data || !e_data->name)
@@ -269,7 +287,7 @@ int MakeCurrentFilePath(char *path)
 int MakePreviewPath(char *path)
 {
     FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
-    int focus_pos = ListViewGetFocusPos(broeser_listview);
+    int focus_pos = ListViewGetFocusPos(browser_listview);
     LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
     FileListEntryData *e_data = (FileListEntryData *)LinkedListGetEntryData(entry);
     if (!ls_data || !e_data || !e_data->name)
@@ -286,7 +304,7 @@ int MakePreviewPath(char *path)
 
 int MakeScreenshotPath(char *path)
 {
-    int focus_pos = ListViewGetFocusPos(broeser_listview);
+    int focus_pos = ListViewGetFocusPos(browser_listview);
     LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
     FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
     if (!data || !data->name)
@@ -317,16 +335,72 @@ GUI_Texture *GetDefaultPreviewTexture()
     return texture;
 }
 
+static void refreshPreviewImageView()
+{
+    switch (app_config.preview_style)
+    {
+    case TYPE_PREVIEW_SCALE_TYPE_FIT_XY:
+        ImageViewSetScaleType(preview_imageview, TYPE_IMAGE_SCALE_FIT_XY);
+        break;
+    case TYPE_PREVIEW_SCALE_TYPE_FIT_CENTER_CROP:
+        ImageViewSetScaleType(preview_imageview, TYPE_IMAGE_SCALE_FIT_CENTER_CROP);
+        break;
+    case TYPE_PREVIEW_SCALE_TYPE_FIT_CENTER_INSIDE:
+    default:
+        ImageViewSetScaleType(preview_imageview, TYPE_IMAGE_SCALE_FIT_CENTER_INSIDE);
+        break;
+    }
+    LayoutParamsUpdate(preview_imageview);
+}
+
+static void refreshPreview()
+{
+    GUI_Texture *texture = NULL;
+
+    if (CurrentPathIsFile())
+    {
+        switch (app_config.preview_path)
+        {
+        case TYPE_PREVIEW_PATH_DEFAULT:
+            texture = GetDefaultPreviewTexture();
+            break;
+        case TYPE_PREVIEW_PATH_SAVESTATE:
+            texture = Emu_GetStateScreenshotTexture(-1);
+            break;
+
+        case TYPE_PREVIEW_PATH_AUTO:
+        default:
+            if (misc_config.auto_save_load)
+                texture = Emu_GetStateScreenshotTexture(-1);
+            if (!texture)
+                texture = GetDefaultPreviewTexture();
+            break;
+        }
+    }
+
+    ImageViewSetTexture(preview_imageview, texture);
+    refreshPreviewImageView();
+}
+
 void Browser_RequestRefreshPreview(int urgent)
 {
-    preview_need_refresh = 1;
+    GUI_Texture *texture = (GUI_Texture *)ImageViewGetTexture(preview_imageview);
+    if (texture)
+    {
+        GUI_WaitRenderingDone();
+        GUI_DestroyTexture(texture);
+    }
+    ImageViewSetTexture(preview_imageview, NULL);
 
     if (urgent)
-        preview_refresh_delay_frames = 0;
+    {
+        refreshPreview();
+    }
     else
+    {
         preview_refresh_delay_frames = PREVIEW_REFRESH_DELAY_FRAMES;
-
-    ImageViewSetTexture(preview_imageview, NULL, 1);
+        preview_need_refresh = 1;
+    }
 }
 
 static void moveFileListPos(int type)
@@ -334,8 +408,8 @@ static void moveFileListPos(int type)
     static int old_dir_level = -1;
     static int old_focus_pos = -1;
 
-    ListViewMovePos(broeser_listview, type);
-    int focus_pos = ListViewGetFocusPos(broeser_listview);
+    ListViewMoveFocusPos(browser_listview, type);
+    int focus_pos = ListViewGetFocusPos(browser_listview);
 
     if (old_dir_level != dir_level || old_focus_pos != focus_pos)
     {
@@ -358,18 +432,18 @@ static void moveFileListPos(int type)
     old_focus_pos = focus_pos;
 }
 
-static void dirLevelUp()
+static int dirLevelUp(int pos)
 {
     if (dir_level < MAX_DIR_LEVELS - 1)
     {
-        focus_pos_saves[dir_level] = ListViewGetFocusPos(broeser_listview);
+        focus_pos_saves[dir_level] = pos;
         dir_level++;
     }
 
-    ListViewSetFocusPos(broeser_listview, 0);
+    return 0;
 }
 
-static void dirLevelDown()
+static int dirLevelDown()
 {
     FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
     RemoveEndSlash(ls_data->path);
@@ -386,7 +460,7 @@ static void dirLevelDown()
     p = strrchr(ls_data->path, ':'); // ux0:abc || ux0:
     if (p)
     {
-        if (strlen(ls_data->path) - ((p + 1) - ls_data->path) > 0) // ux0:abc
+        if (strlen(ls_data->path) - ((p + 1) - ls_data->path) > 0) // strlen(ux0:abc) - (p(:)+1 - p(u)) > 0 for skip ux0:
         {
             p[1] = '\0';
             dir_level--;
@@ -401,25 +475,24 @@ DIR_UP_RETURN:
     if (dir_level < 0)
         dir_level = 0;
 
-    ListViewSetFocusPos(broeser_listview, focus_pos_saves[dir_level]);
+    return focus_pos_saves[dir_level];
 }
 
-static int setFocusByName(const char *name)
+static int getPosByName(const char *name)
 {
     int l_length = LinkedListGetLength(file_list);
     int pos = FileListGetNumberByName(file_list, name);
     if (pos < 0 || pos >= l_length)
-        return -1;
+        return 0;
 
-    ListViewSetFocusPos(broeser_listview, pos);
-    moveFileListPos(TYPE_MOVE_NONE);
-    return 0;
+    return pos;
 }
 
-static int refreshFileList()
+static int refreshFileList(int pos, int update_view)
 {
     int ret = 0, res = 0;
     FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
+    int focus_pos = pos;
 
     do
     {
@@ -428,13 +501,18 @@ static int refreshFileList()
         if (res < 0)
         {
             ret = res;
-            dirLevelDown();
+            focus_pos = dirLevelDown();
         }
     } while (res < 0);
 
-    TextViewSetText(path_textview, ls_data->path);
-    ListViewRefreshtList(broeser_listview);
-    moveFileListPos(TYPE_MOVE_NONE);
+    if (update_view)
+    {
+        TextViewSetText(path_textview, ls_data->path);
+        LayoutParamsUpdate(path_textview);
+        ListViewRefreshtList(browser_listview);
+        LayoutParamsUpdate(browser_listview);
+        ListViewSetFocusPos(browser_listview, focus_pos);
+    }
 
     return ret;
 }
@@ -448,6 +526,7 @@ static int changeToDir(char *lastdir)
     dir_level = 0;
     strcpy(ls_data->path, HOME_PATH);
 
+    int fcous_pos = 0;
     int i;
     for (i = 0; i < strlen(lastdir) + 1; i++)
     {
@@ -467,17 +546,17 @@ static int changeToDir(char *lastdir)
 
             lastdir[i] = ch2;
 
-            refreshFileList();
-            setFocusByName(p + 1);
+            refreshFileList(0, 0);
+            fcous_pos = getPosByName(p + 1);
 
             strcpy(ls_data->path, lastdir);
 
             lastdir[i + 1] = ch;
 
-            dirLevelUp();
+            dirLevelUp(fcous_pos);
         }
     }
-    refreshFileList();
+    refreshFileList(fcous_pos, 1);
 
     return 0;
 }
@@ -498,7 +577,10 @@ int Browser_ChangeDirByFilePath(const char *path)
     char name[MAX_NAME_LENGTH];
     ret = MakeFileName(name, path, MAX_NAME_LENGTH);
     if (ret >= 0)
-        setFocusByName(name);
+    {
+        ListViewSetFocusPos(browser_listview, getPosByName(name));
+        moveFileListPos(TYPE_MOVE_NONE);
+    }
 
     return 0;
 }
@@ -517,8 +599,7 @@ static void backToParentDir()
 {
     if (dir_level > 0)
     {
-        dirLevelDown();
-        refreshFileList();
+        refreshFileList(dirLevelDown(), 1);
     }
 }
 
@@ -540,8 +621,7 @@ static void enterToChildDir(LinkedListEntry *entry)
         strcat(ls_data->path, e_data->name);
     }
 
-    dirLevelUp();
-    refreshFileList();
+    refreshFileList(dirLevelUp(ListViewGetFocusPos(browser_listview)), 1);
 }
 
 static void startGame(LinkedListEntry *entry)
@@ -556,53 +636,6 @@ static void startGame(LinkedListEntry *entry)
     info.type = e_data->type;
     info.state_num = -2;
     Emu_StartGame(&info);
-}
-
-static void refreshPreviewImageView()
-{
-    switch (app_config.preview_style)
-    {
-    case TYPE_PREVIEW_SCALE_TYPE_FIT_XY:
-        ImageViewSetScaleType(preview_imageview, TYPE_IMAGE_SCALE_FIT_XY);
-        break;
-    case TYPE_PREVIEW_SCALE_TYPE_FIT_CENTER_CROP:
-        ImageViewSetScaleType(preview_imageview, TYPE_IMAGE_SCALE_FIT_CENTER_CROP);
-        break;
-    case TYPE_PREVIEW_SCALE_TYPE_FIT_CENTER_INSIDE:
-    default:
-        ImageViewSetScaleType(preview_imageview, TYPE_IMAGE_SCALE_FIT_CENTER_INSIDE);
-        break;
-    }
-    ViewRefresh(preview_imageview);
-}
-
-static void refreshPreview()
-{
-    GUI_Texture *tex = NULL;
-
-    if (CurrentPathIsFile())
-    {
-        switch (app_config.preview_path)
-        {
-        case TYPE_PREVIEW_PATH_DEFAULT:
-            tex = GetDefaultPreviewTexture();
-            break;
-        case TYPE_PREVIEW_PATH_SAVESTATE:
-            tex = Emu_GetStateScreenshotTexture(-1);
-            break;
-
-        case TYPE_PREVIEW_PATH_AUTO:
-        default:
-            if (misc_config.auto_save_load)
-                tex = Emu_GetStateScreenshotTexture(-1);
-            if (!tex)
-                tex = GetDefaultPreviewTexture();
-            break;
-        }
-    }
-
-    ImageViewSetTexture(preview_imageview, tex, 1);
-    refreshPreviewImageView();
 }
 
 static void onPreviewUpdateEvent()
@@ -623,9 +656,7 @@ static void onPreviewUpdateEvent()
 
 static void drawActivityCallback(GUI_Activity *activity)
 {
-    int layout_x = 0, layout_y = 0;
-    GUI_GetActivityLayoutXY(&browser_activity, &layout_x, &layout_y);
-    LayoutDraw(browser_layout, layout_x, layout_y);
+    LayoutParamsDraw(browser_layout);
 }
 
 static int deleteGameCallback(GUI_Dialog *dialog)
@@ -647,8 +678,7 @@ static int deleteGameCallback(GUI_Dialog *dialog)
 #endif
     GUI_CloseDialog(dialog->prev);
     AlertDialog_Dismiss(dialog);
-    refreshFileList(file_list);
-    ListViewRefreshtList(broeser_listview);
+    refreshFileList(ListViewGetFocusPos(browser_listview), 1);
     Browser_RequestRefreshPreview(0);
 
     return 0;
@@ -700,7 +730,7 @@ static int optionMenuPositiveCallback(GUI_Dialog *dialog)
     if (!dialog || !dialog->userdata)
         return -1;
 
-    int focus_pos = ListViewGetFocusPos(broeser_listview);
+    int focus_pos = ListViewGetFocusPos(browser_listview);
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
 
     switch (data->focus_pos)
@@ -777,7 +807,7 @@ static int optionMenuPositiveCallback(GUI_Dialog *dialog)
 
 static void openOptionMenu()
 {
-    int focus_pos = ListViewGetFocusPos(broeser_listview);
+    int focus_pos = ListViewGetFocusPos(browser_listview);
     LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
     FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
     if (!data || data->is_folder)
@@ -796,7 +826,7 @@ static void openOptionMenu()
 
 static void onItemClick()
 {
-    int focus_pos = ListViewGetFocusPos(broeser_listview);
+    int focus_pos = ListViewGetFocusPos(browser_listview);
     LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
     FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
     if (data)
@@ -863,26 +893,27 @@ static int startActivityCallback(GUI_Activity *activity)
 
     ListViewCallbacks callbacks;
     memset(&callbacks, 0, sizeof(ListViewCallbacks));
+    callbacks.newItemView = newItemView;
+    callbacks.setItemViewData = setItemViewData;
+    callbacks.updateDrawItemView = updateDrawItemView;
     callbacks.getListLength = getListLength;
     callbacks.getHeadListEntry = getHeadListEntry;
-    callbacks.getTailListEntry = getTailListEntry;
     callbacks.getNextListEntry = getNextListEntry;
-    callbacks.getPrevListEntry = getPrevListEntry;
-    callbacks.getName = getName;
-    callbacks.getNameColor = getNameColor;
-    ListViewSetList(broeser_listview, file_list, &callbacks);
+    ListViewSetList(browser_listview, file_list, &callbacks);
 
-    FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
-    strcpy(ls_data->path, HOME_PATH);
-    refreshFileList();
-    Browser_ChangeDirBySaveFile(LASTFILE_PATH);
+    if (Browser_ChangeDirBySaveFile(LASTFILE_PATH) < 0)
+    {
+        FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
+        strcpy(ls_data->path, HOME_PATH);
+        refreshFileList(0, 1);
+    }
 
     return 0;
 }
 
 static int exitActivityCallback(GUI_Activity *activity)
 {
+    ListViewEmpty(browser_listview);
     LinkedListEmpty(file_list);
-    ListViewEmptyItems(broeser_listview);
     return 0;
 }

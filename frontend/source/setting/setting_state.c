@@ -194,7 +194,7 @@ static void refreshStateItem(int num)
     }
 
     // Read framebuffer
-    state_list[num].tex = GUI_CreateTextureFormat(header.preview_width, header.preview_height, SCE_GXM_TEXTURE_FORMAT_A8B8G8R8);
+    state_list[num].tex = GUI_CreateTextureFormat(header.preview_width, header.preview_height, GUI_PIXEL_FORMAT_U8U8U8U8_ABGR);
     if (state_list[num].tex)
     {
         sceIoLseek(fd, header.preview_offset, SCE_SEEK_SET);

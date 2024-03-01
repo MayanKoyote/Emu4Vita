@@ -175,84 +175,23 @@ char *StringMakeShortByWidth(const char *string, int limit_w)
     if (!string)
         return NULL;
 
-    char *res = NULL;
     int len = strlen(string);
-    char *buf = (char *)malloc(len + 1);
-    if (!buf)
+    char *res = (char *)malloc(len + 4);
+    if (!res)
         return NULL;
-    strcpy(buf, string);
+    strcpy(res, string);
 
     int cut_w = limit_w - GUI_GetTextWidth("...");
     int cut = 0;
     int max_w = 0;
     char ch;
-    int i, j, count;
-    for (i = 0; i < len;)
-    {
-        if (buf[i] == '\n')
-            break;
-
-        count = GetUTF8Count(&buf[i]);
-        j = i + count;
-        if (j > len)
-            break;
-        ch = buf[j];
-        buf[j] = '\0';
-        max_w += GUI_GetTextWidth(&buf[i]);
-        buf[j] = ch;
-
-        if (max_w <= cut_w)
-            cut = j;
-        if (max_w > limit_w)
-            break;
-
-        i = j;
-    }
-
-    if (max_w > limit_w)
-    {
-        buf[cut] = '\0';
-        if (cut + 4 > len)
-        {
-            res = (char *)malloc(cut + 4);
-            sprintf(res, "%s...", buf);
-            free(buf);
-        }
-        else
-        {
-            res = buf;
-            strcat(res, "...");
-        }
-    }
-    else
-    {
-        res = buf;
-    }
-
-    return res;
-}
-
-char *StringBreakLineByWidth(const char *string, int limit_w)
-{
-    if (!string)
-        return NULL;
-
-    int len = strlen(string) + 128;
-    char *res = malloc(len + 1);
-    if (!res)
-        return NULL;
-    strcpy(res, string);
-
-    char ch;
-    int w = 0, max_w = 0;
     int i, count;
     for (i = 0; i < len; i += count)
     {
         if (res[i] == '\n')
         {
-            max_w = 0;
-            count = 1;
-            continue;
+            res[i] = '\0';
+            break;
         }
 
         count = GetUTF8Count(&res[i]);
@@ -264,14 +203,77 @@ char *StringBreakLineByWidth(const char *string, int limit_w)
 
         ch = res[i + count];
         res[i + count] = '\0';
+        max_w += GUI_GetTextWidth(&res[i]);
+        res[i + count] = ch;
+
+        if (max_w <= cut_w)
+            cut = i + count;
+        if (max_w > limit_w)
+            break;
+    }
+
+    if (max_w > limit_w)
+    {
+        res[cut] = '\0';
+        strcat(res, "...");
+    }
+
+    return res;
+}
+
+char *StringBreakLineByWidth(const char *string, int limit_w)
+{
+    if (!string)
+        return NULL;
+
+    int len = strlen(string);
+    int new_len = len + 128; // 预留128个字符以添加\n
+    char *res = malloc(new_len + 1);
+    if (!res)
+        return NULL;
+    strcpy(res, string);
+
+    char ch;
+    int w = 0, max_w = 0;
+    int move_len = 0;
+    int i, count;
+    for (i = 0; i < len; i += count)
+    {
+        if (res[i] == '\n')
+        {
+            max_w = 0;
+            count = 1;
+            continue;
+        }
+
+        count = GetUTF8Count(&res[i]);
+        if (i + count > len) // 异常字符停止
+        {
+            res[i] = '\0';
+            break;
+        }
+
+        ch = res[i + count];
+        res[i + count] = '\0';
         w = GUI_GetTextWidth(&res[i]);
         res[i + count] = ch;
 
-        if (max_w + w >= limit_w)
+        if (max_w + w > limit_w)
         {
+            // 需留出一个字符添加\n，对应下面的len++不会超过new_len的长度
+            if (len >= new_len)
+            {
+                len = new_len - 1;
+                res[len] = '\0';
+            }
+
+            // 往后移动一个字符以添加\n
+            move_len = len - i + 1; // +1包含\0
+            memmove(&res[i + 1], &res[i], move_len);
+            res[i] = '\n';
+            i++;   // 前移跳过新添加的\n
+            len++; // 因添加了\n长度增长
             max_w = w;
-            memmove(&res[i + 1], &res[i], len - i - 1);
-            res[i++] = '\n';
         }
         else
         {
@@ -292,60 +294,72 @@ int StringToListByWidthEx(LinkedList *list, char *buffer, size_t size, int limit
     char *finish = buffer + size;
     char *last_space_p = start;
     char *p = start;
-    int width = 0;
-    int max_width = 0;
+    char *cut = start;
+    int line_w = 0;
+    int max_w = 0;
     int last_space_w = 0;
+    int w;
     int count;
-    int ch_w;
     char ch;
     while (p < finish)
     {
         count = GetUTF8Count(p);
         ch = *(p + count);
         *(p + count) = '\0';
-        ch_w = GUI_GetTextWidth(p);
+        w = GUI_GetTextWidth(p);
         *(p + count) = ch;
 
         if (*p == ' ' || *p == '\t')
         {
             last_space_p = p;
-            last_space_w = width;
+            last_space_w = line_w + w;
         }
 
-        if (*p == '\n' || width + ch_w > limit_width)
+        if (*p == '\n' || line_w + w > limit_width)
         {
-            // Check english word truncated (if current character and space is not in the line's first)
+            cut = p;
+            
+            // Check english word truncated
             if ((p > start && last_space_p > start) && (IS_ENGLISH_CHARACTER(*p) && IS_ENGLISH_CHARACTER(*(p - 1))))
             {
-                // Go back to the last space, current word will be in the next line
-                p = last_space_p + 1;
-                count = 0;            // Set to zero for skip auto step
-                ch_w = 0;             // Set to zero for skip auto step
-                width = last_space_w; // Set to last space width
+                cut = last_space_p + 1; // Go back to the last space, current word will be in the next line
+                w = line_w + w - last_space_w;
+                line_w = last_space_w;
                 last_space_w = 0;
             }
-            ch = *p;
-            *p = '\0';
+
+            ch = *cut;
+            *cut = '\0';
             string = malloc(strlen(start) + 1);
             if (string)
             {
                 strcpy(string, start);
                 LinkedListAdd(list, string);
             }
-            *p = ch;
-            if (*p == '\n')
-                p++;
-            start = p;
-            if (width > max_width)
-                max_width = width;
-            width = ch_w;
+            *cut = ch;
+
+            if (line_w > max_w)
+                max_w = line_w;
+
+            if (*cut == '\n')
+            {
+                start = cut + 1;
+                line_w = 0;
+            }
+            else
+            {
+                start = cut;
+                line_w = w;
+            }
         }
         else
         {
-            width += ch_w;
+            line_w += w;
         }
+
         p += count;
     }
+
     if (start < finish)
     {
         string = malloc(strlen(start) + 1);
@@ -356,10 +370,10 @@ int StringToListByWidthEx(LinkedList *list, char *buffer, size_t size, int limit
         }
     }
 
-    if (width > max_width)
-        max_width = width;
+    if (line_w > max_w)
+        max_w = line_w;
 
-    return max_width;
+    return max_w;
 }
 
 int StringToListByWidth(LinkedList *list, const char *str, int limit_width)

@@ -5,78 +5,100 @@
 
 #include "gui/gui.h"
 #include "Layout.h"
-#include "RectView.h"
 
-void RectViewDestroy(void *view)
+struct RectView
+{
+    LayoutParams params;
+    uint32_t bg_color;
+    uint32_t rect_color;
+};
+
+static void RectViewDestroy(void *view)
 {
     RectView *rectView = (RectView *)view;
+    LayoutParams *params = LayoutParamsGetParams(rectView);
 
-    if (!rectView || rectView->params.dont_free)
+    if (!rectView || params->dont_free)
         return;
 
     free(rectView);
 }
 
-int RectViewUpdate(void *view, int remaining_w, int remaining_h)
+static int RectViewUpdate(void *view)
 {
     if (!view)
         return -1;
 
     RectView *rectView = (RectView *)view;
-    LayoutParam *params = &rectView->params;
+    LayoutParams *params = LayoutParamsGetParams(rectView);
 
-    int max_w = remaining_w - params->margin_left - params->margin_right;
-    int max_h = remaining_h - params->margin_top - params->margin_bottom;
-    int wrap_w = 0;
-    int wrap_h = 0;
+    if (params->available_w <= 0 || params->available_h <= 0)
+    {
+        params->measured_w = 0;
+        params->measured_h = 0;
+        return -1;
+    }
 
-    params->measured_w = params->layout_w;
-    params->measured_h = params->layout_h;
+    int view_max_w = params->available_w - params->margin_left - params->margin_right; // 最大宽度
+    int view_max_h = params->available_h - params->margin_top - params->margin_bottom; // 最大高度
+    int view_wrap_w = params->padding_left + params->padding_right;                    // 包裹宽度
+    int view_wrap_h = params->padding_top + params->padding_bottom;                    // 包裹高度
 
+    params->wrap_w = view_wrap_w;
+    params->wrap_h = view_wrap_h;
+
+    // 测量宽度（绘制时确定的宽度）
     if (params->layout_w == TYPE_LAYOUT_MATH_PARENT)
-        params->measured_w = max_w;
+        params->measured_w = view_max_w;
     else if (params->layout_w == TYPE_LAYOUT_WRAP_CONTENT)
-        params->measured_w = wrap_w;
-    if (params->measured_w > max_w)
-        params->measured_w = max_w;
+        params->measured_w = view_wrap_w;
+    else
+        params->measured_w = params->layout_w;
+    if (params->measured_w > view_max_w)
+        params->measured_w = view_max_w;
     if (params->measured_w < 0)
         params->measured_w = 0;
 
+    // 测量高度（绘制时确定的高度）
     if (params->layout_h == TYPE_LAYOUT_MATH_PARENT)
-        params->measured_h = max_h;
+        params->measured_h = view_max_h;
     else if (params->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
-        params->measured_h = wrap_h;
-    if (params->measured_h > max_h)
-        params->measured_h = max_h;
+        params->measured_h = view_wrap_h;
+    else
+        params->measured_h = params->layout_h;
+    if (params->measured_h > view_max_h)
+        params->measured_h = view_max_h;
     if (params->measured_h < 0)
         params->measured_h = 0;
 
     return 0;
 }
 
-void RectViewDraw(void *view, int x, int y)
+static void RectViewDraw(void *view)
 {
     if (!view)
         return;
 
     RectView *rectView = (RectView *)view;
-    LayoutParam *params = &rectView->params;
+    LayoutParams *params = LayoutParamsGetParams(rectView);
 
     if (params->measured_w <= 0 || params->measured_h <= 0)
         return;
 
-    int view_x = x + params->margin_left;
-    int view_y = y + params->margin_top;
+    int view_x = params->layout_x + params->margin_left;
+    int view_y = params->layout_y + params->margin_top;
+    int view_max_w = params->measured_w;
+    int view_max_h = params->measured_h;
 
     if (rectView->bg_color)
-        GUI_DrawFillRectangle(view_x, view_y, params->measured_w, params->measured_h, rectView->bg_color);
+        GUI_DrawFillRectangle(view_x, view_y, view_max_w, view_max_h, rectView->bg_color);
 
     if (rectView->rect_color)
     {
         int rect_x = view_x + params->padding_left;
         int rect_y = view_y + params->padding_top;
-        int rect_w = params->measured_w - params->padding_left - params->padding_right;
-        int rect_h = params->measured_h - params->padding_top - params->padding_bottom;
+        int rect_w = view_max_w - params->padding_left - params->padding_right;
+        int rect_h = view_max_h - params->padding_top - params->padding_bottom;
 
         GUI_DrawFillRectangle(rect_x, rect_y, rect_w, rect_h, rectView->rect_color);
     }
@@ -88,7 +110,6 @@ int RectViewSetBgColor(RectView *rectView, uint32_t color)
         return -1;
 
     rectView->bg_color = color;
-
     return 0;
 }
 
@@ -109,7 +130,7 @@ int RectViewInit(RectView *rectView)
 
     memset(rectView, 0, sizeof(RectView));
 
-    LayoutParam *params = &rectView->params;
+    LayoutParams *params = LayoutParamsGetParams(rectView);
     params->destroy = RectViewDestroy;
     params->update = RectViewUpdate;
     params->draw = RectViewDraw;

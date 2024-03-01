@@ -100,12 +100,12 @@ int GUI_CloseDialog(GUI_Dialog *dialog);
 void GUI_CloseAllDialogs(int type);
 void GUI_CloseOtherDialogs(GUI_Dialog *dialog, int type);
 
-void GUI_GetActivityLayoutXY(GUI_Activity *activity, int *x, int *y);
-void GUI_GetActivityLayoutWH(GUI_Activity *activity, int *w, int *h);
+void GUI_GetActivityLayoutPosition(GUI_Activity *activity, int *x, int *y);
+void GUI_GetActivityAvailableSize(GUI_Activity *activity, int *w, int *h);
 
 char **GUI_GetStringArrayByIdArray(int *list, int list_len);
 
-void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int list_len, int max_draw_len, int top_pos, int draw_track);
+void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int max_len, int draw_len, int cur_len, int draw_track);
 
 GUI_Texture *GUI_GetDefaultWallpaper();
 GUI_Texture *GUI_GetDefaultSplash();

@@ -7,6 +7,7 @@
 
 struct LinkedListEntry
 {
+    LinkedList *parent;
     struct LinkedListEntry *next;
     struct LinkedListEntry *prev;
     void *data;
@@ -169,9 +170,12 @@ int LinkedListRemove(LinkedList *list, LinkedListEntry *entry)
     return 1;
 }
 
-LinkedListEntry *LinkedListAddEx(LinkedList *list, void *data, LinkedListFreeDataCallback freeEntryData)
+static LinkedListEntry *LinkedListAddBase(LinkedList *list, LinkedListEntry *insert, void *data)
 {
     if (!list || !data)
+        return NULL;
+
+    if (insert && insert->parent != list)
         return NULL;
 
     LinkedListEntry *entry = malloc(sizeof(LinkedListEntry));
@@ -181,7 +185,7 @@ LinkedListEntry *LinkedListAddEx(LinkedList *list, void *data, LinkedListFreeDat
     entry->next = NULL;
     entry->prev = NULL;
     entry->data = data;
-    entry->freeEntryData = freeEntryData;
+    entry->parent = list;
 
     if (list->head == NULL)
     {
@@ -190,9 +194,7 @@ LinkedListEntry *LinkedListAddEx(LinkedList *list, void *data, LinkedListFreeDat
     }
     else
     {
-        LinkedListEntry *insert = NULL;
-
-        if (list->compare)
+        if (insert == NULL && list->compare)
         {
             insert = list->head;
             while (insert)
@@ -231,7 +233,19 @@ LinkedListEntry *LinkedListAddEx(LinkedList *list, void *data, LinkedListFreeDat
 
 LinkedListEntry *LinkedListAdd(LinkedList *list, void *data)
 {
-    return LinkedListAddEx(list, data, NULL);
+    return LinkedListAddBase(list, NULL, data);
+}
+
+LinkedListEntry *LinkedListAddAbove(LinkedList *list, LinkedListEntry *above, void *data)
+{
+    return LinkedListAddBase(list, above, data);
+}
+
+LinkedListEntry *LinkedListAddBelow(LinkedList *list, LinkedListEntry *below, void *data)
+{
+    if (below)
+        return LinkedListAddBase(list, below->next, data);
+    return LinkedListAddBase(list, NULL, data);
 }
 
 void LinkedListEmpty(LinkedList *list)

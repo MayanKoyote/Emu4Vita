@@ -261,7 +261,7 @@ static void saveScreenshotForPreviewCallback()
     if (Emu_SaveVideoScreenshot(path) < 0)
         return;
 
-    Browser_RequestRefreshPreview(1);
+    Browser_RequestRefreshPreview(0);
     GUI_CloseDialog(&setting_dialog);
 }
 

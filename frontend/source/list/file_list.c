@@ -39,7 +39,8 @@ static void freeEntryData(void *data)
     FileListEntryData *e_data = (FileListEntryData *)data;
     if (e_data)
     {
-        free(e_data->name);
+        if (e_data->name)
+            free(e_data->name);
         free(e_data);
     }
 }
@@ -191,7 +192,7 @@ int FileListGetDirectoryEntries(LinkedList *list, const char *path, int sort)
                     continue;
             }
 
-            FileListEntryData *e_data = malloc(sizeof(FileListEntryData));
+            FileListEntryData *e_data = calloc(1, sizeof(FileListEntryData));
             if (!e_data)
                 continue;
 
@@ -250,8 +251,8 @@ LinkedList *NewFileList()
     }
 
     LinkedListSetListData(list, data);
-    LinkedListSetFreeEntryDataCallback(list, freeEntryData);
     LinkedListSetFreeListDataCallback(list, free);
+    LinkedListSetFreeEntryDataCallback(list, freeEntryData);
 
     return list;
 }

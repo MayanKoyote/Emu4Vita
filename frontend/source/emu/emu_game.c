@@ -296,7 +296,7 @@ void Emu_ExitGame()
         if (!game_reloading && misc_config.auto_save_load)
         { // Auto save state
             Emu_SaveState(-1);
-            Browser_RequestRefreshPreview(1);
+            Browser_RequestRefreshPreview(0);
         }
         retro_unload_game();
         retro_deinit();

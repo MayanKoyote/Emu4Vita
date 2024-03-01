@@ -31,10 +31,10 @@ GUI_Activity about_activity = {
     NULL,                  // User data
 };
 
-#define LISTVIEW_PADDING_L 4
-#define LISTVIEW_PADDING_T 4
-#define ITEMVIEW_PADDING_L 4
-#define ITEMVIEW_PADDING_T 4
+#define LISTVIEW_PADDING_L 6
+#define LISTVIEW_PADDING_T 6
+#define ITEMVIEW_PADDING_L 6
+#define ITEMVIEW_PADDING_T 6
 
 #define TEXT_COLOR COLOR_ORANGE
 
@@ -43,75 +43,64 @@ static ListView *about_listView = NULL;
 
 static int getListLength(void *list)
 {
-    if (!list)
-        return 0;
-    return N_ABOUT_TEXTS;
+    return list ? N_ABOUT_TEXTS : 0;
 }
 
 static void *getHeadListEntry(void *list)
 {
-    if (!list)
-        return NULL;
-    char **textList = (char **)list;
-    return textList[0];
-}
-
-static void *getTailListEntry(void *list)
-{
-    if (!list)
-        return NULL;
-    char **textList = (char **)list;
-    return textList[N_ABOUT_TEXTS - 1];
+    return list ? ((void **)list)[0] : NULL;
 }
 
 static void *getNextListEntry(void *list, void *cur_entry, int cur_idx)
 {
-    if (!list)
-        return NULL;
-    char **textList = (char **)list;
-    if (cur_idx < N_ABOUT_TEXTS - 1)
-        return textList[cur_idx + 1];
+    int next_idx = cur_idx + 1;
+    if (list && next_idx >= 0 && next_idx <= N_ABOUT_TEXTS - 1)
+        return ((void **)list)[next_idx];
     return NULL;
 }
 
-static void *getPrevListEntry(void *list, void *cur_entry, int cur_idx)
+static void *newItemView(void *data)
 {
-    if (!list)
+    ItemView *itemView = NewItemView();
+    if (!itemView)
         return NULL;
-    char **textList = (char **)list;
-    if (cur_idx > 0)
-        return textList[cur_idx - 1];
-    return NULL;
+
+    LayoutParamsSetPadding(itemView, ITEMVIEW_PADDING_L, ITEMVIEW_PADDING_L, ITEMVIEW_PADDING_T, ITEMVIEW_PADDING_T);
+    LayoutParamsSetLayoutSize(itemView, TYPE_LAYOUT_MATH_PARENT, TYPE_LAYOUT_WRAP_CONTENT);
+    ItemViewSetNameColor(itemView, TEXT_COLOR);
+    if (data)
+    {
+        const char *text = (const char *)data;
+        ItemViewSetName(itemView, text);
+    }
+
+    return itemView;
 }
 
-static char *getName(void *list, void *entry, int idx)
+static int setItemViewData(void *itemView, void *data)
 {
-    if (!list)
-        return NULL;
-    return (char *)entry;
-}
-
-static uint32_t getNameColor(void *list, void *entry, int idx)
-{
-    return TEXT_COLOR;
+    return ItemViewSetData((ItemView *)itemView, data);
 }
 
 static void refreshLayout()
 {
-    int layout_w = 0, layout_h = 0;
-
-    GUI_GetActivityLayoutWH(&about_activity, &layout_w, &layout_h);
+    int layout_x = 0, layout_y = 0;
+    int available_w = 0, available_h = 0;
+    GUI_GetActivityLayoutPosition(&about_activity, &layout_x, &layout_y);
+    GUI_GetActivityAvailableSize(&about_activity, &available_w, &available_h);
 
     if (!about_layout)
     {
         about_layout = NewLayout();
         if (!about_layout)
             return;
-        LayoutParamSetAutoFree(about_layout, 0);
+        LayoutParamsSetAutoFree(about_layout, 0);
     }
-    LayoutSetOrientation(about_layout, TYPE_LAYOUT_ORIENTATION_VERTICAL);
-    LayoutParamSetLayoutSize(about_layout, layout_w, layout_h);
-    LayoutParamSetPadding(about_layout, GUI_DEF_MAIN_LAYOUT_PADDING, GUI_DEF_MAIN_LAYOUT_PADDING, GUI_DEF_MAIN_LAYOUT_PADDING, GUI_DEF_MAIN_LAYOUT_PADDING);
+    LayoutParamsSetOrientation(about_layout, TYPE_LAYOUT_ORIENTATION_VERTICAL);
+    LayoutParamsSetLayoutPosition(about_layout, layout_x, layout_y);
+    LayoutParamsSetAvailableSize(about_layout, available_w, available_h);
+    LayoutParamsSetLayoutSize(about_layout, TYPE_LAYOUT_MATH_PARENT, TYPE_LAYOUT_MATH_PARENT);
+    LayoutParamsSetPadding(about_layout, GUI_DEF_MAIN_LAYOUT_PADDING, GUI_DEF_MAIN_LAYOUT_PADDING, GUI_DEF_MAIN_LAYOUT_PADDING, GUI_DEF_MAIN_LAYOUT_PADDING);
     LayoutEmpty(about_layout);
 
     if (!about_listView)
@@ -120,25 +109,21 @@ static void refreshLayout()
         if (!about_listView)
             return;
     }
-    LayoutParamSetLayoutSize(about_listView, TYPE_LAYOUT_MATH_PARENT, TYPE_LAYOUT_MATH_PARENT);
-    LayoutParamSetPadding(about_listView, LISTVIEW_PADDING_L, LISTVIEW_PADDING_L, LISTVIEW_PADDING_T, LISTVIEW_PADDING_T);
+    LayoutParamsSetOrientation(about_listView, TYPE_LAYOUT_ORIENTATION_VERTICAL);
+    LayoutParamsSetLayoutSize(about_listView, TYPE_LAYOUT_MATH_PARENT, TYPE_LAYOUT_MATH_PARENT);
+    LayoutParamsSetPadding(about_listView, LISTVIEW_PADDING_L, LISTVIEW_PADDING_L, LISTVIEW_PADDING_T, LISTVIEW_PADDING_T);
     ListViewSetBgColor(about_listView, GUI_DEF_COLOR_BG);
-    ListViewSetItemPadding(about_listView, ITEMVIEW_PADDING_L, ITEMVIEW_PADDING_L, ITEMVIEW_PADDING_T, ITEMVIEW_PADDING_T);
-    ListViewSetFocusPosEnabled(about_listView, 0);
-    LayoutAdd(about_layout, about_listView);
-
     ListViewCallbacks callbacks;
     memset(&callbacks, 0, sizeof(ListViewCallbacks));
+    callbacks.newItemView = newItemView;
+    callbacks.setItemViewData = setItemViewData;
     callbacks.getListLength = getListLength;
     callbacks.getHeadListEntry = getHeadListEntry;
-    callbacks.getTailListEntry = getTailListEntry;
     callbacks.getNextListEntry = getNextListEntry;
-    callbacks.getPrevListEntry = getPrevListEntry;
-    callbacks.getName = getName;
-    callbacks.getNameColor = getNameColor;
     ListViewSetList(about_listView, about_texts, &callbacks);
+    LayoutAddView(about_layout, about_listView);
 
-    ViewRefresh(about_layout);
+    LayoutParamsUpdate(about_layout);
 }
 
 static int startActivityCallback(GUI_Activity *activity)
@@ -150,28 +135,26 @@ static int startActivityCallback(GUI_Activity *activity)
 
 static void drawActivityCallback(GUI_Activity *activity)
 {
-    int layout_x = 0, layout_y = 0;
-    GUI_GetActivityLayoutXY(&about_activity, &layout_x, &layout_y);
-    LayoutDraw(about_layout, layout_x, layout_y);
+    LayoutParamsDraw(about_layout);
 }
 
 static void ctrlActivityCallback(GUI_Activity *activity)
 {
     if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
     {
-        ListViewMovePos(about_listView, TYPE_MOVE_UP);
+        ListViewMoveTopPos(about_listView, TYPE_MOVE_UP);
     }
     else if (hold_pad[PAD_DOWN] || hold2_pad[PAD_LEFT_ANALOG_DOWN])
     {
-        ListViewMovePos(about_listView, TYPE_MOVE_DOWN);
+        ListViewMoveTopPos(about_listView, TYPE_MOVE_DOWN);
     }
     else if (hold_pad[PAD_LEFT])
     {
-        ListViewMovePos(about_listView, TYPE_MOVE_LEFT);
+        ListViewMoveTopPos(about_listView, TYPE_MOVE_LEFT);
     }
     else if (hold_pad[PAD_RIGHT])
     {
-        ListViewMovePos(about_listView, TYPE_MOVE_RIGHT);
+        ListViewMoveTopPos(about_listView, TYPE_MOVE_RIGHT);
     }
 
     if (released_pad[PAD_CANCEL])
