@@ -186,6 +186,7 @@ static LinkedListEntry *LinkedListAddBase(LinkedList *list, LinkedListEntry *ins
     entry->prev = NULL;
     entry->data = data;
     entry->parent = list;
+    entry->freeEntryData = NULL;
 
     if (list->head == NULL)
     {
