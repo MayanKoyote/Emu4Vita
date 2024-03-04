@@ -81,12 +81,17 @@ typedef struct
     size_t state_size;            // 完整状态的实际大小
     uint64_t next_time;           // 下一次记录的时间
     uint32_t count;               // 用于设置 RewindBlock 中的 index
-    SceUID saving_sema;
-    SceUID saving_thread;
-    SceKernelLwMutexWork saving_mutex;
 } RewindState;
 
+typedef struct
+{
+    SceUID id;
+    SceUID semaphore;
+    SceKernelLwMutexWork mutex;
+} RewindSavingThread;
+
 RewindState rs = {0};
+RewindSavingThread rs_thread = {0};
 int rewind_key_pressed = 0;
 int in_rewinding = 0;
 
@@ -256,6 +261,7 @@ static void *GetState(RewindBlock *block)
 
 static void Rewind()
 {
+    sceKernelLockLwMutex(&rs_thread.mutex, 1, NULL);
 
     if (in_rewinding == 0)
     {
@@ -280,6 +286,8 @@ static void Rewind()
     }
     // AppLog("Rewind End\n");
     rewind_key_pressed = 0;
+
+    sceKernelUnlockLwMutex(&rs_thread.mutex, 1);
 }
 
 static size_t GetBufDistance(size_t first, size_t second)
@@ -294,28 +302,25 @@ static void SaveState()
 {
     if (rs.current_block == NULL)
     {
+        // 进游戏后首次保存
         if (SaveFullState(rs.blocks, rs.buf, NULL))
             rs.current_block = rs.blocks;
     }
-    else if (sceKernelTryLockLwMutex(&rs.saving_mutex, 1) == SCE_OK)
+    else if (sceKernelTryLockLwMutex(&rs_thread.mutex, 1) == SCE_OK) // 确保 SavingThreadFunc 没有在运行中
     {
-        sceKernelUnlockLwMutex(&rs.saving_mutex, 1);
+        sceKernelUnlockLwMutex(&rs_thread.mutex, 1);
         if (retro_serialize(rs.tmp_buf, rs.state_size))
         {
-            sceKernelSignalSema(rs.saving_sema, 1);
+            sceKernelSignalSema(rs_thread.semaphore, 1); // 激活 SavingThreadFunc
         }
     }
 }
 
 static int SavingThreadFunc()
 {
-    while (sceKernelWaitSema(rs.saving_sema, 1, NULL) == SCE_OK)
+    while (sceKernelWaitSema(rs_thread.semaphore, 1, NULL) == SCE_OK && rs.buf != NULL)
     {
-        if (rs.buf == NULL)
-            break;
-
-        sceKernelLockLwMutex(&rs.saving_mutex, 1, NULL);
-        AppLog("SavingThreadFunc\n");
+        sceKernelLockLwMutex(&rs_thread.mutex, 1, NULL);
 
         RewindBlock *current = rs.current_block;
         RewindBlock *next = GetNextBlock();
@@ -339,7 +344,7 @@ static int SavingThreadFunc()
         if (result)
             rs.current_block = next;
 
-        sceKernelUnlockLwMutex(&rs.saving_mutex, 1);
+        sceKernelUnlockLwMutex(&rs_thread.mutex, 1);
     }
 
     AppLog("SavingThreadFunc end\n");
@@ -366,10 +371,10 @@ void Emu_InitRewind(size_t buffer_size)
 
     rs.tmp_buf = malloc(rs.state_size);
 
-    sceKernelCreateLwMutex(&rs.saving_mutex, "saving_mutex", 0, 0, NULL);
-    rs.saving_sema = sceKernelCreateSema("saving_emaphore", 0, 0, 1, NULL);
-    rs.saving_thread = sceKernelCreateThread("saving_thread", SavingThreadFunc, 191, 0x10000, 0, 0, NULL);
-    sceKernelStartThread(rs.saving_thread, 0, NULL);
+    sceKernelCreateLwMutex(&rs_thread.mutex, "saving_mutex", 0, 0, NULL);
+    rs_thread.semaphore = sceKernelCreateSema("saving_emaphore", 0, 0, 1, NULL);
+    rs_thread.id = sceKernelCreateThread("saving_thread", SavingThreadFunc, 191, 0x10000, 0, 0, NULL);
+    sceKernelStartThread(rs_thread.id, 0, NULL);
 
     AppLog("[REWIND] buf size: 0x%08x, state_size: 0x%08x\n", buffer_size, rs.state_size);
     AppLog("[REWIND] blocks: 0x%08x buf: 0x%08x tmp_buf: 0x%08x\n", rs.blocks, rs.buf, rs.tmp_buf);
@@ -379,6 +384,12 @@ void Emu_InitRewind(size_t buffer_size)
 void Emu_DeinitRewind()
 {
     AppLog("[REWIND] rewind deinit...\n");
+    if (rs_thread.id)
+    {
+        sceKernelLockLwMutex(&rs_thread.mutex, 1, NULL);
+        sceKernelUnlockLwMutex(&rs_thread.mutex, 1);
+    }
+
     AppLog("[REWIND] blocks: 0x%08x buf: 0x%08x tmp_buf: 0x%08x\n", rs.blocks, rs.buf, rs.tmp_buf);
     if (rs.blocks)
         free(rs.blocks);
@@ -388,20 +399,16 @@ void Emu_DeinitRewind()
         free(rs.tmp_buf);
 
     AppLog("[REWIND] free all\n");
-
-    if (rs.saving_thread)
-    {
-        rs.buf = NULL;
-        sceKernelSignalSema(rs.saving_sema, 1);
-        sceKernelWaitThreadEnd(rs.saving_thread, NULL, NULL);
-    }
-
-    if (rs.saving_sema)
-        sceKernelDeleteSema(rs.saving_sema);
-
-    sceKernelDeleteLwMutex(&rs.saving_mutex);
-
     memset(&rs, 0, sizeof(RewindState));
+
+    if (rs_thread.id)
+    {
+        sceKernelSignalSema(rs_thread.semaphore, 1);
+        sceKernelWaitThreadEnd(rs_thread.id, NULL, NULL);
+        sceKernelDeleteSema(rs_thread.semaphore);
+        sceKernelDeleteLwMutex(&rs_thread.mutex);
+        memset(&rs_thread, 0, sizeof(RewindSavingThread));
+    }
 
     AppLog("[REWIND] rewind deinit OK!\n");
 }
