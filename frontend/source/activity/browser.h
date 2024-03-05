@@ -7,7 +7,7 @@ int CurrentPathIsFile();
 int GetCurrentFileType();
 int MakeCurrentFileName(char *name);
 int MakeCurrentFilePath(char *path);
-int MakePreviewPath(char *path);
+int MakePreviewPath(char *path, char *ext);
 int MakeScreenshotPath(char *path);
 
 GUI_Texture *GetDefaultPreviewTexture();

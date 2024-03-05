@@ -284,7 +284,7 @@ int MakeCurrentFilePath(char *path)
     return 0;
 }
 
-int MakePreviewPath(char *path)
+int MakePreviewPath(char *path, char *ext)
 {
     FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
     int focus_pos = ListViewGetFocusPos(browser_listview);
@@ -298,7 +298,7 @@ int MakePreviewPath(char *path)
     if (ret < 0)
         return -1;
 
-    snprintf(path, MAX_PATH_LENGTH, "%s%s/%s.png", ls_data->path, PREVIEW_DIR_NAME, base_name);
+    snprintf(path, MAX_PATH_LENGTH, "%s%s/%s.%s", ls_data->path, PREVIEW_DIR_NAME, base_name, ext);
     return 0;
 }
 
@@ -329,9 +329,13 @@ int MakeScreenshotPath(char *path)
 GUI_Texture *GetDefaultPreviewTexture()
 {
     char path[MAX_PATH_LENGTH];
-    MakePreviewPath(path);
+    MakePreviewPath(path, "png");
     GUI_Texture *texture = GUI_LoadPNGFile(path);
-
+    if (!texture)
+    {
+        MakePreviewPath(path, "jpg");
+        texture = GUI_LoadJPEGFile(path);
+    }
     return texture;
 }
 
