@@ -12,10 +12,47 @@
 #include "config.h"
 #include "utils.h"
 
+enum cheat_handler_type
+{
+    CHEAT_HANDLER_TYPE_EMU = 0,
+    CHEAT_HANDLER_TYPE_RETRO,
+    CHEAT_HANDLER_TYPE_END
+};
+
+enum cheat_type
+{
+    CHEAT_TYPE_DISABLED = 0,
+    CHEAT_TYPE_SET_TO_VALUE,
+    CHEAT_TYPE_INCREASE_VALUE,
+    CHEAT_TYPE_DECREASE_VALUE,
+    CHEAT_TYPE_RUN_NEXT_IF_EQ,
+    CHEAT_TYPE_RUN_NEXT_IF_NEQ,
+    CHEAT_TYPE_RUN_NEXT_IF_LT,
+    CHEAT_TYPE_RUN_NEXT_IF_GT
+};
+
+enum cheat_rumble_type
+{
+    RUMBLE_TYPE_DISABLED = 0,
+    RUMBLE_TYPE_CHANGES,
+    RUMBLE_TYPE_DOES_NOT_CHANGE,
+    RUMBLE_TYPE_INCREASE,
+    RUMBLE_TYPE_DECREASE,
+    RUMBLE_TYPE_EQ_VALUE,
+    RUMBLE_TYPE_NEQ_VALUE,
+    RUMBLE_TYPE_LT_VALUE,
+    RUMBLE_TYPE_GT_VALUE,
+    RUMBLE_TYPE_INCREASE_BY_VALUE,
+    RUMBLE_TYPE_DECREASE_BY_VALUE,
+    RUMBLE_TYPE_END_LIST
+};
+
 static SceUID cheat_thid = -1;
 static int cheat_run = 0;
 static int cheat_pause = 1;
 static int cheat_reset = 0;
+static void *memory_data = NULL;
+static size_t memory_size = 0;
 
 static int makeCheatPath(char *path)
 {
@@ -120,6 +157,18 @@ FAILED:
     return -1;
 }
 
+static void GetMemory()
+{
+    memory_data = retro_get_memory_data(RETRO_MEMORY_SYSTEM_RAM);
+    memory_size = retro_get_memory_size(RETRO_MEMORY_SYSTEM_RAM);
+}
+
+static void ApplyRetroCheat(const CheatListEntryData *data)
+{
+    if (!memory_data)
+        GetMemory();
+}
+
 static int ApplyCheatOption()
 {
     if (cheat_reset)
@@ -143,6 +192,10 @@ static int ApplyCheatOption()
             {
                 // printf("[CHEAT] ApplyCheatOption: %s = %s\n", data->desc, data->code);
                 retro_cheat_set(index, 1, data->code);
+            }
+            else if (data->handler == CHEAT_HANDLER_TYPE_RETRO)
+            {
+                ApplyRetroCheat(data);
             }
         }
 
@@ -209,6 +262,8 @@ int Emu_InitCheat()
     retro_cheat_reset();
     cheat_reset = 0;
     cheat_pause = 1;
+    memory_data = NULL;
+    memory_size = 0;
 
     if (Emu_LoadCheatOption() < 0)
         return -1;
