@@ -192,7 +192,7 @@ static int SetupRetroCheatMeta(int bitsize, uint32_t *bytes_per_item, uint32_t *
         break;
 
     default:
-        AppLog("wrong value of memory_search_size: %d", bitsize);
+        // AppLog("wrong value of memory_search_size: %d", bitsize);
         return 0;
     }
 
@@ -224,6 +224,7 @@ static uint32_t GetCurrentValue(int address, int bytes_per_item, int big_endian)
 static void SetCurrentValue(int address, int bytes_per_item, int bits, int big_endian, uint32_t address_mask, int value)
 {
     uint8_t *curr = memory_data + address;
+    // AppLog("SetCurrentValue %08x %08x %08x %x %d\n", memory_data, address, curr, value, bytes_per_item);
 
     switch (bytes_per_item)
     {
@@ -339,14 +340,14 @@ static void ApplyRetroCheat(const CheatListEntryData *data, int *run_cheat)
         break;
 
     default:
-        AppLog("waring: wrong cheat type: %d\n", data->cheat_type);
+        // AppLog("warning: wrong cheat type: %d\n", data->cheat_type);
         break;
     }
 
     if (set_value)
     {
         int address = data->address;
-        for (int i = 1; i < data->repeat_count; i++)
+        for (int i = 0; i < data->repeat_count; i++)
         {
             SetCurrentValue(address, bytes_per_item, bits, data->big_endian, data->address_bit_position, value);
             value += data->repeat_add_to_value;
@@ -398,7 +399,7 @@ static int ApplyCheatOptionThreadFunc(SceSize args, void *argp)
 
     while (cheat_run)
     {
-        if (cheat_pause || !core_cheat_list || LinkedListGetLength(core_cheat_list) <= 0)
+        if (cheat_pause || !core_cheat_list || LinkedListGetLength(core_cheat_list) <= 0 || !Emu_IsGameRunning())
         {
             sceKernelDelayThread(1000);
             continue;

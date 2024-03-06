@@ -194,13 +194,13 @@ int CheatListGetEntriesFromBuffer(LinkedList *list, void *buffer, int size)
         if (!cht_data)
             break;
 
-        cht_data->desc = NULL;
-        cht_data->code = NULL;
-        cht_data->big_endian = 0;
+        // cht_data->desc = NULL;
+        // cht_data->code = NULL;
+        // cht_data->big_endian = 0;
         cht_data->repeat_count = 1;
         cht_data->cheat_type = CHEAT_TYPE_SET_TO_VALUE;
         cht_data->memory_search_size = 3;
-        cht_data->repeat_add_to_value = 0;
+        // cht_data->repeat_add_to_value = 0;
         cht_data->repeat_add_to_address = 1;
         cht_data->address_bit_position = 0xff;
 
