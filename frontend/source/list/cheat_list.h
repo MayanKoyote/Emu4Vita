@@ -3,6 +3,18 @@
 
 #include "linked_list.h"
 
+enum cheat_type
+{
+    CHEAT_TYPE_DISABLED = 0,
+    CHEAT_TYPE_SET_TO_VALUE,
+    CHEAT_TYPE_INCREASE_VALUE,
+    CHEAT_TYPE_DECREASE_VALUE,
+    CHEAT_TYPE_RUN_NEXT_IF_EQ,
+    CHEAT_TYPE_RUN_NEXT_IF_NEQ,
+    CHEAT_TYPE_RUN_NEXT_IF_LT,
+    CHEAT_TYPE_RUN_NEXT_IF_GT
+};
+
 typedef struct CheatListEntryData
 {
     char *desc;                    // = "无限血量"

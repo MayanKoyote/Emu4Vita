@@ -19,18 +19,6 @@ enum cheat_handler_type
     CHEAT_HANDLER_TYPE_END
 };
 
-enum cheat_type
-{
-    CHEAT_TYPE_DISABLED = 0,
-    CHEAT_TYPE_SET_TO_VALUE,
-    CHEAT_TYPE_INCREASE_VALUE,
-    CHEAT_TYPE_DECREASE_VALUE,
-    CHEAT_TYPE_RUN_NEXT_IF_EQ,
-    CHEAT_TYPE_RUN_NEXT_IF_NEQ,
-    CHEAT_TYPE_RUN_NEXT_IF_LT,
-    CHEAT_TYPE_RUN_NEXT_IF_GT
-};
-
 enum cheat_rumble_type
 {
     RUMBLE_TYPE_DISABLED = 0,
@@ -51,7 +39,7 @@ static SceUID cheat_thid = -1;
 static int cheat_run = 0;
 static int cheat_pause = 1;
 static int cheat_reset = 0;
-static void *memory_data = NULL;
+static uint8_t *memory_data = NULL;
 static size_t memory_size = 0;
 
 static int makeCheatPath(char *path)
@@ -163,10 +151,207 @@ static void GetMemory()
     memory_size = retro_get_memory_size(RETRO_MEMORY_SYSTEM_RAM);
 }
 
-static void ApplyRetroCheat(const CheatListEntryData *data)
+static int SetupRetroCheatMeta(int bitsize, uint32_t *bytes_per_item, uint32_t *bits, uint32_t *mask)
 {
+    switch (bitsize)
+    {
+    case 0:
+        *bytes_per_item = 1;
+        *bits = 1;
+        *mask = 1;
+        break;
+
+    case 1:
+        *bytes_per_item = 1;
+        *bits = 2;
+        *mask = 2;
+        break;
+
+    case 2:
+        *bytes_per_item = 1;
+        *bits = 4;
+        *mask = 0xf;
+        break;
+
+    case 3:
+        *bytes_per_item = 1;
+        *bits = 8;
+        *mask = 0xff;
+        break;
+
+    case 4:
+        *bytes_per_item = 2;
+        *bits = 8;
+        *mask = 0xffff;
+        break;
+
+    case 5:
+        *bytes_per_item = 4;
+        *bits = 8;
+        *mask = 0xffffffff;
+        break;
+
+    default:
+        AppLog("wrong value of memory_search_size: %d", bitsize);
+        return 0;
+    }
+
+    return 1;
+}
+
+static uint32_t GetCurrentValue(int address, int bytes_per_item, int big_endian)
+{
+    uint8_t *curr = memory_data + address;
+    uint32_t value;
+
+    switch (bytes_per_item)
+    {
+    case 2:
+        value = big_endian ? (curr[0] << 8) | curr[1] : curr[0] | (curr[1] << 8);
+        break;
+    case 4:
+        value = big_endian ? (curr[0] << 24) | (curr[1] << 16) | (curr[2] << 8) | curr[3] : curr[0] | (curr[1] << 8) | (curr[2] << 16) | curr[3] << 24;
+        break;
+    case 1:
+    default:
+        value = *curr;
+        break;
+    }
+
+    return value;
+}
+
+static void SetCurrentValue(int address, int bytes_per_item, int bits, int big_endian, uint32_t address_mask, int value)
+{
+    uint8_t *curr = memory_data + address;
+
+    switch (bytes_per_item)
+    {
+    case 2:
+        if (big_endian)
+        {
+            curr[0] = (value >> 8) & 0xff;
+            curr[1] = value & 0xff;
+        }
+        else
+        {
+            curr[0] = value & 0xff;
+            curr[1] = (value >> 8) & 0xff;
+        }
+        break;
+
+    case 4:
+        if (big_endian)
+        {
+            curr[0] = (value >> 24) & 0xff;
+            curr[1] = (value >> 16) & 0xff;
+            curr[2] = (value >> 8) & 0xff;
+            curr[3] = value & 0xff;
+        }
+        else
+        {
+            curr[0] = value & 0xff;
+            curr[1] = (value >> 8) & 0xff;
+            curr[2] = (value >> 16) & 0xff;
+            curr[3] = (value >> 24) & 0xff;
+        }
+        break;
+
+    case 1:
+        if (bits < 8)
+        {
+            uint32_t mask;
+            uint8_t v = curr[0];
+            for (int i = 0; i < 8; i++)
+            {
+                if ((address_mask >> i) & 1)
+                {
+                    mask = ~((1 << i) & 0xff);
+                    v &= mask;
+                    v |= ((value >> i) & 1) << i;
+                }
+            }
+            curr[0] = v;
+        }
+        else
+            curr[0] = value & 0xff;
+        break;
+
+    default:
+        curr[0] = value & 0xff;
+        break;
+    }
+}
+
+static void ApplyRetroCheat(const CheatListEntryData *data, int *run_cheat)
+{
+    uint32_t bytes_per_item;
+    uint32_t bits;
+    uint32_t value;
+    uint32_t mask;
+    int set_value = 0;
+
+    if (!(*run_cheat))
+    {
+        *run_cheat = 1;
+        return;
+    }
+
     if (!memory_data)
         GetMemory();
+
+    if (!(memory_data && SetupRetroCheatMeta(data->memory_search_size, &bytes_per_item, &bits, &mask)))
+        return;
+
+    value = GetCurrentValue(data->address, bytes_per_item, data->big_endian);
+
+    switch (data->cheat_type)
+    {
+    case CHEAT_TYPE_SET_TO_VALUE:
+        value = data->value;
+        set_value = 1;
+        break;
+
+    case CHEAT_TYPE_INCREASE_VALUE:
+        value += data->value;
+        set_value = 1;
+        break;
+
+    case CHEAT_TYPE_DECREASE_VALUE:
+        value -= data->value;
+        set_value = 1;
+        break;
+
+    case CHEAT_TYPE_RUN_NEXT_IF_EQ:
+        *run_cheat = (data->value == value);
+        break;
+
+    case CHEAT_TYPE_RUN_NEXT_IF_NEQ:
+        *run_cheat = (data->value != value);
+        break;
+
+    case CHEAT_TYPE_RUN_NEXT_IF_LT:
+        *run_cheat = (data->value < value);
+        break;
+
+    case CHEAT_TYPE_RUN_NEXT_IF_GT:
+        *run_cheat = (data->value > value);
+        break;
+
+    default:
+        AppLog("waring: wrong cheat type: %d\n", data->cheat_type);
+        break;
+    }
+
+    if (set_value)
+    {
+        int address = data->address;
+        for (int i = 1; i < data->repeat_count; i++)
+        {
+            SetCurrentValue(address, bytes_per_item, bits, data->big_endian, data->address_bit_position, value);
+            value += data->repeat_add_to_value;
+        }
+    }
 }
 
 static int ApplyCheatOption()
@@ -182,20 +367,21 @@ static int ApplyCheatOption()
 
     LinkedListEntry *entry = LinkedListHead(core_cheat_list);
     int index = 0;
+    int run_cheat = 1;
 
     while (entry)
     {
         CheatListEntryData *data = (CheatListEntryData *)LinkedListGetEntryData(entry);
         if (data->enable)
         {
-            if (data->code)
+            if (data->code && *data->code)
             {
                 // printf("[CHEAT] ApplyCheatOption: %s = %s\n", data->desc, data->code);
                 retro_cheat_set(index, 1, data->code);
             }
             else if (data->handler == CHEAT_HANDLER_TYPE_RETRO)
             {
-                ApplyRetroCheat(data);
+                ApplyRetroCheat(data, &run_cheat);
             }
         }
 
