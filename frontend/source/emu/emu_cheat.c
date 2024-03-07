@@ -382,6 +382,7 @@ static int ApplyCheatOption()
             }
             else if (data->handler == CHEAT_HANDLER_TYPE_RETRO)
             {
+                // AppLog("[CHEAT] ApplyRetroCheat\n");
                 ApplyRetroCheat(data, &run_cheat);
             }
         }
@@ -396,6 +397,8 @@ static int ApplyCheatOption()
 static int ApplyCheatOptionThreadFunc(SceSize args, void *argp)
 {
     AppLog("[CHEAT] Cheat thread start.\n");
+
+    sceKernelDelayThread(5000000);
 
     while (cheat_run)
     {
