@@ -257,7 +257,7 @@ int Emu_StartGame(EmuGameInfo *info)
     if (state_num >= -1)
         Emu_LoadState(state_num);
 
-    Emu_InitCheat();
+    Emu_InitCheat(state_num < -1);
     Emu_InitAudio();
     Emu_InitVideo();
     Emu_InitInput();

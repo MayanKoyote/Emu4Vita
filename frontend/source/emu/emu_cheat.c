@@ -39,6 +39,7 @@ static SceUID cheat_thid = -1;
 static int cheat_run = 0;
 static int cheat_pause = 1;
 static int cheat_reset = 0;
+static int wait_5_second = 1;
 static uint8_t *memory_data = NULL;
 static size_t memory_size = 0;
 
@@ -149,6 +150,7 @@ static void GetMemory()
 {
     memory_data = retro_get_memory_data(RETRO_MEMORY_SYSTEM_RAM);
     memory_size = retro_get_memory_size(RETRO_MEMORY_SYSTEM_RAM);
+    AppLog("[CHEAT] GetMemory %08x %08x\n", memory_data, memory_size);
 }
 
 static int SetupRetroCheatMeta(int bitsize, uint32_t *bytes_per_item, uint32_t *bits, uint32_t *mask)
@@ -261,7 +263,7 @@ static void SetCurrentValue(int address, int bytes_per_item, int bits, int big_e
     case 1:
         if (bits < 8)
         {
-            uint32_t mask;
+            uint8_t mask;
             uint8_t v = curr[0];
             for (int i = 0; i < 8; i++)
             {
@@ -301,7 +303,7 @@ static void ApplyRetroCheat(const CheatListEntryData *data, int *run_cheat)
     if (!memory_data)
         GetMemory();
 
-    if (!(memory_data && SetupRetroCheatMeta(data->memory_search_size, &bytes_per_item, &bits, &mask)))
+    if (!(memory_data && memory_size && SetupRetroCheatMeta(data->memory_search_size, &bytes_per_item, &bits, &mask)))
         return;
 
     value = GetCurrentValue(data->address, bytes_per_item, data->big_endian);
@@ -351,6 +353,25 @@ static void ApplyRetroCheat(const CheatListEntryData *data, int *run_cheat)
         {
             SetCurrentValue(address, bytes_per_item, bits, data->big_endian, data->address_bit_position, value);
             value += data->repeat_add_to_value;
+            value %= mask;
+
+            if (bits < 8)
+            {
+                int address_mask = data->address_bit_position;
+                for (int i = 0; i < data->repeat_add_to_address; i++)
+                {
+                    address_mask = (address_mask << mask) & 0xff;
+                    if (address_mask == 0)
+                    {
+                        address_mask = mask;
+                        address++;
+                    }
+                }
+            }
+            else
+                address += data->repeat_add_to_address * bytes_per_item;
+
+            address %= memory_size;
         }
     }
 }
@@ -398,7 +419,8 @@ static int ApplyCheatOptionThreadFunc(SceSize args, void *argp)
 {
     AppLog("[CHEAT] Cheat thread start.\n");
 
-    sceKernelDelayThread(5000000);
+    if (wait_5_second)
+        sceKernelDelayThread(5000000);
 
     while (cheat_run)
     {
@@ -447,13 +469,14 @@ static int StartApplyCheatOptionThread()
     return ret;
 }
 
-int Emu_InitCheat()
+int Emu_InitCheat(int wait5sec)
 {
     retro_cheat_reset();
     cheat_reset = 0;
     cheat_pause = 1;
     memory_data = NULL;
     memory_size = 0;
+    wait_5_second = wait5sec;
 
     if (Emu_LoadCheatOption() < 0)
         return -1;

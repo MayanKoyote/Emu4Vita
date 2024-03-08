@@ -213,6 +213,7 @@ static bool setDiskControlExtCallback(const struct retro_disk_control_ext_callba
 
 bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
 {
+    // AppLog("[Environ] (#%u).\n", cmd);
     if (cmd == RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE)
     {
         *(bool *)data = core_varialbe_need_update;
@@ -430,6 +431,17 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
         AppLog("[RETRO] RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE\n");
         const struct retro_disk_control_ext_callback *cb = (const struct retro_disk_control_ext_callback *)data;
         return setDiskControlExtCallback(cb);
+    }
+    break;
+
+    case RETRO_ENVIRONMENT_SET_MEMORY_MAPS:
+    {
+        const struct retro_memory_map *mmaps = (const struct retro_memory_map *)data;
+        AppLog("[RETRO] RETRO_ENVIRONMENT_SET_MEMORY_MAPS %d\n", mmaps->num_descriptors);
+        for (int i = 0; i < mmaps->num_descriptors; i++)
+        {
+            AppLog("%08x %08x %08x\n", mmaps->descriptors->start, mmaps->descriptors->offset, mmaps->descriptors->len);
+        }
     }
     break;
 

@@ -10,8 +10,7 @@ int Emu_ResetCheatOption();
 int Emu_LoadCheatOption();
 int Emu_SaveCheatOption();
 
-int Emu_InitCheat();
+int Emu_InitCheat(int wait5sec);
 int Emu_DeinitCheat();
-
 
 #endif
