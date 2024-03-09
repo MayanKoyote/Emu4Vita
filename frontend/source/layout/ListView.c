@@ -489,7 +489,7 @@ int ListViewSetTargetScrollY(ListView *listView, int y)
     }
 
     // 自动滚动有bug，变更预览图时画面会有闪烁，原因未知，暂时设置current=target关闭自动滚动，可注释掉这行测试自动滚动功能
-    // listView->current_scroll_y = listView->target_scroll_y;
+    listView->current_scroll_y = listView->target_scroll_y;
 
     return 0;
 }
