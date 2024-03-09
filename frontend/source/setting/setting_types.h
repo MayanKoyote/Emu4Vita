@@ -69,7 +69,7 @@ struct SettingMenuItem
     int *visibility;                                                               // 可见性 (指针设为NULL时为默认可见)
     int (*onItemClick)(SettingMenu *menu, SettingMenuItem *menu_item, int id);     // Item点击事件
     int (*onItemUpdate)(SettingMenu *menu, SettingMenuItem *menu_item, int id);    // Item更新事件
-    int (*onOptionChanged)(SettingMenu *menu, SettingMenuItem *menu_item, int id); // Item变更事件
+    int (*onOptionChanged)(SettingMenu *menu, SettingMenuItem *menu_item, int id); // Option变更事件
     int (*onOptionClean)(void *option_data);                                       // option_data清空事件
 };
 

@@ -228,7 +228,7 @@ int GUI_EventToast()
     return 0;
 }
 
-int GUI_ShowToast(const char *message, unsigned int second)
+int GUI_ShowToast(const char *message, float second)
 {
     if (!toast_list)
     {
