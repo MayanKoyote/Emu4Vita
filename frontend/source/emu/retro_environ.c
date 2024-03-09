@@ -440,7 +440,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
         AppLog("[RETRO] RETRO_ENVIRONMENT_SET_MEMORY_MAPS %d\n", mmaps->num_descriptors);
         for (int i = 0; i < mmaps->num_descriptors; i++)
         {
-            AppLog("%08x %08x %08x\n", mmaps->descriptors->start, mmaps->descriptors->offset, mmaps->descriptors->len);
+            AppLog("[RETRO] %d) %08x %08x\n", i, mmaps->descriptors->ptr, mmaps->descriptors->len);
         }
     }
     break;

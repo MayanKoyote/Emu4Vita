@@ -79,6 +79,7 @@ typedef struct
     size_t buf_size;              // buf 缓存的大小
     size_t threshold_size;        // state_size * THRESHOLD_RATE, 如果差异的数据大于 threshold_size, 则保存完全的状态
     size_t state_size;            // 完整状态的实际大小
+    size_t aligned_state_size;    // 完整状态的实际大小，向上 0x10 对齐
     uint64_t next_time;           // 下一次记录的时间
     uint32_t count;               // 用于设置 RewindBlock 中的 index
 } RewindState;
@@ -114,7 +115,7 @@ static RewindBlock *GetPreviousBlock()
 static uint8_t *GetNextBuf()
 {
     uint8_t *buf = rs.current_block->offset + rs.current_block->size;
-    if (buf + rs.state_size + sizeof(RewindFullBuf) >= rs.buf + rs.buf_size)
+    if (buf + rs.aligned_state_size + sizeof(RewindFullBuf) >= rs.buf + rs.buf_size)
         buf = rs.buf;
     return buf;
 }
@@ -133,7 +134,7 @@ static int SaveFullState(RewindBlock *block, uint8_t *buf_offset, uint8_t *state
     block->type = BLOCK_FULL;
     block->index = rs.count++;
     block->offset = buf_offset;
-    block->size = sizeof(RewindFullBuf) + rs.state_size;
+    block->size = sizeof(RewindFullBuf) + rs.aligned_state_size;
     rs.last_full_block = block;
     RewindFullBuf *full = (RewindFullBuf *)buf_offset;
 
@@ -357,11 +358,16 @@ void Emu_InitRewind(size_t buffer_size)
     Emu_DeinitRewind();
 
     rs.state_size = retro_serialize_size();
-    if (buffer_size < rs.state_size * MIN_STATE_RATE)
+    rs.aligned_state_size = (rs.state_size + 0xf) & (~0xf);
+    if (buffer_size < rs.aligned_state_size * MIN_STATE_RATE)
+    {
+        AppLog("[REWIND] the buffer size is too small, Minimum required is %DMB", (rs.aligned_state_size * MIN_STATE_RATE) >> 20);
+        AppLog("[REWIND] rewind init failed\n");
         return;
+    }
 
-    rs.buf_size = buffer_size - sizeof(RewindBlock) * BLOCK_SIZE - rs.state_size;
-    rs.threshold_size = rs.state_size * THRESHOLD_RATE;
+    rs.buf_size = buffer_size - sizeof(RewindBlock) * BLOCK_SIZE - rs.aligned_state_size;
+    rs.threshold_size = rs.aligned_state_size * THRESHOLD_RATE;
 
     rs.blocks = malloc(sizeof(RewindBlock) * BLOCK_SIZE);
     memset(rs.blocks, 0, sizeof(RewindBlock) * BLOCK_SIZE);
@@ -369,14 +375,14 @@ void Emu_InitRewind(size_t buffer_size)
     rs.buf = malloc(rs.buf_size);
     memset(rs.buf, 0, sizeof(rs.buf_size));
 
-    rs.tmp_buf = malloc(rs.state_size);
+    rs.tmp_buf = malloc(rs.aligned_state_size);
 
     sceKernelCreateLwMutex(&rs_thread.mutex, "saving_mutex", 0, 0, NULL);
     rs_thread.semaphore = sceKernelCreateSema("saving_emaphore", 0, 0, 1, NULL);
     rs_thread.id = sceKernelCreateThread("saving_thread", SavingThreadFunc, 191, 0x10000, 0, 0, NULL);
     sceKernelStartThread(rs_thread.id, 0, NULL);
 
-    AppLog("[REWIND] buf size: 0x%08x, state_size: 0x%08x\n", buffer_size, rs.state_size);
+    AppLog("[REWIND] buf size: 0x%08x, state_size: 0x%08x aligned_state_size: 0x%08x\n", buffer_size, rs.state_size, rs.aligned_state_size);
     AppLog("[REWIND] blocks: 0x%08x buf: 0x%08x tmp_buf: 0x%08x\n", rs.blocks, rs.buf, rs.tmp_buf);
     AppLog("[REWIND] rewind init OK!\n");
 }
