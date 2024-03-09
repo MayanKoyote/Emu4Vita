@@ -897,6 +897,8 @@ static int onCtrlActivity(GUI_Activity *activity)
 
 static int onEventActivity(GUI_Activity *activity)
 {
+    if (!browser_activity.wallpaper)
+        browser_activity.wallpaper = GUI_GetDefaultWallpaper();
     onUpdatePreviewEvent();
     return 0;
 }

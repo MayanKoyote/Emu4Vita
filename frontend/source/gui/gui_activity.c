@@ -248,8 +248,6 @@ int GUI_DrawActivity()
 
     if (activity->wallpaper)
         Activity_DrawWallpaper(activity->wallpaper);
-    else
-        Activity_DrawWallpaper(GUI_GetDefaultWallpaper());
 
     Activity_Draw(activity);
 
