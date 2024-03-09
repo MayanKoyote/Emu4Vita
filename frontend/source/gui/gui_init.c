@@ -14,41 +14,32 @@
 
 static SceUID gui_images_thid = -1;
 
-static int ImagesThreadFunc(SceSize args, void *argp)
+static GUI_Texture *LoadImageTextureByName(const char *name)
 {
     GUI_Texture *texture = NULL;
     char path[MAX_PATH_LENGTH];
 
     if (private_assets_dir)
     {
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s", private_assets_dir, WALLPAPER_PNG_NAME);
+        snprintf(path, MAX_PATH_LENGTH, "%s/%s", private_assets_dir, name);
         texture = GUI_LoadPNGFile(path);
     }
     if (!texture && public_assets_dir)
     {
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s", public_assets_dir, WALLPAPER_PNG_NAME);
+        snprintf(path, MAX_PATH_LENGTH, "%s/%s", public_assets_dir, name);
         texture = GUI_LoadPNGFile(path);
-    }
-    if (texture)
-    {
-        GUI_SetWallpaperTexture(texture);
     }
 
-    texture = NULL;
-    if (private_assets_dir)
-    {
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s", private_assets_dir, SPLASH_PNG_NAME);
-        texture = GUI_LoadPNGFile(path);
-    }
-    if (!texture && public_assets_dir)
-    {
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s", public_assets_dir, SPLASH_PNG_NAME);
-        texture = GUI_LoadPNGFile(path);
-    }
-    if (texture)
-    {
-        GUI_SetSplashTexture(texture);
-    }
+    return texture;
+}
+
+static int ImagesThreadFunc(SceSize args, void *argp)
+{
+    GUI_SetDefaultWallpaper(LoadImageTextureByName(WALLPAPER_PNG_NAME));
+    GUI_SetDefaultSplash(LoadImageTextureByName(SPLASH_PNG_NAME));
+
+    GUI_SetCheckBoxTexture(LoadImageTextureByName(CHECKBOX_ON_PNG_NAME), LoadImageTextureByName(CHECKBOX_OFF_PNG_NAME));
+    GUI_SetRadioButtonTexture(LoadImageTextureByName(RADIOBUTTON_ON_PNG_NAME), LoadImageTextureByName(RADIOBUTTON_OFF_PNG_NAME));
 
     sceKernelExitDeleteThread(0);
     return 0;
@@ -69,8 +60,8 @@ static void GUI_DeinitImages()
         sceKernelDeleteThread(gui_images_thid);
         gui_images_thid = -1;
     }
-    GUI_SetWallpaperTexture(NULL);
-    GUI_SetSplashTexture(NULL);
+    GUI_SetDefaultWallpaper(NULL);
+    GUI_SetDefaultSplash(NULL);
 }
 
 void GUI_WaitInitEnd()

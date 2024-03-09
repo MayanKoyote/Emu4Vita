@@ -38,8 +38,6 @@ typedef struct
 #define BACK_TOUCH_HEIGHT 300
 #define BACK_TOUCH_PADDING_L 0
 
-extern GUI_Dialog setting_dialog;
-
 static void saveStateEventCallback();
 static void loadStateEventCallback();
 static void exitGameEventCallback();
@@ -234,21 +232,15 @@ static void LocalKeyToEmuKey(EmuKeyOption *option, int local_port, int mapping_p
 
     if (cur_pressed)
     {
-        option->hold_counts[local_port]++;
-
+        int hold_count = ++option->hold_counts[local_port];
         uint32_t config_key = *(option->value);
-        int enabled = config_key & ENABLE_KEY_BITMASK;
-        if (!enabled)
+        int trubo = config_key & TURBO_BITMASK_KEY;
+        uint32_t map_key = config_key & 0x00FFFFFF;
+        if (!map_key)
             return;
 
-        int trubo = config_key & TURBO_KEY_BITMASK;
-        int hold_count = option->hold_counts[local_port];
-
         if (!trubo || !old_pressed || (hold_count % (control_config.turbo_delay + 1) == 0))
-        {
-            config_key &= 0x00FFFFFF;
-            emu_mapping_keys[mapping_port] |= config_key;
-        }
+            emu_mapping_keys[mapping_port] |= map_key;
     }
     else
     {
@@ -263,15 +255,12 @@ static int onHotKeyEvent(int port, uint32_t buttons)
     uint8_t cur_pressed;
     uint8_t old_pressed;
 
-    buttons |= ENABLE_KEY_BITMASK;
-
     int i;
     for (i = 0; i < N_HOT_KEY_MAPPER_OPTIONS; i++)
     {
         option = &hot_key_options[i];
         config_key = *(option->value);
-        int enabled = config_key & ENABLE_KEY_BITMASK;
-        if (!enabled)
+        if (!config_key)
             continue;
 
         cur_pressed = ((buttons & config_key) == config_key);
@@ -285,7 +274,7 @@ static int onHotKeyEvent(int port, uint32_t buttons)
             {
                 callback();
                 if (config_key & SCE_CTRL_PSBUTTON)
-                    SetPSbuttonEventEnabled(0);
+                    GUI_SetPsbuttonEnabled(0);
                 return 1;
             }
         }
@@ -303,16 +292,16 @@ static int onPSbuttonEvent(int prot, uint32_t buttons)
     if (cur_pressed)
     {
         if (!old_pressed)
-            disable_psbutton_micros[prot] = sceKernelGetProcessTimeWide() + DISABLE_PSBUTTON_EVENT_HOLD_MICROS;
+            disable_psbutton_micros[prot] = sceKernelGetProcessTimeWide() + DISABLE_PSBUTTON_HOLD_MICROS;
         else if (sceKernelGetProcessTimeWide() >= disable_psbutton_micros[prot])
-            SetPSbuttonEventEnabled(0);
+            GUI_SetPsbuttonEnabled(0);
         return 1;
     }
     else
     {
         if (old_pressed)
         {
-            if (IsPSbuttonEventEnabled())
+            if (GUI_IsPsbuttonEnabled())
             {
                 float speed = Emu_GetCurrentRunSpeed();
                 if (speed != 1.0f)
@@ -323,15 +312,15 @@ static int onPSbuttonEvent(int prot, uint32_t buttons)
                 else
                 {
                     Emu_PauseGame();
-                    GUI_OpenDialog(&setting_dialog);
-                    SetPSbuttonEventEnabled(0);
+                    GUI_SetPsbuttonEnabled(0);
+                    Setting_OpenMenu();
                 }
                 return 1;
             }
         }
         else
         {
-            SetPSbuttonEventEnabled(1);
+            GUI_SetPsbuttonEnabled(1);
         }
     }
 
@@ -346,7 +335,7 @@ void Emu_PollInput()
 
     memset(emu_mapping_keys, 0, sizeof(emu_mapping_keys));
 
-    if (!IsControlEventEnabled())
+    if (!GUI_IsControlEnabled())
     {
         cleanInputKeys();
         return;
@@ -417,7 +406,7 @@ int16_t Retro_InputStateCallback(unsigned port, unsigned device, unsigned index,
         if (core_input_supports_bitmasks)
             res = emu_mapping_keys[port] & 0xFFFF;
         else
-            res = emu_mapping_keys[port] & BITMASK_RETRO_KEY(id);
+            res = emu_mapping_keys[port] & RETRO_BITMASK_KEY(id);
     }
 
     return res;

@@ -11,6 +11,7 @@ struct RectView
     LayoutParams params;
     uint32_t bg_color;
     uint32_t rect_color;
+    void *userdata;
 };
 
 static void RectViewDestroy(void *view)
@@ -48,9 +49,9 @@ static int RectViewUpdate(void *view)
     params->wrap_h = view_wrap_h;
 
     // 测量宽度（绘制时确定的宽度）
-    if (params->layout_w == TYPE_LAYOUT_MATH_PARENT)
+    if (params->layout_w == TYPE_LAYOUT_PARAMS_MATH_PARENT)
         params->measured_w = view_max_w;
-    else if (params->layout_w == TYPE_LAYOUT_WRAP_CONTENT)
+    else if (params->layout_w == TYPE_LAYOUT_PARAMS_WRAP_CONTENT)
         params->measured_w = view_wrap_w;
     else
         params->measured_w = params->layout_w;
@@ -60,9 +61,9 @@ static int RectViewUpdate(void *view)
         params->measured_w = 0;
 
     // 测量高度（绘制时确定的高度）
-    if (params->layout_h == TYPE_LAYOUT_MATH_PARENT)
+    if (params->layout_h == TYPE_LAYOUT_PARAMS_MATH_PARENT)
         params->measured_h = view_max_h;
-    else if (params->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
+    else if (params->layout_h == TYPE_LAYOUT_PARAMS_WRAP_CONTENT)
         params->measured_h = view_wrap_h;
     else
         params->measured_h = params->layout_h;
@@ -74,16 +75,16 @@ static int RectViewUpdate(void *view)
     return 0;
 }
 
-static void RectViewDraw(void *view)
+static int RectViewDraw(void *view)
 {
     if (!view)
-        return;
+        return -1;
 
     RectView *rectView = (RectView *)view;
     LayoutParams *params = LayoutParamsGetParams(rectView);
 
     if (params->measured_w <= 0 || params->measured_h <= 0)
-        return;
+        return 0;
 
     int view_x = params->layout_x + params->margin_left;
     int view_y = params->layout_y + params->margin_top;
@@ -102,6 +103,8 @@ static void RectViewDraw(void *view)
 
         GUI_DrawFillRectangle(rect_x, rect_y, rect_w, rect_h, rectView->rect_color);
     }
+
+    return 0;
 }
 
 int RectViewSetBgColor(RectView *rectView, uint32_t color)
@@ -110,6 +113,15 @@ int RectViewSetBgColor(RectView *rectView, uint32_t color)
         return -1;
 
     rectView->bg_color = color;
+    return 0;
+}
+
+int RectViewSetData(RectView *rectView, void *data)
+{
+    if (!rectView)
+        return -1;
+
+    rectView->userdata = data;
     return 0;
 }
 
@@ -123,19 +135,9 @@ int RectViewSetRectColor(RectView *rectView, uint32_t color)
     return 0;
 }
 
-int RectViewInit(RectView *rectView)
+void *RectViewGetData(RectView *rectView)
 {
-    if (!rectView)
-        return -1;
-
-    memset(rectView, 0, sizeof(RectView));
-
-    LayoutParams *params = LayoutParamsGetParams(rectView);
-    params->destroy = RectViewDestroy;
-    params->update = RectViewUpdate;
-    params->draw = RectViewDraw;
-
-    return 0;
+    return rectView ? rectView->userdata : NULL;
 }
 
 RectView *NewRectView()
@@ -143,8 +145,12 @@ RectView *NewRectView()
     RectView *rectView = (RectView *)malloc(sizeof(RectView));
     if (!rectView)
         return NULL;
+    memset(rectView, 0, sizeof(RectView));
 
-    RectViewInit(rectView);
+    LayoutParams *params = LayoutParamsGetParams(rectView);
+    params->destroy = RectViewDestroy;
+    params->update = RectViewUpdate;
+    params->draw = RectViewDraw;
 
     return rectView;
 }

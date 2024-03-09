@@ -8,24 +8,32 @@
 #define MAX_AVAILABLE_WIDTH 4096
 #define MAX_AVAILABLE_HEIGHT 4096
 
-enum TypeLayoutSize
+enum LayoutParamsLayoutSizeType
 {
-    TYPE_LAYOUT_WRAP_CONTENT = -0x01,
-    TYPE_LAYOUT_MATH_PARENT = -0x02,
+    TYPE_LAYOUT_PARAMS_WRAP_CONTENT = -0x0001,
+    TYPE_LAYOUT_PARAMS_MATH_PARENT = -0x0002,
 };
 
-enum TypeLayoutOrientation
+enum LayoutParamsOrientationType
 {
-    TYPE_LAYOUT_ORIENTATION_FRAME,
-    TYPE_LAYOUT_ORIENTATION_HORIZONTAL,
-    TYPE_LAYOUT_ORIENTATION_VERTICAL,
+    TYPE_LAYOUT_PARAMS_ORIENTATION_FRAME,      // 帧布局
+    TYPE_LAYOUT_PARAMS_ORIENTATION_HORIZONTAL, // 水平布局
+    TYPE_LAYOUT_PARAMS_ORIENTATION_VERTICAL,   // 垂直布局
+};
+
+enum LayoutParamsGravityType
+{
+    TYPE_LAYOUT_PARAMS_GRAVITY_LEFT = 0x0001,
+    TYPE_LAYOUT_PARAMS_GRAVITY_RIGHT = 0x0002,
+    TYPE_LAYOUT_PARAMS_GRAVITY_TOP = 0x0004,
+    TYPE_LAYOUT_PARAMS_GRAVITY_BOTTOM = 0x0008,
 };
 
 typedef struct
 {
     int dont_free;
     int orientation;
-    int scroll_enabled;
+    int gravity;
 
     int available_w;
     int available_h;
@@ -48,7 +56,7 @@ typedef struct
 
     void (*destroy)(void *view);
     int (*update)(void *view);
-    void (*draw)(void *view);
+    int (*draw)(void *view);
 } LayoutParams;
 
 LayoutParams *NewLayoutParams();
@@ -57,7 +65,7 @@ LayoutParams *LayoutParamsGetParams(void *view);
 // 设置参数
 int LayoutParamsSetAutoFree(void *view, int auto_free);
 int LayoutParamsSetOrientation(void *view, int orientation);
-int LayoutParamsSetScrollEnabled(void *view, int enabled);
+int LayoutParamsSetGravity(void *view, int gravity);
 int LayoutParamsSetMargin(void *view, int left, int right, int top, int bottom);
 int LayoutParamsSetPadding(void *view, int left, int right, int top, int bottom);
 int LayoutParamsSetLayoutPosition(void *view, int layout_x, int layout_y);
@@ -75,6 +83,6 @@ int LayoutParamsGetWrapSize(void *view, int *wrap_w, int *wrap_h);
 
 void LayoutParamsDestroy(void *view);
 int LayoutParamsUpdate(void *view);
-void LayoutParamsDraw(void *view);
+int LayoutParamsDraw(void *view);
 
 #endif

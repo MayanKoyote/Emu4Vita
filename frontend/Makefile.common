@@ -53,9 +53,10 @@ LIBDIRS := \
 	-L$(LIB_DIR)
 
 SRC_C += \
-	activity/about.c \
-	activity/browser.c \
-	activity/splash.c
+	activity/about_activity.c \
+	activity/browser_activity.c \
+	activity/splash_activity.c \
+	activity/emu_activity.c
 
 SRC_C += \
 	emu/emu_audio.c \
@@ -77,10 +78,14 @@ SRC_C += \
 	gui/gui_init.c \
 	gui/gui_lib.c \
 	gui/gui_shader.c \
+	gui/gui_activity.c \
+	gui/gui_window.c \
+	gui/gui_toast.c \
 	gui/gui.c
 
 SRC_C += \
-	dialog/alert_dialog.c
+	window/alert_dialog.c \
+	window/sliding_menu.c
 
 SRC_C += \
 	layout/LayoutParams.c \
@@ -101,8 +106,12 @@ SRC_C += \
 	list/cheat_list.c
 
 SRC_C += \
+	setting/setting_callbacks.c \
+	setting/setting_menu.c \
+	setting/setting_option.c \
 	setting/setting_overlay.c \
 	setting/setting_state.c \
+	setting/setting_window.c \
 	setting/setting.c
 
 SRC_C += \

@@ -315,7 +315,7 @@ static int generic_pvf_draw_text(vita2d_pvf *font, int draw, int *height,
 	vita2d_texture *tex = NULL;
 	float scale;
 	int start_x = x;
-	int max_x = 0;
+	int max_x = x;
 	int pen_x = x;
 	int pen_y = y;
 	int line_height = vita2d_pvf_get_lineheight(font, size);
@@ -369,7 +369,7 @@ static int generic_pvf_draw_text(vita2d_pvf *font, int draw, int *height,
 		max_x = pen_x;
 
 	if (height)
-		*height = pen_y + size - y;
+		*height = pen_y + line_height - y;
 
 	sceKernelUnlockLwMutex(&font->mutex, 1);
 
@@ -431,5 +431,5 @@ int vita2d_pvf_get_linespace(vita2d_pvf *font)
 
 int vita2d_pvf_get_lineheight(vita2d_pvf *font, int size)
 {
-	return size * (float)font->max_height / (float)font->font_size + 0.5f + FONT_GLYPH_MARGIN / 2.0f;
+	return size / (float)font->font_size * (float)font->max_height + 0.5f + FONT_GLYPH_MARGIN / 2.0f;
 }

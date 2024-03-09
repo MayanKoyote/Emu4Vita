@@ -19,9 +19,6 @@ extern char *_newlib_heap_base, *_newlib_heap_end, *_newlib_heap_cur;
 static int home_locked = 0, usb_connection_locked = 0, quick_menu_locked = 0;
 static int suspend_locked = 0, oled_off_locked = 0, oled_dimming_locked = 0;
 
-static int psbutton_event_enabled = 1;
-static int control_event_enabled = 1;
-
 int AppLog(const char *text, ...)
 {
     if (!app_config.app_log)
@@ -185,7 +182,7 @@ void GetDurationString(char string[16], uint64_t ms)
         snprintf(string, 16, "%02d:%02d", minute, second);
 }
 
-void RefreshListPos(int *top_pos, int *focus_pos, int length, int lines)
+void RefreshListPosEx(int *top_pos, int *focus_pos, int length, int lines)
 {
     int temp_top_pos = *top_pos;
     int temp_focus_pos = *focus_pos;
@@ -207,19 +204,19 @@ void RefreshListPos(int *top_pos, int *focus_pos, int length, int lines)
     *focus_pos = temp_focus_pos;
 }
 
-void RefreshListPosNoFocus(int *top_pos, int length, int lines)
+void RefreshListPos(int *pos, int length, int lines)
 {
-    int temp_top_pos = *top_pos;
+    int temp_pos = *pos;
 
-    if (temp_top_pos > length - lines)
-        temp_top_pos = length - lines;
-    if (temp_top_pos < 0)
-        temp_top_pos = 0;
+    if (temp_pos > length - lines)
+        temp_pos = length - lines;
+    if (temp_pos < 0)
+        temp_pos = 0;
 
-    *top_pos = temp_top_pos;
+    *pos = temp_pos;
 }
 
-void MoveListPos(int type, int *top_pos, int *focus_pos, int length, int lines)
+void MoveListPosEx(int type, int *top_pos, int *focus_pos, int length, int lines)
 {
     int temp_top_pos = *top_pos;
     int temp_focus_pos = *focus_pos;
@@ -232,25 +229,25 @@ void MoveListPos(int type, int *top_pos, int *focus_pos, int length, int lines)
     else if (type == TYPE_MOVE_RIGHT)
         temp_focus_pos += lines;
 
-    RefreshListPos(&temp_top_pos, &temp_focus_pos, length, lines);
+    RefreshListPosEx(&temp_top_pos, &temp_focus_pos, length, lines);
     *top_pos = temp_top_pos;
     *focus_pos = temp_focus_pos;
 }
 
-void MoveListPosNoFocus(int type, int *top_pos, int length, int lines)
+void MoveListPos(int type, int *pos, int length, int lines)
 {
-    int temp_top_pos = *top_pos;
+    int temp_pos = *pos;
     if (type == TYPE_MOVE_UP)
-        temp_top_pos--;
+        temp_pos--;
     else if (type == TYPE_MOVE_DOWN)
-        temp_top_pos++;
+        temp_pos++;
     if (type == TYPE_MOVE_LEFT)
-        temp_top_pos -= lines;
+        temp_pos -= lines;
     else if (type == TYPE_MOVE_RIGHT)
-        temp_top_pos += lines;
+        temp_pos += lines;
 
-    RefreshListPosNoFocus(&temp_top_pos, length, lines);
-    *top_pos = temp_top_pos;
+    RefreshListPos(&temp_pos, length, lines);
+    *pos = temp_pos;
 }
 
 void LockHomeKey()
@@ -309,7 +306,7 @@ void UnlockQuickMenu()
 
 void AutoUnlockQuickMenu()
 {
-    if (quick_menu_locked && !Emu_IsGameLoaded() && !Emu_IsGameLoading() && IsPSbuttonEventEnabled())
+    if (quick_menu_locked && !Emu_IsGameLoaded() && !Emu_IsGameLoading() && GUI_IsPsbuttonEnabled())
     {
         sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_QUICK_MENU);
         quick_menu_locked = 0;
@@ -364,27 +361,7 @@ void UnlockOledDimming()
         oled_dimming_locked = 0;
 }
 
-void SetControlEventEnabled(int enable)
-{
-    control_event_enabled = enable;
-}
-
-int IsControlEventEnabled()
-{
-    return control_event_enabled;
-}
-
-void SetPSbuttonEventEnabled(int enable)
-{
-    psbutton_event_enabled = enable;
-}
-
-int IsPSbuttonEventEnabled()
-{
-    return psbutton_event_enabled;
-}
-
-static int powerTickThreadFunc(SceSize args, void *argp)
+static int powerTickThreadEntry(SceSize args, void *argp)
 {
     while (1)
     {
@@ -407,7 +384,7 @@ static int powerTickThreadFunc(SceSize args, void *argp)
 
 void InitPowerTickThread()
 {
-    SceUID thid = sceKernelCreateThread("powerTickThreadFunc", powerTickThreadFunc, 0x10000100, 0x40000, 0, 0, NULL);
+    SceUID thid = sceKernelCreateThread("power_tick_thread", powerTickThreadEntry, 0x10000100, 0x40000, 0, 0, NULL);
     if (thid >= 0)
         sceKernelStartThread(thid, 0, NULL);
 }

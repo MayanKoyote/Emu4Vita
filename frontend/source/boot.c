@@ -5,7 +5,7 @@
 
 #include <psp2/appmgr.h>
 
-#include "activity/browser.h"
+#include "activity/activity.h"
 #include "emu/emu.h"
 #include "boot.h"
 #include "utils.h"
@@ -18,12 +18,16 @@
 #define PUBLIC_ASSETS_KEY_STR "common_assets_dir"
 #define RESTORE_APP_PATH_KEY_STR "restore_app_path"
 
-int exec_boot_mode = 0;
+static int exec_boot_mode = 0;
 static char *boot_game_path = NULL;
 static char *restore_app_path = NULL;
-
 static int bootparam_argc = 0;
 static char **bootparam_argv = NULL;
+
+int BootGetMode()
+{
+    return exec_boot_mode;
+}
 
 int BootLoadGame()
 {
@@ -82,7 +86,7 @@ static int readBootParamString(const char *str)
     return 0;
 }
 
-int BootCheckParams(int argc, char *const argv[])
+int BootCheckParams(int argc, char *const *argv)
 {
     if (argc < 2)
         goto END;
@@ -113,11 +117,9 @@ END:
     return 0;
 }
 
-int BootLoadExec(char *app_path, char *argv[])
+int BootLoadExec(char *app_path, char *const *argv)
 {
-    int ret = sceAppMgrLoadExec(app_path, (char *const *)argv, NULL);
-
-    return ret;
+    return sceAppMgrLoadExec(app_path, argv, NULL);
 }
 
 int BootLoadParentExec()

@@ -22,6 +22,7 @@ struct TextView
     int text_scoll_enabled;
     int text_scoll_count;
     int text_x_off;
+    void *userdata;
 };
 
 static void TextViewDestroy(void *view)
@@ -80,9 +81,9 @@ static int TextViewUpdate(void *view)
     params->wrap_w = view_wrap_w;
     params->wrap_h = view_wrap_h;
 
-    if (params->layout_w == TYPE_LAYOUT_MATH_PARENT)
+    if (params->layout_w == TYPE_LAYOUT_PARAMS_MATH_PARENT)
         params->measured_w = view_max_w;
-    else if (params->layout_w == TYPE_LAYOUT_WRAP_CONTENT)
+    else if (params->layout_w == TYPE_LAYOUT_PARAMS_WRAP_CONTENT)
         params->measured_w = view_wrap_w;
     else
         params->measured_w = params->layout_w;
@@ -91,9 +92,9 @@ static int TextViewUpdate(void *view)
     if (params->measured_w < 0)
         params->measured_w = 0;
 
-    if (params->layout_h == TYPE_LAYOUT_MATH_PARENT)
+    if (params->layout_h == TYPE_LAYOUT_PARAMS_MATH_PARENT)
         params->measured_h = view_max_h;
-    else if (params->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
+    else if (params->layout_h == TYPE_LAYOUT_PARAMS_WRAP_CONTENT)
         params->measured_h = view_wrap_h;
     else
         params->measured_h = params->layout_h;
@@ -105,16 +106,16 @@ static int TextViewUpdate(void *view)
     return 0;
 }
 
-static void TextViewDraw(void *view)
+static int TextViewDraw(void *view)
 {
     if (!view)
-        return;
+        return -1;
 
     TextView *textView = (TextView *)view;
     LayoutParams *params = LayoutParamsGetParams(textView);
 
     if (params->measured_w <= 0 || params->measured_h <= 0)
-        return;
+        return 0;
 
     int view_x = params->layout_x + params->margin_left;
     int view_y = params->layout_y + params->margin_top;
@@ -130,6 +131,17 @@ static void TextViewDraw(void *view)
         int text_y = view_y + params->padding_top + textView->text_y;
         int text_max_w = view_max_w - params->padding_left - params->padding_right;
         int text_max_h = view_max_h - params->padding_top; // - params->padding_bottom;
+
+        if (params->wrap_w < params->measured_w)
+        {
+            if (params->gravity & TYPE_LAYOUT_PARAMS_GRAVITY_RIGHT)
+                text_x += (params->measured_w - params->wrap_w);
+        }
+        if (params->wrap_h < params->measured_h)
+        {
+            if (params->gravity & TYPE_LAYOUT_PARAMS_GRAVITY_BOTTOM)
+                text_y += (params->measured_h - params->wrap_h);
+        }
 
         const char *text = textView->text_buf;
         uint32_t color = textView->text_color;
@@ -174,6 +186,8 @@ static void TextViewDraw(void *view)
 
         GUI_UnsetClipping();
     }
+
+    return 0;
 }
 
 int TextViewSetBgColor(TextView *textView, uint32_t color)
@@ -182,6 +196,15 @@ int TextViewSetBgColor(TextView *textView, uint32_t color)
         return -1;
 
     textView->bg_color = color;
+    return 0;
+}
+
+int TextViewSetData(TextView *textView, void *data)
+{
+    if (!textView)
+        return -1;
+
+    textView->userdata = data;
     return 0;
 }
 
@@ -245,24 +268,14 @@ int TextViewSetTextScollEnabled(TextView *textView, int enabled)
     return 0;
 }
 
+void *TextViewGetData(TextView *textView)
+{
+    return textView ? textView->userdata : NULL;
+}
+
 const char *TextViewGetText(TextView *textView)
 {
     return textView ? textView->text_ori : NULL;
-}
-
-int TextViewInit(TextView *textView)
-{
-    if (!textView)
-        return -1;
-
-    memset(textView, 0, sizeof(TextView));
-
-    LayoutParams *params = LayoutParamsGetParams(textView);
-    params->destroy = TextViewDestroy;
-    params->update = TextViewUpdate;
-    params->draw = TextViewDraw;
-
-    return 0;
 }
 
 TextView *NewTextView()
@@ -270,8 +283,12 @@ TextView *NewTextView()
     TextView *textView = (TextView *)malloc(sizeof(TextView));
     if (!textView)
         return NULL;
+    memset(textView, 0, sizeof(TextView));
 
-    TextViewInit(textView);
+    LayoutParams *params = LayoutParamsGetParams(textView);
+    params->destroy = TextViewDestroy;
+    params->update = TextViewUpdate;
+    params->draw = TextViewDraw;
 
     return textView;
 }

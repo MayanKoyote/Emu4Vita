@@ -12,6 +12,7 @@ void LinkedListSetEntryData(LinkedListEntry *entry, void *data);
 void *LinkedListGetListData(LinkedList *list);
 void LinkedListSetListData(LinkedList *list, void *data);
 int LinkedListGetLength(LinkedList *list);
+LinkedList *LinkedListEntryGetParent(LinkedListEntry *entry);
 void LinkedListEntrySetFreeEntryDataCallback(LinkedListEntry *entry, LinkedListFreeDataCallback callback);
 void LinkedListSetFreeEntryDataCallback(LinkedList *list, LinkedListFreeDataCallback callback);
 void LinkedListSetFreeListDataCallback(LinkedList *list, LinkedListFreeDataCallback callback);

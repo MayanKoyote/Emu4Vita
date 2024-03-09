@@ -7,7 +7,7 @@
 
 enum TypeListViewPosDisplayMode
 {
-    TYPE_LISTVIEW_FOCUS_POS_DISPLAY_MODE_DEFAULT,
+    TYPE_LISTVIEW_FOCUS_POS_DISPLAY_MODE_DEFAULT,         // 默认动态滚动
     TYPE_LISTVIEW_FOCUS_POS_DISPLAY_MODE_CENTER,          // 动态居中
     TYPE_LISTVIEW_FOCUS_POS_DISPLAY_MODE_CENTER_ABSOLUTE, // 绝对居中
 };
@@ -21,19 +21,17 @@ enum TypeListViewChooseMode
 
 typedef struct ListView ListView;
 
-typedef struct
+typedef struct ListViewCallbacks
 {
-    void *(*newItemView)(void *data);
-    int (*setItemViewData)(void *itemView, void *data);
-    int (*updateDrawItemView)(ListView *listView, void *itemView, int n);
+    int (*onGetListLength)(void *list);
+    void *(*onGetHeadListEntry)(void *list);
+    void *(*onGetNextListEntry)(void *list, void *entry, int id);
 
-    int (*getListLength)(void *list);
-    void *(*getHeadListEntry)(void *list);
-    void *(*getNextListEntry)(void *list, void *cur_entry, int cur_idx);
-
-
-    char *(*onItemClick)(void *list, int n);
-    char *(*onItemLongClick)(void *list, int n);
+    void *(*onCreateItemView)(void *data);
+    int (*onSetItemViewData)(void *itemView, void *data);
+    int (*onBeforeDrawItemView)(ListView *listView, void *itemView, int id);
+    int (*onItemClick)(ListView *listView, void *itemView, int id);
+    int (*onItemLongClick)(ListView *listView, void *itemView, int id);
 } ListViewCallbacks;
 
 void *ListViewFindItemByNum(ListView *listView, int n);
@@ -41,13 +39,16 @@ int ListViewAddItemByData(ListView *listView, void *data);
 int ListViewRemoveItemByNum(ListView *listView, int n);
 int ListViewEmpty(ListView *listView);
 int ListViewRefreshtList(ListView *listView);
-int ListViewSetList(ListView *listView, void *list, ListViewCallbacks *callbacks);
 
 int ListViewSetBgColor(ListView *listView, uint32_t color);
+int ListViewSetData(ListView *listView, void *data);
+int ListViewSetList(ListView *listView, void *list, ListViewCallbacks *callbacks);
 int ListViewSetTargetScrollY(ListView *listView, int y);
 int ListViewSetTopPos(ListView *listView, int pos);
 int ListViewSetFocusPos(ListView *listView, int pos);
 
+void *ListViewGetData(ListView *listView);
+void *ListViewGetList(ListView *listView);
 int ListViewGetTargetScrollY(ListView *listView);
 int ListViewGetTopPos(ListView *listView);
 int ListViewGetFocusPos(ListView *listView);
@@ -55,10 +56,9 @@ int ListViewGetFocusPos(ListView *listView);
 int ListViewMoveTopPos(ListView *listView, int move_type);
 int ListViewMoveFocusPos(ListView *listView, int move_type);
 
-int ListViewSetDriverSize(ListView *listView, int size);
-int ListViewSetDriverColor(ListView *listView, uint32_t color);
+int ListViewSetDivierSize(ListView *listView, int size);
+int ListViewSetDivierColor(ListView *listView, uint32_t color);
 
-int ListViewInit(ListView *listView);
 ListView *NewListView();
 
 #endif

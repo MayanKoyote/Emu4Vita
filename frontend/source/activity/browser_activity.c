@@ -6,21 +6,20 @@
 #include <psp2/io/fcntl.h>
 
 #include "list/file_list.h"
+#include "activity/activity.h"
 #include "setting/setting.h"
 #include "emu/emu.h"
 #include "gui/gui.h"
-#include "browser.h"
 #include "utils.h"
 #include "file.h"
 #include "config.h"
 #include "lang.h"
 
-extern GUI_Activity about_activity;
-
-static int startActivityCallback(GUI_Activity *activity);
-static int exitActivityCallback(GUI_Activity *activity);
-static void drawActivityCallback(GUI_Activity *activity);
-static void ctrlActivityCallback(GUI_Activity *activity);
+static int onStartActivity(GUI_Activity *activity);
+static int onFinishActivity(GUI_Activity *activity);
+static int onDrawActivity(GUI_Activity *activity);
+static int onCtrlActivity(GUI_Activity *activity);
+static int onEventActivity(GUI_Activity *activity);
 
 static GUI_ButtonInstruction button_instructions[] = {
     {LANG_BUTTON_CANCEL, LANG_PARENT_DIR, 1},
@@ -33,16 +32,16 @@ static GUI_ButtonInstruction button_instructions[] = {
 };
 
 GUI_Activity browser_activity = {
-    LANG_APP_TITLE,        // Title
-    button_instructions,   // Button instructions
-    NULL,                  // Wallpaper
-    startActivityCallback, // Start callback
-    exitActivityCallback,  // Exit callback
-    drawActivityCallback,  // Draw callback
-    ctrlActivityCallback,  // Ctrl callback
-    0,                     // Disable draw statusbar
-    NULL,                  // Parent activity
-    NULL,                  // User data
+    LANG_APP_TITLE,      // Title
+    button_instructions, // Button instructions
+    NULL,                // Wallpaper
+    0,                   // Disable draw statusbar
+    onStartActivity,     // Start callback
+    onFinishActivity,    // Finish callback
+    onDrawActivity,      // Draw callback
+    onCtrlActivity,      // Ctrl callback
+    onEventActivity,     // Event callback
+    NULL,                // User data
 };
 
 enum IndexOptionItem
@@ -74,7 +73,7 @@ static int option_items[] = {
 #define LISTVIEW_PADDING_L 2
 #define LISTVIEW_PADDING_T 2
 #define ITEMVIEW_PADDING_L 8
-#define ITEMVIEW_PADDING_T 7
+#define ITEMVIEW_PADDING_T 6
 
 #define ITEMVIEW_COLOR_BG 0
 #define ITEMVIEW_COLOR_FOCUS GUI_DEF_COLOR_FOCUS
@@ -101,55 +100,55 @@ static TextView *path_textview = NULL;
 static ListView *browser_listview = NULL;
 static ImageView *preview_imageview = NULL;
 
-static int getListLength(void *list)
+static int onGetListLength(void *list)
 {
     return LinkedListGetLength((LinkedList *)list);
 }
 
-static void *getHeadListEntry(void *list)
+static void *onGetHeadListEntry(void *list)
 {
     return LinkedListHead((LinkedList *)list);
 }
 
-static void *getNextListEntry(void *list, void *cur_entry, int cur_idx)
+static void *onGetNextListEntry(void *list, void *entry, int id)
 {
-    return LinkedListNext((LinkedListEntry *)cur_entry);
+    return LinkedListNext((LinkedListEntry *)entry);
 }
 
-static void *newItemView(void *data)
+static void *onCreateItemView(void *data)
 {
     ItemView *itemView = NewItemView();
     if (!itemView)
         return NULL;
 
     LayoutParamsSetPadding(itemView, ITEMVIEW_PADDING_L, ITEMVIEW_PADDING_L, ITEMVIEW_PADDING_T, ITEMVIEW_PADDING_T);
-    LayoutParamsSetLayoutSize(itemView, TYPE_LAYOUT_MATH_PARENT, TYPE_LAYOUT_WRAP_CONTENT);
+    LayoutParamsSetLayoutSize(itemView, TYPE_LAYOUT_PARAMS_MATH_PARENT, TYPE_LAYOUT_PARAMS_WRAP_CONTENT);
 
     if (data)
     {
         FileListEntryData *e_data = (FileListEntryData *)LinkedListGetEntryData((LinkedListEntry *)data);
-        ItemViewSetName(itemView, e_data->name);
+        ItemViewSetNameText(itemView, e_data->name);
         if (e_data->is_folder)
-            ItemViewSetNameColor(itemView, FOLDER_TEXT_COLOR);
+            ItemViewSetNameTextColor(itemView, FOLDER_TEXT_COLOR);
         else
-            ItemViewSetNameColor(itemView, FILE_TEXT_COLOR);
+            ItemViewSetNameTextColor(itemView, FILE_TEXT_COLOR);
     }
 
     return itemView;
 }
 
-static int setItemViewData(void *itemView, void *data)
+static int onSetItemViewData(void *itemView, void *data)
 {
     return ItemViewSetData((ItemView *)itemView, data);
 }
 
-static int updateDrawItemView(ListView *listView, void *itemView, int n)
+static int onBeforeDrawItemView(ListView *listView, void *itemView, int id)
 {
     if (!listView || !itemView)
         return -1;
 
     int focus_pos = ListViewGetFocusPos(listView);
-    if (focus_pos == n)
+    if (focus_pos == id)
         ItemViewSetBgColor((ItemView *)itemView, ITEMVIEW_COLOR_FOCUS);
     else
         ItemViewSetBgColor((ItemView *)itemView, ITEMVIEW_COLOR_BG);
@@ -157,38 +156,35 @@ static int updateDrawItemView(ListView *listView, void *itemView, int n)
     return 0;
 }
 
-static int refreshLayout()
+static int createLayout()
 {
     int layout_x = 0, layout_y = 0;
     int available_w = 0, available_h = 0;
     int layout2_available_w = 0, layout2_available_h = 0;
 
-    GUI_GetActivityLayoutPosition(&about_activity, &layout_x, &layout_y);
-    GUI_GetActivityAvailableSize(&about_activity, &available_w, &available_h);
+    if (browser_layout)
+        return 0;
 
+    // 获取主布局的可用尺寸和位置
+    GUI_GetActivityLayoutPosition(&browser_activity, &layout_x, &layout_y);
+    GUI_GetActivityAvailableSize(&browser_activity, &available_w, &available_h);
+
+    // 主布局
+    browser_layout = NewLayout();
     if (!browser_layout)
-    {
-        browser_layout = NewLayout();
-        if (!browser_layout)
-            return -1;
-        LayoutParamsSetAutoFree(browser_layout, 0);
-    }
-    LayoutParamsSetOrientation(browser_layout, TYPE_LAYOUT_ORIENTATION_VERTICAL);
+        return -1;
+    LayoutParamsSetAutoFree(browser_layout, 0);
+    LayoutParamsSetOrientation(browser_layout, TYPE_LAYOUT_PARAMS_ORIENTATION_VERTICAL);
     LayoutParamsSetLayoutPosition(browser_layout, layout_x, layout_y);
     LayoutParamsSetAvailableSize(browser_layout, available_w, available_h);
-    LayoutParamsSetLayoutSize(browser_layout, TYPE_LAYOUT_MATH_PARENT, TYPE_LAYOUT_MATH_PARENT);
+    LayoutParamsSetLayoutSize(browser_layout, TYPE_LAYOUT_PARAMS_MATH_PARENT, TYPE_LAYOUT_PARAMS_MATH_PARENT);
     LayoutParamsSetPadding(browser_layout, GUI_DEF_MAIN_LAYOUT_PADDING, GUI_DEF_MAIN_LAYOUT_PADDING, GUI_DEF_MAIN_LAYOUT_PADDING, GUI_DEF_MAIN_LAYOUT_PADDING);
-    LayoutEmpty(browser_layout);
 
+    // 文件列表父路径
+    path_textview = NewTextView();
     if (!path_textview)
-    {
-        path_textview = NewTextView();
-        if (!path_textview)
-            return -1;
-        LayoutParamsSetAutoFree(path_textview, 0);
-        TextViewSetText(path_textview, "");
-    }
-    LayoutParamsSetLayoutSize(path_textview, TYPE_LAYOUT_MATH_PARENT, GUI_GetLineHeight() + PATH_VIEW_PADDING_T * 2);
+        return -1;
+    LayoutParamsSetLayoutSize(path_textview, TYPE_LAYOUT_PARAMS_MATH_PARENT, GUI_GetLineHeight() + PATH_VIEW_PADDING_T * 2);
     LayoutParamsSetPadding(path_textview, PATH_VIEW_PADDING_L, PATH_VIEW_PADDING_L, PATH_VIEW_PADDING_T, PATH_VIEW_PADDING_T);
     TextViewSetBgColor(path_textview, GUI_DEF_COLOR_BG);
     TextViewSetSingleLine(path_textview, 1);
@@ -196,43 +192,59 @@ static int refreshLayout()
     TextViewSetText(path_textview, "");
     LayoutAddView(browser_layout, path_textview);
 
+    // 文件列表和预览图布局
     Layout *layout2 = NewLayout();
-    LayoutParamsSetOrientation(layout2, TYPE_LAYOUT_ORIENTATION_HORIZONTAL);
-    LayoutParamsSetLayoutSize(layout2, TYPE_LAYOUT_MATH_PARENT, TYPE_LAYOUT_MATH_PARENT);
+    LayoutParamsSetOrientation(layout2, TYPE_LAYOUT_PARAMS_ORIENTATION_HORIZONTAL);
+    LayoutParamsSetLayoutSize(layout2, TYPE_LAYOUT_PARAMS_MATH_PARENT, TYPE_LAYOUT_PARAMS_MATH_PARENT);
     LayoutParamsSetMargin(layout2, 0, 0, LAYOUT_CHILD_MARGIN, 0);
     LayoutAddView(browser_layout, layout2);
 
-    // 先更新获取layout2的可用尺寸以确定预览图的视图尺寸
+    // 先更新主布局以获取layout2的可用尺寸用来确定预览图的视图尺寸
     LayoutParamsUpdate(browser_layout);
     LayoutParamsGetAvailableSize(layout2, &layout2_available_w, &layout2_available_h);
 
+    // 预览图
+    preview_imageview = NewImageView();
     if (!preview_imageview)
-    {
-        preview_imageview = NewImageView();
-        if (!preview_imageview)
-            return -1;
-        LayoutParamsSetAutoFree(preview_imageview, 0);
-    }
+        return -1;
     LayoutParamsSetLayoutSize(preview_imageview, layout2_available_h, layout2_available_h);
     LayoutParamsSetPadding(preview_imageview, PREVIEW_VIEW_PADDING, PREVIEW_VIEW_PADDING, PREVIEW_VIEW_PADDING, PREVIEW_VIEW_PADDING);
     ImageViewSetBgColor(preview_imageview, GUI_DEF_COLOR_BG);
     LayoutAddView(layout2, preview_imageview);
 
+    // 文件列表
+    browser_listview = NewListView();
     if (!browser_listview)
-    {
-        browser_listview = NewListView();
-        if (!browser_listview)
-            return -1;
-        LayoutParamsSetAutoFree(browser_listview, 0);
-    }
-    LayoutParamsSetOrientation(browser_listview, TYPE_LAYOUT_ORIENTATION_VERTICAL);
-    LayoutParamsSetLayoutSize(browser_listview, TYPE_LAYOUT_MATH_PARENT, TYPE_LAYOUT_MATH_PARENT);
+        return -1;
+    LayoutParamsSetOrientation(browser_listview, TYPE_LAYOUT_PARAMS_ORIENTATION_VERTICAL);
+    LayoutParamsSetLayoutSize(browser_listview, TYPE_LAYOUT_PARAMS_MATH_PARENT, TYPE_LAYOUT_PARAMS_MATH_PARENT);
     LayoutParamsSetMargin(browser_listview, 0, LAYOUT_CHILD_MARGIN, 0, 0);
     LayoutParamsSetPadding(browser_listview, LISTVIEW_PADDING_L, LISTVIEW_PADDING_L, LISTVIEW_PADDING_T, LISTVIEW_PADDING_T);
     ListViewSetBgColor(browser_listview, GUI_DEF_COLOR_BG);
+    ListViewCallbacks callbacks;
+    memset(&callbacks, 0, sizeof(ListViewCallbacks));
+    callbacks.onCreateItemView = onCreateItemView;
+    callbacks.onSetItemViewData = onSetItemViewData;
+    callbacks.onBeforeDrawItemView = onBeforeDrawItemView;
+    callbacks.onGetListLength = onGetListLength;
+    callbacks.onGetHeadListEntry = onGetHeadListEntry;
+    callbacks.onGetNextListEntry = onGetNextListEntry;
+    ListViewSetList(browser_listview, file_list, &callbacks);
     LayoutAddViewAbove(layout2, browser_listview, preview_imageview);
 
-    LayoutParamsUpdate(browser_layout);
+    // 更新文件列表和预览图布局
+    LayoutParamsUpdate(layout2);
+
+    return 0;
+}
+
+static int destroyLayout()
+{
+    LayoutParamsDestroy(browser_layout);
+    browser_layout = NULL;
+    path_textview = NULL;
+    preview_imageview = NULL;
+    browser_listview = NULL;
 
     return 0;
 }
@@ -339,7 +351,7 @@ GUI_Texture *GetDefaultPreviewTexture()
     return texture;
 }
 
-static void refreshPreviewImageView()
+static void updatePreviewImageView()
 {
     switch (app_config.preview_style)
     {
@@ -371,7 +383,6 @@ static void refreshPreview()
         case TYPE_PREVIEW_PATH_SAVESTATE:
             texture = Emu_GetStateScreenshotTexture(-1);
             break;
-
         case TYPE_PREVIEW_PATH_AUTO:
         default:
             if (misc_config.auto_save_load)
@@ -383,27 +394,22 @@ static void refreshPreview()
     }
 
     ImageViewSetTexture(preview_imageview, texture);
-    refreshPreviewImageView();
+    updatePreviewImageView();
 }
 
-void Browser_RequestRefreshPreview(int urgent)
+static void onUpdatePreviewEvent()
 {
-    GUI_Texture *texture = (GUI_Texture *)ImageViewGetTexture(preview_imageview);
-    if (texture)
+    if (preview_need_refresh)
     {
-        GUI_WaitRenderingDone();
-        GUI_DestroyTexture(texture);
-    }
-    ImageViewSetTexture(preview_imageview, NULL);
-
-    if (urgent)
-    {
-        refreshPreview();
-    }
-    else
-    {
-        preview_refresh_delay_frames = PREVIEW_REFRESH_DELAY_FRAMES;
-        preview_need_refresh = 1;
+        if (preview_refresh_delay_frames > 0)
+        {
+            preview_refresh_delay_frames--;
+        }
+        else
+        {
+            refreshPreview();
+            preview_need_refresh = 0;
+        }
     }
 }
 
@@ -436,7 +442,7 @@ static void moveFileListPos(int type)
     old_focus_pos = focus_pos;
 }
 
-static int dirLevelUp(int pos)
+static int dirLeveForward(int pos)
 {
     if (dir_level < MAX_DIR_LEVELS - 1)
     {
@@ -444,10 +450,11 @@ static int dirLevelUp(int pos)
         dir_level++;
     }
 
+    // 返回新光标位置
     return 0;
 }
 
-static int dirLevelDown()
+static int dirLeveBackward()
 {
     FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
     RemoveEndSlash(ls_data->path);
@@ -479,20 +486,21 @@ DIR_UP_RETURN:
     if (dir_level < 0)
         dir_level = 0;
 
+    // 返回旧光标位置
     return focus_pos_saves[dir_level];
 }
 
 static int getPosByName(const char *name)
 {
-    int l_length = LinkedListGetLength(file_list);
+    int length = LinkedListGetLength(file_list);
     int pos = FileListGetNumberByName(file_list, name);
-    if (pos < 0 || pos >= l_length)
+    if (pos < 0 || pos > length - 1)
         return 0;
 
     return pos;
 }
 
-static int refreshFileList(int pos, int update_view)
+static int refreshFileList(int pos, int update_views)
 {
     int ret = 0, res = 0;
     FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
@@ -505,17 +513,18 @@ static int refreshFileList(int pos, int update_view)
         if (res < 0)
         {
             ret = res;
-            focus_pos = dirLevelDown();
+            focus_pos = dirLeveBackward();
         }
     } while (res < 0);
 
-    if (update_view)
+    if (update_views)
     {
         TextViewSetText(path_textview, ls_data->path);
         LayoutParamsUpdate(path_textview);
         ListViewRefreshtList(browser_listview);
         LayoutParamsUpdate(browser_listview);
         ListViewSetFocusPos(browser_listview, focus_pos);
+        moveFileListPos(TYPE_MOVE_NONE);
     }
 
     return ret;
@@ -557,12 +566,358 @@ static int changeToDir(char *lastdir)
 
             lastdir[i + 1] = ch;
 
-            dirLevelUp(fcous_pos);
+            dirLeveForward(fcous_pos);
         }
     }
     refreshFileList(fcous_pos, 1);
 
     return 0;
+}
+
+static void backToParentDir()
+{
+    if (dir_level > 0)
+    {
+        refreshFileList(dirLeveBackward(), 1);
+    }
+}
+
+static void enterToChildDir(LinkedListEntry *entry)
+{
+    FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
+    FileListEntryData *e_data = (FileListEntryData *)LinkedListGetEntryData(entry);
+    if (!ls_data || !e_data)
+        return;
+
+    if (dir_level == 0)
+    {
+        strcpy(ls_data->path, e_data->name);
+    }
+    else
+    {
+        if (dir_level > 1)
+            AddEndSlash(ls_data->path);
+        strcat(ls_data->path, e_data->name);
+    }
+
+    refreshFileList(dirLeveForward(ListViewGetFocusPos(browser_listview)), 1);
+}
+
+static void startGame(LinkedListEntry *entry)
+{
+    FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
+    FileListEntryData *e_data = (FileListEntryData *)LinkedListGetEntryData(entry);
+    if (!ls_data || !e_data)
+        return;
+
+    EmuGameInfo info;
+    snprintf(info.path, MAX_PATH_LENGTH, "%s%s", ls_data->path, e_data->name);
+    info.type = e_data->type;
+    info.state_num = -2;
+    Emu_StartGame(&info);
+}
+
+static int onAlertDialogDeleteGame(AlertDialog *dialog, int which)
+{
+    char path[MAX_PATH_LENGTH];
+    if (MakeCurrentFilePath(path) < 0)
+        return -1;
+
+    sceIoRemove(path);
+#ifdef FBA_BUILD
+    FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
+    char base_name[MAX_NAME_LENGTH];
+    MakeBaseName(base_name, path, MAX_NAME_LENGTH);
+    snprintf(path, MAX_PATH_LENGTH, "%s%s.dat", ls_data->path, base_name);
+    sceIoRemove(path);
+#endif
+    refreshFileList(ListViewGetFocusPos(browser_listview), 1);
+    Browser_RequestRefreshPreview(1);
+
+    if (dialog)
+    {
+        AlertDialog *prev_dialog = AlertDialog_GetData(dialog);
+        AlertDialog_Dismiss(prev_dialog);
+        AlertDialog_Dismiss(dialog);
+    }
+
+    return 0;
+}
+
+static int onAlertDialogDeleteAutoState(AlertDialog *dialog, int which)
+{
+    Emu_DeleteState(-1);
+    Browser_RequestRefreshPreview(1);
+
+    if (dialog)
+    {
+        AlertDialog *prev_dialog = AlertDialog_GetData(dialog);
+        AlertDialog_Dismiss(prev_dialog);
+        AlertDialog_Dismiss(dialog);
+    }
+
+    return 0;
+}
+
+static int onAlertDialogDeleteAutoSrm(AlertDialog *dialog, int which)
+{
+    Emu_DeleteSrm();
+
+    if (dialog)
+    {
+        AlertDialog *prev_dialog = AlertDialog_GetData(dialog);
+        AlertDialog_Dismiss(prev_dialog);
+        AlertDialog_Dismiss(dialog);
+    }
+
+    return 0;
+}
+
+static int onAlertDialogDeleteCacheFiles(AlertDialog *dialog, int which)
+{
+#if defined(WANT_EXT_ARCHIVE_ROM)
+    char path[MAX_PATH_LENGTH];
+    MakeCurrentFilePath(path);
+    Archive_CleanCacheByPath(path);
+#endif
+
+    if (dialog)
+    {
+        AlertDialog *prev_dialog = AlertDialog_GetData(dialog);
+        AlertDialog_Dismiss(prev_dialog);
+        AlertDialog_Dismiss(dialog);
+    }
+
+    return 0;
+}
+
+static int onOptionMenuAlertDialogPositiveClick(AlertDialog *dialog, int which)
+{
+    if (!dialog)
+        return -1;
+
+    int focus_pos = ListViewGetFocusPos(browser_listview);
+
+    switch (which)
+    {
+    case INDEX_OPTION_ITEM_LOAD_GAME:
+    {
+        LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
+        FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
+        if (data && !data->is_folder)
+        {
+            AlertDialog_Close(dialog);
+            startGame(entry);
+        }
+        break;
+    }
+    case INDEX_OPTION_ITEM_DELETE_GAME:
+    {
+        if (CurrentPathIsFile())
+        {
+            AlertDialog *ask_dialog = AlertDialog_Create();
+            AlertDialog_SetTitle(ask_dialog, cur_lang[LANG_TIP]);
+            AlertDialog_SetMessage(ask_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_GAME]);
+            AlertDialog_SetPositiveButton(ask_dialog, cur_lang[LANG_CONFIRM], onAlertDialogDeleteGame);
+            AlertDialog_SetNegativeButton(ask_dialog, cur_lang[LANG_CANCEL], AlertDialog_OnClickDismiss);
+            AlertDialog_SetData(ask_dialog, dialog);
+            AlertDialog_Show(ask_dialog);
+        }
+        break;
+    }
+    case INDEX_OPTION_ITEM_DELETE_AUTO_SAVESTATE:
+    {
+        if (CurrentPathIsFile())
+        {
+            AlertDialog *ask_dialog = AlertDialog_Create();
+            AlertDialog_SetTitle(ask_dialog, cur_lang[LANG_TIP]);
+            AlertDialog_SetMessage(ask_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_AUTO_STATE]);
+            AlertDialog_SetPositiveButton(ask_dialog, cur_lang[LANG_CONFIRM], onAlertDialogDeleteAutoState);
+            AlertDialog_SetNegativeButton(ask_dialog, cur_lang[LANG_CANCEL], AlertDialog_OnClickDismiss);
+            AlertDialog_SetData(ask_dialog, dialog);
+            AlertDialog_Show(ask_dialog);
+        }
+        break;
+    }
+    case INDEX_OPTION_ITEM_DELETE_AUTO_SAVEFILE:
+    {
+        if (CurrentPathIsFile())
+        {
+            AlertDialog *ask_dialog = AlertDialog_Create();
+            AlertDialog_SetTitle(ask_dialog, cur_lang[LANG_TIP]);
+            AlertDialog_SetMessage(ask_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_AUTO_SAVEFILE]);
+            AlertDialog_SetPositiveButton(ask_dialog, cur_lang[LANG_CONFIRM], onAlertDialogDeleteAutoSrm);
+            AlertDialog_SetNegativeButton(ask_dialog, cur_lang[LANG_CANCEL], AlertDialog_OnClickDismiss);
+            AlertDialog_SetData(ask_dialog, dialog);
+            AlertDialog_Show(ask_dialog);
+        }
+        break;
+    }
+    case INDEX_OPTION_ITEM_DELETE_CACHE_FILES:
+    {
+        if (CurrentPathIsFile())
+        {
+            AlertDialog *ask_dialog = AlertDialog_Create();
+            AlertDialog_SetTitle(ask_dialog, cur_lang[LANG_TIP]);
+            AlertDialog_SetMessage(ask_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_CACHE_FILES]);
+            AlertDialog_SetPositiveButton(ask_dialog, cur_lang[LANG_CONFIRM], onAlertDialogDeleteCacheFiles);
+            AlertDialog_SetNegativeButton(ask_dialog, cur_lang[LANG_CANCEL], AlertDialog_OnClickDismiss);
+            AlertDialog_SetData(ask_dialog, dialog);
+            AlertDialog_Show(ask_dialog);
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+    return 0;
+}
+
+static void openOptionMenu()
+{
+    int focus_pos = ListViewGetFocusPos(browser_listview);
+    LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
+    FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
+    if (!data || data->is_folder)
+        return;
+
+    AlertDialog *dialog = AlertDialog_Create();
+    AlertDialog_SetTitle(dialog, cur_lang[LANG_MENU]);
+    int n_items = N_OPTION_ITEMS;
+    char **items = GetStringArrayByLangArray(option_items, n_items);
+    AlertDialog_SetItems(dialog, items, n_items);
+    free(items);
+    AlertDialog_SetPositiveButton(dialog, cur_lang[LANG_CONFIRM], onOptionMenuAlertDialogPositiveClick);
+    AlertDialog_SetNegativeButton(dialog, cur_lang[LANG_CANCEL], AlertDialog_OnClickDismiss);
+    AlertDialog_Show(dialog);
+}
+
+static void onFileListViewItemClick(ListView *listView, void *itemView, int id)
+{
+    LinkedList *list = (LinkedList *)ListViewGetList(listView);
+    LinkedListEntry *entry;
+    if (itemView)
+        entry = ItemViewGetData((ItemView *)itemView);
+    else
+        entry = LinkedListFindByNum(list, id);
+    FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
+    if (data)
+    {
+        if (data->is_folder)
+            enterToChildDir(entry);
+        else
+            startGame(entry);
+    }
+}
+
+static int onStartActivity(GUI_Activity *activity)
+{
+    browser_activity.wallpaper = GUI_GetDefaultWallpaper();
+
+    // 先创建file_list，createLayout要用到
+    file_list = NewFileList();
+    if (!file_list)
+        return -1;
+
+    createLayout();
+
+    // 跳转到最后游玩的游戏位置
+    if (Browser_ChangeDirBySaveFile(LASTFILE_PATH) < 0)
+    {
+        // 如果失败打开home目录列表
+        FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
+        strcpy(ls_data->path, HOME_PATH);
+        refreshFileList(0, 1);
+    }
+
+    return 0;
+}
+
+static int onFinishActivity(GUI_Activity *activity)
+{
+    destroyLayout();
+    LinkedListDestroy(file_list);
+    file_list = NULL;
+    return 0;
+}
+
+static int onDrawActivity(GUI_Activity *activity)
+{
+    LayoutParamsDraw(browser_layout);
+    return 0;
+}
+
+static int onCtrlActivity(GUI_Activity *activity)
+{
+    if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
+    {
+        moveFileListPos(TYPE_MOVE_UP);
+    }
+    else if (hold_pad[PAD_DOWN] || hold2_pad[PAD_LEFT_ANALOG_DOWN])
+    {
+        moveFileListPos(TYPE_MOVE_DOWN);
+    }
+    else if (hold_pad[PAD_LEFT])
+    {
+        moveFileListPos(TYPE_MOVE_LEFT);
+    }
+    else if (hold_pad[PAD_RIGHT])
+    {
+        moveFileListPos(TYPE_MOVE_RIGHT);
+    }
+    else if (released_pad[PAD_TRIANGLE])
+    {
+        openOptionMenu();
+    }
+    else if (released_pad[PAD_CANCEL])
+    {
+        backToParentDir();
+    }
+    else if (released_pad[PAD_ENTER])
+    {
+        onFileListViewItemClick(browser_listview, NULL, ListViewGetFocusPos(browser_listview));
+    }
+    else if (released_pad[PAD_SELECT])
+    {
+        GUI_StartActivity(&about_activity);
+    }
+    else if (released_pad[PAD_START])
+    {
+        Browser_ChangeDirBySaveFile(LASTFILE_PATH);
+    }
+    else if (released_pad[PAD_PSBUTTON])
+    {
+        if (GUI_IsPsbuttonEnabled())
+            Setting_OpenMenu();
+    }
+
+    return 0;
+}
+
+static int onEventActivity(GUI_Activity *activity)
+{
+    onUpdatePreviewEvent();
+    return 0;
+}
+
+void Browser_RequestRefreshPreview(int urgent)
+{
+    // 销毁旧预览图的texture
+    GUI_Texture *texture = (GUI_Texture *)ImageViewGetTexture(preview_imageview);
+    if (texture)
+    {
+        ImageViewSetTexture(preview_imageview, NULL);
+        GUI_DestroyTexture(texture);
+    }
+
+    // 是否迫切要更新预览图
+    if (urgent)
+        preview_refresh_delay_frames = 0;
+    else
+        preview_refresh_delay_frames = PREVIEW_REFRESH_DELAY_FRAMES;
+
+    preview_need_refresh = 1;
 }
 
 int Browser_ChangeDirByFilePath(const char *path)
@@ -597,327 +952,4 @@ int Browser_ChangeDirBySaveFile(const char *path)
     lastfile[MAX_PATH_LENGTH - 1] = '\0';
 
     return Browser_ChangeDirByFilePath(lastfile);
-}
-
-static void backToParentDir()
-{
-    if (dir_level > 0)
-    {
-        refreshFileList(dirLevelDown(), 1);
-    }
-}
-
-static void enterToChildDir(LinkedListEntry *entry)
-{
-    FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
-    FileListEntryData *e_data = (FileListEntryData *)LinkedListGetEntryData(entry);
-    if (!ls_data || !e_data)
-        return;
-
-    if (dir_level == 0)
-    {
-        strcpy(ls_data->path, e_data->name);
-    }
-    else
-    {
-        if (dir_level > 1)
-            AddEndSlash(ls_data->path);
-        strcat(ls_data->path, e_data->name);
-    }
-
-    refreshFileList(dirLevelUp(ListViewGetFocusPos(browser_listview)), 1);
-}
-
-static void startGame(LinkedListEntry *entry)
-{
-    FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
-    FileListEntryData *e_data = (FileListEntryData *)LinkedListGetEntryData(entry);
-    if (!ls_data || !e_data)
-        return;
-
-    EmuGameInfo info;
-    snprintf(info.path, MAX_PATH_LENGTH, "%s%s", ls_data->path, e_data->name);
-    info.type = e_data->type;
-    info.state_num = -2;
-    Emu_StartGame(&info);
-}
-
-static void onPreviewUpdateEvent()
-{
-    if (!preview_need_refresh)
-        return;
-
-    if (preview_refresh_delay_frames > 0)
-    {
-        preview_refresh_delay_frames--;
-    }
-    else
-    {
-        refreshPreview();
-        preview_need_refresh = 0;
-    }
-}
-
-static void drawActivityCallback(GUI_Activity *activity)
-{
-    LayoutParamsDraw(browser_layout);
-}
-
-static int deleteGameCallback(GUI_Dialog *dialog)
-{
-    if (!dialog || !dialog->userdata)
-        return -1;
-
-    char path[MAX_PATH_LENGTH];
-    if (MakeCurrentFilePath(path) < 0)
-        return -1;
-
-    sceIoRemove(path);
-#ifdef FBA_BUILD
-    FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
-    char base_name[MAX_NAME_LENGTH];
-    MakeBaseName(base_name, path, MAX_NAME_LENGTH);
-    snprintf(path, MAX_PATH_LENGTH, "%s%s.dat", ls_data->path, base_name);
-    sceIoRemove(path);
-#endif
-    GUI_CloseDialog(dialog->prev);
-    AlertDialog_Dismiss(dialog);
-    refreshFileList(ListViewGetFocusPos(browser_listview), 1);
-    Browser_RequestRefreshPreview(0);
-
-    return 0;
-}
-
-static int deleteAutoStateCallback(GUI_Dialog *dialog)
-{
-    if (!dialog || !dialog->userdata)
-        return -1;
-
-    Emu_DeleteState(-1);
-    GUI_CloseDialog(dialog->prev);
-    AlertDialog_Dismiss(dialog);
-    Browser_RequestRefreshPreview(0);
-
-    return 0;
-}
-
-static int deleteAutoSrmCallback(GUI_Dialog *dialog)
-{
-    if (!dialog || !dialog->userdata)
-        return -1;
-
-    Emu_DeleteSrm();
-    GUI_CloseDialog(dialog->prev);
-    AlertDialog_Dismiss(dialog);
-
-    return 0;
-}
-
-static int deleteCacheFilesCallback(GUI_Dialog *dialog)
-{
-    if (!dialog || !dialog->userdata)
-        return -1;
-
-#if defined(WANT_EXT_ARCHIVE_ROM)
-    char path[MAX_PATH_LENGTH];
-    MakeCurrentFilePath(path);
-    Archive_CleanCacheByPath(path);
-#endif
-    GUI_CloseDialog(dialog->prev);
-    AlertDialog_Dismiss(dialog);
-
-    return 0;
-}
-
-static int optionMenuPositiveCallback(GUI_Dialog *dialog)
-{
-    if (!dialog || !dialog->userdata)
-        return -1;
-
-    int focus_pos = ListViewGetFocusPos(browser_listview);
-    AlertDialogData *data = (AlertDialogData *)dialog->userdata;
-
-    switch (data->focus_pos)
-    {
-    case INDEX_OPTION_ITEM_LOAD_GAME:
-    {
-        LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
-        FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
-        if (data && !data->is_folder)
-        {
-            GUI_CloseAllDialogs(TYPE_GUI_DIALOG_ANY);
-            startGame(entry);
-        }
-    }
-    break;
-    case INDEX_OPTION_ITEM_DELETE_GAME:
-    {
-        if (CurrentPathIsFile())
-        {
-            GUI_Dialog *tip_dialog = AlertDialog_Create();
-            AlertDialog_SetTitle(tip_dialog, cur_lang[LANG_TIP]);
-            AlertDialog_SetMessage(tip_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_GAME]);
-            AlertDialog_SetPositiveButton(tip_dialog, cur_lang[LANG_CONFIRM], deleteGameCallback);
-            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], AlertDialog_Dismiss);
-            AlertDialog_Show(tip_dialog);
-        }
-    }
-    break;
-    case INDEX_OPTION_ITEM_DELETE_AUTO_SAVESTATE:
-    {
-        if (CurrentPathIsFile())
-        {
-            GUI_Dialog *tip_dialog = AlertDialog_Create();
-            AlertDialog_SetTitle(tip_dialog, cur_lang[LANG_TIP]);
-            AlertDialog_SetMessage(tip_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_AUTO_STATE]);
-            AlertDialog_SetPositiveButton(tip_dialog, cur_lang[LANG_CONFIRM], deleteAutoStateCallback);
-            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], AlertDialog_Dismiss);
-            AlertDialog_Show(tip_dialog);
-        }
-    }
-    break;
-    case INDEX_OPTION_ITEM_DELETE_AUTO_SAVEFILE:
-    {
-        if (CurrentPathIsFile())
-        {
-            GUI_Dialog *tip_dialog = AlertDialog_Create();
-            AlertDialog_SetTitle(tip_dialog, cur_lang[LANG_TIP]);
-            AlertDialog_SetMessage(tip_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_AUTO_SAVEFILE]);
-            AlertDialog_SetPositiveButton(tip_dialog, cur_lang[LANG_CONFIRM], deleteAutoSrmCallback);
-            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], AlertDialog_Dismiss);
-            AlertDialog_Show(tip_dialog);
-        }
-    }
-    break;
-    case INDEX_OPTION_ITEM_DELETE_CACHE_FILES:
-    {
-        if (CurrentPathIsFile())
-        {
-            GUI_Dialog *tip_dialog = AlertDialog_Create();
-            AlertDialog_SetTitle(tip_dialog, cur_lang[LANG_TIP]);
-            AlertDialog_SetMessage(tip_dialog, cur_lang[LANG_MESSAGE_ASK_DELETE_CACHE_FILES]);
-            AlertDialog_SetPositiveButton(tip_dialog, cur_lang[LANG_CONFIRM], deleteCacheFilesCallback);
-            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_CANCEL], AlertDialog_Dismiss);
-            AlertDialog_Show(tip_dialog);
-        }
-    }
-    break;
-    default:
-        break;
-    }
-
-    return 0;
-}
-
-static void openOptionMenu()
-{
-    int focus_pos = ListViewGetFocusPos(browser_listview);
-    LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
-    FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
-    if (!data || data->is_folder)
-        return;
-
-    GUI_Dialog *dialog = AlertDialog_Create();
-    AlertDialog_SetTitle(dialog, cur_lang[LANG_MENU]);
-    int n_items = N_OPTION_ITEMS;
-    char **items = GUI_GetStringArrayByIdArray(option_items, n_items);
-    AlertDialog_SetItems(dialog, items, n_items);
-    free(items);
-    AlertDialog_SetPositiveButton(dialog, cur_lang[LANG_CONFIRM], optionMenuPositiveCallback);
-    AlertDialog_SetNegativeButton(dialog, cur_lang[LANG_CANCEL], AlertDialog_Dismiss);
-    AlertDialog_Show(dialog);
-}
-
-static void onItemClick()
-{
-    int focus_pos = ListViewGetFocusPos(browser_listview);
-    LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
-    FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
-    if (data)
-    {
-        if (data->is_folder)
-            enterToChildDir(entry);
-        else
-            startGame(entry);
-    }
-}
-
-static void ctrlActivityCallback(GUI_Activity *activity)
-{
-    onPreviewUpdateEvent();
-
-    if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
-    {
-        moveFileListPos(TYPE_MOVE_UP);
-    }
-    else if (hold_pad[PAD_DOWN] || hold2_pad[PAD_LEFT_ANALOG_DOWN])
-    {
-        moveFileListPos(TYPE_MOVE_DOWN);
-    }
-    else if (hold_pad[PAD_LEFT])
-    {
-        moveFileListPos(TYPE_MOVE_LEFT);
-    }
-    else if (hold_pad[PAD_RIGHT])
-    {
-        moveFileListPos(TYPE_MOVE_RIGHT);
-    }
-
-    if (released_pad[PAD_TRIANGLE])
-    {
-        openOptionMenu();
-    }
-    else if (released_pad[PAD_CANCEL])
-    {
-        backToParentDir();
-    }
-    else if (released_pad[PAD_ENTER])
-    {
-        onItemClick();
-    }
-    else if (released_pad[PAD_SELECT])
-    {
-        GUI_StartActivity(&about_activity);
-    }
-    else if (released_pad[PAD_START])
-    {
-        Browser_ChangeDirBySaveFile(LASTFILE_PATH);
-    }
-}
-
-static int startActivityCallback(GUI_Activity *activity)
-{
-    browser_activity.wallpaper = GUI_GetDefaultWallpaper();
-    refreshLayout();
-
-    if (!file_list)
-        file_list = NewFileList();
-    if (!file_list)
-        return -1;
-
-    ListViewCallbacks callbacks;
-    memset(&callbacks, 0, sizeof(ListViewCallbacks));
-    callbacks.newItemView = newItemView;
-    callbacks.setItemViewData = setItemViewData;
-    callbacks.updateDrawItemView = updateDrawItemView;
-    callbacks.getListLength = getListLength;
-    callbacks.getHeadListEntry = getHeadListEntry;
-    callbacks.getNextListEntry = getNextListEntry;
-    ListViewSetList(browser_listview, file_list, &callbacks);
-
-    if (Browser_ChangeDirBySaveFile(LASTFILE_PATH) < 0)
-    {
-        FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
-        strcpy(ls_data->path, HOME_PATH);
-        refreshFileList(0, 1);
-    }
-
-    return 0;
-}
-
-static int exitActivityCallback(GUI_Activity *activity)
-{
-    ListViewEmpty(browser_listview);
-    LinkedListEmpty(file_list);
-    return 0;
 }

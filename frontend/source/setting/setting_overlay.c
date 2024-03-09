@@ -70,3 +70,12 @@ int Setting_WaitOverlayInitEnd()
 
     return 0;
 }
+
+int Setting_DeinitOverlay()
+{
+    Setting_WaitOverlayInitEnd();
+    LinkedListDestroy(graphics_overlay_list);
+    graphics_overlay_list = NULL;
+
+    return 0;
+}

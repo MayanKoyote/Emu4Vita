@@ -187,6 +187,13 @@ enum LanguageContainer
     LANG_REWIND_BUFFER_SIZE,
     LANG_SAVE_SCREENSHOT,
     LANG_SAVE_PREVIEW,
+
+    LANG_SAVE_SCREENSHOT_OK,
+    LANG_SAVE_SCREENSHOT_FAILED,
+    LANG_SAVE_PREVIEW_OK,
+    LANG_SAVE_PREVIEW_FAILED,
+
+    // Menu hotkey
     LANG_HOTKEY_SAVESTATE,
     LANG_HOTKEY_LOADSTATE,
     LANG_HOTKEY_GAME_SPEED_UP,
@@ -234,10 +241,10 @@ typedef struct
     int retro_lang;
 } LangEntry;
 
-extern LangEntry lang_entries[];
 extern char **cur_lang;
 
-int GetLangsLength();
+LangEntry *GetLangEntries();
+int GetLangEntriesLength();
 int GetLangIndexByLocalLang(int local_lang);
 int GetLangIndexByConfigValue(int config_value);
 int GetConfigValueByLangIndex(int lang_index);
@@ -245,5 +252,6 @@ int GetRetroLangByLangIndex(int lang_index);
 int SetCurrentLang(int lang_index);
 
 char *GetLangString(LangString *lang_s);
+char **GetStringArrayByLangArray(int *langs, int n_langs);
 
 #endif

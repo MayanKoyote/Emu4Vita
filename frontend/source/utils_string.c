@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "list/string_list.h"
 #include "gui/gui.h"
 #include "utils_string.h"
 #include "utils.h"
@@ -289,7 +290,6 @@ int StringToListByWidthEx(LinkedList *list, char *buffer, size_t size, int limit
     if (!list || !buffer)
         return 0;
 
-    char *string;
     char *start = buffer;
     char *finish = buffer + size;
     char *last_space_p = start;
@@ -330,12 +330,7 @@ int StringToListByWidthEx(LinkedList *list, char *buffer, size_t size, int limit
 
             ch = *cut;
             *cut = '\0';
-            string = malloc(strlen(start) + 1);
-            if (string)
-            {
-                strcpy(string, start);
-                LinkedListAdd(list, string);
-            }
+            StringListAdd(list, start);
             *cut = ch;
 
             if (line_w > max_w)
@@ -361,14 +356,7 @@ int StringToListByWidthEx(LinkedList *list, char *buffer, size_t size, int limit
     }
 
     if (start < finish)
-    {
-        string = malloc(strlen(start) + 1);
-        if (string)
-        {
-            strcpy(string, start);
-            LinkedListAdd(list, string);
-        }
-    }
+        StringListAdd(list, start);
 
     if (line_w > max_w)
         max_w = line_w;

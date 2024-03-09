@@ -16,8 +16,8 @@ struct ListView
     void *list;
     int choose_mode;
     int focus_pos;
-    int driver_size;
-    uint32_t driver_color;
+    int divider_size;
+    uint32_t divider_color;
     uint32_t focus_color;
     int current_scroll_x;
     int current_scroll_y;
@@ -25,22 +25,27 @@ struct ListView
     int target_scroll_y;
     int scroll_step;
     ListViewCallbacks callbacks;
+    void *userdata;
 };
 
 static void ListViewUpdateScroll(ListView *listView)
 {
-    if (listView->current_scroll_y < listView->target_scroll_y)
+    int current_scroll_y = listView->current_scroll_y;
+
+    if (current_scroll_y < listView->target_scroll_y)
     {
-        listView->current_scroll_y += listView->scroll_step;
-        if (listView->current_scroll_y > listView->target_scroll_y)
-            listView->current_scroll_y = listView->target_scroll_y;
+        current_scroll_y += listView->scroll_step;
+        if (current_scroll_y > listView->target_scroll_y)
+            current_scroll_y = listView->target_scroll_y;
     }
-    else if (listView->current_scroll_y > listView->target_scroll_y)
+    else if (current_scroll_y > listView->target_scroll_y)
     {
-        listView->current_scroll_y -= listView->scroll_step;
-        if (listView->current_scroll_y < listView->target_scroll_y)
-            listView->current_scroll_y = listView->target_scroll_y;
+        current_scroll_y -= listView->scroll_step;
+        if (current_scroll_y < listView->target_scroll_y)
+            current_scroll_y = listView->target_scroll_y;
     }
+
+    listView->current_scroll_y = current_scroll_y;
 }
 
 static void ListViewDestroy(void *view)
@@ -55,7 +60,7 @@ static void ListViewDestroy(void *view)
     free(listView);
 }
 
-static int ListViewUpdateChildOne(ListView *listView, void *itemView, int available_w, int available_h, int *wrap_w, int *wrap_h, int has_driver)
+static int ListViewUpdateChildOne(ListView *listView, void *itemView, int available_w, int available_h, int *wrap_w, int *wrap_h, int has_divier)
 {
     if (!listView || !itemView)
         return -1;
@@ -69,19 +74,19 @@ static int ListViewUpdateChildOne(ListView *listView, void *itemView, int availa
     int occupy_w = it_params->measured_w + it_params->margin_left + it_params->margin_right;
     int occupy_h = it_params->measured_h + it_params->margin_top + it_params->margin_bottom;
 
-    if (ls_params->orientation == TYPE_LAYOUT_ORIENTATION_HORIZONTAL)
+    if (ls_params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_HORIZONTAL)
     {
         *wrap_w += occupy_w;
-        if (has_driver)
-            *wrap_w += listView->driver_size;
+        if (has_divier)
+            *wrap_w += listView->divider_size;
         if (occupy_h > *wrap_h)
             *wrap_h = occupy_h;
     }
-    else if (ls_params->orientation == TYPE_LAYOUT_ORIENTATION_VERTICAL)
+    else if (ls_params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_VERTICAL)
     {
         *wrap_h += occupy_h;
-        if (has_driver)
-            *wrap_h += listView->driver_size;
+        if (has_divier)
+            *wrap_h += listView->divider_size;
         if (occupy_w > *wrap_w)
             *wrap_w = occupy_w;
     }
@@ -111,9 +116,9 @@ static int ListViewUpdate(void *view)
     int view_wrap_w = 0;
     int view_wrap_h = 0;
 
-    if (params->orientation == TYPE_LAYOUT_ORIENTATION_HORIZONTAL)
+    if (params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_HORIZONTAL)
         view_available_w = MAX_AVAILABLE_WIDTH;
-    else if (params->orientation == TYPE_LAYOUT_ORIENTATION_VERTICAL)
+    else if (params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_VERTICAL)
         view_available_h = MAX_AVAILABLE_HEIGHT;
 
     LinkedListEntry *entry = LinkedListHead(listView->items);
@@ -121,8 +126,8 @@ static int ListViewUpdate(void *view)
     {
         LinkedListEntry *next = LinkedListNext(entry);
         void *itemView = LinkedListGetEntryData(entry);
-        int has_driver = (next != NULL); // 不绘制最后一个driver
-        ListViewUpdateChildOne(listView, itemView, view_available_w, view_available_h, &view_wrap_w, &view_wrap_h, has_driver);
+        int has_divier = (next != NULL); // 不绘制最后一个 divier
+        ListViewUpdateChildOne(listView, itemView, view_available_w, view_available_h, &view_wrap_w, &view_wrap_h, has_divier);
         entry = next;
     }
 
@@ -135,9 +140,9 @@ static int ListViewUpdate(void *view)
     params->wrap_w = view_wrap_w;
     params->wrap_h = view_wrap_h;
 
-    if (params->layout_w == TYPE_LAYOUT_MATH_PARENT)
+    if (params->layout_w == TYPE_LAYOUT_PARAMS_MATH_PARENT)
         params->measured_w = view_max_w;
-    else if (params->layout_w == TYPE_LAYOUT_WRAP_CONTENT)
+    else if (params->layout_w == TYPE_LAYOUT_PARAMS_WRAP_CONTENT)
         params->measured_w = view_wrap_w;
     else
         params->measured_w = params->layout_w;
@@ -146,9 +151,9 @@ static int ListViewUpdate(void *view)
     if (params->measured_w < 0)
         params->measured_w = 0;
 
-    if (params->layout_h == TYPE_LAYOUT_MATH_PARENT)
+    if (params->layout_h == TYPE_LAYOUT_PARAMS_MATH_PARENT)
         params->measured_h = view_max_h;
-    else if (params->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
+    else if (params->layout_h == TYPE_LAYOUT_PARAMS_WRAP_CONTENT)
         params->measured_h = view_wrap_h;
     else
         params->measured_h = params->layout_h;
@@ -160,7 +165,7 @@ static int ListViewUpdate(void *view)
     return 0;
 }
 
-static int ListViewDrawChildOne(ListView *listView, void *itemView, int *x, int *y, int min_x, int min_y, int max_x, int max_y, int index, int has_driver)
+static int ListViewDrawChildOne(ListView *listView, void *itemView, int *x, int *y, int min_x, int min_y, int max_x, int max_y, int index, int has_divier)
 {
     if (!listView || !itemView)
         return 0;
@@ -175,21 +180,21 @@ static int ListViewDrawChildOne(ListView *listView, void *itemView, int *x, int 
     int next_x = *x;
     int next_y = *y;
 
-    if (ls_params->orientation == TYPE_LAYOUT_ORIENTATION_HORIZONTAL)
+    if (ls_params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_HORIZONTAL)
     {
         next_x = dx;
-        if (has_driver)
-            next_x += listView->driver_size;
+        if (has_divier)
+            next_x += listView->divider_size;
         if (dx <= min_x)
             goto NEXT;
         if (*x >= max_x)
             return -1;
     }
-    else if (ls_params->orientation == TYPE_LAYOUT_ORIENTATION_VERTICAL)
+    else if (ls_params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_VERTICAL)
     {
         next_y = dy;
-        if (has_driver)
-            next_y += listView->driver_size;
+        if (has_divier)
+            next_y += listView->divider_size;
         if (dy <= min_y)
             goto NEXT;
         if (*y >= max_y)
@@ -199,12 +204,13 @@ static int ListViewDrawChildOne(ListView *listView, void *itemView, int *x, int 
     LayoutParamsSetLayoutPosition(itemView, *x, *y);
     LayoutParamsDraw(itemView);
 
-    if (has_driver && listView->driver_color && listView->driver_size > 0)
+    // 绘制分割线
+    if (has_divier && listView->divider_color && listView->divider_size > 0)
     {
-        if (ls_params->orientation == TYPE_LAYOUT_ORIENTATION_HORIZONTAL)
-            GUI_DrawFillRectangle(dx, *y, listView->driver_size, it_params->measured_h, listView->driver_color);
-        else if (ls_params->orientation == TYPE_LAYOUT_ORIENTATION_VERTICAL)
-            GUI_DrawFillRectangle(*x, dy, it_params->measured_w, listView->driver_size, listView->driver_color);
+        if (ls_params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_HORIZONTAL)
+            GUI_DrawFillRectangle(dx, *y, listView->divider_size, it_params->measured_h, listView->divider_color);
+        else if (ls_params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_VERTICAL)
+            GUI_DrawFillRectangle(*x, dy, it_params->measured_w, listView->divider_size, listView->divider_color);
     }
 
 NEXT:
@@ -214,16 +220,18 @@ NEXT:
     return 0;
 }
 
-void ListViewDraw(void *view)
+int ListViewDraw(void *view)
 {
     if (!view)
-        return;
+        return -1;
 
     ListView *listView = (ListView *)view;
     LayoutParams *params = LayoutParamsGetParams(listView);
 
     if (params->measured_w <= 0 || params->measured_h <= 0)
-        return;
+        return 0;
+
+    ListViewUpdateScroll(listView); // 更新滚动数据
 
     int view_x = params->layout_x + params->margin_left;
     int view_y = params->layout_y + params->margin_top;
@@ -237,16 +245,16 @@ void ListViewDraw(void *view)
     int child_max_w = child_dx - child_sx;
     int child_max_h = child_dy - child_sy;
 
-    int x = child_sx + listView->current_scroll_x;
-    int y = child_sy + listView->current_scroll_y;
+    GUI_SetClipping(view_x, view_y, view_max_w, view_max_h);
 
     if (listView->bg_color)
         GUI_DrawFillRectangle(view_x, view_y, view_max_w, view_max_h, listView->bg_color);
 
+    int x = child_sx + listView->current_scroll_x;
+    int y = child_sy + listView->current_scroll_y;
+
     if (listView->items)
     {
-        ListViewUpdateScroll(listView); // 更新滚动数据
-
         GUI_SetClipping(child_sx, child_sy, child_max_w, child_max_h);
 
         int index = 0;
@@ -255,12 +263,12 @@ void ListViewDraw(void *view)
         {
             LinkedListEntry *next = LinkedListNext(entry);
             void *itemView = LinkedListGetEntryData(entry);
-            int has_driver = (next != NULL); // 不绘制最后一个driver
+            int has_divier = (next != NULL); // 不绘制最后一个 divier
 
-            if (listView->callbacks.updateDrawItemView)
-                listView->callbacks.updateDrawItemView(listView, itemView, index);
+            if (listView->callbacks.onBeforeDrawItemView)
+                listView->callbacks.onBeforeDrawItemView(listView, itemView, index);
 
-            if (ListViewDrawChildOne(listView, itemView, &x, &y, child_sx, child_sy, child_dx, child_dy, index, has_driver) < 0)
+            if (ListViewDrawChildOne(listView, itemView, &x, &y, child_sx, child_sy, child_dx, child_dy, index, has_divier) < 0)
                 break;
             entry = next;
             index++;
@@ -278,6 +286,10 @@ void ListViewDraw(void *view)
         GUI_DrawVerticalScrollbar(scrollbar_track_x, scrollbar_track_y, scrollbar_track_height,
                                   its_wrap_h, its_measured_h, 0 - listView->current_scroll_y, 0);
     }
+
+    GUI_UnsetClipping();
+
+    return 0;
 }
 
 void *ListViewFindItemByNum(ListView *listView, int n)
@@ -295,14 +307,14 @@ int ListViewAddItemByData(ListView *listView, void *data)
         return 0;
 
     ListViewCallbacks *callbacks = &listView->callbacks;
-    if (!callbacks->newItemView || !callbacks->setItemViewData)
+    if (!callbacks->onCreateItemView || !callbacks->onSetItemViewData)
         return 0;
 
-    void *itemView = callbacks->newItemView(data);
+    void *itemView = callbacks->onCreateItemView(data);
     if (!itemView)
         return 0;
 
-    callbacks->setItemViewData(itemView, data);
+    callbacks->onSetItemViewData(itemView, data);
     LinkedListAdd(listView->items, itemView);
 
     return 1;
@@ -344,15 +356,15 @@ int ListViewRefreshtList(ListView *listView)
         return -1;
 
     ListViewCallbacks *callbacks = &listView->callbacks;
-    if (!callbacks->getHeadListEntry || !callbacks->getNextListEntry)
+    if (!callbacks->onGetHeadListEntry || !callbacks->onGetNextListEntry)
         return -1;
 
-    void *entry = callbacks->getHeadListEntry(listView->list);
+    void *entry = callbacks->onGetHeadListEntry(listView->list);
     int n = 0;
     while (entry)
     {
         ListViewAddItemByData(listView, entry);
-        entry = callbacks->getNextListEntry(listView->list, entry, n);
+        entry = callbacks->onGetNextListEntry(listView->list, entry, n);
         n++;
     }
 
@@ -365,6 +377,7 @@ int ListViewSetList(ListView *listView, void *list, ListViewCallbacks *callbacks
         return -1;
 
     listView->list = list;
+
     if (callbacks)
         memcpy(&listView->callbacks, callbacks, sizeof(ListViewCallbacks));
     else
@@ -388,7 +401,7 @@ int ListViewGetSrcollYByPos(ListView *listView, int pos)
     {
         void *itemView = LinkedListGetEntryData(entry);
         LayoutParams *it_params = LayoutParamsGetParams(itemView);
-        int occupy_h = it_params->measured_h + it_params->margin_top + it_params->margin_bottom + listView->driver_size;
+        int occupy_h = it_params->measured_h + it_params->margin_top + it_params->margin_bottom + listView->divider_size;
         y -= occupy_h;
         entry = LinkedListNext(entry);
     }
@@ -419,7 +432,7 @@ int ListViewGetPosBySrcollY(ListView *listView, int scroll_y)
     {
         void *itemView = LinkedListGetEntryData(entry);
         LayoutParams *it_params = LayoutParamsGetParams(itemView);
-        int occupy_h = it_params->measured_h + it_params->margin_top + it_params->margin_bottom + listView->driver_size;
+        int occupy_h = it_params->measured_h + it_params->margin_top + it_params->margin_bottom + listView->divider_size;
         int dy = y + occupy_h;
         if (y <= scroll_y && dy > scroll_y)
             return pos;
@@ -437,6 +450,15 @@ int ListViewSetBgColor(ListView *listView, uint32_t color)
         return -1;
 
     listView->bg_color = color;
+    return 0;
+}
+
+int ListViewSetData(ListView *listView, void *data)
+{
+    if (!listView)
+        return -1;
+
+    listView->userdata = data;
     return 0;
 }
 
@@ -466,8 +488,8 @@ int ListViewSetTargetScrollY(ListView *listView, int y)
             listView->scroll_step = 1;
     }
 
-    // 自动滚动有bug，画面会有闪烁，且销毁Texture里画面会有撕裂，暂时设置current=target关闭自动滚动，可注释掉这行测试自动滚动功能
-    listView->current_scroll_y = listView->target_scroll_y;
+    // 自动滚动有bug，变更预览图时画面会有闪烁，原因未知，暂时设置current=target关闭自动滚动，可注释掉这行测试自动滚动功能
+    // listView->current_scroll_y = listView->target_scroll_y;
 
     return 0;
 }
@@ -522,6 +544,16 @@ int ListViewSetFocusPos(ListView *listView, int pos)
     ListViewSetTargetScrollY(listView, y);
 
     return 0;
+}
+
+void *ListViewGetData(ListView *listView)
+{
+    return listView ? listView->userdata : NULL;
+}
+
+void *ListViewGetList(ListView *listView)
+{
+    return listView ? listView->list : NULL;
 }
 
 int ListViewGetTargetScrollY(ListView *listView)
@@ -608,42 +640,22 @@ int ListViewMoveFocusPos(ListView *listView, int move_type)
     return 0;
 }
 
-int ListViewSetDriverSize(ListView *listView, int size)
+int ListViewSetDivierSize(ListView *listView, int size)
 {
     if (!listView)
         return -1;
 
-    listView->driver_size = size;
+    listView->divider_size = size;
 
     return 0;
 }
 
-int ListViewSetDriverColor(ListView *listView, uint32_t color)
+int ListViewSetDivierColor(ListView *listView, uint32_t color)
 {
     if (!listView)
         return -1;
 
-    listView->driver_color = color;
-
-    return 0;
-}
-
-int ListViewInit(ListView *listView)
-{
-    if (!listView)
-        return -1;
-
-    memset(listView, 0, sizeof(ListView));
-
-    listView->items = NewLinkedList();
-    if (!listView->items)
-        return -1;
-    LinkedListSetFreeEntryDataCallback(listView->items, LayoutParamsDestroy);
-
-    LayoutParams *params = LayoutParamsGetParams(listView);
-    params->destroy = ListViewDestroy;
-    params->update = ListViewUpdate;
-    params->draw = ListViewDraw;
+    listView->divider_color = color;
 
     return 0;
 }
@@ -653,12 +665,20 @@ ListView *NewListView()
     ListView *listView = (ListView *)malloc(sizeof(ListView));
     if (!listView)
         return NULL;
+    memset(listView, 0, sizeof(ListView));
 
-    if (ListViewInit(listView) < 0)
+    listView->items = NewLinkedList();
+    if (!listView->items)
     {
         free(listView);
         return NULL;
     }
+    LinkedListSetFreeEntryDataCallback(listView->items, LayoutParamsDestroy);
+
+    LayoutParams *params = LayoutParamsGetParams(listView);
+    params->destroy = ListViewDestroy;
+    params->update = ListViewUpdate;
+    params->draw = ListViewDraw;
 
     return listView;
 }

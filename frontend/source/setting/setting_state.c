@@ -8,10 +8,11 @@
 #include <psp2/io/fcntl.h>
 #include <psp2/io/stat.h>
 
-#include "activity/browser.h"
+#include "activity/activity.h"
 #include "emu/emu.h"
 #include "gui/gui.h"
 #include "setting.h"
+#include "setting_window.h"
 #include "utils.h"
 #include "config.h"
 #include "lang.h"
@@ -22,6 +23,11 @@
 
 #define STATE_ITEMVIEW_PADDING 8.0f
 #define STATE_ITEMVIEW_MARGIN 8.0f
+
+#define OPTION_LINE_SPACE 4.0f
+
+#define STATE_PREVIEW_HEIGHT ((GUI_GetLineHeight() + OPTION_LINE_SPACE) * 4 - OPTION_LINE_SPACE)
+#define STATE_PREVIEW_WIDTH(h) (h * 4.0f / 3.0f)
 
 #define STATE_ITEMVIEW_COLOR_DEF_BG COLOR_ALPHA(COLOR_DARKGRAY, 0xAF)
 #define STATE_ITEMVIEW_COLOR_FOCUS_BG GUI_DEF_COLOR_FOCUS
@@ -34,8 +40,6 @@
 #define STATE_INFO_LINE_SPACE 4.0f
 
 #define STATE_PREVIEW_COLOR_BG COLOR_ALPHA(COLOR_GRAY, 0xAF)
-
-#define MENU_LINE_SPACE 4.0f
 
 typedef struct
 {
@@ -59,8 +63,6 @@ static StateMenuItem state_menu[] = {
 };
 #define N_MENU_ITEMS (sizeof(state_menu) / sizeof(StateMenuItem))
 
-extern GUI_Dialog setting_dialog;
-
 StateListItem *state_list = NULL;
 static SceUID state_thid = -1;
 static int state_thread_stop = 0;
@@ -68,29 +70,6 @@ static int state_thread_stop = 0;
 static int list_top_pos = 0, list_focus_pos = 0;
 static int option_open = 0;
 static int option_focus_pos = 0;
-
-static int state_listview_width, state_listview_height;
-static int state_listview_sx, state_listview_sy;
-static int state_itemview_width, state_itemview_height;
-static int state_itemview_x_space, state_itemview_y_space;
-
-static int state_preview_width, state_preview_height;
-
-void Setting_RefreshStateLayout()
-{
-    state_listview_sx = SETTING_FREE_DRAW_SX;
-    state_listview_sy = SETTING_FREE_DRAW_SY;
-    state_listview_width = SETTING_FREE_DRAW_WIDTH;
-    state_listview_height = SETTING_FREE_DRAW_HEIGHT;
-
-    state_itemview_width = (state_listview_width - STATE_LISTVIEW_PADDING_L * 2 - STATE_ITEMVIEW_MARGIN * (N_STATE_COUNTS_PER_LINE - 1)) / N_STATE_COUNTS_PER_LINE;
-    state_itemview_height = (state_listview_height - STATE_LISTVIEW_PADDING_T * 2 - STATE_ITEMVIEW_MARGIN * (N_STATE_DRAW_LINES - 1)) / N_STATE_DRAW_LINES;
-    state_itemview_x_space = state_itemview_width + STATE_ITEMVIEW_MARGIN;
-    state_itemview_y_space = state_itemview_height + STATE_ITEMVIEW_MARGIN;
-
-    state_preview_height = state_itemview_height - STATE_ITEMVIEW_PADDING * 2;
-    state_preview_width = ((float)state_preview_height / 3) * 4;
-}
 
 static void refreshStateListPos(int *top_pos, int *focus_pos)
 {
@@ -145,7 +124,6 @@ static void cleanStateItem(int num)
 
     if (state_list[num].tex)
     {
-        GUI_WaitRenderingDone();
         GUI_DestroyTexture(state_list[num].tex);
         state_list[num].tex = NULL;
     }
@@ -157,7 +135,6 @@ static void freeStateList()
     if (!state_list)
         return;
 
-    GUI_WaitRenderingDone();
     int i;
     for (i = 0; i < STATE_LIST_LEN; i++)
     {
@@ -216,14 +193,14 @@ static void refreshStateItem(int num)
     sceIoClose(fd);
 }
 
-int Setting_GetStatePreviewWidth()
+int Setting_GetStatePreviewSize(int *width, int *height)
 {
-    return state_preview_width;
-}
-
-int Setting_GetStatePreviewHeight()
-{
-    return state_preview_height;
+    int h = STATE_PREVIEW_HEIGHT;
+    if (height)
+        *height = h;
+    if (width)
+        *width = STATE_PREVIEW_WIDTH(h);
+    return 0;
 }
 
 void Setting_SetStateSelectId(int id)
@@ -270,24 +247,46 @@ int Setting_DeleteState(int num)
 
 void Setting_DrawState()
 {
-    int itemview_sx = state_listview_sx + STATE_LISTVIEW_PADDING_L;
-    int itemview_sy = state_listview_sy + STATE_LISTVIEW_PADDING_T;
-    int max_draw_len = N_STATE_DRAW_LINES * N_STATE_COUNTS_PER_LINE;
-    int drawn_len = 0;
+    int layout_x = 0, layout_y = 0;
+    int layout_w = 0, layout_h = 0;
+    int preview_w = 0, preview_h = 0;
+
+    Setting_GetWindowMenuLayoutPosition(&layout_x, &layout_y);
+    Setting_GetWindowMenuAvailableSize(&layout_w, &layout_h);
+    Setting_GetStatePreviewSize(&preview_w, &preview_h);
+
+    int itemviews_sx = layout_x + STATE_LISTVIEW_PADDING_L;
+    int itemviews_sy = layout_y + STATE_LISTVIEW_PADDING_T;
+    int itemviews_w = layout_w - STATE_LISTVIEW_PADDING_L * 2;
+    int itemviews_h = layout_h - STATE_LISTVIEW_PADDING_T * 2;
+    int itemviews_dx = itemviews_sx + itemviews_w;
+    int itemviews_dy = itemviews_sy + itemviews_h;
+
+    int itemview_w = (itemviews_w - STATE_ITEMVIEW_MARGIN * (N_STATE_COUNTS_PER_LINE - 1)) / N_STATE_COUNTS_PER_LINE;
+    int itemview_h = preview_h + STATE_ITEMVIEW_PADDING * 2;
+    int itemview_x_space = itemview_w + STATE_ITEMVIEW_MARGIN;
+    int itemview_y_space = itemview_h + STATE_ITEMVIEW_MARGIN;
+
+    int itemview_x = itemviews_sx;
+    int itemview_y = itemviews_sy;
 
     int i;
     for (i = list_top_pos; i < STATE_LIST_LEN; i++)
     {
-        if (drawn_len >= max_draw_len)
+        if (itemview_y + itemview_h <= itemviews_sy)
+            goto NEXT;
+        if (itemview_x >= itemviews_dx)
+            goto NEXT;
+        if (itemview_y >= itemviews_dy)
             break;
 
         uint32_t color = (i == list_focus_pos) ? STATE_ITEMVIEW_COLOR_FOCUS_BG : STATE_ITEMVIEW_COLOR_DEF_BG;
-        GUI_DrawFillRectangle(itemview_sx, itemview_sy, state_itemview_width, state_itemview_height, color);
+        GUI_DrawFillRectangle(itemview_x, itemview_y, itemview_w, itemview_h, color);
 
-        int preview_sx = itemview_sx + STATE_ITEMVIEW_PADDING;
-        int preview_sy = itemview_sy + STATE_ITEMVIEW_PADDING;
-        int info_sx = preview_sx + state_preview_width + STATE_INFO_MARGIN_L;
-        int info_sy = preview_sy + state_preview_height - GUI_GetLineHeight();
+        int preview_x = itemview_x + STATE_ITEMVIEW_PADDING;
+        int preview_y = itemview_y + STATE_ITEMVIEW_PADDING;
+        int info_sx = preview_x + preview_w + STATE_INFO_MARGIN_L;
+        int info_sy = preview_y + preview_h - GUI_GetLineHeight();
 
         if (state_list[i].exist)
         {
@@ -296,9 +295,9 @@ void Setting_DrawState()
             {
                 int tex_width = GUI_GetTextureWidth(state_list[i].tex);
                 int tex_height = GUI_GetTextureHeight(state_list[i].tex);
-                float x_scale = (float)state_preview_width / (float)tex_width;
-                float y_scale = (float)state_preview_height / (float)tex_height;
-                GUI_DrawTextureScale(state_list[i].tex, preview_sx, preview_sy, x_scale, y_scale);
+                float x_scale = (float)preview_w / (float)tex_width;
+                float y_scale = (float)preview_h / (float)tex_height;
+                GUI_DrawTextureScale(state_list[i].tex, preview_x, preview_y, x_scale, y_scale);
             }
 
             // Date & time
@@ -313,7 +312,7 @@ void Setting_DrawState()
         else
         {
             // Empty
-            GUI_DrawFillRectangle(preview_sx, preview_sy, state_preview_width, state_preview_height, STATE_PREVIEW_COLOR_BG);
+            GUI_DrawFillRectangle(preview_x, preview_y, preview_w, preview_h, STATE_PREVIEW_COLOR_BG);
             GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %d", cur_lang[LANG_STATE_EMPTY_STATE], i);
         }
 
@@ -321,8 +320,8 @@ void Setting_DrawState()
         if (option_open && i == list_focus_pos)
         {
             int j;
-            int menu_dx = itemview_sx + state_itemview_width - STATE_ITEMVIEW_PADDING;
-            int menu_sy = itemview_sy + STATE_ITEMVIEW_PADDING;
+            int menu_dx = itemview_x + itemview_w - STATE_ITEMVIEW_PADDING;
+            int menu_sy = itemview_y + STATE_ITEMVIEW_PADDING;
             for (j = 0; j < N_MENU_ITEMS; j++)
             {
                 if (state_menu[j].enable)
@@ -330,21 +329,21 @@ void Setting_DrawState()
                     uint32_t color = (j == option_focus_pos) ? COLOR_GREEN : COLOR_WHITE;
                     char *name = cur_lang[state_menu[j].name];
                     GUI_DrawTextf(menu_dx - GUI_GetTextWidth(name), menu_sy, color, name);
-                    menu_sy += (GUI_GetLineHeight() + MENU_LINE_SPACE);
+                    menu_sy += (GUI_GetLineHeight() + OPTION_LINE_SPACE);
                 }
             }
         }
 
+    NEXT:
         if ((i + 1) % N_STATE_COUNTS_PER_LINE == 0) // Next line
         {
-            itemview_sx = state_listview_sx + STATE_LISTVIEW_PADDING_L;
-            itemview_sy += state_itemview_y_space;
+            itemview_x = itemviews_sx;
+            itemview_y += itemview_y_space;
         }
         else
         {
-            itemview_sx += state_itemview_x_space;
+            itemview_x += itemview_x_space;
         }
-        drawn_len++;
     }
 }
 
@@ -398,14 +397,13 @@ static void ctrlStateList()
     {
         moveStateListPos(TYPE_MOVE_RIGHT);
     }
-
-    if (released_pad[PAD_ENTER])
+    else if (released_pad[PAD_ENTER])
     {
         openMenu();
     }
     else if (released_pad[PAD_CANCEL])
     {
-        GUI_CloseDialog(&setting_dialog);
+        Setting_CloseMenu();
     }
 }
 
@@ -435,15 +433,14 @@ static void ctrlOption()
             }
         }
     }
-
-    if (released_pad[PAD_ENTER])
+    else if (released_pad[PAD_ENTER])
     {
         switch (option_focus_pos)
         {
         case 0:
         {
             option_open = 0;
-            GUI_CloseDialog(&setting_dialog);
+            Setting_CloseMenu();
             Setting_LoadState(list_focus_pos);
             break;
         }

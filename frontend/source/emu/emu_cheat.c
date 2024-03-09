@@ -5,7 +5,7 @@
 
 #include <psp2/kernel/threadmgr/thread.h>
 
-#include "activity/browser.h"
+#include "activity/activity.h"
 #include "list/cheat_list.h"
 #include "setting/setting.h"
 #include "emu/emu.h"

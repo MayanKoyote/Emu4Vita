@@ -19,6 +19,7 @@
 #include <psp2/touch.h>
 #include <psp2/common_dialog.h>
 
+#include "activity/activity.h"
 #include "setting/setting.h"
 #include "gui/gui.h"
 #include "emu/emu.h"
@@ -32,8 +33,6 @@
 #ifdef SCE_LIBC_SIZE
 unsigned int sceLibcHeapSize = SCE_LIBC_SIZE;
 #endif
-
-extern GUI_Activity browser_activity;
 
 static int app_exit = 0;
 
@@ -68,7 +67,7 @@ int checkVitatvModel()
     return is_vitatv_model;
 }
 
-static int safeModeDialogNegativeCallback(GUI_Dialog *dialog)
+static int onSafeModeAlertDialogNegativeClick(AlertDialog *dialog, int which)
 {
     AppExit();
 
@@ -77,10 +76,10 @@ static int safeModeDialogNegativeCallback(GUI_Dialog *dialog)
 
 static void showSafeModeDialog()
 {
-    GUI_Dialog *tip_dialog = AlertDialog_Create();
+    AlertDialog *tip_dialog = AlertDialog_Create();
     AlertDialog_SetTitle(tip_dialog, cur_lang[LANG_TIP]);
     AlertDialog_SetMessage(tip_dialog, cur_lang[LANG_MESSAGE_WARN_SAFE_MODE]);
-    AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_EXIT], safeModeDialogNegativeCallback);
+    AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_EXIT], onSafeModeAlertDialogNegativeClick);
     AlertDialog_Show(tip_dialog);
 }
 
@@ -117,10 +116,7 @@ void AppRunLoop()
 {
     while (!app_exit)
     {
-        if (Emu_IsGameRunning() || in_rewinding)
-            Emu_RunGame();
-        else
-            GUI_RunMain();
+        GUI_Run();
     }
 }
 
@@ -184,7 +180,7 @@ int AppInit(int argc, char *const argv[])
 
     AppLog("[INIT] Init app OK!\n");
 
-    if (exec_boot_mode == BOOT_MODE_GAME)
+    if (BootGetMode() == BOOT_MODE_GAME)
         BootLoadGame();
 
 END:

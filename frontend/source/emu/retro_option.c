@@ -20,7 +20,6 @@ int Retro_GetVariable(struct retro_variable *var)
 
     OptionListEntryData *data = (OptionListEntryData *)LinkedListGetEntryData(entry);
     var->value = data->values[data->select].value;
-    Setting_RequestUpdateMenuItems();
 
     return 0;
 }
@@ -36,7 +35,6 @@ int Retro_SetCoreOptionsDisplay(const struct retro_core_option_display *option_d
 
     OptionListEntryData *data = (OptionListEntryData *)LinkedListGetEntryData(entry);
     data->visibility = option_display->visible;
-    Setting_RequestUpdateMenuItems();
 
     return 0;
 }
@@ -44,14 +42,9 @@ int Retro_SetCoreOptionsDisplay(const struct retro_core_option_display *option_d
 void Retro_UpdateCoreOptionsDisplay()
 {
     if (core_options_update_display_callback && core_options_update_display_callback->callback)
-    {
         core_options_update_display_callback->callback();
-        Setting_RequestUpdateMenuItems();
-    }
     else
-    {
         Retro_RequestUpdateOptionsDisplay();
-    }
 }
 
 int Retro_SetOptionListFromVariables(struct retro_variable *varialbes)

@@ -19,10 +19,7 @@ struct ImageView
     int tex_dst_y;
     int tex_dst_w;
     int tex_dst_h;
-    int tex_src_x;
-    int tex_src_y;
-    int tex_src_w;
-    int tex_src_h;
+    void *userdata;
 };
 
 void ImageViewDestroy(void *view)
@@ -59,9 +56,9 @@ int ImageViewUpdate(void *view)
     params->wrap_w = view_wrap_w;
     params->wrap_h = view_wrap_h;
 
-    if (params->layout_w == TYPE_LAYOUT_MATH_PARENT)
+    if (params->layout_w == TYPE_LAYOUT_PARAMS_MATH_PARENT)
         params->measured_w = view_max_w;
-    else if (params->layout_w == TYPE_LAYOUT_WRAP_CONTENT)
+    else if (params->layout_w == TYPE_LAYOUT_PARAMS_WRAP_CONTENT)
         params->measured_w = view_wrap_w;
     else
         params->measured_w = params->layout_w;
@@ -70,9 +67,9 @@ int ImageViewUpdate(void *view)
     if (params->measured_w < 0)
         params->measured_w = 0;
 
-    if (params->layout_h == TYPE_LAYOUT_MATH_PARENT)
+    if (params->layout_h == TYPE_LAYOUT_PARAMS_MATH_PARENT)
         params->measured_h = view_max_h;
-    else if (params->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
+    else if (params->layout_h == TYPE_LAYOUT_PARAMS_WRAP_CONTENT)
         params->measured_h = view_wrap_h;
     else
         params->measured_h = params->layout_h;
@@ -210,16 +207,16 @@ int ImageViewUpdate(void *view)
     return 0;
 }
 
-void ImageViewDraw(void *view)
+int ImageViewDraw(void *view)
 {
     if (!view)
-        return;
+        return -1;
 
     ImageView *imageView = (ImageView *)view;
     LayoutParams *params = LayoutParamsGetParams(imageView);
 
     if (params->measured_w <= 0 || params->measured_h <= 0)
-        return;
+        return 0;
 
     int view_x = params->layout_x + params->margin_left;
     int view_y = params->layout_y + params->margin_top;
@@ -252,6 +249,8 @@ void ImageViewDraw(void *view)
 
         GUI_UnsetClipping();
     }
+
+    return 0;
 }
 
 int ImageViewSetBgColor(ImageView *imageView, uint32_t color)
@@ -260,6 +259,15 @@ int ImageViewSetBgColor(ImageView *imageView, uint32_t color)
         return -1;
 
     imageView->bg_color = color;
+    return 0;
+}
+
+int ImageViewSetData(ImageView *imageView, void *data)
+{
+    if (!imageView)
+        return -1;
+
+    imageView->userdata = data;
     return 0;
 }
 
@@ -299,24 +307,14 @@ int ImageViewSetTexture(ImageView *imageView, const GUI_Texture *texture)
     return 0;
 }
 
+void *ImageViewGetData(ImageView *imageView)
+{
+    return imageView ? imageView->userdata : NULL;
+}
+
 const GUI_Texture *ImageViewGetTexture(ImageView *imageView)
 {
     return imageView ? imageView->tex : NULL;
-}
-
-int ImageViewInit(ImageView *imageView)
-{
-    if (!imageView)
-        return -1;
-
-    memset(imageView, 0, sizeof(ImageView));
-
-    LayoutParams *params = LayoutParamsGetParams(imageView);
-    params->destroy = ImageViewDestroy;
-    params->update = ImageViewUpdate;
-    params->draw = ImageViewDraw;
-
-    return 0;
 }
 
 ImageView *NewImageView()
@@ -324,8 +322,12 @@ ImageView *NewImageView()
     ImageView *imageView = (ImageView *)malloc(sizeof(ImageView));
     if (!imageView)
         return NULL;
+    memset(imageView, 0, sizeof(ImageView));
 
-    ImageViewInit(imageView);
+    LayoutParams *params = LayoutParamsGetParams(imageView);
+    params->destroy = ImageViewDestroy;
+    params->update = ImageViewUpdate;
+    params->draw = ImageViewDraw;
 
     return imageView;
 }

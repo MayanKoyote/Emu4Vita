@@ -38,7 +38,7 @@ enum LangIndex
     LANG_INDEX_FINNISH,
 };
 
-LangEntry lang_entries[] = {
+static LangEntry lang_entries[] = {
     {"English", lang_us, RETRO_LANGUAGE_ENGLISH},
     {"Japanese", NULL, RETRO_LANGUAGE_JAPANESE},
     {"French", NULL, RETRO_LANGUAGE_FRENCH},
@@ -69,7 +69,12 @@ LangEntry lang_entries[] = {
 
 char **cur_lang = lang_us;
 
-int GetLangsLength()
+LangEntry *GetLangEntries()
+{
+    return lang_entries;
+}
+
+int GetLangEntriesLength()
 {
     return N_LANGS;
 }
@@ -199,7 +204,7 @@ int SetCurrentLang(int lang_index)
         ret = -1;
         goto END;
     }
-    
+
     cur_lang = lang_entries[lang_index].container;
 
 END:
@@ -226,10 +231,30 @@ char *GetLangString(LangString *lang_s)
         return NULL;
 
     char *res = NULL;
+    // 如果有lang，返回lang
     if (lang_s->lang != LANG_NULL && lang_s->lang < LANGUAGE_CONTAINER_SIZE)
         res = cur_lang[lang_s->lang];
+    // 如果没有lang，返回string
     if (res == NULL)
         res = lang_s->string;
 
     return res;
+}
+
+char **GetStringArrayByLangArray(int *langs, int n_langs)
+{
+    if (!langs || n_langs <= 0)
+        return NULL;
+
+    char **strs = calloc(n_langs, sizeof(char *));
+    if (!strs)
+        return NULL;
+
+    int i;
+    for (i = 0; i < n_langs; i++)
+    {
+        strs[i] = cur_lang[langs[i]];
+    }
+
+    return strs;
 }

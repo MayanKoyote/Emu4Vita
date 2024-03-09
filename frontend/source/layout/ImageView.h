@@ -21,13 +21,14 @@ enum TypeImageViewScale
 typedef struct ImageView ImageView;
 
 int ImageViewSetBgColor(ImageView *imageView, uint32_t color);
+int ImageViewSetData(ImageView *imageView, void *data);
 int ImageViewSetScaleType(ImageView *imageView, int type);
 int ImageViewSetTintColor(ImageView *imageView, uint32_t color);
 int ImageViewSetTexture(ImageView *imageView, const GUI_Texture *texture);
 
+void *ImageViewGetData(ImageView *imageView);
 const GUI_Texture *ImageViewGetTexture(ImageView *imageView);
 
-int ImageViewInit(ImageView *imageView);
 ImageView *NewImageView();
 
 #endif

@@ -28,6 +28,8 @@ int GUI_InitLib();
 int GUI_DeinitLib();
 
 // Renderer
+void GUI_LockDraw();
+void GUI_UnlockDraw();
 void GUI_StartDrawing(GUI_Texture *texture);
 void GUI_EndDrawing();
 #define GUI_WaitRenderingDone() vita2d_wait_rendering_done()
@@ -54,7 +56,7 @@ void GUI_DrawEmptyRectangle(float x, float y, float w, float h, float line_size,
 #define GUI_CreateTexture(w, h) vita2d_create_empty_texture(w, h)
 #define GUI_CreateTextureFormat(w, h, format) vita2d_create_empty_texture_format(w, h, format)
 #define GUI_CreateTextureRendertarget(w, h, format) vita2d_create_empty_texture_rendertarget(w, h, format)
-#define GUI_DestroyTexture(texture) vita2d_free_texture(texture)
+void GUI_DestroyTexture(GUI_Texture *texture);
 
 #define GUI_GetTextureWidth(texture) vita2d_texture_get_width(texture)
 #define GUI_GetTextureHeight(texture) vita2d_texture_get_height(texture)

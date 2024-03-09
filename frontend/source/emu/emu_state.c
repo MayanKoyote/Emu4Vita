@@ -5,7 +5,7 @@
 
 #include <psp2/io/fcntl.h>
 
-#include "activity/browser.h"
+#include "activity/activity.h"
 #include "setting/setting.h"
 #include "gui/gui.h"
 #include "emu/emu.h"
@@ -240,8 +240,9 @@ int Emu_SaveState(int num)
     }
 
     preview_offset = screenshot_offset + screenshot_size;
-    preview_width = Setting_GetStatePreviewWidth();
-    preview_height = Setting_GetStatePreviewHeight();
+    preview_width = 0;
+    preview_height = 0;
+    Setting_GetStatePreviewSize((int *)&preview_width, (int *)&preview_height);
     preview_size = 0;
     preview_buf = Emu_GetVideoScreenshotData(&preview_width, &preview_height, &preview_size, rotate, 0);
     if (!preview_buf)

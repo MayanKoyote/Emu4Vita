@@ -13,15 +13,15 @@ struct ItemView
     LayoutParams params;
     uint32_t bg_color;
     Layout *layout;
-    ImageView *imageView;
+    ImageView *iconView;
     TextView *nameView;
     TextView *infoView;
-    const GUI_Texture *image;
-    const char *name;
-    const char *info;
-    uint32_t image_tint_color;
-    uint32_t name_color;
-    uint32_t info_color;
+    const GUI_Texture *icon_tex;
+    const char *name_text;
+    const char *info_text;
+    uint32_t icon_tint_color;
+    uint32_t name_text_color;
+    uint32_t info_text_color;
     void *data;
 };
 
@@ -47,7 +47,7 @@ int ItemViewUpdate(void *view)
 
     LayoutParamsDestroy(itemView->layout);
     itemView->layout = NULL;
-    itemView->imageView = NULL;
+    itemView->iconView = NULL;
     itemView->nameView = NULL;
 
     if (params->available_w <= 0 || params->available_h <= 0)
@@ -60,41 +60,47 @@ int ItemViewUpdate(void *view)
     int view_max_h = params->available_h - params->margin_top - params->margin_bottom;
     int view_available_h = view_max_h - params->padding_top - params->padding_bottom;
 
-    if (itemView->image)
+    if (itemView->icon_tex)
     {
-        int image_layout_h = GUI_GetLineHeight() * 2;
-        if (image_layout_h > view_available_h)
-            image_layout_h = view_available_h;
+        int icon_layout_h = GUI_GetLineHeight() * 2;
+        if (icon_layout_h > view_available_h)
+            icon_layout_h = view_available_h;
 
-        itemView->imageView = NewImageView();
-        LayoutParamsSetLayoutSize(itemView->imageView, image_layout_h, image_layout_h);
-        ImageViewSetTexture(itemView->imageView, itemView->image);
-        ImageViewSetScaleType(itemView->imageView, TYPE_IMAGE_SCALE_FIT_CENTER_INSIDE);
-        ImageViewSetTintColor(itemView->imageView, itemView->image_tint_color);
+        itemView->iconView = NewImageView();
+        LayoutParamsSetLayoutSize(itemView->iconView, icon_layout_h, icon_layout_h);
+        ImageViewSetTexture(itemView->iconView, itemView->icon_tex);
+        ImageViewSetScaleType(itemView->iconView, TYPE_IMAGE_SCALE_FIT_CENTER_INSIDE);
+        ImageViewSetTintColor(itemView->iconView, itemView->icon_tint_color);
     }
 
-    if (itemView->name)
+    if (itemView->name_text)
     {
         itemView->nameView = NewTextView();
-        LayoutParamsSetLayoutSize(itemView->nameView, TYPE_LAYOUT_MATH_PARENT, TYPE_LAYOUT_WRAP_CONTENT);
-        if (itemView->imageView)
+        LayoutParamsSetLayoutSize(itemView->nameView, TYPE_LAYOUT_PARAMS_MATH_PARENT, TYPE_LAYOUT_PARAMS_WRAP_CONTENT);
+        if (itemView->iconView)
             LayoutParamsSetMargin(itemView->nameView, ITEMVIEW_CHILD_MARGIN, 0, 0, 0);
-        TextViewSetText(itemView->nameView, itemView->name);
+        TextViewSetText(itemView->nameView, itemView->name_text);
         TextViewSetSingleLine(itemView->nameView, 1);
-        TextViewSetTextColor(itemView->nameView, itemView->name_color);
+        TextViewSetTextColor(itemView->nameView, itemView->name_text_color);
+    }
+
+    if (itemView->info_text)
+    {
+        // 待添加
     }
 
     itemView->layout = NewLayout();
     // 从itemView传入layout
-    LayoutParamsSetOrientation(itemView->layout, TYPE_LAYOUT_ORIENTATION_HORIZONTAL);
+    LayoutParamsSetOrientation(itemView->layout, TYPE_LAYOUT_PARAMS_ORIENTATION_HORIZONTAL);
     LayoutParamsSetAvailableSize(itemView->layout, params->available_w, params->available_h);
     LayoutParamsSetLayoutSize(itemView->layout, params->layout_w, params->layout_h);
     LayoutParamsSetMargin(itemView->layout, params->margin_left, params->margin_right, params->margin_top, params->margin_bottom);
     LayoutParamsSetPadding(itemView->layout, params->padding_left, params->padding_right, params->padding_top, params->padding_bottom);
     LayoutSetBgColor(itemView->layout, itemView->bg_color);
 
-    LayoutAddView(itemView->layout, itemView->imageView);
+    LayoutAddView(itemView->layout, itemView->iconView);
     LayoutAddView(itemView->layout, itemView->nameView);
+    LayoutAddView(itemView->layout, itemView->infoView);
     LayoutParamsUpdate(itemView->layout);
 
     // 从layout回传itemView
@@ -104,16 +110,17 @@ int ItemViewUpdate(void *view)
     return 0;
 }
 
-void ItemViewDraw(void *view)
+int ItemViewDraw(void *view)
 {
     if (!view)
-        return;
+        return -1;
 
     ItemView *itemView = (ItemView *)view;
     LayoutParams *params = LayoutParamsGetParams(itemView);
 
+    // 从itemView传入layout
     LayoutParamsSetLayoutPosition(itemView->layout, params->layout_x, params->layout_y);
-    LayoutParamsDraw(itemView->layout);
+    return LayoutParamsDraw(itemView->layout);
 }
 
 int ItemViewSetBgColor(ItemView *itemView, uint32_t color)
@@ -137,72 +144,72 @@ int ItemViewSetData(ItemView *itemView, void *data)
     return 0;
 }
 
-int ItemViewSetImage(ItemView *itemView, const GUI_Texture *image)
+int ItemViewSetIconTexture(ItemView *itemView, const GUI_Texture *texture)
 {
     if (!itemView)
         return -1;
 
-    itemView->image = image;
-    if (itemView->imageView)
-        ImageViewSetTexture(itemView->imageView, image);
+    itemView->icon_tex = texture;
+    if (itemView->iconView)
+        ImageViewSetTexture(itemView->iconView, texture);
 
     return 0;
 }
 
-int ItemViewSetName(ItemView *itemView, const char *name)
+int ItemViewSetNameText(ItemView *itemView, const char *text)
 {
     if (!itemView)
         return -1;
 
-    itemView->name = name;
+    itemView->name_text = text;
     if (itemView->nameView)
-        TextViewSetText(itemView->nameView, name);
+        TextViewSetText(itemView->nameView, text);
 
     return 0;
 }
 
-int ItemViewSetInfo(ItemView *itemView, const char *info)
+int ItemViewSetInfoText(ItemView *itemView, const char *text)
 {
     if (!itemView)
         return -1;
 
-    itemView->info = info;
+    itemView->info_text = text;
     if (itemView->infoView)
-        TextViewSetText(itemView->infoView, info);
+        TextViewSetText(itemView->infoView, text);
 
     return 0;
 }
 
-int ItemViewSetImageTintColor(ItemView *itemView, uint32_t color)
+int ItemViewSetIconTintColor(ItemView *itemView, uint32_t color)
 {
     if (!itemView)
         return -1;
 
-    itemView->image_tint_color = color;
-    if (itemView->imageView)
-        ImageViewSetTintColor(itemView->imageView, color);
+    itemView->icon_tint_color = color;
+    if (itemView->iconView)
+        ImageViewSetTintColor(itemView->iconView, color);
 
     return 0;
 }
 
-int ItemViewSetNameColor(ItemView *itemView, uint32_t color)
+int ItemViewSetNameTextColor(ItemView *itemView, uint32_t color)
 {
     if (!itemView)
         return -1;
 
-    itemView->name_color = color;
+    itemView->name_text_color = color;
     if (itemView->nameView)
         TextViewSetTextColor(itemView->nameView, color);
 
     return 0;
 }
 
-int ItemViewSetInfoColor(ItemView *itemView, uint32_t color)
+int ItemViewSetInfoTextColor(ItemView *itemView, uint32_t color)
 {
     if (!itemView)
         return -1;
 
-    itemView->info_color = color;
+    itemView->info_text_color = color;
     if (itemView->infoView)
         TextViewSetTextColor(itemView->infoView, color);
 
@@ -214,28 +221,17 @@ void *ItemViewGetData(ItemView *itemView)
     return itemView ? itemView->data : NULL;
 }
 
-int ItemViewInit(ItemView *itemView)
+ItemView *NewItemView()
 {
+    ItemView *itemView = (ItemView *)malloc(sizeof(ItemView));
     if (!itemView)
-        return -1;
-
+        return NULL;
     memset(itemView, 0, sizeof(ItemView));
 
     LayoutParams *params = LayoutParamsGetParams(itemView);
     params->destroy = ItemViewDestroy;
     params->update = ItemViewUpdate;
     params->draw = ItemViewDraw;
-
-    return 0;
-}
-
-ItemView *NewItemView()
-{
-    ItemView *itemView = (ItemView *)malloc(sizeof(ItemView));
-    if (!itemView)
-        return NULL;
-
-    ItemViewInit(itemView);
 
     return itemView;
 }
