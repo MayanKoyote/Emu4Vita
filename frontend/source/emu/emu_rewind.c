@@ -215,7 +215,6 @@ static int finishRewindThread()
 
 int Emu_IsRewindSerializing()
 {
-    printf("Emu_IsRewindSerializing: %d\n", rewind_serializing);
     return rewind_serializing;
 }
 

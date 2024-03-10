@@ -109,8 +109,8 @@ EmuKeyOption emu_key_options[] = {
 #define N_EMU_KEY_OPTIONS (sizeof(emu_key_options) / sizeof(EmuKeyOption))
 
 HotKeyOption hot_key_options[] = {
-    {&hotkey_config.hk_loadstate, saveStateEventCallback, {0}},
-    {&hotkey_config.hk_savestate, loadStateEventCallback, {0}},
+    {&hotkey_config.hk_savestate, saveStateEventCallback, {0}},
+    {&hotkey_config.hk_loadstate, loadStateEventCallback, {0}},
     {&hotkey_config.hk_speed_up, Emu_SpeedUpGame, {0}},
     {&hotkey_config.hk_speed_down, Emu_SpeedDownGame, {0}},
     {&hotkey_config.hk_rewind_game, (void *)Emu_RewindGame, {0}},
