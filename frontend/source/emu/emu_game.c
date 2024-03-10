@@ -6,8 +6,7 @@
 #include <psp2/kernel/processmgr.h>
 #include <psp2/io/fcntl.h>
 
-#include "activity/browser.h"
-#include "activity/splash.h"
+#include "activity/activity.h"
 #include "setting/setting.h"
 #include "emu/emu.h"
 #include "file.h"
@@ -18,9 +17,6 @@
 
 #define MAX_GAME_RUN_SPEED 2.0f
 #define STEP_GAME_RUN_SPEED 0.5f
-
-extern GUI_Activity splash_activity;
-extern GUI_Dialog setting_dialog;
 
 static int game_loading = 0, game_loaded = 0, game_reloading = 0, game_running = 0, game_exiting = 0;
 static int game_run_event_action_type = TYPE_GAME_RUN_EVENT_ACTION_NONE;
@@ -172,8 +168,7 @@ static int loadGame(const char *path, int type)
 {
     int ret;
 
-    AppLog("[GAME] Load game...\n");
-    AppLog("[GAME] Rom path: %s\n", path);
+    AppLog("[GAME] Load game: %s\n", path);
 
     if (!game_reloading)
     {
@@ -213,8 +208,8 @@ int Emu_StartGame(EmuGameInfo *info)
 
     // 过场图片（在线程中显示）
     GUI_StartThreadRun();
-    SetControlEventEnabled(0);
-    Splash_SetAutoScrollListview(1);
+    GUI_SetControlEnabled(0);
+    Splash_SetListviewAutoScroll(1);
     Splash_SetLogEnabled(app_config.show_log);
     char splash_path[MAX_PATH_LENGTH];
     makeSplashPicPath(splash_path);
@@ -227,16 +222,16 @@ int Emu_StartGame(EmuGameInfo *info)
     game_reloading = 0;
 
     GUI_ExitThreadRun();
-    SetControlEventEnabled(1);
-    Splash_SetAutoScrollListview(0);
+    GUI_SetControlEnabled(1);
+    Splash_SetListviewAutoScroll(0);
     if (ret < 0)
     {
         if (!app_config.show_log)
-            GUI_ExitActivity(&splash_activity);
-        AlertDialog_ShowSimpleTipDialog(cur_lang[LANG_TIP], cur_lang[LANG_MESSAGE_START_GAME_FAILED]);
+            GUI_FinishActivity(&splash_activity);
+        AlertDialog_ShowSimpleDialog(cur_lang[LANG_TIP], cur_lang[LANG_MESSAGE_START_GAME_FAILED]);
         return -1;
     }
-    GUI_ExitActivity(&splash_activity);
+    GUI_FinishActivity(&splash_activity);
     WriteFile((LASTFILE_PATH), info->path, strlen(info->path) + 1);
 
     AppLog("[GAME] Start game...\n");
@@ -267,7 +262,7 @@ int Emu_StartGame(EmuGameInfo *info)
 
     Emu_RequestUpdateVideoDisplay();
     Retro_UpdateCoreOptionsDisplay();
-    Setting_RequestUpdateMenu();
+    GUI_StartActivity(&emu_activity);
 
     game_loaded = 1;
     Emu_ResumeGame();
@@ -287,16 +282,16 @@ void Emu_ExitGame()
         Emu_PauseGame();
 
         GUI_StartThreadRun();
-        SetControlEventEnabled(0);
-        GUI_Dialog *dialog = AlertDialog_Create();
+        GUI_SetControlEnabled(0);
+        AlertDialog *dialog = AlertDialog_Create();
         AlertDialog_SetMessage(dialog, cur_lang[LANG_MESSAGE_WAIT_EXITING]);
-        AlertDialog_Show(dialog);
+        AlertDialog_Open(dialog);
 
         Emu_SaveSrm(); // Auto save srm
         if (!game_reloading && misc_config.auto_save_load)
         { // Auto save state
             Emu_SaveState(-1);
-            Browser_RequestRefreshPreview(0);
+            Browser_RequestRefreshPreview(1);
         }
         retro_unload_game();
         retro_deinit();
@@ -309,12 +304,12 @@ void Emu_ExitGame()
             LoadMiscConfig(TYPE_CONFIG_MAIN);
             LoadCoreConfig(TYPE_CONFIG_MAIN);
             Retro_UpdateCoreOptionsDisplay();
-            Setting_RequestUpdateMenu();
         }
 
-        GUI_CloseDialog(dialog);
+        AlertDialog_Close(dialog);
         GUI_ExitThreadRun();
-        SetControlEventEnabled(1);
+        GUI_SetControlEnabled(1);
+        GUI_FinishActivity(&emu_activity);
 
         Emu_DeinitCheat();
         Emu_DeinitAudio();
@@ -388,7 +383,7 @@ void Emu_SetGameRunEventAction(int type)
     game_run_event_action_type = type;
 }
 
-static void onGameRunEvent()
+static void Emu_EventRunGame()
 {
     if (game_run_event_action_type == TYPE_GAME_RUN_EVENT_ACTION_NONE)
         return;
@@ -419,7 +414,7 @@ static void onGameRunEvent()
     case TYPE_GAME_RUN_EVENT_ACTION_EXIT:
     {
         Emu_ExitGame();
-        if (exec_boot_mode == BOOT_MODE_GAME)
+        if (BootGetMode() == BOOT_MODE_GAME)
             BootLoadParentExec();
     }
     break;
@@ -434,7 +429,7 @@ void Emu_RunGame()
 {
     Emu_PollInput();
     retro_run();
-    onGameRunEvent();
+    Emu_EventRunGame();
     if (misc_config.enable_rewind)
         Emu_RewindCheck();
 }

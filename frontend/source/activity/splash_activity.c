@@ -7,28 +7,28 @@
 #include <psp2/kernel/threadmgr.h>
 
 #include "list/string_list.h"
+#include "activity/activity.h"
 #include "gui/gui.h"
-#include "splash.h"
 #include "utils.h"
 #include "config.h"
 #include "lang.h"
 
-static int startActivityCallback(GUI_Activity *activity);
-static int exitActivityCallback(GUI_Activity *activity);
-static void drawActivityCallback(GUI_Activity *activity);
-static void ctrlActivityCallback(GUI_Activity *activity);
+static int onStartActivity(GUI_Activity *activity);
+static int onFinishActivity(GUI_Activity *activity);
+static int onDrawActivity(GUI_Activity *activity);
+static int onCtrlActivity(GUI_Activity *activity);
 
 GUI_Activity splash_activity = {
-    LANG_NULL,             // Title
-    NULL,                  // Button instructions
-    NULL,                  // Wallpaper
-    startActivityCallback, // Start callback
-    exitActivityCallback,  // Exit callback
-    drawActivityCallback,  // Draw callback
-    ctrlActivityCallback,  // Ctrl callback
-    1,                     // Disable draw statusbar
-    NULL,                  // Parent activity
-    NULL,                  // User data
+    LANG_NULL,        // Title
+    NULL,             // Button instructions
+    NULL,             // Wallpaper
+    1,                // Disable draw statusbar
+    onStartActivity,  // Start callback
+    onFinishActivity, // Finish callback
+    onDrawActivity,   // Draw callback
+    onCtrlActivity,   // Ctrl callback
+    NULL,             // Event callback
+    NULL,             // User data
 };
 
 #define LISTVIEW_PADDING_L 10
@@ -120,7 +120,7 @@ void Splash_AddLogf(const char *text, ...)
     Splash_AddLog(buf);
 }
 
-void Splash_SetAutoScrollListview(int enable)
+void Splash_SetListviewAutoScroll(int enable)
 {
     listview_auto_scroll = enable;
 }
@@ -129,7 +129,6 @@ void Splash_SetBgTexture(GUI_Texture *texture)
 {
     if (splash_activity.wallpaper && splash_activity.wallpaper != GUI_GetDefaultSplash())
     {
-        GUI_WaitRenderingDone();
         GUI_DestroyTexture(splash_activity.wallpaper);
         splash_activity.wallpaper = NULL;
     }
@@ -144,10 +143,38 @@ void Splash_SetLogEnabled(int enabled)
     log_enabled = enabled;
 }
 
-static void drawActivityCallback(GUI_Activity *activity)
+static int onStartActivity(GUI_Activity *activity)
+{
+    refreshLayout();
+
+    if (log_list)
+        LinkedListDestroy(log_list);
+    log_list = NewStringList();
+
+    sceKernelCreateLwMutex(&splash_mutex, "splash_mutex", 2, 0, NULL);
+    return 0;
+}
+
+static int onFinishActivity(GUI_Activity *activity)
+{
+    sceKernelLockLwMutex(&splash_mutex, 1, NULL);
+    if (log_list)
+        LinkedListDestroy(log_list);
+    log_list = NULL;
+    if (splash_activity.wallpaper && splash_activity.wallpaper != GUI_GetDefaultSplash())
+    {
+        GUI_DestroyTexture(splash_activity.wallpaper);
+        splash_activity.wallpaper = NULL;
+    }
+    sceKernelUnlockLwMutex(&splash_mutex, 1);
+    sceKernelDeleteLwMutex(&splash_mutex);
+    return 0;
+}
+
+static int onDrawActivity(GUI_Activity *activity)
 {
     if (!log_enabled || !log_list)
-        return;
+        return 0;
 
     sceKernelLockLwMutex(&splash_mutex, 1, NULL);
 
@@ -195,17 +222,20 @@ static void drawActivityCallback(GUI_Activity *activity)
     }
 
     sceKernelUnlockLwMutex(&splash_mutex, 1);
+
+    return 0;
 }
 
-static void ctrlActivityCallback(GUI_Activity *activity)
+static int onCtrlActivity(GUI_Activity *activity)
 {
     if (released_pad[PAD_CANCEL])
     {
-        GUI_ExitActivity(&splash_activity);
+        GUI_FinishActivity(activity);
+        return 0;
     }
 
     if (!log_enabled || !log_list)
-        return;
+        return 0;
 
     sceKernelLockLwMutex(&splash_mutex, 1, NULL);
 
@@ -214,57 +244,29 @@ static void ctrlActivityCallback(GUI_Activity *activity)
     if (listview_auto_scroll)
     {
         listview_top_pos = l_length;
-        RefreshListPosNoFocus(&listview_top_pos, l_length, listview_n_draw_items);
+        RefreshListPos(&listview_top_pos, l_length, listview_n_draw_items);
     }
     else
     {
         if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
         {
-            MoveListPosNoFocus(TYPE_MOVE_UP, &listview_top_pos, l_length, listview_n_draw_items);
+            MoveListPos(TYPE_MOVE_UP, &listview_top_pos, l_length, listview_n_draw_items);
         }
         else if (hold_pad[PAD_DOWN] || hold2_pad[PAD_LEFT_ANALOG_DOWN])
         {
-            MoveListPosNoFocus(TYPE_MOVE_DOWN, &listview_top_pos, l_length, listview_n_draw_items);
+            MoveListPos(TYPE_MOVE_DOWN, &listview_top_pos, l_length, listview_n_draw_items);
         }
         else if (hold_pad[PAD_LEFT])
         {
-            MoveListPosNoFocus(TYPE_MOVE_LEFT, &listview_top_pos, l_length, listview_n_draw_items);
+            MoveListPos(TYPE_MOVE_LEFT, &listview_top_pos, l_length, listview_n_draw_items);
         }
         else if (hold_pad[PAD_RIGHT])
         {
-            MoveListPosNoFocus(TYPE_MOVE_RIGHT, &listview_top_pos, l_length, listview_n_draw_items);
+            MoveListPos(TYPE_MOVE_RIGHT, &listview_top_pos, l_length, listview_n_draw_items);
         }
     }
 
     sceKernelUnlockLwMutex(&splash_mutex, 1);
-}
 
-static int startActivityCallback(GUI_Activity *activity)
-{
-    refreshLayout();
-
-    if (log_list)
-        LinkedListDestroy(log_list);
-    log_list = NewStringList();
-
-    sceKernelCreateLwMutex(&splash_mutex, "splash_mutex", 2, 0, NULL);
-    return 0;
-}
-
-static int exitActivityCallback(GUI_Activity *activity)
-{
-    sceKernelLockLwMutex(&splash_mutex, 1, NULL);
-    if (log_list)
-        LinkedListDestroy(log_list);
-    log_list = NULL;
-    if (splash_activity.wallpaper && splash_activity.wallpaper != GUI_GetDefaultSplash())
-    {
-        // printf("[SPLASHS] Destroy splash texture.\n");
-        GUI_WaitRenderingDone();
-        GUI_DestroyTexture(splash_activity.wallpaper);
-        splash_activity.wallpaper = NULL;
-    }
-    sceKernelUnlockLwMutex(&splash_mutex, 1);
-    sceKernelDeleteLwMutex(&splash_mutex);
     return 0;
 }

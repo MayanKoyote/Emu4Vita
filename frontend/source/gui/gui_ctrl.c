@@ -15,23 +15,19 @@
 Pad old_pad, current_pad, pressed_pad, released_pad, hold_pad, hold2_pad;
 Pad hold_count, hold2_count;
 static uint64_t disable_psbutton_micros = 0;
+static int psbutton_enabled = 1;
+static int control_enabled = 1;
 
 void GUI_ReadPad()
 {
     SceCtrlData ctrl_data;
     int port, i;
 
+    if (!GUI_IsControlEnabled())
+        return;
+
     memcpy(old_pad, current_pad, sizeof(Pad));
     memset(current_pad, 0, sizeof(Pad));
-
-    if (!IsControlEventEnabled())
-    {
-        memset(&pressed_pad, 0, sizeof(Pad));
-        memset(&released_pad, 0, sizeof(Pad));
-        memset(&hold_pad, 0, sizeof(Pad));
-        memset(&hold2_pad, 0, sizeof(Pad));
-        return;
-    }
 
     for (i = 0; i < N_CTRL_PORTS; i++)
     {
@@ -168,14 +164,14 @@ void GUI_ReadPad()
     if (current_pad[PAD_PSBUTTON])
     {
         if (!old_pad[PAD_PSBUTTON])
-            disable_psbutton_micros = sceKernelGetProcessTimeWide() + DISABLE_PSBUTTON_EVENT_HOLD_MICROS;
+            disable_psbutton_micros = sceKernelGetProcessTimeWide() + DISABLE_PSBUTTON_HOLD_MICROS;
         else if (sceKernelGetProcessTimeWide() >= disable_psbutton_micros)
-            SetPSbuttonEventEnabled(0);
+            GUI_SetPsbuttonEnabled(0);
     }
     else
     {
         if (!old_pad[PAD_PSBUTTON])
-            SetPSbuttonEventEnabled(1);
+            GUI_SetPsbuttonEnabled(1);
     }
 }
 
@@ -187,4 +183,26 @@ void GUI_CleanPad()
     memset(&released_pad, 0, sizeof(Pad));
     memset(&hold_pad, 0, sizeof(Pad));
     memset(&hold2_pad, 0, sizeof(Pad));
+}
+
+void GUI_SetControlEnabled(int enable)
+{
+    control_enabled = enable;
+    if (!control_enabled)
+        GUI_CleanPad();
+}
+
+int GUI_IsControlEnabled()
+{
+    return control_enabled;
+}
+
+void GUI_SetPsbuttonEnabled(int enable)
+{
+    psbutton_enabled = enable;
+}
+
+int GUI_IsPsbuttonEnabled()
+{
+    return psbutton_enabled;
 }

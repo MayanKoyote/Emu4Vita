@@ -37,13 +37,13 @@ int LayoutParamsSetOrientation(void *view, int orientation)
     return 0;
 }
 
-int LayoutParamsSetScrollEnabled(void *view, int enabled)
+int LayoutParamsSetGravity(void *view, int gravity)
 {
     if (!view)
         return -1;
 
     LayoutParams *params = (LayoutParams *)view;
-    params->scroll_enabled = enabled;
+    params->gravity = gravity;
 
     return 0;
 }
@@ -204,12 +204,14 @@ int LayoutParamsUpdate(void *view)
     return -1;
 }
 
-void LayoutParamsDraw(void *view)
+int LayoutParamsDraw(void *view)
 {
     if (!view)
-        return;
+        return -1;
 
     LayoutParams *params = (LayoutParams *)view;
     if (params->draw)
         params->draw(view);
+
+    return 0;
 }

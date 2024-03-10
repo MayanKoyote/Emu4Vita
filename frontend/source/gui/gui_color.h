@@ -1,0 +1,29 @@
+#ifndef __M_GUI_COLOR_H__
+#define __M_GUI_COLOR_H__
+
+// Primary colors
+#define COLOR_RED 0xFF0000FF
+#define COLOR_GREEN 0xFF00FF00
+#define COLOR_BLUE 0xFFFF0000
+// Secondary colors
+#define COLOR_CYAN 0xFFFFFF00
+#define COLOR_MAGENTA 0xFFFF00FF
+#define COLOR_YELLOW 0xFF00FFFF
+// Tertiary colors
+#define COLOR_AZURE 0xFFFF7F00
+#define COLOR_VIOLET 0xFFFF007F
+#define COLOR_ROSE 0xFF7F00FF
+#define COLOR_ORANGE 0xFF007FFF
+#define COLOR_CHARTREUSE 0xFF00FF7F
+#define COLOR_SPRING_GREEN 0xFF7FFF00
+// Grayscale
+#define COLOR_WHITE 0xFFFFFFFF
+#define COLOR_LITEGRAY 0xFFBFBFBF
+#define COLOR_GRAY 0xFF7F7F7F
+#define COLOR_DARKGRAY 0xFF3F3F3F
+#define COLOR_BLACK 0xFF000000
+
+#define NOALPHA 0xFF
+#define COLOR_ALPHA(color, alpha) (color & 0x00FFFFFF) | ((alpha & 0xFF) << 24)
+
+#endif

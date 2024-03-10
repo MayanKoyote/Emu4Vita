@@ -3,5 +3,6 @@
 
 int Setting_InitOverlay();
 int Setting_WaitOverlayInitEnd();
+int Setting_DeinitOverlay();
 
 #endif

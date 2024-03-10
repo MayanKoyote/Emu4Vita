@@ -334,6 +334,15 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     // LANG_SAVE_PREVIEW
     "Save screenshot for preview",
 
+    // LANG_SAVE_SCREENSHOT_OK,
+    "Save screenshot OK!",
+    // LANG_SAVE_SCREENSHOT_FAILED,
+    "Failed to save screenshot!",
+    // LANG_SAVE_PREVIEW_OK,
+    "Save screenshot for preview OK!",
+    // LANG_SAVE_PREVIEW_FAILED,
+    "Failed to save screenshot for preview!",
+
     /**************  Menu hotkey  *****************/
     // LANG_HOTKEY_SAVESTATE
     "[Hotkey] Save state",
@@ -720,6 +729,15 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "保存截图",
     // LANG_SAVE_PREVIEW
     "保存截图为预览图",
+
+    // LANG_SAVE_SCREENSHOT_OK,
+    "保存截图完成！",
+    // LANG_SAVE_SCREENSHOT_FAILED,
+    "保存截图失败！",
+    // LANG_SAVE_PREVIEW_OK,
+    "保存截图为预览图完成！",
+    // LANG_SAVE_PREVIEW_FAILED,
+    "保存截图为预览图失败！",
 
     /**************  Menu hotkey  *****************/
     // LANG_HOTKEY_SAVESTATE
@@ -1108,6 +1126,15 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     // LANG_SAVE_PREVIEW
     "保存截圖為預覽圖",
 
+    // LANG_SAVE_SCREENSHOT_OK,
+    "保存截圖完成！",
+    // LANG_SAVE_SCREENSHOT_FAILED,
+    "保存截圖失敗！",
+    // LANG_SAVE_PREVIEW_OK,
+    "保存截圖為預覽圖完成！",
+    // LANG_SAVE_PREVIEW_FAILED,
+    "保存截圖為預覽圖失敗！",
+
     /**************  Menu hotkey  *****************/
     // LANG_HOTKEY_SAVESTATE
     "[快捷鍵] 保存存檔",
@@ -1118,7 +1145,7 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     // LANG_HOTKEY_GAME_SPEED_DOWN
     "[快捷鍵] 減速遊戲",
     // LANG_HOTKEY_GAME_REWIND
-    "[快捷鍵] 倒帶"
+    "[快捷鍵] 倒帶",
     // LANG_HOTKEY_CONTROL_PLAYER_UP
     "[快捷鍵] 切換玩家+",
     // LANG_HOTKEY_CONTROL_PLAYER_DOWN

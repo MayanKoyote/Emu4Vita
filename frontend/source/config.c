@@ -5,12 +5,14 @@
 
 #include <psp2/io/fcntl.h>
 
+#include "list/config_list.h"
 #include "list/cheat_list.h"
 #include "list/option_list.h"
 #include "list/overlay_list.h"
-#include "activity/browser.h"
+#include "activity/activity.h"
 #include "setting/setting.h"
 #include "emu/emu.h"
+#include "gui/gui.h"
 #include "config.h"
 #include "file.h"
 #include "utils.h"
@@ -50,14 +52,14 @@ int ResetGraphicsConfig()
 {
     memset(&graphics_config, 0, sizeof(GraphicsConfig));
     graphics_config.version = GRAPHICS_CONFIG_VERSION;
-    graphics_config.display_size = TYPE_DISPLAY_SIZE_FULL;
-    graphics_config.aspect_ratio = TYPE_ASPECT_RATIO_DEFAULT;
-    graphics_config.display_rotate = TYPE_DISPLAY_ROTATE_DEFAULT;
-    graphics_config.graphics_shader = TYPE_GRAPHICS_SHADER_DEFAULT;
-    graphics_config.graphics_smooth = 0;
-    graphics_config.overlay_select = 0;
-    graphics_config.overlay_mode = 0;
-    graphics_config.show_fps = 0;
+    graphics_config.display_size = DEFAULT_CONFIG_VALUE_GRAPHICS_DISPLAY_SIZE;
+    graphics_config.aspect_ratio = DEFAULT_CONFIG_VALUE_GRAPHICS_DISPLAY_RATIO;
+    graphics_config.display_rotate = DEFAULT_CONFIG_VALUE_GRAPHICS_DISPLAY_ROTATE;
+    graphics_config.graphics_shader = DEFAULT_CONFIG_VALUE_GRAPHICS_GRAPHICS_SHADER;
+    graphics_config.graphics_smooth = DEFAULT_CONFIG_VALUE_GRAPHICS_GRAPHICS_SMOOTH;
+    graphics_config.overlay_select = DEFAULT_CONFIG_VALUE_GRAPHICS_OVERLAY_SELECT;
+    graphics_config.overlay_mode = DEFAULT_CONFIG_VALUE_GRAPHICS_OVERLAY_MODE;
+    graphics_config.show_fps = DEFAULT_CONFIG_VALUE_GRAPHICS_SHOW_FPS;
 
     return 0;
 }
@@ -66,102 +68,34 @@ int ResetControlConfig()
 {
     memset(&control_config, 0, sizeof(ControlConfig));
     control_config.version = CONTROL_CONFIG_VERSION;
-    control_config.ctrl_player = 0;
-
-    control_config.button_up = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_UP);
-    control_config.button_down = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_DOWN);
-    control_config.button_left = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_LEFT);
-    control_config.button_right = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_RIGHT);
-#if defined(FC_BUILD) || defined(GBC_BUILD) || defined(NGP_BUILD)
-    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = ENABLE_TURBO_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_square = ENABLE_TURBO_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-#if defined(FC_BUILD)
-    control_config.button_l = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L);
-    control_config.button_r = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R);
-#endif
-#elif defined(SFC_BUILD)
-    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_X);
-    control_config.button_square = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
-    control_config.button_l = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L);
-    control_config.button_r = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R);
-#elif defined(GBA_BUILD)
-    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = ENABLE_TURBO_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_square = ENABLE_TURBO_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_l = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L);
-    control_config.button_r = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R);
-#elif defined(MD_BUILD)
-    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_X);
-    control_config.button_square = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
-    control_config.button_l = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L);
-    control_config.button_r = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R);
-#elif defined(WSC_BUILD)
-    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = ENABLE_TURBO_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_square = ENABLE_TURBO_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_l = 0;
-    control_config.button_r = 0;
-#elif defined(PCE_BUILD)
-    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_X);
-    control_config.button_square = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
-    control_config.button_l = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L);
-    control_config.button_r = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R);
-#elif defined(ARC_BUILD)
-    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_X);
-    control_config.button_square = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
-    control_config.button_l = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L);
-    control_config.button_r = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R);
-    control_config.button_l2 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L2);
-    control_config.button_r2 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R2);
-#elif defined(PS_BUILD)
-    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_X);
-    control_config.button_square = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
-    control_config.button_l = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L);
-    control_config.button_r = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R);
-    control_config.button_l2 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L2);
-    control_config.button_r2 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R2);
-    control_config.button_l3 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L3);
-    control_config.button_r3 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R3);
-#else
-    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_X);
-    control_config.button_square = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
-    control_config.button_l = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L);
-    control_config.button_r = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R);
-    control_config.button_l2 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L2);
-    control_config.button_r2 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R2);
-    control_config.button_l3 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L3);
-    control_config.button_r3 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R3);
-#endif
-#if !defined(WSC_BUILD)
-    control_config.button_select = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_SELECT);
-#endif
-    control_config.button_start = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_START);
-    control_config.left_analog_up = control_config.button_up;
-    control_config.left_analog_down = control_config.button_down;
-    control_config.left_analog_left = control_config.button_left;
-    control_config.left_analog_right = control_config.button_right;
-#if defined(PS_BUILD)
-    control_config.front_touch_pad = 1;
-    control_config.back_touch_pad = 1;
-#endif
-
-    control_config.turbo_delay = 4;
+    control_config.ctrl_player = DEFAULT_CONFIG_VALUE_CONTROL_CTRL_PLAYER;
+    control_config.button_up = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_UP;
+    control_config.button_down = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_DOWN;
+    control_config.button_left = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_LEFT;
+    control_config.button_right = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_RIGHT;
+    control_config.button_circle = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_CIRCLE;
+    control_config.button_cross = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_CROSS;
+    control_config.button_triangle = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_TRIANGLE;
+    control_config.button_square = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_SQUARE;
+    control_config.button_l = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_L;
+    control_config.button_r = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_R;
+    control_config.button_l2 = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_L2;
+    control_config.button_r2 = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_R2;
+    control_config.button_l3 = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_L3;
+    control_config.button_r3 = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_R3;
+    control_config.button_select = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_SELECT;
+    control_config.button_start = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_START;
+    control_config.left_analog_up = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_LEFT_ANALOG_UP;
+    control_config.left_analog_down = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_LEFT_ANALOG_DOWN;
+    control_config.left_analog_left = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_LEFT_ANALOG_LEFT;
+    control_config.left_analog_right = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_LEFT_ANALOG_RIGHT;
+    control_config.right_analog_up = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_RIGHT_ANALOG_UP;
+    control_config.right_analog_down = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_RIGHT_ANALOG_DOWN;
+    control_config.right_analog_left = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_RIGHT_ANALOG_LEFT;
+    control_config.right_analog_right = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_RIGHT_ANALOG_RIGHT;
+    control_config.front_touch_pad = DEFAULT_CONFIG_VALUE_CONTROL_FRONT_TOUCH_PAD;
+    control_config.back_touch_pad = DEFAULT_CONFIG_VALUE_CONTROL_BACK_TOUCH_PAD;
+    control_config.turbo_delay = DEFAULT_CONFIG_VALUE_CONTROL_TURBO_DELEY;
 
     return 0;
 }
@@ -170,14 +104,14 @@ int ResetHotkeyConfig()
 {
     memset(&hotkey_config, 0, sizeof(HotkeyConfig));
     hotkey_config.version = HOTKEY_CONFIG_VERSION;
-    hotkey_config.hk_loadstate = (SCE_CTRL_PSBUTTON | SCE_CTRL_SQUARE | ENABLE_KEY_BITMASK);
-    hotkey_config.hk_savestate = (SCE_CTRL_PSBUTTON | SCE_CTRL_TRIANGLE | ENABLE_KEY_BITMASK);
-    hotkey_config.hk_speed_up = (SCE_CTRL_PSBUTTON | SCE_CTRL_R1 | ENABLE_KEY_BITMASK);
-    hotkey_config.hk_speed_down = (SCE_CTRL_PSBUTTON | SCE_CTRL_L1 | ENABLE_KEY_BITMASK);
-    hotkey_config.hk_rewind = (SCE_CTRL_PSBUTTON | SCE_CTRL_CROSS | ENABLE_KEY_BITMASK);
-    hotkey_config.hk_player_up = (SCE_CTRL_PSBUTTON | EXT_CTRL_RIGHT_ANLOG_RIGHT | ENABLE_KEY_BITMASK);
-    hotkey_config.hk_player_down = (SCE_CTRL_PSBUTTON | EXT_CTRL_RIGHT_ANLOG_LEFT | ENABLE_KEY_BITMASK);
-    hotkey_config.hk_exit_game = (SCE_CTRL_PSBUTTON | SCE_CTRL_CROSS | ENABLE_KEY_BITMASK);
+    hotkey_config.hk_loadstate = DEFAULT_CONFIG_VALUE_HOTKEY_SAVE_STATE;
+    hotkey_config.hk_savestate = DEFAULT_CONFIG_VALUE_HOTKEY_LOAD_STATE;
+    hotkey_config.hk_speed_up = DEFAULT_CONFIG_VALUE_HOTKEY_SPEED_UP;
+    hotkey_config.hk_speed_down = DEFAULT_CONFIG_VALUE_HOTKEY_SPEED_DOWN;
+    hotkey_config.hk_rewind = DEFAULT_CONFIG_VALUE_HOTKEY_REWIND;
+    hotkey_config.hk_player_up = DEFAULT_CONFIG_VALUE_HOTKEY_PLAYER_UP;
+    hotkey_config.hk_player_down = DEFAULT_CONFIG_VALUE_HOTKEY_PLAYER_DOWN;
+    hotkey_config.hk_exit_game = DEFAULT_CONFIG_VALUE_HOTKEY_EXIT_GAME;
 
     return 0;
 }
@@ -186,9 +120,9 @@ int ResetMiscConfig()
 {
     memset(&misc_config, 0, sizeof(MiscConfig));
     misc_config.version = MISC_CONFIG_VERSION;
-    misc_config.auto_save_load = 1;
-    misc_config.enable_rewind = 1;
-    misc_config.rewind_buffer_size = 10;
+    misc_config.auto_save_load = DEFAULT_CONFIG_VALUE_MISC_AUTO_SAVE_LOAD;
+    misc_config.enable_rewind = DEFAULT_CONFIG_VALUE_MISC_ENABLE_REWIND;
+    misc_config.rewind_buffer_size = DEFAULT_CONFIG_VALUE_MISC_REWIND_BUFFER_SIZE;
 
     return 0;
 }
@@ -197,16 +131,12 @@ int ResetAppConfig()
 {
     memset(&app_config, 0, sizeof(AppConfig));
     app_config.version = APP_CONFIG_VERSION;
-    app_config.preview_path = TYPE_PREVIEW_PATH_AUTO;
-    app_config.preview_style = TYPE_PREVIEW_SCALE_TYPE_FIT_CENTER_INSIDE;
-    app_config.app_log = 1;
-    app_config.core_log = 0;
-#if defined(FBA_BUILD)
-    app_config.show_log = 1;
-#else
-    app_config.show_log = 0;
-#endif
-    app_config.language = GetLangIndexByLocalLang(language);
+    app_config.preview_path = DEFAULT_CONFIG_VALUE_APP_PREVIEW_PATH;
+    app_config.preview_style = DEFAULT_CONFIG_VALUE_APP_PREVIEW_SCALE_TYPE;
+    app_config.app_log = DEFAULT_CONFIG_VALUE_APP_APP_LOG;
+    app_config.core_log = DEFAULT_CONFIG_VALUE_APP_CORE_LOG;
+    app_config.show_log = DEFAULT_CONFIG_VALUE_APP_SHOW_LOG;
+    app_config.language = GetLangIndexByLocalLang(language); // DEFAULT_CONFIG_VALUE_APP_LANGUAGE
 
     return 0;
 }

@@ -32,6 +32,12 @@ void GUI_DrawEmptyRectangle(float x, float y, float w, float h, float line_size,
     vita2d_draw_rectangle(sx, dy - line_size, w - line_size, line_size, color);
 }
 
+void GUI_DestroyTexture(GUI_Texture *texture)
+{
+    GUI_WaitRenderingDone();
+    vita2d_free_texture(texture);
+}
+
 void GUI_DrawTextureShaderPartScalRotate(const GUI_Texture *texture, const GUI_Shader *shader, float x, float y,
                                          float tex_x, float tex_y, float tex_w, float tex_h, float x_scale, float y_scale, float rad)
 {
@@ -58,9 +64,18 @@ void GUI_DrawTextureShaderPartScalRotate(const GUI_Texture *texture, const GUI_S
     vita2d_draw_texture_part_scale_rotate_generic(texture, x, y, tex_x, tex_y, tex_w, tex_h, x_scale, y_scale, rad);
 }
 
-void GUI_StartDrawing(GUI_Texture *texture)
+void GUI_LockDraw()
 {
     sceKernelLockLwMutex(&gui_draw_mutex, 1, NULL);
+}
+
+void GUI_UnlockDraw()
+{
+    sceKernelUnlockLwMutex(&gui_draw_mutex, 1);
+}
+
+void GUI_StartDrawing(GUI_Texture *texture)
+{
     vita2d_pool_reset();
     vita2d_start_drawing_advanced(texture, 0);
     vita2d_clear_screen();
@@ -71,24 +86,17 @@ void GUI_EndDrawing()
     vita2d_end_drawing();
     // vita2d_common_dialog_update();
     vita2d_swap_buffers();
-    sceKernelUnlockLwMutex(&gui_draw_mutex, 1);
-}
-
-static int initRenderClip()
-{
-    if (!gui_clip_list)
-        gui_clip_list = NewLinkedList();
-    if (!gui_clip_list)
-        return -1;
-
-    LinkedListSetFreeEntryDataCallback(gui_clip_list, free);
-    return 0;
 }
 
 int GUI_SetClipping(int x, int y, int w, int h)
 {
     if (!gui_clip_list)
-        return -1;
+    {
+        gui_clip_list = NewLinkedList();
+        if (!gui_clip_list)
+            return -1;
+        LinkedListSetFreeEntryDataCallback(gui_clip_list, free);
+    }
 
     GUI_Rect *cur_rect = (GUI_Rect *)malloc(sizeof(GUI_Rect));
     if (!cur_rect)
@@ -157,7 +165,6 @@ int GUI_InitLib()
     vita2d_init();
     vita2d_ext_init(vita2d_get_context(), vita2d_get_shader_patcher());
     vita2d_set_vblank_wait(1);
-    initRenderClip();
     return 0;
 }
 

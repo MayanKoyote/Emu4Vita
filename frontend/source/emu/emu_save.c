@@ -5,7 +5,7 @@
 
 #include <psp2/io/fcntl.h>
 
-#include "activity/browser.h"
+#include "activity/activity.h"
 #include "emu/emu.h"
 #include "file.h"
 #include "utils.h"

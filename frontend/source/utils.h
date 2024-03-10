@@ -38,11 +38,11 @@ void GetDateString(char string[24], int date_format, SceDateTime *time);
 void GetTimeString(char string[16], int time_format, SceDateTime *time);
 void GetDurationString(char string[16], uint64_t ms);
 
-void RefreshListPos(int *top_pos, int *focus_pos, int length, int lines);
-void RefreshListPosNoFocus(int *top_pos, int length, int lines);
+void RefreshListPosEx(int *top_pos, int *focus_pos, int length, int lines);
+void RefreshListPos(int *pos, int length, int lines);
 
-void MoveListPos(int type, int *top_pos, int *focus_pos, int length, int lines);
-void MoveListPosNoFocus(int type, int *top_pos, int length, int lines);
+void MoveListPosEx(int type, int *top_pos, int *focus_pos, int length, int lines);
+void MoveListPos(int type, int *pos, int length, int lines);
 
 void LockHomeKey();
 void UnlockHomeKey();
@@ -60,11 +60,6 @@ void LockOledDimming();
 void UnlockOledDimming();
 
 void InitPowerTickThread();
-
-void SetControlEventEnabled(int enable);
-int IsControlEventEnabled();
-void SetPSbuttonEventEnabled(int enable);
-int IsPSbuttonEventEnabled();
 
 uint64_t GetTotalHeadMemSize();
 uint64_t GetFreeHeadMemSize();

@@ -12,23 +12,8 @@ struct Layout
     LayoutParams params;
     uint32_t bg_color;
     LinkedList *childs;
+    void *userdata;
 };
-
-static LinkedListEntry *LayoutFindListEntryByView(Layout *layout, void *view)
-{
-    if (!layout || !layout->childs)
-        return NULL;
-
-    LinkedListEntry *entry = LinkedListHead(layout->childs);
-    while (entry)
-    {
-        void *find = LinkedListGetEntryData(entry);
-        if (find == view)
-            return entry;
-    }
-
-    return NULL;
-}
 
 static void LayoutDestroy(void *view)
 {
@@ -56,14 +41,14 @@ static int LayoutUpdateChildOne(Layout *layout, void *view, int *available_w, in
     int occupy_w = c_params->measured_w + c_params->margin_left + c_params->margin_right;
     int occupy_h = c_params->measured_h + c_params->margin_top + c_params->margin_bottom;
 
-    if (l_params->orientation == TYPE_LAYOUT_ORIENTATION_HORIZONTAL)
+    if (l_params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_HORIZONTAL)
     {
         *available_w -= occupy_w;
         *wrap_w += occupy_w;
         if (occupy_h > *wrap_h)
             *wrap_h = occupy_h;
     }
-    else if (l_params->orientation == TYPE_LAYOUT_ORIENTATION_VERTICAL)
+    else if (l_params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_VERTICAL)
     {
         *available_h -= occupy_h;
         *wrap_h += occupy_h;
@@ -104,8 +89,9 @@ static int LayoutUpdate(void *view)
     {
         void *c_view = LinkedListGetEntryData(entry);
         LayoutParams *c_params = LayoutParamsGetParams(c_view);
-        if ((params->orientation == TYPE_LAYOUT_ORIENTATION_HORIZONTAL && c_params->layout_w != TYPE_LAYOUT_MATH_PARENT) ||
-            (params->orientation == TYPE_LAYOUT_ORIENTATION_VERTICAL && c_params->layout_h != TYPE_LAYOUT_MATH_PARENT))
+        if (params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_FRAME ||
+            (params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_HORIZONTAL && c_params->layout_w != TYPE_LAYOUT_PARAMS_MATH_PARENT) ||
+            (params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_VERTICAL && c_params->layout_h != TYPE_LAYOUT_PARAMS_MATH_PARENT))
         {
             LayoutUpdateChildOne(layout, c_view, &view_available_w, &view_available_h, &view_wrap_w, &view_wrap_h);
             n_remainings--;
@@ -113,7 +99,7 @@ static int LayoutUpdate(void *view)
         entry = LinkedListNext(entry);
     }
 
-    // 再更新MATH_PARENT的子控件，第一个MATH_PARENT会占用掉所有空间
+    // 再更新MATH_PARENT的子控件，第一个MATH_PARENT会占用掉所有空间，以至于后面的视图将无法显示，暂时不支持weight属性
     if (n_remainings > 0)
     {
         entry = LinkedListHead(layout->childs);
@@ -121,8 +107,8 @@ static int LayoutUpdate(void *view)
         {
             void *c_view = LinkedListGetEntryData(entry);
             LayoutParams *c_params = LayoutParamsGetParams(c_view);
-            if ((params->orientation == TYPE_LAYOUT_ORIENTATION_HORIZONTAL && c_params->layout_w == TYPE_LAYOUT_MATH_PARENT) ||
-                (params->orientation == TYPE_LAYOUT_ORIENTATION_VERTICAL && c_params->layout_h == TYPE_LAYOUT_MATH_PARENT))
+            if ((params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_HORIZONTAL && c_params->layout_w == TYPE_LAYOUT_PARAMS_MATH_PARENT) ||
+                (params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_VERTICAL && c_params->layout_h == TYPE_LAYOUT_PARAMS_MATH_PARENT))
             {
                 LayoutUpdateChildOne(layout, c_view, &view_available_w, &view_available_h, &view_wrap_w, &view_wrap_h);
             }
@@ -136,9 +122,9 @@ static int LayoutUpdate(void *view)
     params->wrap_w = view_wrap_w;
     params->wrap_h = view_wrap_h;
 
-    if (params->layout_w == TYPE_LAYOUT_MATH_PARENT)
+    if (params->layout_w == TYPE_LAYOUT_PARAMS_MATH_PARENT)
         params->measured_w = view_max_w;
-    else if (params->layout_w == TYPE_LAYOUT_WRAP_CONTENT)
+    else if (params->layout_w == TYPE_LAYOUT_PARAMS_WRAP_CONTENT)
         params->measured_w = view_wrap_w;
     else
         params->measured_w = params->layout_w;
@@ -147,9 +133,9 @@ static int LayoutUpdate(void *view)
     if (params->measured_w < 0)
         params->measured_w = 0;
 
-    if (params->layout_h == TYPE_LAYOUT_MATH_PARENT)
+    if (params->layout_h == TYPE_LAYOUT_PARAMS_MATH_PARENT)
         params->measured_h = view_max_h;
-    else if (params->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
+    else if (params->layout_h == TYPE_LAYOUT_PARAMS_WRAP_CONTENT)
         params->measured_h = view_wrap_h;
     else
         params->measured_h = params->layout_h;
@@ -169,23 +155,25 @@ static int LayoutDrawChildOne(Layout *layout, void *view, int *x, int *y, int mi
     LayoutParams *l_params = LayoutParamsGetParams(layout);
     LayoutParams *c_params = LayoutParamsGetParams(view);
 
-    int occupy_w = c_params->measured_w + c_params->margin_left + c_params->margin_right;
+    int occupy_w = c_params->measured_w + c_params->margin_left + c_params->margin_right; // 视图实际所占的空间包括了margin，而measured不包括，所以需要加上
     int occupy_h = c_params->measured_h + c_params->margin_top + c_params->margin_bottom;
     int dx = *x + occupy_w;
     int dy = *y + occupy_h;
     int next_x = *x;
     int next_y = *y;
 
-    if (l_params->orientation == TYPE_LAYOUT_ORIENTATION_HORIZONTAL)
+    if (l_params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_HORIZONTAL)
     {
+        // 水平布局: x 前进，y 不变
         next_x = dx;
-        if (dx <= min_x)
+        if (dx <= min_x) // 当前控件未在视图里面，跳过绘制
             goto NEXT;
-        if (*x >= max_x)
+        if (*x >= max_x) // 当前及之后的控件都超出了视图，返回终止提示
             return -1;
     }
-    else if (l_params->orientation == TYPE_LAYOUT_ORIENTATION_VERTICAL)
+    else if (l_params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_VERTICAL)
     {
+        // 垂直布局: y 前进，x 不变
         next_y = dy;
         if (dy <= min_y)
             goto NEXT;
@@ -203,16 +191,16 @@ NEXT:
     return 0;
 }
 
-static void LayoutDraw(void *view)
+static int LayoutDraw(void *view)
 {
     if (!view)
-        return;
+        return -1;
 
     Layout *layout = (Layout *)view;
     LayoutParams *params = LayoutParamsGetParams(layout);
 
     if (params->measured_w <= 0 || params->measured_h <= 0)
-        return;
+        return 0;
 
     int view_x = params->layout_x + params->margin_left;
     int view_y = params->layout_y + params->margin_top;
@@ -229,6 +217,17 @@ static void LayoutDraw(void *view)
     int x = child_sx;
     int y = child_sy;
 
+    if (params->wrap_w < params->measured_w)
+    {
+        if (params->gravity & TYPE_LAYOUT_PARAMS_GRAVITY_RIGHT) // 设置子控件居右
+            x += (params->measured_w - params->wrap_w);
+    }
+    if (params->wrap_h < params->measured_h)
+    {
+        if (params->gravity & TYPE_LAYOUT_PARAMS_GRAVITY_BOTTOM) // 设置子控件居底
+            y += (params->measured_h - params->wrap_h);
+    }
+
     if (layout->bg_color)
         GUI_DrawFillRectangle(view_x, view_y, view_max_w, view_max_h, layout->bg_color);
 
@@ -237,21 +236,15 @@ static void LayoutDraw(void *view)
     LinkedListEntry *entry = LinkedListHead(layout->childs);
     while (entry)
     {
+        LinkedListEntry *next = LinkedListNext(entry);
         void *view = LinkedListGetEntryData(entry);
         if (LayoutDrawChildOne(layout, view, &x, &y, child_sx, child_sy, child_dx, child_dy) < 0)
             break;
-        entry = LinkedListNext(entry);
+        entry = next;
     }
 
     GUI_UnsetClipping();
-}
 
-int LayoutSetBgColor(Layout *layout, uint32_t color)
-{
-    if (!layout)
-        return -1;
-
-    layout->bg_color = color;
     return 0;
 }
 
@@ -260,11 +253,8 @@ int LayoutAddView(Layout *layout, void *view)
     if (!layout || !view)
         return 0;
 
-    if (layout->childs)
-    {
-        LinkedListAdd(layout->childs, view);
+    if (LinkedListAdd(layout->childs, view))
         return 1;
-    }
 
     return 0;
 }
@@ -274,11 +264,11 @@ int LayoutAddViewAbove(Layout *layout, void *view, void *above)
     if (!layout || !view || !above)
         return 0;
 
-    LinkedListEntry *a_entry = LayoutFindListEntryByView(layout, above);
+    LinkedListEntry *a_entry = LinkedListFindByData(layout->childs, above);
     if (a_entry)
     {
-        LinkedListAddAbove(layout->childs, a_entry, view);
-        return 1;
+        if (LinkedListAddAbove(layout->childs, a_entry, view))
+            return 1;
     }
 
     return 0;
@@ -289,11 +279,11 @@ int LayoutAddViewBelow(Layout *layout, void *view, void *below)
     if (!layout || !view || !below)
         return 0;
 
-    LinkedListEntry *b_entry = LayoutFindListEntryByView(layout, below);
+    LinkedListEntry *b_entry = LinkedListFindByData(layout->childs, below);
     if (b_entry)
     {
-        LinkedListAddBelow(layout->childs, b_entry, view);
-        return 1;
+        if (LinkedListAddBelow(layout->childs, b_entry, view))
+            return 1;
     }
 
     return 0;
@@ -304,7 +294,7 @@ int LayoutRemoveView(Layout *layout, void *view)
     if (!layout || !view)
         return 0;
 
-    LinkedListEntry *entry = LayoutFindListEntryByView(layout, view);
+    LinkedListEntry *entry = LinkedListFindByData(layout->childs, view);
     if (entry)
     {
         LinkedListRemove(layout->childs, entry);
@@ -320,28 +310,30 @@ int LayoutEmpty(Layout *layout)
         return -1;
 
     LinkedListEmpty(layout->childs);
-
     return 0;
 }
 
-int LayoutInit(Layout *layout)
+int LayoutSetBgColor(Layout *layout, uint32_t color)
 {
     if (!layout)
         return -1;
 
-    memset(layout, 0, sizeof(Layout));
-
-    layout->childs = NewLinkedList();
-    if (!layout->childs)
-        return -1;
-    LinkedListSetFreeEntryDataCallback(layout->childs, LayoutParamsDestroy);
-
-    LayoutParams *params = LayoutParamsGetParams(layout);
-    params->destroy = LayoutDestroy;
-    params->update = LayoutUpdate;
-    params->draw = LayoutDraw;
-
+    layout->bg_color = color;
     return 0;
+}
+
+int LayoutSetData(Layout *layout, void *data)
+{
+    if (!layout)
+        return -1;
+
+    layout->userdata = data;
+    return 0;
+}
+
+void *LayoutGetData(Layout *layout)
+{
+    return layout ? layout->userdata : NULL;
 }
 
 Layout *NewLayout()
@@ -349,12 +341,20 @@ Layout *NewLayout()
     Layout *layout = (Layout *)malloc(sizeof(Layout));
     if (!layout)
         return NULL;
+    memset(layout, 0, sizeof(Layout));
 
-    if (LayoutInit(layout) < 0)
+    layout->childs = NewLinkedList();
+    if (!layout->childs)
     {
         free(layout);
         return NULL;
     }
+    LinkedListSetFreeEntryDataCallback(layout->childs, LayoutParamsDestroy);
+
+    LayoutParams *params = LayoutParamsGetParams(layout);
+    params->destroy = LayoutDestroy;
+    params->update = LayoutUpdate;
+    params->draw = LayoutDraw;
 
     return layout;
 }

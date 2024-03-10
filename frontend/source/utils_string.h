@@ -1,6 +1,8 @@
 #ifndef __M_UTILS_STRING_H__
 #define __M_UTILS_STRING_H__
 
+#include "list/linked_list.h"
+
 #define IS_ENGLISH_CHARACTER(ch) ((ch >= 0x41 && ch <= 0x5A) || (ch >= 0x61 && ch <= 0x7A))
 
 void TrimString(char *str);

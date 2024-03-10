@@ -9,6 +9,9 @@
 #include "emu_video.h"
 #include "utils.h"
 
+#define ALIGN_UP(x, a) ((x) + ((a)-1)) & ~((a)-1)
+#define ALIGN_UP_10(x) ALIGN_UP(x, 0x10)
+
 // 每 0.05 秒记录一次
 #define NEXT_STATE_PERIOD 50000
 // 如果差异的大小超过 THRESHOLD_RATE，则保存全部
@@ -217,6 +220,7 @@ static int PreSaveDiffState(RewindBlock *block, uint8_t *buf_offset, RewindBlock
     }
 
     block->size += diff->num * sizeof(DiffArea);
+    block->size = ALIGN_UP_10(block->size);
     return 1;
 }
 
@@ -358,7 +362,7 @@ void Emu_InitRewind(size_t buffer_size)
     Emu_DeinitRewind();
 
     rs.state_size = retro_serialize_size();
-    rs.aligned_state_size = (rs.state_size + 0xf) & (~0xf);
+    rs.aligned_state_size = ALIGN_UP_10(rs.state_size);
     if (buffer_size < rs.aligned_state_size * MIN_STATE_RATE)
     {
         AppLog("[REWIND] the buffer size is too small, Minimum required is %DMB", (rs.aligned_state_size * MIN_STATE_RATE) >> 20);

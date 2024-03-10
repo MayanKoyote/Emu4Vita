@@ -14,7 +14,8 @@
 
 #define MICROS_PER_SECOND 1000000llu
 #define SHOW_PLAYER_DURATION_MICROS (MICROS_PER_SECOND * 2)
-#define MAX_TEXTURE_BUFS 2
+
+#define MAX_TEXTURE_BUFS 3
 
 static int video_okay = 0, video_pause = 1;
 static int video_display_need_update = 1;
@@ -30,19 +31,12 @@ static unsigned int video_width = 0, video_height = 0;
 static float video_x = 0.0f, video_y = 0.0f;
 static float video_x_scale = 1.0f, video_y_scale = 1.0f;
 static float video_rotate_rad = 0.0f;
+
 static unsigned int video_frames = 0;
 static float video_fps = 0.0f;
 
 static uint64_t last_fps_micros = 0;
 static uint64_t show_player_micros = 0;
-
-static uint64_t micros_per_frame = 0;
-static uint64_t last_frame_micros = 0;
-
-void Emu_SetMicrosPerFrame(uint64_t micros)
-{
-    micros_per_frame = micros;
-}
 
 void Emu_PauseVideo()
 {
@@ -127,33 +121,33 @@ void Emu_GetVideoBaseWH(uint32_t *width, uint32_t *height)
         else
             aspect_ratio = (float)*(overlay_data->viewport_width) / (float)*(overlay_data->viewport_height);
     }
-    else if (graphics_config.aspect_ratio == TYPE_ASPECT_RATIO_BY_GAME_RESOLUTION)
+    else if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_BY_GAME_RESOLUTION)
     {
         *width = base_width;
         *height = base_height;
         return;
     }
-    else if (graphics_config.aspect_ratio == TYPE_ASPECT_RATIO_DEFAULT)
+    else if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_DEFAULT)
     {
         aspect_ratio = core_system_av_info.geometry.aspect_ratio;
     }
-    else if (graphics_config.aspect_ratio == TYPE_ASPECT_RATIO_BY_DEV_SCREEN)
+    else if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_BY_DEVICE_SCREEN)
     {
         aspect_ratio = (float)GUI_SCREEN_WIDTH / (float)GUI_SCREEN_HEIGHT;
     }
-    else if (graphics_config.aspect_ratio == TYPE_ASPECT_RATIO_8_7)
+    else if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_8_7)
     {
         aspect_ratio = 8.f / 7.f;
     }
-    else if (graphics_config.aspect_ratio == TYPE_ASPECT_RATIO_4_3)
+    else if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_4_3)
     {
         aspect_ratio = 4.f / 3.f;
     }
-    else if (graphics_config.aspect_ratio == TYPE_ASPECT_RATIO_3_2)
+    else if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_3_2)
     {
         aspect_ratio = 3.f / 2.f;
     }
-    else if (graphics_config.aspect_ratio == TYPE_ASPECT_RATIO_16_9)
+    else if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_16_9)
     {
         aspect_ratio = 16.f / 9.f;
     }
@@ -292,6 +286,7 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
         goto END;
     }
 
+    GUI_LockDraw();
     GUI_WaitRenderingDone();
     GUI_StartDrawing(rendert_tex);
     if (video_shader && use_shader)
@@ -302,6 +297,7 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
                                        video_width, video_height, x_scale, y_scale, rotate_rad);
     GUI_EndDrawing();
     GUI_WaitRenderingDone();
+    GUI_UnlockDraw();
 
     // Alloc and copy screenshot data
     uint64_t conver_size = conver_width * conver_height * 4;
@@ -369,8 +365,6 @@ int Emu_SaveVideoScreenshot(char *path)
 
 void Emu_DestroyVideoTexture()
 {
-    GUI_WaitRenderingDone();
-
     int i;
     for (i = 0; i < 2; i++)
     {
@@ -380,7 +374,6 @@ void Emu_DestroyVideoTexture()
             video_texture_bufs[i] = NULL;
         }
     }
-
     video_texture = NULL;
 }
 
@@ -414,7 +407,6 @@ static void destroyOverlayTexture()
 {
     if (overlay_texture)
     {
-        GUI_WaitRenderingDone();
         GUI_DestroyTexture(overlay_texture);
         overlay_texture = NULL;
     }
@@ -543,32 +535,6 @@ static int updateVideoDisplay()
     return 0;
 }
 
-void Emu_DrawVideo()
-{
-    if (!video_okay)
-        return;
-
-    if (video_display_need_update)
-    {
-        updateVideoDisplay();
-        video_display_need_update = 0;
-    }
-
-    if (overlay_texture && graphics_config.overlay_mode == 1)
-        GUI_DrawTexture(overlay_texture, 0.0f, 0.0f);
-
-    if (video_texture)
-    {
-        if (video_shader)
-            GUI_DrawTextureShaderPartScalRotate(video_texture, video_shader, video_x, video_y, 0, 0, video_width, video_height, video_x_scale, video_y_scale, video_rotate_rad);
-        else
-            GUI_DrawTexturePartScaleRotate(video_texture, video_x, video_y, 0, 0, video_width, video_height, video_x_scale, video_y_scale, video_rotate_rad);
-    }
-
-    if (overlay_texture && graphics_config.overlay_mode == 0)
-        GUI_DrawTexture(overlay_texture, 0.0f, 0.0f);
-}
-
 static void refreshFps()
 {
     uint64_t cur_micros = sceKernelGetProcessTimeWide();
@@ -592,27 +558,28 @@ static void drawHeadMemInfo()
     GUI_DrawTextf( 0, GUI_GetLineHeight(), COLOR_GREEN, "Mem:%s/%s", used_string, total_string);
 }
 */
-static void checkFrameDelay()
+void Emu_DrawVideo()
 {
-    uint64_t cur_micros = sceKernelGetProcessTimeWide();
-    uint64_t interval_micros = cur_micros - last_frame_micros;
-    if (interval_micros < micros_per_frame)
+    if (!video_okay)
+        return;
+
+    if (overlay_texture && graphics_config.overlay_mode == TYPE_GRAPHICS_OVERLAY_MODE_BACKGROUND)
+        GUI_DrawTexture(overlay_texture, 0.0f, 0.0f);
+
+    if (video_texture)
     {
-        uint64_t delay_micros = micros_per_frame - interval_micros;
-        sceKernelDelayThread(delay_micros);
-        last_frame_micros = cur_micros + delay_micros;
+        if (video_shader)
+            GUI_DrawTextureShaderPartScalRotate(video_texture, video_shader, video_x, video_y, 0, 0, video_width, video_height, video_x_scale, video_y_scale, video_rotate_rad);
+        else
+            GUI_DrawTexturePartScaleRotate(video_texture, video_x, video_y, 0, 0, video_width, video_height, video_x_scale, video_y_scale, video_rotate_rad);
     }
-    else
-    {
-        last_frame_micros = cur_micros;
-    }
+
+    if (overlay_texture && graphics_config.overlay_mode == TYPE_GRAPHICS_OVERLAY_MODE_OVERLAY)
+        GUI_DrawTexture(overlay_texture, 0.0f, 0.0f);
 }
 
-static void displayVideo()
+void Emu_DrawVideoWidgets()
 {
-    GUI_StartDrawing(NULL);
-    Emu_DrawVideo();
-
     if (graphics_config.show_fps)
     {
         refreshFps();
@@ -634,11 +601,18 @@ static void displayVideo()
         else
             show_player_micros = 0;
     }
+}
 
-    // drawHeadMemInfo();
+void Emu_EventVideo()
+{
+    if (!video_okay)
+        return;
 
-    checkFrameDelay();
-    GUI_EndDrawing();
+    if (video_display_need_update)
+    {
+        updateVideoDisplay();
+        video_display_need_update = 0;
+    }
 }
 
 void Retro_VideoRefreshCallback(const void *data, unsigned width, unsigned height, size_t pitch)
@@ -647,7 +621,7 @@ void Retro_VideoRefreshCallback(const void *data, unsigned width, unsigned heigh
         return;
 
     if (!data || pitch <= 0 || (video_texture && GUI_GetTextureDatap(video_texture) == data))
-        goto DISPLAY_VIDEO;
+        return;
 
     if (video_width != width || video_height != height || !video_texture ||
         GUI_GetTextureFormat(video_texture) != core_video_pixel_format)
@@ -656,14 +630,14 @@ void Retro_VideoRefreshCallback(const void *data, unsigned width, unsigned heigh
     }
 
     video_texture_index = (video_texture_index + 1) % MAX_TEXTURE_BUFS;
-    video_texture = video_texture_bufs[video_texture_index];
+    GUI_Texture *dst_texture = video_texture_bufs[video_texture_index];
 
-    if (video_texture)
+    if (dst_texture)
     {
         const uint8_t *in_data = (const uint8_t *)data;
-        uint8_t *out_data = (uint8_t *)GUI_GetTextureDatap(video_texture);
+        uint8_t *out_data = (uint8_t *)GUI_GetTextureDatap(dst_texture);
         unsigned int in_pitch = pitch;
-        unsigned int out_pitch = GUI_GetTextureStride(video_texture);
+        unsigned int out_pitch = GUI_GetTextureStride(dst_texture);
 
         int i;
         for (i = 0; i < height; i++)
@@ -673,9 +647,7 @@ void Retro_VideoRefreshCallback(const void *data, unsigned width, unsigned heigh
             out_data += out_pitch;
         }
     }
-
-DISPLAY_VIDEO:
-    displayVideo();
+    video_texture = dst_texture;
 }
 
 int Emu_InitVideo()

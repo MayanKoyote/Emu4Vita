@@ -35,7 +35,7 @@ char **getDevices();
 LinkedListEntry *FileListFindEntryByName(LinkedList *list, const char *name);
 int FileListGetNumberByName(LinkedList *list, const char *name);
 
-int FileListGetDeviceEntries(LinkedList *list);
+int FileListGetDeviceEntries(LinkedList *list, int sort);
 int FileListGetDirectoryEntries(LinkedList *list, const char *path, int sort);
 int FileListGetEntries(LinkedList *list, const char *path, int sort);
 LinkedList *NewFileList();

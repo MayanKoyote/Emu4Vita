@@ -6,7 +6,7 @@
 
 #include <psp2/io/fcntl.h>
 
-#include "activity/splash.h"
+#include "activity/activity.h"
 #include "setting/setting.h"
 #include "gui/gui.h"
 #include "emu/emu.h"

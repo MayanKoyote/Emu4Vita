@@ -57,7 +57,7 @@ LinkedListEntry *FileListFindEntryByName(LinkedList *list, const char *name)
     while (entry)
     {
         FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
-        if (data->name_length == name_length && strcasecmp(data->name, name) == 0)
+        if (data->name && data->name_length == name_length && strcasecmp(data->name, name) == 0)
             return entry;
 
         entry = LinkedListNext(entry);
@@ -80,7 +80,7 @@ int FileListGetNumberByName(LinkedList *list, const char *name)
     while (entry)
     {
         FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
-        if (data->name_length == name_length && strcasecmp(data->name, name) == 0)
+        if (data->name && data->name_length == name_length && strcasecmp(data->name, name) == 0)
             return n;
 
         n++;
@@ -95,29 +95,38 @@ static int FileListCompareByName(void *data1, void *data2)
     if (!data1 || !data2)
         return -1;
 
+    int ret = -1;
     FileListEntryData *f_data1 = (FileListEntryData *)data1;
     FileListEntryData *f_data2 = (FileListEntryData *)data2;
-    char name1[MAX_NAME_LENGTH];
-    char name2[MAX_NAME_LENGTH];
 
-    strcpy(name1, f_data1->name);
-    RemoveEndSlash(name1);
-    strcpy(name2, f_data2->name);
-    RemoveEndSlash(name2);
+    if (f_data1->is_folder)
+        RemoveEndSlash(f_data1->name);
+    if (f_data2->is_folder)
+        RemoveEndSlash(f_data2->name);
 
     // Sort by name within the same type
     if (f_data1->is_folder == f_data2->is_folder)
-        return strnatcasecmp(name1, name2);
+        ret = strnatcasecmp(f_data1->name, f_data2->name);
     else
-        return f_data1->is_folder ? -1 : 1;
+        ret = f_data1->is_folder ? -1 : 1;
+
+    if (f_data1->is_folder)
+        AddEndSlash(f_data1->name);
+    if (f_data2->is_folder)
+        AddEndSlash(f_data2->name);
+
+    return ret;
 }
 
-int FileListGetDeviceEntries(LinkedList *list)
+int FileListGetDeviceEntries(LinkedList *list, int sort)
 {
     if (!list)
         return -1;
 
-    LinkedListSetCompareCallback(list, FileListCompareByName);
+    if (sort == SORT_BY_NAME)
+        LinkedListSetCompareCallback(list, FileListCompareByName);
+    else
+        LinkedListSetCompareCallback(list, NULL);
 
     FileListData *ls_data = (FileListData *)LinkedListGetListData(list);
 
@@ -231,7 +240,7 @@ int FileListGetEntries(LinkedList *list, const char *path, int sort)
 
     if (strcasecmp(path, HOME_PATH) == 0)
     {
-        return FileListGetDeviceEntries(list);
+        return FileListGetDeviceEntries(list, sort);
     }
 
     return FileListGetDirectoryEntries(list, path, sort);

@@ -7,14 +7,17 @@
 
 typedef struct Layout Layout;
 
-int LayoutSetBgColor(Layout *layout, uint32_t color);
-
 int LayoutAddView(Layout *layout, void *view);
 int LayoutAddViewAbove(Layout *layout, void *view, void *above);
 int LayoutAddViewBelow(Layout *layout, void *view, void *below);
 int LayoutRemoveView(Layout *layout, void *view);
 int LayoutEmpty(Layout *layout);
-int LayoutInit(Layout *layout);
+
+int LayoutSetBgColor(Layout *layout, uint32_t color);
+int LayoutSetData(Layout *layout, void *data);
+
+void *LayoutGetData(Layout *layout);
+
 Layout *NewLayout();
 
 #include "RectView.h"

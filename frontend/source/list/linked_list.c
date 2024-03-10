@@ -52,6 +52,11 @@ int LinkedListGetLength(LinkedList *list)
     return list ? list->length : 0;
 }
 
+LinkedList *LinkedListEntryGetParent(LinkedListEntry *entry)
+{
+    return entry ? entry->parent : NULL;
+}
+
 void LinkedListEntrySetFreeEntryDataCallback(LinkedListEntry *entry, LinkedListFreeDataCallback callback)
 {
     if (entry)
@@ -170,7 +175,7 @@ int LinkedListRemove(LinkedList *list, LinkedListEntry *entry)
     return 1;
 }
 
-static LinkedListEntry *LinkedListAddBase(LinkedList *list, LinkedListEntry *insert, void *data)
+static LinkedListEntry *LinkedListAddInsert(LinkedList *list, LinkedListEntry *insert, void *data)
 {
     if (!list || !data)
         return NULL;
@@ -234,19 +239,20 @@ static LinkedListEntry *LinkedListAddBase(LinkedList *list, LinkedListEntry *ins
 
 LinkedListEntry *LinkedListAdd(LinkedList *list, void *data)
 {
-    return LinkedListAddBase(list, NULL, data);
+    return LinkedListAddInsert(list, NULL, data);
 }
 
 LinkedListEntry *LinkedListAddAbove(LinkedList *list, LinkedListEntry *above, void *data)
 {
-    return LinkedListAddBase(list, above, data);
+    return LinkedListAddInsert(list, above, data);
 }
 
 LinkedListEntry *LinkedListAddBelow(LinkedList *list, LinkedListEntry *below, void *data)
 {
     if (below)
-        return LinkedListAddBase(list, below->next, data);
-    return LinkedListAddBase(list, NULL, data);
+        return LinkedListAddInsert(list, below->next, data);
+    else
+        return LinkedListAddInsert(list, NULL, data);
 }
 
 void LinkedListEmpty(LinkedList *list)

@@ -1,7 +1,9 @@
-#ifndef __M_BROWSER_H__
-#define __M_BROWSER_H__
+#ifndef __M_BROWSER_ACITVITY_H__
+#define __M_BROWSER_ACITVITY_H__
 
 #include "gui/gui.h"
+
+extern GUI_Activity browser_activity;
 
 int CurrentPathIsFile();
 int GetCurrentFileType();
