@@ -316,8 +316,8 @@ static int generic_pgf_draw_text(vita2d_pgf *font, int draw, int *height,
 
 		if (draw) {
 			vita2d_draw_texture_tint_part_scale(tex,
-				pen_x + data.bitmap_left * scale, 
-				pen_y + (font->max_ascender - data.bitmap_top) * scale,
+				pen_x + (data.bitmap_left - FONT_GLYPH_MARGIN / 2.0f) * scale, 
+				pen_y + (font->max_ascender - data.bitmap_top - FONT_GLYPH_MARGIN / 2.0f) * scale,
 				rect.x + FONT_GLYPH_MARGIN / 2.0f, rect.y + FONT_GLYPH_MARGIN / 2.0f,
 				rect.w - FONT_GLYPH_MARGIN / 2.0f, rect.h - FONT_GLYPH_MARGIN / 2.0f,
 				scale,
@@ -394,5 +394,5 @@ int vita2d_pgf_get_linespace(vita2d_pgf *font)
 
 int vita2d_pgf_get_lineheight(vita2d_pgf *font, int size)
 {
-	return size / (float)font->font_size * (float)font->max_height + 0.5f + FONT_GLYPH_MARGIN / 2.0f;
+	return size / (float)font->font_size * (float)font->max_height + 0.5f;
 }
