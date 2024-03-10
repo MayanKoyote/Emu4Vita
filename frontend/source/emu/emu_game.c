@@ -23,6 +23,7 @@ static int game_run_event_action_type = TYPE_GAME_RUN_EVENT_ACTION_NONE;
 static float game_run_speed = 1.0f;
 static double game_cur_fps = 0;
 static void *game_rom_data = NULL;
+static SceKernelLwMutexWork game_run_mutex = {0};
 
 static int makeSplashPicPath(char *path)
 {
@@ -91,14 +92,7 @@ void Emu_SpeedDownGame()
     Emu_SetRunSpeed(speed);
 }
 
-void Emu_RewindGame()
-{
-    // AppLog("Emu_RewindGame\n");
-    rewind_key_pressed = 1;
-}
-
-static int
-loadGameFromFile(const char *path, int type)
+static int loadGameFromFile(const char *path, int type)
 {
     const char *rom_path = path;
 
@@ -237,6 +231,7 @@ int Emu_StartGame(EmuGameInfo *info)
     AppLog("[GAME] Start game...\n");
 
     game_run_event_action_type = TYPE_GAME_RUN_EVENT_ACTION_NONE;
+    sceKernelCreateLwMutex(&game_run_mutex, "emu_rewind_mutex", 2, 0, NULL);
     retro_get_system_av_info(&core_system_av_info);
     Emu_SetRunSpeed(1.0f);
     Retro_SetControllerPortDevices();
@@ -256,9 +251,7 @@ int Emu_StartGame(EmuGameInfo *info)
     Emu_InitAudio();
     Emu_InitVideo();
     Emu_InitInput();
-
-    if (misc_config.enable_rewind)
-        Emu_InitRewind(misc_config.rewind_buffer_size << 20);
+    Emu_InitRewind();
 
     Emu_RequestUpdateVideoDisplay();
     Retro_UpdateCoreOptionsDisplay();
@@ -316,6 +309,7 @@ void Emu_ExitGame()
         Emu_DeinitVideo();
         Emu_DeinitInput();
         Emu_DeinitRewind();
+        sceKernelDeleteLwMutex(&game_run_mutex);
         game_exiting = 0;
         game_loaded = 0;
     }
@@ -335,6 +329,7 @@ void Emu_PauseGame()
     {
         game_running = 0;
         Emu_PauseCheat();
+        Emu_PauseRewind();
         Emu_PauseAudio();
         Emu_PauseVideo();
         if (game_run_event_action_type == TYPE_GAME_RUN_EVENT_ACTION_NONE)
@@ -348,6 +343,7 @@ void Emu_ResumeGame()
     {
         game_running = 1;
         Emu_ResumeCheat();
+        Emu_ResumeRewind();
         Emu_ResumeAudio();
         Emu_ResumeVideo();
         LockQuickMenu();
@@ -404,6 +400,13 @@ static void Emu_EventRunGame()
         Emu_ResumeGame();
     }
     break;
+    case TYPE_GAME_RUN_EVENT_ACTION_REWIND:
+    {
+        Emu_PauseGame();
+        Emu_RewindGame();
+        Emu_ResumeGame();
+    }
+    break;
     case TYPE_GAME_RUN_EVENT_ACTION_RESET:
     {
         Emu_PauseGame();
@@ -427,9 +430,19 @@ static void Emu_EventRunGame()
 
 void Emu_RunGame()
 {
+    Emu_LockRunGame();
     Emu_PollInput();
     retro_run();
     Emu_EventRunGame();
-    if (misc_config.enable_rewind)
-        Emu_RewindCheck();
+    Emu_UnlockRunGame();
+}
+
+void Emu_LockRunGame()
+{
+    sceKernelLockLwMutex(&game_run_mutex, 1, NULL);
+}
+
+void Emu_UnlockRunGame()
+{
+    sceKernelUnlockLwMutex(&game_run_mutex, 1);
 }

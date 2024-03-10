@@ -104,11 +104,11 @@ int ResetHotkeyConfig()
 {
     memset(&hotkey_config, 0, sizeof(HotkeyConfig));
     hotkey_config.version = HOTKEY_CONFIG_VERSION;
-    hotkey_config.hk_loadstate = DEFAULT_CONFIG_VALUE_HOTKEY_SAVE_STATE;
-    hotkey_config.hk_savestate = DEFAULT_CONFIG_VALUE_HOTKEY_LOAD_STATE;
+    hotkey_config.hk_savestate = DEFAULT_CONFIG_VALUE_HOTKEY_SAVE_STATE;
+    hotkey_config.hk_loadstate = DEFAULT_CONFIG_VALUE_HOTKEY_LOAD_STATE;
     hotkey_config.hk_speed_up = DEFAULT_CONFIG_VALUE_HOTKEY_SPEED_UP;
     hotkey_config.hk_speed_down = DEFAULT_CONFIG_VALUE_HOTKEY_SPEED_DOWN;
-    hotkey_config.hk_rewind = DEFAULT_CONFIG_VALUE_HOTKEY_REWIND;
+    hotkey_config.hk_rewind_game = DEFAULT_CONFIG_VALUE_HOTKEY_REWIND_GAME;
     hotkey_config.hk_player_up = DEFAULT_CONFIG_VALUE_HOTKEY_PLAYER_UP;
     hotkey_config.hk_player_down = DEFAULT_CONFIG_VALUE_HOTKEY_PLAYER_DOWN;
     hotkey_config.hk_exit_game = DEFAULT_CONFIG_VALUE_HOTKEY_EXIT_GAME;
@@ -122,7 +122,8 @@ int ResetMiscConfig()
     misc_config.version = MISC_CONFIG_VERSION;
     misc_config.auto_save_load = DEFAULT_CONFIG_VALUE_MISC_AUTO_SAVE_LOAD;
     misc_config.enable_rewind = DEFAULT_CONFIG_VALUE_MISC_ENABLE_REWIND;
-    misc_config.rewind_buffer_size = DEFAULT_CONFIG_VALUE_MISC_REWIND_BUFFER_SIZE;
+    misc_config.rewind_max_count = DEFAULT_CONFIG_VALUE_MISC_REWIND_MAX_COUNT;
+    misc_config.rewind_interval_time = DEFAULT_CONFIG_VALUE_MISC_REWIND_INTERVAL_TIME;
 
     return 0;
 }

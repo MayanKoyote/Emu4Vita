@@ -320,15 +320,17 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     // LANG_BACK_TOUCH_TO_BUTTON
     "Back touch to button",
     // LANG_TURBO_DELAY
-    "Turbo delay (frame)",
+    "Turbo delay (frames)",
 
     /**************  Menu misc  *****************/
     // LANG_AUTO_SAVE_LOAD_STATE
     "Auto save/load state",
     // LANG_ENABLE_REWIND
     "Enable game rewind",
-    // LANG_REWIND_BUFFER_SIZE
-    "Rewind Buffer Size (MB)",
+    // LANG_REWIND_MAX_COUNT
+    "Max rewind count",
+    // LANG_REWIND_INTERVAL_TIME
+    "Rewind interval time (seconds)",
     // LANG_SAVE_SCREENSHOT
     "Save screenshot",
     // LANG_SAVE_PREVIEW
@@ -723,8 +725,10 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "自动存读档",
     // LANG_ENABLE_REWIND
     "启用回溯",
-    // LANG_REWIND_BUFFER_SIZE
-    "回溯缓冲区大小 (MB)",
+    // LANG_REWIND_MAX_COUNT
+    "最大回溯次数",
+    // LANG_REWIND_INTERVAL_TIME
+    "回溯间隔时间 (秒)",
     // LANG_SAVE_SCREENSHOT
     "保存截图",
     // LANG_SAVE_PREVIEW
@@ -749,7 +753,7 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     // LANG_HOTKEY_GAME_SPEED_DOWN
     "[快捷键] 减速游戏",
     // LANG_HOTKEY_GAME_REWIND
-    "[快捷键] 回溯",
+    "[快捷键] 回溯游戏",
     // LANG_HOTKEY_CONTROL_PLAYER_UP
     "[快捷键] 切换玩家+",
     // LANG_HOTKEY_CONTROL_PLAYER_DOWN
@@ -1118,9 +1122,11 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     // LANG_AUTO_SAVE_LOAD_STATE
     "自動存讀檔",
     // LANG_ENABLE_REWIND
-    "開啟倒帶",
-    // LANG_REWIND_BUFFER_SIZE
-    "倒帶緩衝區大小 (MB)",
+    "開啟回溯",
+    // LANG_REWIND_MAX_COUNT
+    "最大回溯次數",
+    // LANG_REWIND_INTERVAL_TIME
+    "回溯間隔時間 (秒)",
     // LANG_SAVE_SCREENSHOT
     "保存截圖",
     // LANG_SAVE_PREVIEW
@@ -1145,7 +1151,7 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     // LANG_HOTKEY_GAME_SPEED_DOWN
     "[快捷鍵] 減速遊戲",
     // LANG_HOTKEY_GAME_REWIND
-    "[快捷鍵] 倒帶",
+    "[快捷鍵] 回溯遊戲",
     // LANG_HOTKEY_CONTROL_PLAYER_UP
     "[快捷鍵] 切換玩家+",
     // LANG_HOTKEY_CONTROL_PLAYER_DOWN

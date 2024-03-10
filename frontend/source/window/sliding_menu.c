@@ -29,11 +29,12 @@ struct SlidingMenu
     int listview_wrap_w;
     int listview_wrap_h;
     int listview_scroll_y;
-    int popupmenu_x;
-    int popupmenu_y;
-    int popupmenu_w;
-    int popupmenu_h;
+    int slidingmenu_x;
+    int slidingmenu_y;
+    int slidingmenu_w;
+    int slidingmenu_h;
     int (*onItemClick)(SlidingMenu *slidingMenu, int which);
+    int (*onSelectChanged)(SlidingMenu *slidingMenu);
     int (*onClose)(SlidingMenu *slidingMenu);
     void (*freeUserData)(void *data);
     void *userdata;
@@ -83,12 +84,12 @@ static int SlidingMenu_UpdateLayout(SlidingMenu *slidingMenu)
     GUI_GetWindowLayoutPosition(&window_x, &window_y);
     GUI_GetWindowAvailableSize(&window_w, &window_h);
 
-    int popupmenu_max_w = window_w;
-    int popupmenu_max_h = window_h;
-    int popupmenu_x = window_x;
-    int popupmenu_y = window_y;
-    int popupmenu_w = popupmenu_max_w;
-    int popupmenu_h = popupmenu_max_h;
+    int slidingmenu_max_w = window_w;
+    int slidingmenu_max_h = window_h;
+    int slidingmenu_x = window_x;
+    int slidingmenu_y = window_y;
+    int slidingmenu_w = slidingmenu_max_w;
+    int slidingmenu_h = slidingmenu_max_h;
     int listview_wrap_w = slidingMenu->listview_wrap_w;
     int listview_wrap_h = slidingMenu->listview_wrap_h;
 
@@ -100,41 +101,41 @@ static int SlidingMenu_UpdateLayout(SlidingMenu *slidingMenu)
 
     if (slidingMenu->mode == TYPE_SLIDING_MENU_MODE_TOP) // 从顶部往下弹出
     {
-        popupmenu_max_h = window_h * 2.0f / 3.0f;
-        popupmenu_h = MAX(listview_wrap_h, ITEMS_LISTVIEW_MIN_HEIGHT);
-        if (popupmenu_h > popupmenu_max_h)
-            popupmenu_h = popupmenu_max_h;
+        slidingmenu_max_h = window_h * 2.0f / 3.0f;
+        slidingmenu_h = MAX(listview_wrap_h, ITEMS_LISTVIEW_MIN_HEIGHT);
+        if (slidingmenu_h > slidingmenu_max_h)
+            slidingmenu_h = slidingmenu_max_h;
     }
     else if (slidingMenu->mode == TYPE_SLIDING_MENU_MODE_BOTTOM) // 从底部往上弹出
     {
-        popupmenu_max_h = window_h * 2.0f / 3.0f;
-        popupmenu_h = MAX(listview_wrap_h, ITEMS_LISTVIEW_MIN_HEIGHT);
-        if (popupmenu_h > popupmenu_max_h)
-            popupmenu_h = popupmenu_max_h;
-        popupmenu_y = window_y + window_h - popupmenu_h;
+        slidingmenu_max_h = window_h * 2.0f / 3.0f;
+        slidingmenu_h = MAX(listview_wrap_h, ITEMS_LISTVIEW_MIN_HEIGHT);
+        if (slidingmenu_h > slidingmenu_max_h)
+            slidingmenu_h = slidingmenu_max_h;
+        slidingmenu_y = window_y + window_h - slidingmenu_h;
     }
     else if (slidingMenu->mode == TYPE_SLIDING_MENU_MODE_LEFT) // 从左侧往右弹出
     {
-        popupmenu_max_w = window_w * 2.0f / 3.0f;
-        popupmenu_w = MAX(listview_wrap_w, ITEMS_LISTVIEW_MIN_WIDTH);
-        if (popupmenu_w > popupmenu_max_w)
-            popupmenu_w = popupmenu_max_w;
+        slidingmenu_max_w = window_w * 2.0f / 3.0f;
+        slidingmenu_w = MAX(listview_wrap_w, ITEMS_LISTVIEW_MIN_WIDTH);
+        if (slidingmenu_w > slidingmenu_max_w)
+            slidingmenu_w = slidingmenu_max_w;
     }
     else // 默认从右侧往左弹出
     {
-        popupmenu_max_w = window_w * 2.0f / 3.0f;
-        popupmenu_w = MAX(listview_wrap_w, ITEMS_LISTVIEW_MIN_WIDTH);
-        if (popupmenu_w > popupmenu_max_w)
-            popupmenu_w = popupmenu_max_w;
-        popupmenu_x = window_x + window_w - popupmenu_w;
+        slidingmenu_max_w = window_w * 2.0f / 3.0f;
+        slidingmenu_w = MAX(listview_wrap_w, ITEMS_LISTVIEW_MIN_WIDTH);
+        if (slidingmenu_w > slidingmenu_max_w)
+            slidingmenu_w = slidingmenu_max_w;
+        slidingmenu_x = window_x + window_w - slidingmenu_w;
     }
 
-    slidingMenu->popupmenu_x = popupmenu_x;
-    slidingMenu->popupmenu_y = popupmenu_y;
-    slidingMenu->popupmenu_w = popupmenu_w;
-    slidingMenu->popupmenu_h = popupmenu_h;
-    slidingMenu->listview_w = popupmenu_w - SLIDINGMENU_PADDING_L * 2;
-    slidingMenu->listview_h = popupmenu_h - SLIDINGMENU_PADDING_T * 2;
+    slidingMenu->slidingmenu_x = slidingmenu_x;
+    slidingMenu->slidingmenu_y = slidingmenu_y;
+    slidingMenu->slidingmenu_w = slidingmenu_w;
+    slidingMenu->slidingmenu_h = slidingmenu_h;
+    slidingMenu->listview_w = slidingmenu_w - SLIDINGMENU_PADDING_L * 2;
+    slidingMenu->listview_h = slidingmenu_h - SLIDINGMENU_PADDING_T * 2;
 
     SlidingMenu_SetFocusPos(slidingMenu, 0);
 
@@ -160,57 +161,57 @@ static int onDrawWindow(GUI_Window *window)
     if (!slidingMenu)
         return -1;
 
-    int popupmenu_sx = slidingMenu->popupmenu_x;
-    int popupmenu_sy = slidingMenu->popupmenu_y;
-    int popupmenu_w = slidingMenu->popupmenu_w;
-    int popupmenu_h = slidingMenu->popupmenu_h;
-    int popupmenu_dx = popupmenu_sx + popupmenu_w;
-    int popupmenu_dy = popupmenu_sy + popupmenu_h;
+    int slidingmenu_sx = slidingMenu->slidingmenu_x;
+    int slidingmenu_sy = slidingMenu->slidingmenu_y;
+    int slidingmenu_w = slidingMenu->slidingmenu_w;
+    int slidingmenu_h = slidingMenu->slidingmenu_h;
+    int slidingmenu_dx = slidingmenu_sx + slidingmenu_w;
+    int slidingmenu_dy = slidingmenu_sy + slidingmenu_h;
 
-    int popupmenu_show_x = popupmenu_sx;
-    int popupmenu_show_y = popupmenu_sy;
-    int popupmenu_show_w = popupmenu_w;
-    int popupmenu_show_h = popupmenu_h;
+    int slidingmenu_show_x = slidingmenu_sx;
+    int slidingmenu_show_y = slidingmenu_sy;
+    int slidingmenu_show_w = slidingmenu_w;
+    int slidingmenu_show_h = slidingmenu_h;
 
     // 更新滚动坐标
     if (slidingMenu->gradual_count < MAX_SLIDINGMENU_GRADUAL_COUNT)
     {
         if (slidingMenu->mode == TYPE_SLIDING_MENU_MODE_TOP) // 从顶部往下弹出
         {
-            popupmenu_show_h = getGradualSize(popupmenu_h, slidingMenu->gradual_count, MAX_SLIDINGMENU_GRADUAL_COUNT);
-            popupmenu_sy -= (popupmenu_h - popupmenu_show_h);
+            slidingmenu_show_h = getGradualSize(slidingmenu_h, slidingMenu->gradual_count, MAX_SLIDINGMENU_GRADUAL_COUNT);
+            slidingmenu_sy -= (slidingmenu_h - slidingmenu_show_h);
         }
         else if (slidingMenu->mode == TYPE_SLIDING_MENU_MODE_BOTTOM) // 从底部往上弹出
         {
-            popupmenu_show_h = getGradualSize(popupmenu_h, slidingMenu->gradual_count, MAX_SLIDINGMENU_GRADUAL_COUNT);
-            popupmenu_sy += (popupmenu_h - popupmenu_show_h);
-            popupmenu_show_y = popupmenu_sy;
+            slidingmenu_show_h = getGradualSize(slidingmenu_h, slidingMenu->gradual_count, MAX_SLIDINGMENU_GRADUAL_COUNT);
+            slidingmenu_sy += (slidingmenu_h - slidingmenu_show_h);
+            slidingmenu_show_y = slidingmenu_sy;
         }
         else if (slidingMenu->mode == TYPE_SLIDING_MENU_MODE_LEFT) // 从左侧往右弹出
         {
-            popupmenu_show_w = getGradualSize(popupmenu_w, slidingMenu->gradual_count, MAX_SLIDINGMENU_GRADUAL_COUNT);
-            popupmenu_sx -= (popupmenu_w - popupmenu_show_w);
+            slidingmenu_show_w = getGradualSize(slidingmenu_w, slidingMenu->gradual_count, MAX_SLIDINGMENU_GRADUAL_COUNT);
+            slidingmenu_sx -= (slidingmenu_w - slidingmenu_show_w);
         }
         else // 默认从右侧往左弹出
         {
-            popupmenu_show_w = getGradualSize(popupmenu_w, slidingMenu->gradual_count, MAX_SLIDINGMENU_GRADUAL_COUNT);
-            popupmenu_sx += (popupmenu_w - popupmenu_show_w);
-            popupmenu_show_x = popupmenu_sx;
+            slidingmenu_show_w = getGradualSize(slidingmenu_w, slidingMenu->gradual_count, MAX_SLIDINGMENU_GRADUAL_COUNT);
+            slidingmenu_sx += (slidingmenu_w - slidingmenu_show_w);
+            slidingmenu_show_x = slidingmenu_sx;
         }
     }
 
-    int child_sx = popupmenu_sx + SLIDINGMENU_PADDING_L;
-    int child_sy = popupmenu_sy + SLIDINGMENU_PADDING_T;
-    int child_dx = popupmenu_dx - SLIDINGMENU_PADDING_L;
-    int child_dy = popupmenu_dy - SLIDINGMENU_PADDING_T;
+    int child_sx = slidingmenu_sx + SLIDINGMENU_PADDING_L;
+    int child_sy = slidingmenu_sy + SLIDINGMENU_PADDING_T;
+    int child_dx = slidingmenu_dx - SLIDINGMENU_PADDING_L;
+    int child_dy = slidingmenu_dy - SLIDINGMENU_PADDING_T;
     int child_w = child_dx - child_sx;
     int child_h = child_dy - child_sy;
 
     // Set slidingMenu clip
-    GUI_SetClipping(popupmenu_show_x, popupmenu_show_y, popupmenu_show_w, popupmenu_show_h);
+    GUI_SetClipping(slidingmenu_show_x, slidingmenu_show_y, slidingmenu_show_w, slidingmenu_show_h);
 
     // Draw slidingMenu bg
-    GUI_DrawFillRectangle(popupmenu_sx, popupmenu_sy, popupmenu_w, popupmenu_h, SLIDINGMENU_COLOR_BG);
+    GUI_DrawFillRectangle(slidingmenu_sx, slidingmenu_sy, slidingmenu_w, slidingmenu_h, SLIDINGMENU_COLOR_BG);
 
     // Set childs clip
     GUI_SetClipping(child_sx, child_sy, child_w, child_h);
@@ -365,6 +366,23 @@ static int onCtrlWindow(GUI_Window *window)
 
         if (slidingMenu->onItemClick)
             slidingMenu->onItemClick(slidingMenu, slidingMenu->focus_pos);
+    }
+    else if (released_pad[PAD_TRIANGLE]) // 多选模式下清除所有选中
+    {
+        if (slidingMenu->selects)
+        {
+            if (slidingMenu->choice_type == TYPE_SLIDING_MENU_CHOICE_MULTIPLE)
+            {
+                int i;
+                for (i = 0; i < slidingMenu->n_items; i++)
+                {
+                    slidingMenu->selects[i] = 0;
+                }
+            }
+        }
+
+        if (slidingMenu->onSelectChanged)
+            slidingMenu->onSelectChanged(slidingMenu);
     }
     else if (released_pad[PAD_CANCEL] || released_pad[PAD_PSBUTTON])
     {
@@ -643,6 +661,16 @@ int SlidingMenu_SetOnItemClickListener(SlidingMenu *slidingMenu, int (*onItemCli
         return -1;
 
     slidingMenu->onItemClick = onItemClickListener;
+
+    return 0;
+}
+
+int SlidingMenu_SetOnSelectChangedListener(SlidingMenu *slidingMenu, int (*onSelectChangedListener)(SlidingMenu *slidingMenu))
+{
+    if (!slidingMenu)
+        return -1;
+
+    slidingMenu->onSelectChanged = onSelectChangedListener;
 
     return 0;
 }

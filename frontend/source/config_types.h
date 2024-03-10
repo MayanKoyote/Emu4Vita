@@ -52,12 +52,10 @@
 #define MAX_CONFIG_VALUE_LENGTH 1024
 #define MAX_CONFIG_LINE_LENGTH 2048
 
-#define TURBO_BITMASK_KEY (1 << 30)
+#define TURBO_BITMASK_KEY (1 << 31)
 #define RETRO_BITMASK_KEY(id) (1 << id)
 #define TURBO_RETRO_BITMASK_KEY(id) ((1 << id) | TURBO_BITMASK_KEY)
-
-#define MIN_REWIND_BUFFER_SIZE 10
-#define MAX_REWIND_BUFFER_SIZE 50
+#define TURBO_LOCAL_BITMASK_KEY(id) (id | TURBO_BITMASK_KEY)
 
 typedef enum DisplaySizeType
 {
@@ -177,7 +175,7 @@ typedef struct
     uint32_t hk_savestate;   // 0x08
     uint32_t hk_speed_up;    // 0x0C
     uint32_t hk_speed_down;  // 0x10
-    uint32_t hk_rewind;      // 0x14
+    uint32_t hk_rewind_game; // 0x14
     uint32_t hk_player_up;   // 0x18
     uint32_t hk_player_down; // 0x1c
     uint32_t hk_exit_game;   // 0x20
@@ -186,23 +184,24 @@ typedef struct
 
 typedef struct
 {
-    uint32_t version;           // 0x00
-    uint32_t auto_save_load;    // 0x04
-    uint32_t enable_rewind;     // 0x08
-    int32_t rewind_buffer_size; // 0x0c
-    char reserved[0x70];        // 0x10
-} MiscConfig;                   // 0x80
+    uint32_t version;             // 0x00
+    uint32_t auto_save_load;      // 0x04
+    uint32_t enable_rewind;       // 0x08
+    int32_t rewind_max_count;     // 0x0c
+    int32_t rewind_interval_time; // 0x10
+    char reserved[0x6c];          // 0x14
+} MiscConfig;                     // 0x80
 
 typedef struct
 {
-    uint32_t version;            // 0x00
-    uint32_t preview_path;       // 0x04
+    uint32_t version;       // 0x00
+    uint32_t preview_path;  // 0x04
     uint32_t preview_style; // 0x08
-    uint32_t app_log;            // 0x0C
-    uint32_t core_log;           // 0x10
-    uint32_t show_log;           // 0x14
-    uint32_t language;           // 0x18
-    char reserved[0x64];         // 0x1C
-} AppConfig;                     // 0x80
+    uint32_t app_log;       // 0x0C
+    uint32_t core_log;      // 0x10
+    uint32_t show_log;      // 0x14
+    uint32_t language;      // 0x18
+    char reserved[0x64];    // 0x1C
+} AppConfig;                // 0x80
 
 #endif

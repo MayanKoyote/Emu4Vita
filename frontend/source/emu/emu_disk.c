@@ -111,18 +111,6 @@ int Emu_DiskGetImageLabel(unsigned index, char *label, size_t len)
     return 0;
 }
 
-void printDiskInfo()
-{
-    if (!core_disk_control_ext_callback)
-        return;
-    
-    int eject_state = Emu_DiskGetEjectState();
-    int image_index = Emu_DiskGetImageIndex();
-    int num_images = Emu_DiskGetNumImages();
-
-    printf("[DISK] eject_state = %d, image_index = %d, num_images = %d\n", eject_state, image_index, num_images);
-}
-
 int Emu_DiskChangeImageIndex(int index)
 {
     if (!Emu_HasDiskControl())
