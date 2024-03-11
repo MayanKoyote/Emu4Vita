@@ -34,27 +34,27 @@ struct SettingWindow
 };
 
 // Window
-#define WINDOW_WIDTH 960.0f  // 840.0f
-#define WINDOW_HEIGHT 544.0f // 476.0f
-#define WINDOW_PADDING 0.0f
+#define WINDOW_WIDTH 960  // 840
+#define WINDOW_HEIGHT 544 // 476
+#define WINDOW_PADDING 0
 #define WINDOW_SX (GUI_SCREEN_WIDTH - WINDOW_WIDTH) / 2
 #define WINDOW_SY (GUI_SCREEN_HEIGHT - WINDOW_HEIGHT) / 2
 #define WINDOW_DX (WINDOW_SX + WINDOW_WIDTH)
 #define WINDOW_DY (WINDOW_SY + WINDOW_HEIGHT)
 #define WINDOW_BG_COLOR COLOR_ALPHA(COLOR_BLACK, 0xAF)
 
-#define MENU_LAYOUT_CHILD_MARGIN 8.0f
+#define MENU_LAYOUT_CHILD_MARGIN 8
 
-#define MENU_TABVIEW_PADDING_L 10.0f
-#define MENU_TABVIEW_PADDING_T 10.0f
-#define MENU_TABVIEW_DIVIER_SIZE 3.0f
+#define MENU_TABVIEW_PADDING_L 10
+#define MENU_TABVIEW_PADDING_T 10
+#define MENU_TABVIEW_DIVIER_SIZE 3
 #define MENU_TABVIEW_HEIGHT (GUI_GetLineHeight() + MENU_TABVIEW_PADDING_T * 2 + MENU_TABVIEW_DIVIER_SIZE)
 
-#define MENU_LISTVIEW_PADDING_L 0.0f
-#define MENU_LISTVIEW_PADDING_T 8.0f
+#define MENU_LISTVIEW_PADDING_L 0
+#define MENU_LISTVIEW_PADDING_T 8
 
-#define MENU_ITEMVIEW_PADDING_L 10.0f
-#define MENU_ITEMVIEW_PADDING_T 6.0f
+#define MENU_ITEMVIEW_PADDING_L 10
+#define MENU_ITEMVIEW_PADDING_T 6
 #define MENU_ITEMVIEW_HEIGHT (GUI_GetLineHeight() + MENU_ITEMVIEW_PADDING_T * 2)
 
 #define MENU_ITEMVIEW_COLOR_FOCUS_BG GUI_DEF_COLOR_FOCUS
@@ -106,7 +106,7 @@ static int Setting_UpdateWindowLayout(SettingWindow *window)
     if (scroll_y > max_srcoll_y)
         scroll_y = max_srcoll_y;
 
-    window->listview_wrap_h = itemviews_h + MENU_LISTVIEW_PADDING_T * 2;
+    window->listview_wrap_h = itemviews_wrap_h + MENU_LISTVIEW_PADDING_T * 2;
     window->listview_scroll_y = scroll_y;
 
     return 0;
@@ -429,6 +429,7 @@ static int drawMenu(SettingWindow *st_window, int x, int y, int w, int h)
     int itemviews_w = itemviews_dx - itemviews_sx;
     int itemviews_h = itemviews_dy - itemviews_sy;
     int itemviews_wrap_h = st_window->listview_wrap_h - MENU_LISTVIEW_PADDING_T * 2;
+    int itemview_w = itemviews_w;
     int itemview_h = MENU_ITEMVIEW_HEIGHT;
 
     int itemview_x = itemviews_sx;
@@ -458,7 +459,7 @@ static int drawMenu(SettingWindow *st_window, int x, int y, int w, int h)
                 break;
 
             if (i == menu_pos)
-                GUI_DrawFillRectangle(itemview_x, itemview_y, itemviews_w, itemview_h, MENU_ITEMVIEW_COLOR_FOCUS_BG);
+                GUI_DrawFillRectangle(itemview_x, itemview_y, itemview_w, itemview_h, MENU_ITEMVIEW_COLOR_FOCUS_BG);
 
             text_y = itemview_y + MENU_ITEMVIEW_PADDING_T;
 
@@ -698,7 +699,7 @@ int Setting_CloseWindow(SettingWindow *window)
         return -1;
 
     if (window->status == TYPE_SETTING_WINDOW_STATUS_DISMISS) // 已经在关闭中
-        return -1;
+        return 0;
 
     if (window->status == TYPE_SETTING_WINDOW_STATUS_SHOW)
         window->status = TYPE_SETTING_WINDOW_STATUS_DISMISS; // 设置状态，通过onEventWindow关闭

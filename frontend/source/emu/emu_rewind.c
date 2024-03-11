@@ -67,12 +67,27 @@ static int RewindSaveState()
         goto FAILED;
 
     void *state_data = malloc(state_size);
-    retro_serialize(state_data, state_size);
+    if (!state_data)
+    {
+        GUI_ShowToast("[REWIND] Failed to malloc state data, please try to reduce the max rewind count!", 2); // 无法分配内存
+        while (!state_data && LinkedListGetLength(rewind_list) > 0)
+        {
+            LinkedListEntry *head = LinkedListHead(rewind_list);
+            LinkedListRemove(rewind_list, head); // 释放旧存档
+            state_data = malloc(state_size);
+        }
+        if (!state_data)
+            goto FAILED;
+    }
+    if (!retro_serialize(state_data, state_size))
+    {
+        free(state_data);
+        goto FAILED;
+    }
 
     RewindEntryData *data = (RewindEntryData *)calloc(1, sizeof(RewindEntryData));
     if (!data)
     {
-        GUI_ShowToast("[REWIND] Failed to malloc state data, please try to reduce the max rewind count!\n", 2); // 无法分配内存
         free(state_data);
         goto FAILED;
     }

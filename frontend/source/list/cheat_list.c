@@ -57,8 +57,6 @@ static int checkCheatConfig(CheatListEntryData *data, int idx, char *key, char *
 
     p = ++p2; // 前进跳过'_'
 
-    int found = 1;
-
     if (strcmp(p, "desc") == 0)
     {
         if (!data->desc)
@@ -161,15 +159,6 @@ static int checkCheatConfig(CheatListEntryData *data, int idx, char *key, char *
     {
         data->value = StringToDecimal(value);
     }
-    else
-    {
-        found = 0;
-    }
-
-    if (found)
-    {
-        // printf("Add Found: index: %d, key: %s, value: %s\n", idx, p, value);
-    }
 
     return 1;
 }
@@ -185,18 +174,14 @@ int CheatListGetEntriesFromBuffer(LinkedList *list, void *buffer, int size)
 
     ConfigListGetEntriesFromBuffer(cfg_list, buffer, size);
 
-    LinkedListEntry *cht_entry = NULL;
-    CheatListEntryData *cht_data = NULL;
     int i;
     for (i = 0; LinkedListGetLength(cfg_list) > 0; i++)
     {
-        cht_data = (CheatListEntryData *)calloc(1, sizeof(CheatListEntryData));
+        CheatListEntryData *cht_data = (CheatListEntryData *)calloc(1, sizeof(CheatListEntryData));
         if (!cht_data)
             break;
-        cht_entry = LinkedListAdd(list, cht_data);
 
         LinkedListEntry *cfg_entry = LinkedListHead(cfg_list);
-
         while (cfg_entry)
         {
             LinkedListEntry *next_cfg_entry = LinkedListNext(cfg_entry);
@@ -208,11 +193,12 @@ int CheatListGetEntriesFromBuffer(LinkedList *list, void *buffer, int size)
 
             cfg_entry = next_cfg_entry;
         }
-    }
 
-    cht_data = (CheatListEntryData *)LinkedListGetEntryData(cht_entry);
-    if (cht_data && !cht_data->desc)
-        LinkedListRemove(list, cht_entry);
+        if (!cht_data->desc)
+            freeEntryData(cht_data);
+        else
+            LinkedListAdd(list, cht_data);
+    }
 
     // cht_entry = LinkedListHead(list);
     // i = 0;

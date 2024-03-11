@@ -28,7 +28,7 @@
 #define GUI_DEF_COLOR_BG 0xAF0F0F0F
 #define GUI_DEF_COLOR_FOCUS COLOR_ALPHA(COLOR_AZURE, 0xDF)
 
-void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int max_len, int draw_len, int cur_len, int draw_track);
+void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int max_len, int draw_len, int scroll_len, int draw_track);
 
 void GUI_SetBackToMainActivityEnabled(int enabled);
 void GUI_SetDefaultWallpaper(GUI_Texture *texture);

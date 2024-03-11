@@ -5,6 +5,7 @@
 
 #include "gui/gui.h"
 #include "utils.h"
+
 typedef enum SlidingMenuStatusType
 {
     TYPE_SLIDING_MENU_STATUS_HIDE,
@@ -504,7 +505,7 @@ int SlidingMenu_Dismiss(SlidingMenu *slidingMenu)
         return -1;
 
     if (slidingMenu->status == TYPE_SLIDING_MENU_STATUS_DISMISS) // 已经在关闭中
-        return -1;
+        return 0;
 
     if (slidingMenu->status == TYPE_SLIDING_MENU_STATUS_SHOW)
         slidingMenu->status = TYPE_SLIDING_MENU_STATUS_DISMISS; // 设置状态，通过onEventWindow关闭
