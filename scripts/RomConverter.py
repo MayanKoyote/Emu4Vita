@@ -113,7 +113,22 @@ class Pegasus(Base):
     DATA_NAME = 'metadata.pegasus.txt'
 
     def load(self, data_path):
-        pass
+        data = {}
+        for line in open(Path(data_path) / self.DATA_NAME, encoding='utf-8'):
+            if ':' in line:
+                k, v = line.split(':', 1)
+                k = k.strip()
+                v = v.strip()
+                if k == 'game' and 'game' in data:
+                    self[data['game']] = data
+                    data = {}
+                data[k] = v
+
+        if 'game' in data:
+            self[data['game']] = data
+
+    def get_rom_path(self, key):
+        return self.path / self[key]['file']
 
 
 class RetroArch(Base):
