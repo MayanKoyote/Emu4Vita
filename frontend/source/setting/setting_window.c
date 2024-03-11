@@ -29,10 +29,6 @@ struct SettingWindow
     GUI_Window *window;
     SettingContext *context;
     int status;
-    SettingMenu *visible_menus; // 可见的menus
-    int n_visible_menus;
-    SettingMenuItem *visible_items; // 可见的items
-    int n_visible_items;
     int listview_wrap_h;
     int listview_scroll_y;
 };
@@ -141,7 +137,7 @@ static int moveMenuPos(SettingMenu *menu, int move_type)
             else
                 break;
             n++;
-        } while (!SETTING_IS_VISIBLE(items[pos].visibility) && n < menu->n_items); // 防止死循环
+        } while (!SETTING_IS_VISIBLE(items[pos].visibility) && n < menu->n_items); // n < n_items 防止死循环
     }
     else if (move_type == TYPE_MOVE_DOWN)
     {
@@ -153,7 +149,7 @@ static int moveMenuPos(SettingMenu *menu, int move_type)
             else
                 break;
             n++;
-        } while (!SETTING_IS_VISIBLE(items[pos].visibility) && n < menu->n_items); // 防止死循环
+        } while (!SETTING_IS_VISIBLE(items[pos].visibility) && n < menu->n_items); // n < n_items 防止死循环
     }
     else // 尝试修正pos
     {
@@ -161,8 +157,15 @@ static int moveMenuPos(SettingMenu *menu, int move_type)
             pos = n_items - 1;
         if (pos < 0)
             pos = 0;
-        while (!SETTING_IS_VISIBLE(items[pos].visibility) && pos < n_items - 1)
-            pos++;
+        int n = 0;
+        while (!SETTING_IS_VISIBLE(items[pos].visibility) && n < n_items - 1) // n < n_items - 1 防止死循环
+        {
+            if (pos < n_items - 1)
+                pos++;
+            else
+                pos = 0;
+            n++;
+        }
     }
 
     if (SETTING_IS_VISIBLE(items[pos].visibility))
@@ -196,7 +199,7 @@ static int moveTabBarPos(SettingContext *context, int move_type)
             else
                 pos = n_menus - 1;
             n++;
-        } while (!SETTING_IS_VISIBLE(menus[pos].visibility) && n < n_menus);
+        } while (!SETTING_IS_VISIBLE(menus[pos].visibility) && n < n_menus); // n < n_menus 防止死循环
     }
     else if (move_type == TYPE_MOVE_DOWN)
     {
@@ -208,7 +211,7 @@ static int moveTabBarPos(SettingContext *context, int move_type)
             else
                 pos = 0;
             n++;
-        } while (!SETTING_IS_VISIBLE(menus[pos].visibility) && n < n_menus);
+        } while (!SETTING_IS_VISIBLE(menus[pos].visibility) && n < n_menus); // n < n_menus 防止死循环
     }
     else // 尝试修正pos
     {
@@ -216,8 +219,15 @@ static int moveTabBarPos(SettingContext *context, int move_type)
             pos = n_menus - 1;
         if (pos < 0)
             pos = 0;
-        while (!SETTING_IS_VISIBLE(menus[pos].visibility) && pos < n_menus - 1)
-            pos++;
+        int n = 0;
+        while (!SETTING_IS_VISIBLE(menus[pos].visibility) && n < n_menus - 1) // n < n_menus - 1 防止死循环
+        {
+            if (pos < n_menus - 1)
+                pos++;
+            else
+                pos = 0;
+            n++;
+        }
     }
 
     if (SETTING_IS_VISIBLE(menus[pos].visibility))
