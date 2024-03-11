@@ -276,21 +276,19 @@ static int onCloseWindow(GUI_Window *window)
 
     SettingContext *context = st_window->context;
     if (!context || !context->menus)
-        return -1;
+        goto EXIT;
 
     SettingMenu *menus = context->menus;
     int n_menus = context->n_menus;
 
-    if (context->menus)
+    int i;
+    for (i = 0; i < n_menus; i++)
     {
-        int i;
-        for (i = 0; i < n_menus; i++)
-        {
-            if (SETTING_IS_VISIBLE(menus[i].visibility) && menus[i].onFinish)
-                menus[i].onFinish(&menus[i]);
-        }
+        if (SETTING_IS_VISIBLE(menus[i].visibility) && menus[i].onFinish)
+            menus[i].onFinish(&menus[i]);
     }
 
+EXIT:
     if (Emu_IsGameLoaded())
         Emu_ResumeGame();
 

@@ -475,7 +475,7 @@ static int onKeyMapOptionSlidingMenuItemClick(SlidingMenu *slidingMenu, int whic
     return 0;
 }
 
-static int onKeyMapOptionSlidingMenuOptionChanged(SlidingMenu *slidingMenu)
+static int onKeyMapOptionSlidingMenuSelectChanged(SlidingMenu *slidingMenu)
 {
     return onKeyMapOptionSlidingMenuItemClick(slidingMenu, 0);
 }
@@ -522,7 +522,7 @@ int Setting_OnKeyMapOptionItemClick(SettingMenu *menu, SettingMenuItem *menu_ite
     SlidingMenu_SetItems(slidingMenu, names, n_names);
     SlidingMenu_SetChoiceType(slidingMenu, TYPE_SLIDING_MENU_CHOICE_MULTIPLE);
     SlidingMenu_SetOnItemClickListener(slidingMenu, onKeyMapOptionSlidingMenuItemClick);
-    SlidingMenu_SetOnSelectChangedListener(slidingMenu, onKeyMapOptionSlidingMenuOptionChanged);
+    SlidingMenu_SetOnSelectChangedListener(slidingMenu, onKeyMapOptionSlidingMenuSelectChanged);
 
     if (option->value) // 设置选中
     {
