@@ -94,8 +94,8 @@ typedef struct
 } RewindState;
 
 static RewindState rs = {0};
-
-static int rewind_key_pressed = 0;
+static int rewind_okay = 0;
+static int rewind_rewinding = 0;
 static SceUID rewind_thread_id = -1;
 static int rewind_run = 0;
 static SceUID rewind_semaphore = -1;
@@ -373,7 +373,7 @@ static int RewindThreadFunc()
         if (current_time < rs.next_time)
             sceKernelDelayThread(rs.next_time - current_time);
 
-        rewind_key_pressed ? Rewind() : SaveState();
+        rewind_rewinding ? Rewind() : SaveState();
 
         uint64_t period = MAX(NEXT_STATE_PERIOD, Emu_GetMicrosPerFrame());
         rs.next_time = current_time + period;
@@ -389,6 +389,9 @@ void Emu_InitRewind()
         return;
 
     AppLog("[REWIND] rewind init...\n");
+
+    if (rewind_okay)
+        Emu_DeinitRewind();
 
     memset(&rs, 0, sizeof(RewindState));
 
@@ -424,12 +427,14 @@ void Emu_InitRewind()
 
     // AppLog("[REWIND] buf size: 0x%08x, state_size: 0x%08x aligned_state_size: 0x%08x\n", buffer_size, rs.state_size, rs.aligned_state_size);
     // AppLog("[REWIND] blocks: 0x%08x buf: 0x%08x tmp_buf: 0x%08x\n", rs.blocks, rs.buf, rs.tmp_buf);
+    rewind_okay = 1;
     AppLog("[REWIND] rewind init OK!\n");
 }
 
 void Emu_DeinitRewind()
 {
     AppLog("[REWIND] rewind deinit...\n");
+    rewind_okay = 0;
     rewind_run = 0;
     if (rewind_thread_id >= 0)
     {
@@ -461,19 +466,19 @@ void Emu_StartRewindGame()
 {
     // AppLog("Emu_StartRewindGame\n");
     Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_START_REWIND);
-    rewind_key_pressed = 1;
+    rewind_rewinding = 1;
 }
 
 void Emu_StopRewindGame()
 {
     // AppLog("Emu_StopRewindGame\n");
     Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_STOP_REWIND);
-    rewind_key_pressed = 0;
+    rewind_rewinding = 0;
 }
 
 int Emu_IsInRewinding()
 {
-    return rewind_key_pressed;
+    return rewind_rewinding;
 }
 
 void Emu_WaitRewind()

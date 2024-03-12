@@ -98,11 +98,11 @@ static int getGradualSize(int size, int gradual, int max)
     return (float)size * ((float)gradual / (float)max);
 }
 
-static uint32_t getGradualColor(uint32_t color, uint64_t gradual, uint64_t max)
+static uint32_t getGradualColor(uint32_t color, int gradual, int max)
 {
     uint32_t rgb = color & 0x00FFFFFF;
     uint8_t a = color >> 24;
-    a = a * ((double)gradual / (double)max);
+    a = a * ((float)gradual / (float)max);
     return (rgb | (a << 24));
 }
 
@@ -641,7 +641,7 @@ int AlertDialog_Dismiss(AlertDialog *dialog)
         return -1;
 
     if (dialog->status == TYPE_ALERT_DIALOG_STATUS_DISMISS) // 已经在关闭中
-        return -1;
+        return 0;
 
     if (dialog->status == TYPE_ALERT_DIALOG_STATUS_SHOW)
         dialog->status = TYPE_ALERT_DIALOG_STATUS_DISMISS; // 设置状态，通过onEventWindow关闭

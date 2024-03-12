@@ -320,9 +320,9 @@ int Setting_onSaveScreenshotItemClick(SettingMenu *menu, SettingMenuItem *menu_i
 
 END:
     if (ret < 0)
-        AlertDialog_ShowSimpleDialog(cur_lang[LANG_TIP], cur_lang[LANG_SAVE_SCREENSHOT_FAILED]);
+        GUI_ShowToast(cur_lang[LANG_SAVE_SCREENSHOT_FAILED], 2);
     else
-        AlertDialog_ShowSimpleDialog(cur_lang[LANG_TIP], cur_lang[LANG_SAVE_SCREENSHOT_OK]);
+        GUI_ShowToast(cur_lang[LANG_SAVE_SCREENSHOT_OK], 2);
     return ret;
 
 FAILED:
@@ -343,12 +343,12 @@ int Setting_onSavePreviewItemClick(SettingMenu *menu, SettingMenuItem *menu_item
 END:
     if (ret < 0)
     {
-        AlertDialog_ShowSimpleDialog(cur_lang[LANG_TIP], cur_lang[LANG_SAVE_PREVIEW_FAILED]);
+        GUI_ShowToast(cur_lang[LANG_SAVE_PREVIEW_FAILED], 2);
     }
     else
     {
         Browser_RequestRefreshPreview(1);
-        AlertDialog_ShowSimpleDialog(cur_lang[LANG_TIP], cur_lang[LANG_SAVE_PREVIEW_OK]);
+        GUI_ShowToast(cur_lang[LANG_SAVE_PREVIEW_OK], 2);
     }
     return ret;
 

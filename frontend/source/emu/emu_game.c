@@ -92,8 +92,7 @@ void Emu_SpeedDownGame()
     Emu_SetRunSpeed(speed);
 }
 
-static int
-loadGameFromFile(const char *path, int type)
+static int loadGameFromFile(const char *path, int type)
 {
     const char *rom_path = path;
 
@@ -252,7 +251,6 @@ int Emu_StartGame(EmuGameInfo *info)
     Emu_InitAudio();
     Emu_InitVideo();
     Emu_InitInput();
-
     Emu_InitRewind();
 
     Emu_RequestUpdateVideoDisplay();

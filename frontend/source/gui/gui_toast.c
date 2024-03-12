@@ -211,13 +211,12 @@ int GUI_EventToast()
     uint64_t cur_micros = sceKernelGetProcessTimeWide();
     if (toast->status == TYPE_TOAST_STATUS_SHOW)
     {
-        if (cur_micros > toast->finish_show_micros)
+        if (cur_micros >= toast->finish_show_micros)
             Toast_Dismiss(toast);
     }
     else if (toast->status == TYPE_TOAST_STATUS_DISMISS)
     {
-        uint64_t dismissing_micros = cur_micros - toast->finish_show_micros;
-        if (dismissing_micros > MAX_TOAST_GRADUAL_MICROS)
+        if (cur_micros - toast->finish_show_micros >= MAX_TOAST_GRADUAL_MICROS)
             LinkedListRemove(toast_list, entry);
     }
     else
@@ -242,7 +241,7 @@ int GUI_ShowToast(const char *message, float second)
         return -1;
 
     // 设置显示时间
-    toast->show_micros = second * 1000000;
+    toast->show_micros = second * MICROS_PER_SECOND;
 
     // 设置TextView
     LayoutParamsSetAvailableSize(toast->textView, TOAST_MAX_WIDTH, TOAST_MAX_HEIGHT);

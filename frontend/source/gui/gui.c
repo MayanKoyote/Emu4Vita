@@ -31,7 +31,7 @@ extern int GUI_EventActivity();
 extern int GUI_DrawToast();
 extern int GUI_EventToast();
 
-void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int max_len, int draw_len, int cur_len, int draw_track)
+void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int max_len, int draw_len, int scroll_len, int draw_track)
 {
     if (track_height <= 0 || draw_len <= 0 || max_len <= draw_len)
         return;
@@ -47,7 +47,7 @@ void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int m
 
     int min_y = track_y;
     int max_y = track_y + track_height - thumb_height;
-    int thumb_y = track_y + (float)cur_len * size_per_item;
+    int thumb_y = track_y + (float)scroll_len * size_per_item;
     if (thumb_y < min_y)
         thumb_y = min_y;
     else if (thumb_y > max_y)
