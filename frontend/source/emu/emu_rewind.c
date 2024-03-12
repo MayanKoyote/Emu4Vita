@@ -32,16 +32,17 @@ enum BlockType
     BLOCK_DIFF
 };
 
-typedef struct RewindBlock RewindBlock;
-
-struct RewindBlock
+typedef struct
 {
-    uint32_t type;  // BLOCK_FULL 或 BLOCK_DIFF
-    uint32_t index; // 流水号
-    uint8_t *offset;
-    uint32_t size;
-};
+    uint32_t type;   // BLOCK_FULL 或 BLOCK_DIFF
+    uint32_t index;  // 流水号, 为当前的 RewindState.count，赋值后 RewindState.count++
+    uint8_t *offset; // 指向为于 RewindState.buf 中的 *RewindBufHeader 或 *RewindDiffBuf
+    uint32_t size;   // 在 RewindState.buf 中的占用的大小
+} RewindBlock;
 
+// 用于判断保存的 state 是否还有效 （未被覆盖）
+// magic 固定为 REWIND_BLOCK_MAGIC
+// index 用于和 RewindBlock.index 进行比较
 #define REWIND_BUF_HEADER \
     uint32_t magic;       \
     uint32_t index;
@@ -54,7 +55,7 @@ typedef struct
 typedef struct
 {
     REWIND_BUF_HEADER
-    uint8_t buf[];
+    uint8_t buf[]; // 完整的state
 } RewindFullBuf;
 
 typedef struct
