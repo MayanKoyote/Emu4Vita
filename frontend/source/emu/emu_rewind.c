@@ -351,7 +351,7 @@ static void SaveState()
 
 static int SavingThreadFunc()
 {
-    while (sceKernelWaitSema(rs_thread.semaphore, 1, NULL) == SCE_OK && rs.buf != NULL)
+    while (rewind_run && sceKernelWaitSema(rs_thread.semaphore, 1, NULL) == SCE_OK)
     {
         sceKernelLockLwMutex(&rs_thread.mutex, 1, NULL);
 
