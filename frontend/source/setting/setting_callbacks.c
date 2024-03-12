@@ -301,7 +301,7 @@ int Setting_onRewindOptionChanged(SettingMenu *menu, SettingMenuItem *menu_item,
     if (Emu_IsGameLoaded())
     {
         if (misc_config.enable_rewind)
-            Emu_InitRewind(misc_config.rewind_buffer_size << 20);
+            Emu_InitRewind();
         else
             Emu_DeinitRewind();
     }
