@@ -318,7 +318,6 @@ static void Rewind()
         }
     }
     // AppLog("Rewind End\n");
-    rewind_key_pressed = 0;
 
     sceKernelUnlockLwMutex(&rs_thread.mutex, 1);
 }
@@ -442,6 +441,13 @@ void Emu_InitRewind()
 
     rs.tmp_buf = malloc(rs.aligned_state_size);
 
+    if (!(rs.blocks && rs.buf && rs.tmp_buf))
+    {
+        AppLog("[REWIND] rewind init failed\n");
+        return;
+    }
+
+    rewind_run = 1;
     sceKernelCreateLwMutex(&rs_thread.mutex, "rewind_saving_mutex", 0, 0, NULL);
     rs_thread.semaphore = sceKernelCreateSema("rewind_saving_emaphore", 0, 0, 1, NULL);
     rs_thread.id = sceKernelCreateThread("rewind_saving_thread", SavingThreadFunc, 191, 0x10000, 0, 0, NULL);
@@ -449,7 +455,6 @@ void Emu_InitRewind()
 
     rewind_thread_id = sceKernelCreateThread("rewind_main_thread", RewindThreadFunc, 191, 0x10000, 0, 0, NULL);
     sceKernelStartThread(rewind_thread_id, 0, NULL);
-    rewind_run = 1;
 
     // AppLog("[REWIND] buf size: 0x%08x, state_size: 0x%08x aligned_state_size: 0x%08x\n", buffer_size, rs.state_size, rs.aligned_state_size);
     // AppLog("[REWIND] blocks: 0x%08x buf: 0x%08x tmp_buf: 0x%08x\n", rs.blocks, rs.buf, rs.tmp_buf);
@@ -496,14 +501,21 @@ void Emu_DeinitRewind()
     AppLog("[REWIND] rewind deinit OK!\n");
 }
 
-void Emu_RewindGame()
+void Emu_StartRewindGame()
 {
-    // AppLog("Emu_RewindGame\n");
+    AppLog("Emu_StartRewindGame\n");
+    Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_START_REWIND);
     rewind_key_pressed = 1;
 }
 
 void Emu_StopRewindGame()
 {
-    // AppLog("Emu_StopRewindGame\n");
+    AppLog("Emu_StopRewindGame\n");
+    Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_STOP_REWIND);
     rewind_key_pressed = 0;
+}
+
+int Emu_IsInRewinding()
+{
+    return rewind_key_pressed;
 }

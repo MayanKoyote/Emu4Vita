@@ -114,7 +114,7 @@ HotKeyOption hot_key_options[] = {
     {&hotkey_config.hk_loadstate, 0, NULL, loadStateEventCallback, {0}},
     {&hotkey_config.hk_speed_up, 0, NULL, Emu_SpeedUpGame, {0}},
     {&hotkey_config.hk_speed_down, 0, NULL, Emu_SpeedDownGame, {0}},
-    {&hotkey_config.hk_rewind, 1, Emu_RewindGame, Emu_StopRewindGame, {0}},
+    {&hotkey_config.hk_rewind, 0, Emu_StartRewindGame, Emu_StopRewindGame, {0}},
     {&hotkey_config.hk_player_up, 0, NULL, changeMapPortUpCallback, {0}},
     {&hotkey_config.hk_player_down, 0, NULL, changeMapPortDownCallback, {0}},
     {&hotkey_config.hk_exit_game, 0, NULL, exitGameEventCallback, {0}},
@@ -297,7 +297,8 @@ static int onHotKeyEvent(int port, uint32_t buttons)
             callback();
             if (config_key & SCE_CTRL_PSBUTTON)
                 GUI_SetPsbuttonEnabled(0);
-            return !option->allow_holding;
+            if (!option->allow_holding)
+                return 1;
         }
     }
 

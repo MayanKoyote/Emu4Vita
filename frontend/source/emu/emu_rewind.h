@@ -7,7 +7,8 @@
 
 void Emu_InitRewind();
 void Emu_DeinitRewind();
-void Emu_RewindGame();
+void Emu_StartRewindGame();
 void Emu_StopRewindGame();
+int Emu_IsInRewinding();
 
 #endif
