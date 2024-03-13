@@ -89,17 +89,9 @@ typedef struct
     uint32_t count;               // 用于设置 RewindBlock 中的 index
 } RewindState;
 
-typedef struct
-{
-    SceUID id;
-    SceUID semaphore;
-    SceKernelLwMutexWork mutex;
-} RewindSavingThread;
-
 static RewindState rs = {0};
-static RewindSavingThread rs_thread = {0};
+
 static int rewind_key_pressed = 0;
-static int in_rewinding = 0;
 static SceUID rewind_thread_id = 0;
 static int rewind_run = 0;
 
@@ -176,7 +168,8 @@ SaveFullState(RewindBlock *block, uint8_t *buf_offset, uint8_t *state)
 }
 
 // 仅把需要复制的差异信息(地址, 大小)写入 areas，统计 total_size
-static int PreSaveDiffState(RewindBlock *block, uint8_t *buf_offset, RewindBlock *full_block)
+// 调用前需先把 state 保存入 rs.tmp_buf
+static void PreSaveDiffState(RewindBlock *block, uint8_t *buf_offset, RewindBlock *full_block)
 {
     block->type = BLOCK_DIFF;
     block->index = rs.count++;
@@ -188,8 +181,6 @@ static int PreSaveDiffState(RewindBlock *block, uint8_t *buf_offset, RewindBlock
     diff->index = block->index;
     diff->full_block = full_block;
     diff->num = 0;
-    // if (!retro_serialize(rs.tmp_buf, rs.state_size))
-    //     return 0;
 
     uint8_t *old = ((RewindFullBuf *)full_block->offset)->buf;
     uint8_t *new = rs.tmp_buf;
@@ -243,7 +234,6 @@ static int PreSaveDiffState(RewindBlock *block, uint8_t *buf_offset, RewindBlock
 
     block->size += diff->num * sizeof(DiffArea);
     block->size = ALIGN_UP_10(block->size);
-    return 1;
 }
 
 static uint8_t *GetDiffBuffer(const RewindDiffBuf *diff)
@@ -291,18 +281,17 @@ static void *GetState(RewindBlock *block)
     return rs.tmp_buf;
 }
 
+static size_t GetBufDistance(size_t first, size_t second)
+{
+    if (second >= first)
+        return second - first;
+    else
+        return rs.buf_size + first - second;
+}
+
 static void Rewind()
 {
     // AppLog("Rewind\n");
-    sceKernelLockLwMutex(&rs_thread.mutex, 1, NULL);
-
-    if (in_rewinding == 0)
-    {
-        // Emu_PauseCheat();
-        // Emu_PauseAudio();
-        in_rewinding = 1;
-    }
-
     RewindBlock *prev = GetPreviousBlock();
     // AppLog("%08x %08x\n", rs.current_block, prev);
     if (IsValidBlock(prev))
@@ -312,22 +301,9 @@ static void Rewind()
         {
             UnserializeState(state, rs.state_size);
             rs.current_block = prev;
-            // Emu_CleanAudioSound();
-            // if (Emu_IsVideoPaused())
-            // Emu_ResumeVideo();
         }
     }
     // AppLog("Rewind End\n");
-
-    sceKernelUnlockLwMutex(&rs_thread.mutex, 1);
-}
-
-static size_t GetBufDistance(size_t first, size_t second)
-{
-    if (second >= first)
-        return second - first;
-    else
-        return rs.buf_size + first - second;
 }
 
 static void SaveState()
@@ -338,50 +314,34 @@ static void SaveState()
         // 进游戏后首次保存
         if (SaveFullState(rs.blocks, rs.buf, NULL))
             rs.current_block = rs.blocks;
+        return;
     }
-    else if (sceKernelTryLockLwMutex(&rs_thread.mutex, 1) == SCE_OK) // 确保 SavingThreadFunc 没有在运行中
-    {
-        sceKernelUnlockLwMutex(&rs_thread.mutex, 1);
-        if (SerializeState(rs.tmp_buf, rs.state_size))
-        {
-            sceKernelSignalSema(rs_thread.semaphore, 1); // 激活 SavingThreadFunc
-        }
-    }
-}
 
-static int SavingThreadFunc()
-{
-    while (rewind_run && sceKernelWaitSema(rs_thread.semaphore, 1, NULL) == SCE_OK)
-    {
-        sceKernelLockLwMutex(&rs_thread.mutex, 1, NULL);
+    if (!SerializeState(rs.tmp_buf, rs.state_size))
+        return;
 
-        RewindBlock *current = rs.current_block;
-        RewindBlock *next = GetNextBlock();
-        uint8_t *next_buf = GetNextBuf();
-        int result = 0;
-        if (GetBufDistance((size_t)rs.last_full_block->offset, (size_t)next_buf) > rs.buf_size / 2)
+    RewindBlock *current = rs.current_block;
+    RewindBlock *next = GetNextBlock();
+    uint8_t *next_buf = GetNextBuf();
+    int result = 0;
+
+    if (GetBufDistance((size_t)rs.last_full_block->offset, (size_t)next_buf) > rs.buf_size / 2)
+        result = SaveFullState(next, next_buf, rs.tmp_buf);
+    else
+    {
+        RewindBlock *full_block = current->type == BLOCK_FULL ? current : ((RewindDiffBuf *)(current->offset))->full_block;
+        PreSaveDiffState(next, next_buf, full_block);
+        if (next->size > rs.threshold_size)
             result = SaveFullState(next, next_buf, rs.tmp_buf);
         else
         {
-            RewindBlock *full_block = current->type == BLOCK_FULL ? current : ((RewindDiffBuf *)(current->offset))->full_block;
-            result = PreSaveDiffState(next, next_buf, full_block);
-            if (result)
-            {
-                if (next->size > rs.threshold_size)
-                    result = SaveFullState(next, next_buf, rs.tmp_buf);
-                else
-                    SaveDiffState(next);
-            }
+            SaveDiffState(next);
+            result = 1;
         }
-
-        if (result)
-            rs.current_block = next;
-
-        sceKernelUnlockLwMutex(&rs_thread.mutex, 1);
     }
 
-    AppLog("SavingThreadFunc end\n");
-    return 0;
+    if (result)
+        rs.current_block = next;
 }
 
 static int RewindThreadFunc()
@@ -418,7 +378,6 @@ void Emu_InitRewind()
     AppLog("[REWIND] rewind init...\n");
 
     memset(&rs, 0, sizeof(RewindState));
-    memset(&rs_thread, 0, sizeof(RewindSavingThread));
 
     size_t buffer_size = misc_config.rewind_buffer_size << 20;
     rs.state_size = retro_serialize_size();
@@ -441,19 +400,16 @@ void Emu_InitRewind()
 
     rs.tmp_buf = malloc(rs.aligned_state_size);
 
-    if (!(rs.blocks && rs.buf && rs.tmp_buf))
+    rewind_run = 1;
+    rewind_thread_id = sceKernelCreateThread("rewind_main_thread", RewindThreadFunc, 191, 0x10000, 0, 0, NULL);
+
+    if (!(rs.blocks && rs.buf && rs.tmp_buf && rewind_thread_id >= 0))
     {
         AppLog("[REWIND] rewind init failed\n");
+        Emu_DeinitRewind();
         return;
     }
 
-    rewind_run = 1;
-    sceKernelCreateLwMutex(&rs_thread.mutex, "rewind_saving_mutex", 0, 0, NULL);
-    rs_thread.semaphore = sceKernelCreateSema("rewind_saving_emaphore", 0, 0, 1, NULL);
-    rs_thread.id = sceKernelCreateThread("rewind_saving_thread", SavingThreadFunc, 191, 0x10000, 0, 0, NULL);
-    sceKernelStartThread(rs_thread.id, 0, NULL);
-
-    rewind_thread_id = sceKernelCreateThread("rewind_main_thread", RewindThreadFunc, 191, 0x10000, 0, 0, NULL);
     sceKernelStartThread(rewind_thread_id, 0, NULL);
 
     // AppLog("[REWIND] buf size: 0x%08x, state_size: 0x%08x aligned_state_size: 0x%08x\n", buffer_size, rs.state_size, rs.aligned_state_size);
@@ -472,13 +428,7 @@ void Emu_DeinitRewind()
         rewind_thread_id = -1;
     }
 
-    if (rs_thread.id >= 0)
-    {
-        sceKernelLockLwMutex(&rs_thread.mutex, 1, NULL);
-        sceKernelUnlockLwMutex(&rs_thread.mutex, 1);
-    }
-
-    AppLog("[REWIND] blocks: 0x%08x buf: 0x%08x tmp_buf: 0x%08x\n", rs.blocks, rs.buf, rs.tmp_buf);
+    // AppLog("[REWIND] blocks: 0x%08x buf: 0x%08x tmp_buf: 0x%08x\n", rs.blocks, rs.buf, rs.tmp_buf);
     if (rs.blocks)
         free(rs.blocks);
     if (rs.buf)
@@ -486,31 +436,21 @@ void Emu_DeinitRewind()
     if (rs.tmp_buf)
         free(rs.tmp_buf);
 
-    AppLog("[REWIND] free all\n");
-
-    if (rs_thread.id >= 0)
-    {
-        sceKernelSignalSema(rs_thread.semaphore, 1);
-        sceKernelWaitThreadEnd(rs_thread.id, NULL, NULL);
-        sceKernelDeleteSema(rs_thread.semaphore);
-        sceKernelDeleteLwMutex(&rs_thread.mutex);
-        rs_thread.id = -1;
-        rs_thread.semaphore = -1;
-    }
+    memset(&rs, 0, sizeof(RewindState));
 
     AppLog("[REWIND] rewind deinit OK!\n");
 }
 
 void Emu_StartRewindGame()
 {
-    AppLog("Emu_StartRewindGame\n");
+    // AppLog("Emu_StartRewindGame\n");
     Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_START_REWIND);
     rewind_key_pressed = 1;
 }
 
 void Emu_StopRewindGame()
 {
-    AppLog("Emu_StopRewindGame\n");
+    // AppLog("Emu_StopRewindGame\n");
     Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_STOP_REWIND);
     rewind_key_pressed = 0;
 }
