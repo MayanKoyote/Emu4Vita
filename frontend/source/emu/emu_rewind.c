@@ -187,7 +187,9 @@ static void PreSaveDiffState(RewindBlock *block, uint8_t *buf_offset, RewindBloc
     uint8_t *new = rs.tmp_buf;
     int last_state = 0; // 相同: 0, 不同: 1
     int offset = 0;
-    for (; offset < rs.state_size; offset += DIFF_STEP)
+    uint32_t tail_size = rs.state_size % DIFF_STEP;
+    size_t loop_state_size = rs.state_size - tail_size;
+    for (; offset < loop_state_size; offset += DIFF_STEP)
     {
         if (memcmp(old + offset, new + offset, DIFF_STEP) == 0)
         {
@@ -209,8 +211,7 @@ static void PreSaveDiffState(RewindBlock *block, uint8_t *buf_offset, RewindBloc
         }
     }
 
-    uint32_t tail_size = rs.state_size % DIFF_STEP;
-    offset = rs.state_size - tail_size;
+    offset = loop_state_size;
     if (tail_size > 0 && memcmp(old + offset, new + offset, tail_size) != 0)
     {
         if (last_state == 0)
