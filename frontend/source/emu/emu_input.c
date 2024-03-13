@@ -41,7 +41,6 @@ typedef struct
 typedef struct
 {
     uint32_t *value;
-    uint32_t allow_holding;
     void (*key_down_callback)();
     void (*key_up_callback)();
     uint8_t old_presseds[N_CTRL_PORTS];
@@ -110,14 +109,14 @@ EmuKeyOption emu_key_options[] = {
 #define N_EMU_KEY_OPTIONS 24 // (sizeof(emu_key_options) / sizeof(EmuKeyOption))
 
 HotKeyOption hot_key_options[] = {
-    {&hotkey_config.hk_savestate, 0, NULL, saveStateEventCallback, {0}},
-    {&hotkey_config.hk_loadstate, 0, NULL, loadStateEventCallback, {0}},
-    {&hotkey_config.hk_speed_up, 0, NULL, Emu_SpeedUpGame, {0}},
-    {&hotkey_config.hk_speed_down, 0, NULL, Emu_SpeedDownGame, {0}},
-    {&hotkey_config.hk_rewind, 0, Emu_StartRewindGame, Emu_StopRewindGame, {0}},
-    {&hotkey_config.hk_player_up, 0, NULL, changeMapPortUpCallback, {0}},
-    {&hotkey_config.hk_player_down, 0, NULL, changeMapPortDownCallback, {0}},
-    {&hotkey_config.hk_exit_game, 0, NULL, exitGameEventCallback, {0}},
+    {&hotkey_config.hk_savestate, NULL, saveStateEventCallback, {0}},
+    {&hotkey_config.hk_loadstate, NULL, loadStateEventCallback, {0}},
+    {&hotkey_config.hk_speed_up, NULL, Emu_SpeedUpGame, {0}},
+    {&hotkey_config.hk_speed_down, NULL, Emu_SpeedDownGame, {0}},
+    {&hotkey_config.hk_rewind, Emu_StartRewindGame, Emu_StopRewindGame, {0}},
+    {&hotkey_config.hk_player_up, NULL, changeMapPortUpCallback, {0}},
+    {&hotkey_config.hk_player_down, NULL, changeMapPortDownCallback, {0}},
+    {&hotkey_config.hk_exit_game, NULL, exitGameEventCallback, {0}},
 };
 #define N_HOT_KEY_MAPPER_OPTIONS 8 // (sizeof(hot_key_options) / sizeof(HotKeyOption))
 
@@ -285,9 +284,7 @@ static int onHotKeyEvent(int port, uint32_t buttons)
         option->old_presseds[port] = cur_pressed;
 
         void (*callback)() = NULL;
-        if (option->allow_holding)
-            callback = cur_pressed ? option->key_down_callback : option->key_up_callback;
-        else if (old_pressed && !cur_pressed)
+        if (old_pressed && !cur_pressed)
             callback = option->key_up_callback;
         else if (!old_pressed && cur_pressed)
             callback = option->key_down_callback;
@@ -297,8 +294,7 @@ static int onHotKeyEvent(int port, uint32_t buttons)
             callback();
             if (config_key & SCE_CTRL_PSBUTTON)
                 GUI_SetPsbuttonEnabled(0);
-            if (!option->allow_holding)
-                return 1;
+            return 1;
         }
     }
 

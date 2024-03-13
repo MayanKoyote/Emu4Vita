@@ -69,7 +69,7 @@ void Emu_SetRunSpeed(float speed)
 {
     game_run_speed = speed;
     game_cur_fps = core_system_av_info.timing.fps * (double)speed;
-    Emu_SetMicrosPerFrame(1000000.0f / game_cur_fps);
+    Emu_SetMicrosPerFrame(1000000.0 / game_cur_fps);
 }
 
 void Emu_SpeedUpGame()

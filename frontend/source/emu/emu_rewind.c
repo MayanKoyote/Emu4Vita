@@ -9,6 +9,7 @@
 #include "emu_video.h"
 #include "utils.h"
 #include "config.h"
+#include "activity/emu_activity.h"
 
 #define ALIGN_UP(x, a) ((x) + ((a)-1)) & ~((a)-1)
 #define ALIGN_UP_10(x) ALIGN_UP(x, 0x10)
@@ -326,6 +327,7 @@ static void SaveState()
     int result = 0;
 
     if (GetBufDistance((size_t)rs.last_full_block->offset, (size_t)next_buf) > rs.buf_size / 2)
+        // 确保至少有两个完整的 state
         result = SaveFullState(next, next_buf, rs.tmp_buf);
     else
     {
@@ -356,14 +358,12 @@ static int RewindThreadFunc()
 
         int current_time = sceKernelGetProcessTimeWide();
         if (current_time < rs.next_time)
-        {
             sceKernelDelayThread(rs.next_time - current_time);
-            continue;
-        }
 
         rewind_key_pressed ? Rewind() : SaveState();
 
-        rs.next_time = sceKernelGetProcessTimeWide() + NEXT_STATE_PERIOD;
+        uint64_t period = NEXT_STATE_PERIOD > Emu_GetMicrosPerFrame() ? NEXT_STATE_PERIOD : Emu_GetMicrosPerFrame();
+        rs.next_time = current_time + period;
     }
 
     AppLog("RewindThreadFunc end\n");
