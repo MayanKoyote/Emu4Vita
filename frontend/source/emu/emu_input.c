@@ -296,7 +296,7 @@ static int onHotKeyEvent(int port, uint32_t buttons)
             callback();
             if (config_key & SCE_CTRL_PSBUTTON)
                 GUI_SetPsbuttonEnabled(0);
-            return !option->allow_holding;
+            return 1;
         }
     }
 
