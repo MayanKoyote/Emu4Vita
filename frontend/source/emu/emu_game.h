@@ -9,6 +9,8 @@ enum TypeGameRunAction
     TYPE_GAME_RUN_EVENT_ACTION_SAVE_STATE,
     TYPE_GAME_RUN_EVENT_ACTION_LOAD_STATE,
     TYPE_GAME_RUN_EVENT_ACTION_RESET,
+    TYPE_GAME_RUN_EVENT_ACTION_START_REWIND,
+    TYPE_GAME_RUN_EVENT_ACTION_STOP_REWIND,
     TYPE_GAME_RUN_EVENT_ACTION_EXIT,
 };
 
@@ -36,8 +38,9 @@ void Emu_ResetGame();
 int Emu_ReloadGame();
 void Emu_SpeedUpGame();
 void Emu_SpeedDownGame();
-void Emu_RewindGame();
 
 void Emu_SetGameRunEventAction(int type);
+void Emu_LockRunGame();
+void Emu_UnlockRunGame();
 
 #endif
