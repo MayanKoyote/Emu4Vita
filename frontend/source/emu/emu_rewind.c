@@ -20,6 +20,9 @@
 #define THRESHOLD_RATE 0.1
 // 最小差异单位
 #define DIFF_STEP 0x10
+#define MEMCMP2(SIZE) memcmp_##SIZE
+#define MEMCMP(SIZE) MEMCMP2(SIZE)
+#define MEMCMP_DIFF_STEP MEMCMP(DIFF_STEP)
 // "REWD"
 #define REWIND_BLOCK_MAGIC 0x44574552
 // RewindBlock 的数量
@@ -168,6 +171,14 @@ SaveFullState(RewindBlock *block, uint8_t *buf_offset, uint8_t *state)
     // AppLog("SaveFullState %08x %08x\n", block, buf_offset);
 }
 
+// 不要用 uint64_t，会触发memcpy，造成负优化 !!
+static inline int memcmp_0x10(const void *src, const void *dst)
+{
+    const uint32_t *s = src;
+    const uint32_t *d = dst;
+    return s[0] != d[0] || s[1] != d[1] || s[2] != d[2] || s[3] != d[3];
+}
+
 // 仅把需要复制的差异信息(地址, 大小)写入 areas，统计 total_size
 // 调用前需先把 state 保存入 rs.tmp_buf
 static void PreSaveDiffState(RewindBlock *block, uint8_t *buf_offset, RewindBlock *full_block)
@@ -191,7 +202,7 @@ static void PreSaveDiffState(RewindBlock *block, uint8_t *buf_offset, RewindBloc
     size_t loop_state_size = rs.state_size - tail_size;
     for (; offset < loop_state_size; offset += DIFF_STEP)
     {
-        if (memcmp(old + offset, new + offset, DIFF_STEP) == 0)
+        if (MEMCMP_DIFF_STEP(old + offset, new + offset) == 0)
         {
             if (last_state == 1)
             {
@@ -319,9 +330,6 @@ static void SaveState()
         return;
     }
 
-    if (!SerializeState(rs.tmp_buf, rs.state_size))
-        return;
-
     RewindBlock *current = rs.current_block;
     RewindBlock *next = GetNextBlock();
     uint8_t *next_buf = GetNextBuf();
@@ -329,17 +337,18 @@ static void SaveState()
 
     if (GetBufDistance((size_t)rs.last_full_block->offset, (size_t)next_buf) > rs.buf_size / 2)
         // 确保至少有两个完整的 state
-        result = SaveFullState(next, next_buf, rs.tmp_buf);
+        result = SaveFullState(next, next_buf, NULL);
     else
     {
-        RewindBlock *full_block = current->type == BLOCK_FULL ? current : ((RewindDiffBuf *)(current->offset))->full_block;
-        PreSaveDiffState(next, next_buf, full_block);
-        if (next->size > rs.threshold_size)
-            result = SaveFullState(next, next_buf, rs.tmp_buf);
-        else
+        result = SerializeState(rs.tmp_buf, rs.state_size);
+        if (result)
         {
-            SaveDiffState(next);
-            result = 1;
+            RewindBlock *full_block = current->type == BLOCK_FULL ? current : ((RewindDiffBuf *)(current->offset))->full_block;
+            PreSaveDiffState(next, next_buf, full_block);
+            if (next->size > rs.threshold_size)
+                result = SaveFullState(next, next_buf, rs.tmp_buf);
+            else
+                SaveDiffState(next);
         }
     }
 
