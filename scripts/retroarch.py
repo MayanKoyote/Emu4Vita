@@ -24,8 +24,8 @@ class RetroArch(Base):
     def get_rom_path(self, key):
         return key
 
-    def get_image_path(self, key, image_type=None):
-        image_type = self._check_image_type(image_type)
+    def get_image_path(self, key, image_type):
+        self._check_image_type(image_type)
         item = self[key]
         return f'{self.path}/thumbnails/{item["plp_name"]}/Named_{image_type}/{item["label"]}.png'
 

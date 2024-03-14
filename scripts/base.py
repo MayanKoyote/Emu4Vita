@@ -66,8 +66,5 @@ class Base(dict):
                 shutil.copy(rom_path, new_rom_path)
 
     def _check_image_type(self, image_type):
-        if image_type is None and len(self.VALID_IMAGE_TYPES) > 0:
-            return self.VALID_IMAGE_TYPES[0]
-        elif image_type not in self.VALID_IMAGE_TYPES:
+        if image_type not in self.VALID_IMAGE_TYPES:
             raise ValueError(f'image_type "{image_type}" is not in {self.VALID_IMAGE_TYPES}')
-        return image_type

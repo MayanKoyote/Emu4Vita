@@ -22,8 +22,8 @@ class SimUI(Base):
     def get_rom_path(self, key):
         return f'{self.path}/{self.platform["rom_path"]}/{self[key]["rom_path"]}'
 
-    def get_image_path(self, key, image_type=None):
-        image_type = self._check_image_type(image_type)
+    def get_image_path(self, key, image_type):
+        self._check_image_type(image_type)
 
         row = self[key]
         if 'pname' in row or len(row['pname']) > 0:

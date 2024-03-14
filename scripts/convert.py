@@ -29,7 +29,11 @@ if __name__ == '__main__':
             roms = klass(input_path)
             break
 
+    image_type = args.image_type
+    if image_type is None:
+        image_type = klass.VALID_IMAGE_TYPES[0]
+
     if roms:
-        roms.convert(args.output[0], args.image_type, args.compress)
+        roms.convert(args.output[0], image_type, args.compress)
     else:
         parser.print_help()

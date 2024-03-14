@@ -63,8 +63,8 @@ class Pegasus(Base):
     def get_rom_path(self, key):
         return self.path / self[key]['file']
 
-    def get_image_path(self, key, image_type=None):
-        image_type = self._check_image_type(image_type)
+    def get_image_path(self, key, image_type):
+        self._check_image_type(image_type)
         row = self[key]
 
         image_key = f'assets.{image_type}'
