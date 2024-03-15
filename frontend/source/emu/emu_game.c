@@ -404,14 +404,12 @@ static void Emu_EventRunGame()
     {
         Emu_PauseCheat();
         Emu_PauseAudio();
-        Emu_PauseVideo();
     }
     break;
     case TYPE_GAME_RUN_EVENT_ACTION_STOP_REWIND:
     {
         Emu_ResumeCheat();
         Emu_ResumeAudio();
-        Emu_ResumeVideo();
     }
     break;
     case TYPE_GAME_RUN_EVENT_ACTION_RESET:
@@ -439,17 +437,12 @@ void Emu_RunGame()
 {
     Emu_LockRunGame();
     Emu_PollInput();
-
-    if (Emu_IsInRewinding())
-        Emu_ResumeVideo();
-
     retro_run();
-
-    if (Emu_IsInRewinding())
-        Emu_PauseVideo();
-
     Emu_EventRunGame();
     Emu_UnlockRunGame();
+
+    if (Emu_IsInRewinding())
+        Emu_WaitRewind();
 }
 
 void Emu_LockRunGame()

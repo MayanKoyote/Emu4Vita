@@ -96,8 +96,9 @@ typedef struct
 static RewindState rs = {0};
 
 static int rewind_key_pressed = 0;
-static SceUID rewind_thread_id = 0;
+static SceUID rewind_thread_id = -1;
 static int rewind_run = 0;
+static SceUID rewind_semaphore = -1;
 
 static RewindBlock *
 GetNextBlock()
@@ -316,6 +317,8 @@ static void Rewind()
             rs.current_block = prev;
         }
     }
+
+    sceKernelSignalSema(rewind_semaphore, 1);
     // AppLog("Rewind End\n");
 }
 
@@ -372,7 +375,7 @@ static int RewindThreadFunc()
 
         rewind_key_pressed ? Rewind() : SaveState();
 
-        uint64_t period = NEXT_STATE_PERIOD > Emu_GetMicrosPerFrame() ? NEXT_STATE_PERIOD : Emu_GetMicrosPerFrame();
+        uint64_t period = MAX(NEXT_STATE_PERIOD, Emu_GetMicrosPerFrame());
         rs.next_time = current_time + period;
     }
 
@@ -402,18 +405,15 @@ void Emu_InitRewind()
     rs.buf_size = buffer_size - sizeof(RewindBlock) * BLOCK_SIZE - rs.aligned_state_size;
     rs.threshold_size = rs.aligned_state_size * THRESHOLD_RATE;
 
-    rs.blocks = malloc(sizeof(RewindBlock) * BLOCK_SIZE);
-    memset(rs.blocks, 0, sizeof(RewindBlock) * BLOCK_SIZE);
-
-    rs.buf = malloc(rs.buf_size);
-    memset(rs.buf, 0, sizeof(rs.buf_size));
-
-    rs.tmp_buf = malloc(rs.aligned_state_size);
+    rs.blocks = calloc(BLOCK_SIZE, sizeof(RewindBlock));
+    rs.buf = calloc(1, rs.buf_size);
+    rs.tmp_buf = calloc(1, rs.aligned_state_size);
 
     rewind_run = 1;
     rewind_thread_id = sceKernelCreateThread("rewind_main_thread", RewindThreadFunc, 191, 0x10000, 0, 0, NULL);
+    rewind_semaphore = sceKernelCreateSema("rewind_loading_semaphore", 0, 0, 1, NULL);
 
-    if (!(rs.blocks && rs.buf && rs.tmp_buf && rewind_thread_id >= 0))
+    if (!(rs.blocks && rs.buf && rs.tmp_buf && rewind_thread_id >= 0 && rewind_semaphore >= 0))
     {
         AppLog("[REWIND] rewind init failed\n");
         Emu_DeinitRewind();
@@ -436,6 +436,12 @@ void Emu_DeinitRewind()
         sceKernelWaitThreadEnd(rewind_thread_id, NULL, NULL);
         sceKernelDeleteThread(rewind_thread_id);
         rewind_thread_id = -1;
+    }
+
+    if (rewind_semaphore >= 0)
+    {
+        sceKernelDeleteSema(rewind_semaphore);
+        rewind_semaphore = -1;
     }
 
     // AppLog("[REWIND] blocks: 0x%08x buf: 0x%08x tmp_buf: 0x%08x\n", rs.blocks, rs.buf, rs.tmp_buf);
@@ -468,4 +474,13 @@ void Emu_StopRewindGame()
 int Emu_IsInRewinding()
 {
     return rewind_key_pressed;
+}
+
+void Emu_WaitRewind()
+{
+    int result = sceKernelWaitSema(rewind_semaphore, 1, NULL);
+    if (result != SCE_OK)
+    {
+        AppLog("[REWIND] sceKernelWaitSema Error: %d\n", result);
+    }
 }

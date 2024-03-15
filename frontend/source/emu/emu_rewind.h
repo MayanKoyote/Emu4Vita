@@ -10,5 +10,6 @@ void Emu_DeinitRewind();
 void Emu_StartRewindGame();
 void Emu_StopRewindGame();
 int Emu_IsInRewinding();
+void Emu_WaitRewind();
 
 #endif
