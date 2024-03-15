@@ -405,13 +405,9 @@ void Emu_InitRewind()
     rs.buf_size = buffer_size - sizeof(RewindBlock) * BLOCK_SIZE - rs.aligned_state_size;
     rs.threshold_size = rs.aligned_state_size * THRESHOLD_RATE;
 
-    rs.blocks = malloc(sizeof(RewindBlock) * BLOCK_SIZE);
-    memset(rs.blocks, 0, sizeof(RewindBlock) * BLOCK_SIZE);
-
-    rs.buf = malloc(rs.buf_size);
-    memset(rs.buf, 0, sizeof(rs.buf_size));
-
-    rs.tmp_buf = malloc(rs.aligned_state_size);
+    rs.blocks = calloc(BLOCK_SIZE, sizeof(RewindBlock));
+    rs.buf = calloc(1, rs.buf_size);
+    rs.tmp_buf = calloc(1, rs.aligned_state_size);
 
     rewind_run = 1;
     rewind_thread_id = sceKernelCreateThread("rewind_main_thread", RewindThreadFunc, 191, 0x10000, 0, 0, NULL);
