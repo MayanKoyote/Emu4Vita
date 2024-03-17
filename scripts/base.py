@@ -40,6 +40,10 @@ class Base(dict):
         raise NotImplementedError
 
     def convert(self, output_path, image_type, compress=False):
+        def _output_path(src_path, dst_path):
+            print(f'{src_path} ==> {dst_path}', end='')
+            print('  *** warning: file exist ***' if Path(dst_path).exists() else '')
+
         for key in self.keys():
             rom_path = self.get_rom_path(key)
             image_path = self.get_image_path(key, image_type)
@@ -48,20 +52,20 @@ class Base(dict):
             new_path = Path(output_path) / Path(rom_path).parent
             if image_path:
                 new_image_path = str(new_path / 'images' / rom_name) + Path(image_path).suffix
-                print(f'{image_path} ==> {new_image_path}')
+                _output_path(image_path, new_image_path)
                 try_make_dirs(new_image_path)
                 shutil.copy(image_path, new_image_path)
 
             if compress and not is_compressed_file(rom_path):
                 zip_path = str(new_path / rom_name) + '.zip'
-                print(f'{rom_path} ==> {zip_path}')
+                _output_path(rom_path, zip_path)
                 try_make_dirs(zip_path)
                 zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_DEFLATED).writestr(
                     Path(rom_path).name, open(rom_path, 'rb').read()
                 )
             else:
                 new_rom_path = str(new_path / rom_name) + Path(rom_path).suffix
-                print(f'{rom_path} ==> {new_rom_path}')
+                _output_path(rom_path, new_rom_path)
                 try_make_dirs(new_rom_path)
                 shutil.copy(rom_path, new_rom_path)
 

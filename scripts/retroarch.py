@@ -1,4 +1,4 @@
-from base import Base
+from base import *
 from pathlib import Path
 import json
 
@@ -30,4 +30,4 @@ class RetroArch(Base):
         return f'{self.path}/thumbnails/{item["plp_name"]}/Named_{image_type}/{item["label"]}.png'
 
     def get_rom_name(self, key):
-        return self[key]['label']
+        return legal_file_name(self[key]['label'])

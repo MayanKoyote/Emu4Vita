@@ -16,13 +16,13 @@ def image_type_help():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('input', action='store', nargs=1, default='./', help='input path')
+    parser.add_argument('input', action='store', nargs='?', default='./', help='input path')
     parser.add_argument('output', action='store', nargs=1, help='output path')
     parser.add_argument('--compress', action='store_true', default=False, help='compress roms to zip')
     parser.add_argument('--image_type', action='store', help=image_type_help(), metavar='')
     args = parser.parse_args()
 
-    input_path = Path(args.input[0])
+    input_path = Path(args.input)
     roms = None
     for klass in KLASS:
         if (input_path / klass.DATA_NAME).exists():

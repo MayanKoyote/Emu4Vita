@@ -1,4 +1,4 @@
-from base import Base
+from base import *
 
 
 class Pegasus(Base):
@@ -51,10 +51,16 @@ class Pegasus(Base):
                 k = k.strip()
                 v = v.strip()
                 if k == 'game' and 'game' in data:
-                    self[data['game']] = data
+                    if 'files' in data:
+                        for f in data['files'].strip().split('\n'):
+                            f = f.strip()
+                            data['file'] = f
+                            self[f"{data['game']} {Path(f).stem}"] = data
+                    else:
+                        self[data['game']] = data
                     data = {}
                 data[k] = v
-            else:
+            elif k is not None:
                 data[k] += '\n' + line
 
         if 'game' in data:
@@ -76,11 +82,11 @@ class Pegasus(Base):
             if image_type == 'box_front':
                 image_type = 'BoxFront'
             for ext in ('.jpg', '.png'):
-                image_path = f'media/{key}/{image_type}{ext}'
+                image_path = f'{self.path}/media/{key}/{image_type}{ext}'
                 if os.path.exists(image_path):
                     return image_path
 
         return None
 
     def get_rom_name(self, key):
-        return key
+        return legal_file_name(key)

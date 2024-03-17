@@ -1,5 +1,7 @@
-from base import Base
+from base import *
 import sqlite3
+from pathlib import Path
+import os
 
 
 class SimUI(Base):
@@ -27,7 +29,7 @@ class SimUI(Base):
 
         row = self[key]
         if 'pname' in row or len(row['pname']) > 0:
-            return self.get_image_path(self[row['pname']]['file_md5'])
+            return self.get_image_path(self[row['pname']]['file_md5'], image_type)
 
         for key in ('base_name_en', 'name', 'rom_path'):
             for ext in ('.png', '.jpg'):
