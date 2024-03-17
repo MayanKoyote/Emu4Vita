@@ -388,8 +388,6 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
     {
         // AppLog("[RETRO] RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE\n");
         int result = 1 | 2;
-        if (Emu_IsRewindSerializing())
-            result = 4;
         if (data)
             *(int *)data = result;
     }

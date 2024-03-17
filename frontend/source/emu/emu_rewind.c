@@ -228,11 +228,6 @@ static int finishRewindThread()
     return 0;
 }
 
-int Emu_IsRewindSerializing()
-{
-    return rewind_serializing;
-}
-
 void Emu_PauseRewind()
 {
     rewind_pause = 1;

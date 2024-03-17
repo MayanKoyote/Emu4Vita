@@ -1,7 +1,6 @@
 #ifndef __M_EMU_REWIND_H__
 #define __M_EMU_REWIND_H__
 
-int Emu_IsRewindSerializing();
 void Emu_PauseRewind();
 void Emu_ResumeRewind();
 int Emu_RewindGame();
