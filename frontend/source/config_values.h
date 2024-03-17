@@ -172,8 +172,8 @@
 //--------------------------------------------------------------------------------------------------------
 //                          Hotkey default config values
 //--------------------------------------------------------------------------------------------------------
-#define DEFAULT_CONFIG_VALUE_HOTKEY_SAVE_STATE (SCE_CTRL_PSBUTTON | SCE_CTRL_TRIANGLE)
-#define DEFAULT_CONFIG_VALUE_HOTKEY_LOAD_STATE (SCE_CTRL_PSBUTTON | SCE_CTRL_SQUARE)
+#define DEFAULT_CONFIG_VALUE_HOTKEY_SAVE_STATE (SCE_CTRL_PSBUTTON | SCE_CTRL_SQUARE)
+#define DEFAULT_CONFIG_VALUE_HOTKEY_LOAD_STATE (SCE_CTRL_PSBUTTON | SCE_CTRL_TRIANGLE)
 #define DEFAULT_CONFIG_VALUE_HOTKEY_SPEED_UP (SCE_CTRL_PSBUTTON | SCE_CTRL_R1)
 #define DEFAULT_CONFIG_VALUE_HOTKEY_SPEED_DOWN (SCE_CTRL_PSBUTTON | SCE_CTRL_L1)
 #define DEFAULT_CONFIG_VALUE_HOTKEY_REWIND_GAME TURBO_LOCAL_BITMASK_KEY(SCE_CTRL_PSBUTTON | EXT_CTRL_RIGHT_ANLOG_LEFT) // 回退功能使用连发
