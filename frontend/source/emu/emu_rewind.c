@@ -371,7 +371,10 @@ static int RewindThreadFunc()
 
         int current_time = sceKernelGetProcessTimeWide();
         if (current_time < rs.next_time)
+        {
             sceKernelDelayThread(rs.next_time - current_time);
+            current_time = sceKernelGetProcessTimeWide();
+        }
 
         rewind_rewinding ? Rewind() : SaveState();
 
