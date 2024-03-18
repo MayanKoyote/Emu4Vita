@@ -41,7 +41,7 @@ class Pegasus(Base):
     def load(self, data_path):
         data = {}
         k = None
-        for line in open(Path(data_path) / self.DATA_NAME, encoding='utf-8'):
+        for line in open(data_path, encoding='utf-8'):
             line = line.strip()
             if len(line) == 0 or line.startswith('#'):
                 continue

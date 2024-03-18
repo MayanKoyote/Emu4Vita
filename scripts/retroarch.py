@@ -4,7 +4,7 @@ import json
 
 
 class RetroArch(Base):
-    DATA_NAME = 'playlists'
+    DATA_PATTERN = 'playlists'
     VALID_IMAGE_TYPES = ['Boxarts', 'Snaps', 'Titles']
 
     def __load_lpl(self, name):

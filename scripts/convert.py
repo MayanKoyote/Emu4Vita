@@ -25,9 +25,11 @@ if __name__ == '__main__':
     input_path = Path(args.input)
     roms = None
     for klass in KLASS:
-        if (input_path / klass.DATA_NAME).exists():
-            roms = klass(input_path)
+        try:
+            roms = klass(args.input)
             break
+        except:
+            continue
 
     image_type = args.image_type
     if image_type is None:

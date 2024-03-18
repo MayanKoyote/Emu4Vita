@@ -5,11 +5,11 @@ import os
 
 
 class SimUI(Base):
-    DATA_NAME = 'data.dll'
+    DATA_PATTERN = 'data.dll'
     VALID_IMAGE_TYPES = ['cassette', 'icon', 'packing', 'poster', 'thumbs', 'title']
 
     def load(self, data_path):
-        con = sqlite3.connect(data_path / self.DATA_NAME)
+        con = sqlite3.connect(data_path)
         con.row_factory = sqlite3.Row
         cur = con.cursor()
 

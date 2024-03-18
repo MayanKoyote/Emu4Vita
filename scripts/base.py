@@ -22,10 +22,21 @@ def is_compressed_file(path):
 
 class Base(dict):
     VALID_IMAGE_TYPES = []
+    DATA_PATTERN = ''
 
     def __init__(self, data_path):
-        self.path = Path(data_path)
-        self.load(data_path)
+        path = Path(data_path)
+        if path.is_file():
+            self.path = path.parent
+            self.load(path)
+        else:
+            self.path = path
+            self.load_all(path)
+
+    def load_all(self, path):
+        for name in Path(path).rglob(self.DATA_PATTERN):
+            if name.is_file():
+                self.load(name)
 
     def load(self, data_path):
         raise NotImplementedError
