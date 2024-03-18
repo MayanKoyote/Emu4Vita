@@ -231,7 +231,7 @@ int Emu_StartGame(EmuGameInfo *info)
     AppLog("[GAME] Start game...\n");
 
     game_run_event_action_type = TYPE_GAME_RUN_EVENT_ACTION_NONE;
-    sceKernelCreateLwMutex(&game_run_mutex, "emu_rewind_mutex", 2, 0, NULL);
+    sceKernelCreateLwMutex(&game_run_mutex, "game_run_mutex", 2, 0, NULL);
     retro_get_system_av_info(&core_system_av_info);
     Emu_SetRunSpeed(1.0f);
     Retro_SetControllerPortDevices();

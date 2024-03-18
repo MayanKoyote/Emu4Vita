@@ -111,7 +111,7 @@ static bool setSystemAvInfo(struct retro_system_av_info *info)
 
     return true;
 }
-#if 0
+
 static bool getCurrentSoftwareFramebuffer(struct retro_framebuffer *fb)
 {
     if (!fb)
@@ -120,16 +120,15 @@ static bool getCurrentSoftwareFramebuffer(struct retro_framebuffer *fb)
     GUI_Texture *texture = Emu_GetVideoTexture();
     if (!texture || GUI_GetTextureWidth(texture) != fb->width || GUI_GetTextureHeight(texture) != fb->height ||
         GUI_GetTextureFormat(texture) != core_video_pixel_format)
-        texture = Emu_CreateVideoTexture(fb->width, fb->height);
-    if (!texture)
         return false;
+
     fb->format = core_pixel_format;
     fb->pitch = GUI_GetTextureStride(texture);
     fb->data = GUI_GetTextureDatap(texture);
 
     return true;
 }
-#endif
+
 static bool setCoreOptionsUpdateDisplayCallback(struct retro_core_options_update_display_callback *cb)
 {
     if (core_options_update_display_callback)
@@ -375,7 +374,6 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
         return setSystemAvInfo(info);
     }
     break;
-#if 0
     case RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER:
     {
         // AppLog("[RETRO] RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER\n");
@@ -383,7 +381,6 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
         return getCurrentSoftwareFramebuffer(fb);
     }
     break;
-#endif
     case RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE:
     {
         // AppLog("[RETRO] RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE\n");
