@@ -193,6 +193,9 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "Failed to start this game!",
     // LANG_MESSAGE_WAIT_EXITING
     "Exiting, please wait......",
+    // LANG_MESSAGE_REWIND_BUFFER_TOO_SMALL,
+    "The rewind buffer size is too small,\n"
+    "minimum required is %dMB.",
 
     /**************  About  *****************/
     // LANG_ABOUT_TITLE
@@ -589,6 +592,9 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "启动游戏失败！",
     // LANG_MESSAGE_WAIT_EXITING
     "正在退出，请稍候......",
+    // LANG_MESSAGE_REWIND_BUFFER_TOO_SMALL,
+    "回溯缓存过小，\n"
+    "至少需要%dMB.",
 
     /**************  About  *****************/
     // LANG_ABOUT_TITLE
@@ -985,6 +991,9 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     "啟動遊戲失敗！",
     // LANG_MESSAGE_WAIT_EXITING
     "正在退出，請稍候......",
+    // LANG_MESSAGE_REWIND_BUFFER_TOO_SMALL,
+    "回溯緩存過小，\n "
+    "至少需要%dMB."
 
     /**************  About  *****************/
     // LANG_ABOUT_TITLE

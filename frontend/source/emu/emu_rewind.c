@@ -10,6 +10,7 @@
 #include "utils.h"
 #include "config.h"
 #include "activity/emu_activity.h"
+#include "lang.h"
 
 #define ALIGN_UP(x, a) ((x) + ((a)-1)) & ~((a)-1)
 #define ALIGN_UP_10(x) ALIGN_UP(x, 0x10)
@@ -29,6 +30,8 @@
 #define BLOCK_SIZE 0x400
 // 最小的 buf size 的倍率
 #define MIN_STATE_RATE 5
+#define THREAD_PRIORITY_REWIND 64
+#define THREAD_PRIORITY_SAVE 191
 
 enum BlockType
 {
@@ -100,8 +103,7 @@ static SceUID rewind_thread_id = -1;
 static int rewind_run = 0;
 static SceUID rewind_semaphore = -1;
 
-static RewindBlock *
-GetNextBlock()
+static RewindBlock *GetNextBlock()
 {
     RewindBlock *block = rs.current_block + 1;
     if (block - rs.blocks >= BLOCK_SIZE)
@@ -281,8 +283,8 @@ static void *GetState(RewindBlock *block)
     if (!IsValidBlock(diff->full_block))
         return NULL;
 
-    uint8_t *buf = GetDiffBuffer(diff);
-    DiffArea *area = diff->areas;
+    const uint8_t *buf = GetDiffBuffer(diff);
+    const DiffArea *area = diff->areas;
 
     memcpy(rs.tmp_buf, ((RewindFullBuf *)diff->full_block->offset)->buf, rs.state_size);
     for (int i = 0; i < diff->num; i++)
@@ -370,7 +372,7 @@ static int RewindThreadFunc()
         }
 
         int current_time = sceKernelGetProcessTimeWide();
-        if (current_time < rs.next_time)
+        if ((!rewind_rewinding) && current_time < rs.next_time)
         {
             sceKernelDelayThread(rs.next_time - current_time);
             current_time = sceKernelGetProcessTimeWide();
@@ -403,8 +405,10 @@ void Emu_InitRewind()
     rs.aligned_state_size = ALIGN_UP_10(rs.state_size);
     if (buffer_size < rs.aligned_state_size * MIN_STATE_RATE)
     {
-        AppLog("[REWIND] the buffer size is too small, Minimum required is %DMB", (rs.aligned_state_size * MIN_STATE_RATE) >> 20);
+        size_t min_size = (rs.aligned_state_size * MIN_STATE_RATE) >> 20;
+        AppLog("[REWIND] the buffer size is too small, minimum required is %DMB", min_size);
         AppLog("[REWIND] rewind init failed\n");
+        GUI_ShowToast(2, cur_lang[LANG_MESSAGE_REWIND_BUFFER_TOO_SMALL], min_size);
         return;
     }
 
@@ -416,7 +420,7 @@ void Emu_InitRewind()
     rs.tmp_buf = calloc(1, rs.aligned_state_size);
 
     rewind_run = 1;
-    rewind_thread_id = sceKernelCreateThread("rewind_main_thread", RewindThreadFunc, 191, 0x10000, 0, 0, NULL);
+    rewind_thread_id = sceKernelCreateThread("rewind_main_thread", RewindThreadFunc, THREAD_PRIORITY_SAVE, 0x10000, 0, 0, NULL);
     rewind_semaphore = sceKernelCreateSema("rewind_loading_semaphore", 0, 0, 1, NULL);
 
     if (!(rs.blocks && rs.buf && rs.tmp_buf && rewind_thread_id >= 0 && rewind_semaphore >= 0))
@@ -470,6 +474,8 @@ void Emu_StartRewindGame()
     // AppLog("Emu_StartRewindGame\n");
     Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_START_REWIND);
     rewind_rewinding = 1;
+    if (rewind_thread_id >= 0)
+        sceKernelChangeThreadPriority(rewind_thread_id, THREAD_PRIORITY_REWIND);
 }
 
 void Emu_StopRewindGame()
@@ -477,6 +483,8 @@ void Emu_StopRewindGame()
     // AppLog("Emu_StopRewindGame\n");
     Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_STOP_REWIND);
     rewind_rewinding = 0;
+    if (rewind_thread_id >= 0)
+        sceKernelChangeThreadPriority(rewind_thread_id, THREAD_PRIORITY_SAVE);
 }
 
 int Emu_IsInRewinding()

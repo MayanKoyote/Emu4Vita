@@ -433,14 +433,14 @@ static void Emu_EventRunGame()
 
 void Emu_RunGame()
 {
+    if (Emu_IsInRewinding())
+        Emu_WaitRewind();
+
     Emu_LockRunGame();
     Emu_PollInput();
     retro_run();
     Emu_EventRunGame();
     Emu_UnlockRunGame();
-
-    if (Emu_IsInRewinding())
-        Emu_WaitRewind();
 }
 
 void Emu_LockRunGame()
