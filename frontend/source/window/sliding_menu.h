@@ -32,6 +32,7 @@ int SlidingMenu_SetMode(SlidingMenu *slidingMenu, SlidingMenuModeType mode);
 int SlidingMenu_SetChoiceType(SlidingMenu *slidingMenu, SlidingMenuChoiceType type);
 int SlidingMenu_SetItems(SlidingMenu *slidingMenu, char *const *items, int n_items);
 int SlidingMenu_SetOnItemClickListener(SlidingMenu *slidingMenu, int (*onItemClickListener)(SlidingMenu *slidingMenu, int which));
+int SlidingMenu_SetOnSelectChangedListener(SlidingMenu *slidingMenu, int (*onSelectChangedListener)(SlidingMenu *slidingMenu));
 int SlidingMenu_SetOnCloseListener(SlidingMenu *slidingMenu, int (*onCloseListener)(SlidingMenu *slidingMenu));
 int SlidingMenu_SetFreeDataCallback(SlidingMenu *slidingMenu, void (*freeData)(void *data));
 int SlidingMenu_SetItemSeclected(SlidingMenu *slidingMenu, int id, int seclected);

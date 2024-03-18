@@ -78,7 +78,7 @@ TouchOption touch_options[2] = {
     {&control_config.front_touch_pad, front_touch_maps, sizeof(front_touch_maps) / sizeof(TouchMap)},
     {&control_config.back_touch_pad, back_touch_maps, sizeof(back_touch_maps) / sizeof(TouchMap)},
 };
-#define N_TOUCH_OPTIONS 2 // (sizeof(touch_options) / sizeof(TouchOption))
+#define N_TOUCH_OPTIONS (sizeof(touch_options) / sizeof(TouchOption))
 
 EmuKeyOption emu_key_options[] = {
     {&control_config.button_left, SCE_CTRL_LEFT, {0}, {0}},
@@ -106,19 +106,19 @@ EmuKeyOption emu_key_options[] = {
     {&control_config.right_analog_right, EXT_CTRL_RIGHT_ANLOG_RIGHT, {0}, {0}},
     {&control_config.right_analog_down, EXT_CTRL_RIGHT_ANLOG_DOWN, {0}, {0}},
 };
-#define N_EMU_KEY_OPTIONS 24 // (sizeof(emu_key_options) / sizeof(EmuKeyOption))
+#define N_EMU_KEY_OPTIONS (sizeof(emu_key_options) / sizeof(EmuKeyOption))
 
 HotKeyOption hot_key_options[] = {
     {&hotkey_config.hk_savestate, NULL, saveStateEventCallback, {0}},
     {&hotkey_config.hk_loadstate, NULL, loadStateEventCallback, {0}},
     {&hotkey_config.hk_speed_up, NULL, Emu_SpeedUpGame, {0}},
     {&hotkey_config.hk_speed_down, NULL, Emu_SpeedDownGame, {0}},
-    {&hotkey_config.hk_rewind, Emu_StartRewindGame, Emu_StopRewindGame, {0}},
+    {&hotkey_config.hk_rewind_game, Emu_StartRewindGame, Emu_StopRewindGame, {0}},
     {&hotkey_config.hk_player_up, NULL, changeMapPortUpCallback, {0}},
     {&hotkey_config.hk_player_down, NULL, changeMapPortDownCallback, {0}},
     {&hotkey_config.hk_exit_game, NULL, exitGameEventCallback, {0}},
 };
-#define N_HOT_KEY_MAPPER_OPTIONS 8 // (sizeof(hot_key_options) / sizeof(HotKeyOption))
+#define N_HOT_KEY_MAPPER_OPTIONS (sizeof(hot_key_options) / sizeof(HotKeyOption))
 
 static uint8_t psbutton_old_pressed[N_CTRL_PORTS];
 static uint64_t disable_psbutton_micros[N_CTRL_PORTS];
@@ -251,7 +251,7 @@ static void LocalKeyToEmuKey(EmuKeyOption *option, int local_port, int mapping_p
         int hold_count = ++option->hold_counts[local_port];
         uint32_t config_key = *(option->value);
         int trubo = config_key & TURBO_BITMASK_KEY;
-        uint32_t map_key = config_key & 0x00FFFFFF;
+        uint32_t map_key = config_key & 0x0FFFFFFF;
         if (!map_key)
             return;
 
@@ -266,20 +266,22 @@ static void LocalKeyToEmuKey(EmuKeyOption *option, int local_port, int mapping_p
 
 static int onHotKeyEvent(int port, uint32_t buttons)
 {
-    HotKeyOption *option;
-    uint32_t config_key;
     uint8_t cur_pressed;
     uint8_t old_pressed;
+    HotKeyOption *option;
+    uint32_t config_key;
+    uint32_t map_key;
 
     int i;
     for (i = 0; i < N_HOT_KEY_MAPPER_OPTIONS; i++)
     {
         option = &hot_key_options[i];
         config_key = *(option->value);
-        if (!config_key)
+        map_key = config_key & 0x0FFFFFFF;
+        if (!map_key)
             continue;
 
-        cur_pressed = ((buttons & config_key) == config_key);
+        cur_pressed = ((buttons & map_key) == map_key);
         old_pressed = option->old_presseds[port];
         option->old_presseds[port] = cur_pressed;
 
@@ -303,7 +305,7 @@ static int onHotKeyEvent(int port, uint32_t buttons)
 
 static int onPSbuttonEvent(int prot, uint32_t buttons)
 {
-    uint8_t cur_pressed = ((buttons & SCE_CTRL_PSBUTTON) != 0);
+    uint8_t cur_pressed = ((buttons & SCE_CTRL_PSBUTTON) == SCE_CTRL_PSBUTTON);
     uint8_t old_pressed = psbutton_old_pressed[prot];
     psbutton_old_pressed[prot] = cur_pressed;
 
@@ -354,10 +356,7 @@ void Emu_PollInput()
     memset(emu_mapping_keys, 0, sizeof(emu_mapping_keys));
 
     if (!GUI_IsControlEnabled())
-    {
-        cleanInputKeys();
         return;
-    }
 
     for (local_port = 0; local_port < N_CTRL_PORTS; local_port++)
     {

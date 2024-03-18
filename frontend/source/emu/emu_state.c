@@ -267,7 +267,12 @@ int Emu_SaveState(int num)
         ret = -1;
         goto END;
     }
-    retro_serialize(state_buf, state_size);
+    if (!retro_serialize(state_buf, state_size))
+    {
+        AppLog("[SAVESTATE] Save state: retro_serialize failed!\n");
+        ret = -1;
+        goto END;
+    }
 
     fd = sceIoOpen(path, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
     if (fd < 0)

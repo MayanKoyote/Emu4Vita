@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "psp2/kernel/processmgr.h"
 
@@ -211,13 +212,12 @@ int GUI_EventToast()
     uint64_t cur_micros = sceKernelGetProcessTimeWide();
     if (toast->status == TYPE_TOAST_STATUS_SHOW)
     {
-        if (cur_micros > toast->finish_show_micros)
+        if (cur_micros >= toast->finish_show_micros)
             Toast_Dismiss(toast);
     }
     else if (toast->status == TYPE_TOAST_STATUS_DISMISS)
     {
-        uint64_t dismissing_micros = cur_micros - toast->finish_show_micros;
-        if (dismissing_micros > MAX_TOAST_GRADUAL_MICROS)
+        if (cur_micros - toast->finish_show_micros >= MAX_TOAST_GRADUAL_MICROS)
             LinkedListRemove(toast_list, entry);
     }
     else
@@ -228,7 +228,7 @@ int GUI_EventToast()
     return 0;
 }
 
-int GUI_ShowToast(const char *message, float second)
+int GUI_ShowToast(float second, const char *message, ...)
 {
     if (!toast_list)
     {
@@ -241,14 +241,20 @@ int GUI_ShowToast(const char *message, float second)
     if (!toast)
         return -1;
 
+    va_list list;
+    char buf[512];
+    va_start(list, message);
+    vsprintf(buf, message, list);
+    va_end(list);
+
     // 设置显示时间
-    toast->show_micros = second * 1000000;
+    toast->show_micros = second * MICROS_PER_SECOND;
 
     // 设置TextView
     LayoutParamsSetAvailableSize(toast->textView, TOAST_MAX_WIDTH, TOAST_MAX_HEIGHT);
     LayoutParamsSetLayoutSize(toast->textView, TYPE_LAYOUT_PARAMS_WRAP_CONTENT, TYPE_LAYOUT_PARAMS_WRAP_CONTENT);
     LayoutParamsSetPadding(toast->textView, TOAST_TEXTVIEW_PADDING_L, TOAST_TEXTVIEW_PADDING_L, TOAST_TEXTVIEW_PADDING_T, TOAST_TEXTVIEW_PADDING_T);
-    TextViewSetText(toast->textView, message);
+    TextViewSetText(toast->textView, buf);
     TextViewSetBgColor(toast->textView, TOAST_COLOR_BG);
     TextViewSetTextColor(toast->textView, TOAST_COLOR_TEXT);
     LayoutParamsUpdate(toast->textView);

@@ -17,6 +17,7 @@
 #include "setting_option.h"
 
 extern int setting_config_type;
+extern int setting_resume_game_enabled;
 extern uint32_t setting_language_config_value;
 
 extern int Setting_UpdateMenu(SettingMenu *menu);
@@ -32,25 +33,26 @@ int Setting_onResumeGameItemClick(SettingMenu *menu, SettingMenuItem *menu_item,
 
 int Setting_onResetGameItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id)
 {
-    Emu_ResetGame();
     Setting_CloseMenu();
+    Emu_ResetGame();
     return 0;
 }
 
 int Setting_onExitGameItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id)
 {
+    setting_resume_game_enabled = 0;
+    Setting_CloseMenu();
     Emu_ExitGame();
     if (BootGetMode() == BOOT_MODE_GAME)
         BootLoadParentExec();
-    Setting_CloseMenu();
     return 0;
 }
 
 static int onDiskControlAlertDialogPositiveClick(AlertDialog *dialog, int which)
 {
+    Setting_CloseMenu();
     Emu_DiskChangeImageIndex(which);
     AlertDialog_Dismiss(dialog);
-    Setting_CloseMenu();
     return 0;
 }
 
@@ -89,17 +91,19 @@ int Setting_onDiskControlItemClick(SettingMenu *menu, SettingMenuItem *menu_item
 
 int Setting_onExitToArchItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id)
 {
+    setting_resume_game_enabled = 0;
+    Setting_CloseMenu();
     Emu_ExitGame();
     BootLoadParentExec();
-    Setting_CloseMenu();
     return 0;
 }
 
 int Setting_onExitAppItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id)
 {
+    setting_resume_game_enabled = 0;
+    Setting_CloseMenu();
     Emu_ExitGame();
     AppExit();
-    Setting_CloseMenu();
     return 0;
 }
 
@@ -320,9 +324,9 @@ int Setting_onSaveScreenshotItemClick(SettingMenu *menu, SettingMenuItem *menu_i
 
 END:
     if (ret < 0)
-        AlertDialog_ShowSimpleDialog(cur_lang[LANG_TIP], cur_lang[LANG_SAVE_SCREENSHOT_FAILED]);
+        GUI_ShowToast(2, cur_lang[LANG_SAVE_SCREENSHOT_FAILED]);
     else
-        AlertDialog_ShowSimpleDialog(cur_lang[LANG_TIP], cur_lang[LANG_SAVE_SCREENSHOT_OK]);
+        GUI_ShowToast(2, cur_lang[LANG_SAVE_SCREENSHOT_OK]);
     return ret;
 
 FAILED:
@@ -343,12 +347,12 @@ int Setting_onSavePreviewItemClick(SettingMenu *menu, SettingMenuItem *menu_item
 END:
     if (ret < 0)
     {
-        AlertDialog_ShowSimpleDialog(cur_lang[LANG_TIP], cur_lang[LANG_SAVE_PREVIEW_FAILED]);
+        GUI_ShowToast(2, cur_lang[LANG_SAVE_PREVIEW_FAILED]);
     }
     else
     {
         Browser_RequestRefreshPreview(1);
-        AlertDialog_ShowSimpleDialog(cur_lang[LANG_TIP], cur_lang[LANG_SAVE_PREVIEW_OK]);
+        GUI_ShowToast(2, cur_lang[LANG_SAVE_PREVIEW_OK]);
     }
     return ret;
 

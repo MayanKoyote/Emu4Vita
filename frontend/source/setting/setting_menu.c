@@ -266,14 +266,14 @@ static KeyMapOption hk_savestate_option = {&hotkey_config.hk_savestate, hotkey_k
 static KeyMapOption hk_loadstate_option = {&hotkey_config.hk_loadstate, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
 static KeyMapOption hk_speed_up_option = {&hotkey_config.hk_speed_up, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
 static KeyMapOption hk_speed_down_option = {&hotkey_config.hk_speed_down, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
-static KeyMapOption hk_rewind_option = {&hotkey_config.hk_rewind, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
+static KeyMapOption hk_rewind_game_option = {&hotkey_config.hk_rewind_game, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
 static KeyMapOption hk_player_up_option = {&hotkey_config.hk_player_up, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
 static KeyMapOption hk_player_down_option = {&hotkey_config.hk_player_down, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
 static KeyMapOption hk_exit_game_option = {&hotkey_config.hk_exit_game, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
 
 // 杂项 (设置选项)
 static StrArrayOption auto_save_load_option = {&misc_config.auto_save_load, no_yes_names, sizeof(no_yes_names) / sizeof(LangString)};
-static StrArrayOption rewind_option = {&misc_config.enable_rewind, no_yes_names, sizeof(no_yes_names) / sizeof(LangString)};
+static StrArrayOption rewind_enabled_option = {&misc_config.enable_rewind, no_yes_names, sizeof(no_yes_names) / sizeof(LangString)};
 static IntRangeOption rewind_buffer_size_option = {&misc_config.rewind_buffer_size, MIN_REWIND_BUFFER_SIZE, MAX_REWIND_BUFFER_SIZE, 1, "%d"};
 
 // 程序 (设置选项)
@@ -350,7 +350,7 @@ static SettingMenuItem hotkey_menu_items[] = {
     KEYMAP_OPTION_ITEM(LANG_HOTKEY_LOADSTATE, &hk_loadstate_option, NULL, NULL),
     KEYMAP_OPTION_ITEM(LANG_HOTKEY_GAME_SPEED_UP, &hk_speed_up_option, NULL, NULL),
     KEYMAP_OPTION_ITEM(LANG_HOTKEY_GAME_SPEED_DOWN, &hk_speed_down_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_HOTKEY_GAME_REWIND, &hk_rewind_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_HOTKEY_GAME_REWIND, &hk_rewind_game_option, NULL, NULL),
     KEYMAP_OPTION_ITEM(LANG_HOTKEY_CONTROL_PLAYER_UP, &hk_player_up_option, NULL, NULL),
     KEYMAP_OPTION_ITEM(LANG_HOTKEY_CONTROL_PLAYER_DOWN, &hk_player_down_option, NULL, NULL),
     KEYMAP_OPTION_ITEM(LANG_HOTKEY_EXIT_GAME, &hk_exit_game_option, NULL, NULL),
@@ -360,7 +360,7 @@ static SettingMenuItem hotkey_menu_items[] = {
 // 杂项 (菜单条目)
 static SettingMenuItem misc_menu_items[] = {
     STRARRAY_OPTION_ITEM(LANG_AUTO_SAVE_LOAD_STATE, &auto_save_load_option, NULL, Setting_onAutoSaveLoadOptionChanged),
-    STRARRAY_OPTION_ITEM(LANG_ENABLE_REWIND, &rewind_option, NULL, Setting_onRewindOptionChanged),
+    STRARRAY_OPTION_ITEM(LANG_ENABLE_REWIND, &rewind_enabled_option, NULL, Setting_onRewindOptionChanged),
     INTRANGE_OPTION_ITEM(LANG_REWIND_BUFFER_SIZE, &rewind_buffer_size_option, NULL, Setting_onRewindOptionChanged),
     FUCNTION_ITEM(LANG_SAVE_SCREENSHOT, &setting_game_is_loaded, Setting_onSaveScreenshotItemClick),
     FUCNTION_ITEM(LANG_SAVE_PREVIEW, &setting_game_is_loaded, Setting_onSavePreviewItemClick),

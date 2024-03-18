@@ -92,8 +92,7 @@ void Emu_SpeedDownGame()
     Emu_SetRunSpeed(speed);
 }
 
-static int
-loadGameFromFile(const char *path, int type)
+static int loadGameFromFile(const char *path, int type)
 {
     const char *rom_path = path;
 
@@ -232,7 +231,7 @@ int Emu_StartGame(EmuGameInfo *info)
     AppLog("[GAME] Start game...\n");
 
     game_run_event_action_type = TYPE_GAME_RUN_EVENT_ACTION_NONE;
-    sceKernelCreateLwMutex(&game_run_mutex, "emu_rewind_mutex", 2, 0, NULL);
+    sceKernelCreateLwMutex(&game_run_mutex, "game_run_mutex", 2, 0, NULL);
     retro_get_system_av_info(&core_system_av_info);
     Emu_SetRunSpeed(1.0f);
     Retro_SetControllerPortDevices();
@@ -252,7 +251,6 @@ int Emu_StartGame(EmuGameInfo *info)
     Emu_InitAudio();
     Emu_InitVideo();
     Emu_InitInput();
-
     Emu_InitRewind();
 
     Emu_RequestUpdateVideoDisplay();
@@ -435,14 +433,14 @@ static void Emu_EventRunGame()
 
 void Emu_RunGame()
 {
+    if (Emu_IsInRewinding())
+        Emu_WaitRewind();
+
     Emu_LockRunGame();
     Emu_PollInput();
     retro_run();
     Emu_EventRunGame();
     Emu_UnlockRunGame();
-
-    if (Emu_IsInRewinding())
-        Emu_WaitRewind();
 }
 
 void Emu_LockRunGame()
