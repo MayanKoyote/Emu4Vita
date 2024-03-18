@@ -60,6 +60,7 @@ struct SettingWindow
 #define MENU_ITEMVIEW_COLOR_FOCUS_BG GUI_DEF_COLOR_FOCUS
 
 extern int Setting_UpdateMenu(SettingMenu *menu);
+extern int Setting_IsResumeGameEnabled();
 
 static int Setting_UpdateWindowLayout(SettingWindow *window)
 {
@@ -289,7 +290,7 @@ static int onCloseWindow(GUI_Window *window)
     }
 
 EXIT:
-    if (Emu_IsGameLoaded())
+    if (Emu_IsGameLoaded() && Setting_IsResumeGameEnabled())
         Emu_ResumeGame();
 
     return 0;

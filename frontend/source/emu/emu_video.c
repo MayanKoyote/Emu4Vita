@@ -620,24 +620,31 @@ void Retro_VideoRefreshCallback(const void *data, unsigned width, unsigned heigh
     if (!video_okay || video_pause)
         return;
 
-    if (!data || pitch <= 0 || (video_texture && GUI_GetTextureDatap(video_texture) == data))
-        return;
+    GUI_LockDraw();
 
-    if (video_width != width || video_height != height || !video_texture ||
-        GUI_GetTextureFormat(video_texture) != core_video_pixel_format)
+    void *texture_data = video_texture ? GUI_GetTextureDatap(video_texture) : NULL;
+    int next_texture_index = (video_texture_index + 1) % MAX_TEXTURE_BUFS;
+    GUI_Texture *next_texture = video_texture_bufs[next_texture_index];
+
+    if (video_width != width || video_height != height || !next_texture ||
+        GUI_GetTextureFormat(next_texture) != core_video_pixel_format)
     {
         Emu_CreateVideoTexture(width, height);
+        next_texture_index = video_texture_index;
+        next_texture = video_texture;
     }
 
-    video_texture_index = (video_texture_index + 1) % MAX_TEXTURE_BUFS;
-    GUI_Texture *dst_texture = video_texture_bufs[video_texture_index];
+    if (!data || pitch <= 0)
+        goto END;
+    else if (texture_data == data)
+        goto SET_NEXT_FRAME;
 
-    if (dst_texture)
+    if (next_texture)
     {
         const uint8_t *in_data = (const uint8_t *)data;
-        uint8_t *out_data = (uint8_t *)GUI_GetTextureDatap(dst_texture);
+        uint8_t *out_data = (uint8_t *)GUI_GetTextureDatap(next_texture);
         unsigned int in_pitch = pitch;
-        unsigned int out_pitch = GUI_GetTextureStride(dst_texture);
+        unsigned int out_pitch = GUI_GetTextureStride(next_texture);
 
         int i;
         for (i = 0; i < height; i++)
@@ -647,7 +654,13 @@ void Retro_VideoRefreshCallback(const void *data, unsigned width, unsigned heigh
             out_data += out_pitch;
         }
     }
-    video_texture = dst_texture;
+
+SET_NEXT_FRAME:
+    video_texture_index = next_texture_index;
+    video_texture = next_texture;
+
+END:
+    GUI_UnlockDraw();
 }
 
 int Emu_InitVideo()

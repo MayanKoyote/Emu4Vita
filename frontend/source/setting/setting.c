@@ -26,10 +26,11 @@
 
 static SettingWindow *setting_window = NULL;
 
+int setting_resume_game_enabled = 0;
 int setting_config_type = 0;
 int setting_has_main_core_menu = 0;
 int setting_game_is_loaded = 0;
-int setting_current_path_is_file;
+int setting_current_path_is_file = 0;
 
 int setting_visibility_core_menu = 0;
 int setting_visibility_cheat_menu = 0;
@@ -44,6 +45,7 @@ extern SettingContext setting_context;
 
 static void updateVariables()
 {
+    setting_resume_game_enabled = 1;
     setting_game_is_loaded = Emu_IsGameLoaded();
     setting_config_type = setting_game_is_loaded ? TYPE_CONFIG_GAME : TYPE_CONFIG_MAIN;
     setting_current_path_is_file = CurrentPathIsFile();
@@ -421,4 +423,9 @@ int Setting_CloseMenu()
     Setting_CloseWindow(setting_window);
 
     return 0;
+}
+
+int Setting_IsResumeGameEnabled()
+{
+    return setting_resume_game_enabled;
 }
