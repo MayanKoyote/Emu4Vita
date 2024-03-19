@@ -275,7 +275,7 @@ static KeyMapOption hk_exit_game_option = {&hotkey_config.hk_exit_game, hotkey_k
 // 杂项 (设置选项)
 static StrArrayOption auto_save_load_option = {&misc_config.auto_save_load, no_yes_names, sizeof(no_yes_names) / sizeof(LangString)};
 static StrArrayOption rewind_enabled_option = {&misc_config.enable_rewind, no_yes_names, sizeof(no_yes_names) / sizeof(LangString)};
-static IntRangeOption rewind_max_count_option = {&misc_config.rewind_max_count, 1, 300, 1, "%d"};
+static IntRangeOption rewind_max_count_option = {&misc_config.rewind_max_count, 10, 1000, 10, "%d"};
 static IntRangeOption rewind_interval_time_option = {&misc_config.rewind_interval_time, 1, 100, 1, "%d"};
 
 // 程序 (设置选项)

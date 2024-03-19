@@ -264,6 +264,7 @@ void LinkedListEmpty(LinkedList *list)
 
     while (entry)
     {
+        entry->prev = NULL;
         LinkedListEntry *next = entry->next;
         if (entry->data)
         {

@@ -186,8 +186,8 @@
 //--------------------------------------------------------------------------------------------------------
 #define DEFAULT_CONFIG_VALUE_MISC_AUTO_SAVE_LOAD 1
 #define DEFAULT_CONFIG_VALUE_MISC_ENABLE_REWIND 1
-#define DEFAULT_CONFIG_VALUE_MISC_REWIND_MAX_COUNT 20
-#define DEFAULT_CONFIG_VALUE_MISC_REWIND_INTERVAL_TIME 3
+#define DEFAULT_CONFIG_VALUE_MISC_REWIND_MAX_COUNT 100
+#define DEFAULT_CONFIG_VALUE_MISC_REWIND_INTERVAL_TIME 1
 
 //--------------------------------------------------------------------------------------------------------
 //                          App default config values
