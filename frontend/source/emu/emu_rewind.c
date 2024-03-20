@@ -40,8 +40,8 @@ typedef struct RewindState
 static SceUID rewind_thid = -1;
 static LinkedList *rewind_list = NULL;
 static uint64_t last_save_micros = 0;
+static int rewind_okay = 0;
 static int rewind_run = 0, rewind_pause = 0;
-static int rewind_serializing = 0;
 static int last_rewind_event = TYPE_REWIND_EVENT_NONE;
 
 static void freeRewindEntryData(void *data)
@@ -63,7 +63,10 @@ static void freeRewindEntryData(void *data)
             LinkedListEntry *next_entry = LinkedListNext(state->entry);
             RewindState *next_state = (RewindState *)LinkedListGetEntryData(next_entry);
             if ((!prev_state || prev_state->parent_data != state->parent_data) && (!next_state || next_state->parent_data != state->parent_data))
+            {
+                // printf("[REWIND] freeRewindEntryData: free parent_data: %p\n", state->parent_data);
                 free(state->parent_data);
+            }
         }
 
         free(state);
@@ -130,12 +133,12 @@ static RewindState *RewindCreateState(void *current_data, size_t current_size, v
         {
             if (diff_size > 0)
             {
-                BlockTableEntryData *entry = (BlockTableEntryData *)calloc(1, sizeof(BlockTableEntryData));
-                if (!entry)
+                BlockTableEntryData *data = (BlockTableEntryData *)calloc(1, sizeof(BlockTableEntryData));
+                if (!data)
                     goto SAVE_FULL;
-                entry->size = diff_size;
-                entry->offset = diff_offset;
-                LinkedListAdd(state->table_list, entry);
+                data->size = diff_size;
+                data->offset = diff_offset;
+                LinkedListAdd(state->table_list, data);
                 diff_size = 0;
             }
         }
@@ -232,7 +235,6 @@ static int RewindGetStateData(RewindState *state, void **data, size_t *size)
         block_offset += data->size;
         entry = LinkedListNext(entry);
     }
-    printf("RewindGetStateData: block_offset: %u, block_size: %u\n", block_offset, state->block_size);
 
     *data = state_data;
     *size = state_size;
@@ -247,8 +249,8 @@ static int RewindSaveState()
     void *state_data = NULL;
     size_t state_size = 0;
 
-    Emu_LockRunGame();      // 游戏运行锁，无法在游戏运行中保存存档，需要加互斥锁
-    rewind_serializing = 1; // 有些核心保存即时存档时会调用RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE获取是否要保存音视频等，rewind可以不要音视频节省容量和时间
+    if (!rewind_okay)
+        goto FAILED;
 
     state_size = retro_serialize_size();
     if (state_size == 0)
@@ -295,12 +297,11 @@ static int RewindSaveState()
 
     last_rewind_event = TYPE_REWIND_EVENT_SAVE;
     last_save_micros = sceKernelGetProcessTimeWide();
+    // printf("[REWIND] RewindSaveState: index: %d, block_size: %u, table_length: %d, parent_size: %u\n", LinkedListGetLength(rewind_list), state->block_size, LinkedListGetLength(state->table_list), state->parent_size);
 
 END:
     if (state_data && (!state || state->parent_data != state_data))
         free(state_data);
-    rewind_serializing = 0;
-    Emu_UnlockRunGame();
     return ret;
 
 FAILED:
@@ -315,8 +316,8 @@ static int RewindLoadState()
     void *state_data = NULL;
     size_t state_size = 0;
 
-    Emu_LockRunGame();
-    rewind_serializing = 1;
+    if (!rewind_okay)
+        goto FAILED;
 
     LinkedListEntry *entry = LinkedListTail(rewind_list);
     if (!entry)
@@ -345,12 +346,11 @@ static int RewindLoadState()
 
     last_rewind_event = TYPE_REWIND_EVENT_LOAD;
     last_save_micros = sceKernelGetProcessTimeWide();
+    // printf("[REWIND] RewindLoadState: index: %d, block_size: %u, table_length: %d, parent_size: %u\n", LinkedListGetLength(rewind_list), state->block_size, LinkedListGetLength(state->table_list), state->parent_size);
 
 END:
     if (state_data && (!state || state->parent_data != state_data))
         free(state_data);
-    rewind_serializing = 0;
-    Emu_UnlockRunGame();
     return ret;
 
 FAILED:
@@ -372,11 +372,13 @@ static int rewindThreadEntry(SceSize args, void *argp)
             continue;
         }
 
+        Emu_LockRunGame();
         uint64_t cur_micros = sceKernelGetProcessTimeWide();
-        uint64_t rewind_interval_micros = misc_config.rewind_interval_time * MICROS_PER_SECOND;
+        uint64_t rewind_interval_micros = (uint64_t)misc_config.rewind_interval_time * MICROS_PER_SECOND;
         uint64_t cur_interval_micros = cur_micros - last_save_micros;
         if (cur_interval_micros < rewind_interval_micros)
         {
+            Emu_UnlockRunGame();
             // 不休眠全部时间差，最大只休眠1000，continue重新判断。因为休眠时有可能会打开菜单，如此会造成真实的游戏运行间隔时间出现错误
             uint64_t delay_micros = MIN(rewind_interval_micros - cur_interval_micros, 1000);
             sceKernelDelayThread(delay_micros);
@@ -384,6 +386,7 @@ static int rewindThreadEntry(SceSize args, void *argp)
         }
 
         RewindSaveState();
+        Emu_UnlockRunGame();
     }
 
     AppLog("[REWIND] Rewind thread exit.\n");
@@ -416,9 +419,9 @@ static int startRewindThread()
 
 static int finishRewindThread()
 {
-    rewind_run = 0;
     if (rewind_thid >= 0)
     {
+        rewind_run = 0;
         sceKernelWaitThreadEnd(rewind_thid, NULL, NULL);
         sceKernelDeleteThread(rewind_thid);
         rewind_thid = -1;
@@ -439,36 +442,50 @@ void Emu_ResumeRewind()
 
 int Emu_RewindGame()
 {
-    return RewindLoadState();
+    if (misc_config.enable_rewind)
+        return RewindLoadState();
+    return 0;
 }
 
 int Emu_InitRewind()
 {
+    if (rewind_okay)
+        Emu_DeinitRewind();
+
+    if (!misc_config.enable_rewind)
+        return 0;
+
+    AppLog("[REWIND] Rewind init...\n");
+
+    rewind_list = NewRewindList();
     if (!rewind_list)
-    {
-        rewind_list = NewRewindList();
-        if (!rewind_list)
-            return -1;
-    }
-    else
-    {
-        LinkedListEmpty(rewind_list);
-    }
+        goto FAILED;
 
     last_rewind_event = TYPE_REWIND_EVENT_NONE;
     rewind_pause = 1;
-    rewind_run = 0;
     if (startRewindThread() < 0)
-        return -1;
+        goto FAILED;
+    rewind_okay = 1;
 
+    AppLog("[REWIND] Rewind init OK!\n");
     return 0;
+
+FAILED:
+    AppLog("[REWIND] Rewind init failed!\n");
+    Emu_DeinitRewind();
+    return -1;
 }
 
 int Emu_DeinitRewind()
 {
+    AppLog("[REWIND] Rewind deinit...\n");
+
     finishRewindThread();
     LinkedListDestroy(rewind_list);
     rewind_list = NULL;
+    rewind_okay = 0;
+
+    AppLog("[REWIND] Rewind deinit OK!\n");
 
     return 0;
 }

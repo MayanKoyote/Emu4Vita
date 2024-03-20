@@ -14,8 +14,6 @@
 #include "utils.h"
 #include "config.h"
 
-extern char *_newlib_heap_base, *_newlib_heap_end, *_newlib_heap_cur;
-
 static int home_locked = 0, usb_connection_locked = 0, quick_menu_locked = 0;
 static int suspend_locked = 0, oled_off_locked = 0, oled_dimming_locked = 0;
 
@@ -387,21 +385,6 @@ void InitPowerTickThread()
     SceUID thid = sceKernelCreateThread("power_tick_thread", powerTickThreadEntry, 0x10000100, 0x40000, 0, 0, NULL);
     if (thid >= 0)
         sceKernelStartThread(thid, 0, NULL);
-}
-
-uint64_t GetTotalHeadMemSize()
-{
-    return _newlib_heap_end - _newlib_heap_base;
-}
-
-uint64_t GetFreeHeadMemSize()
-{
-    return _newlib_heap_end - _newlib_heap_cur;
-}
-
-uint64_t GetUsedHeadMemSize()
-{
-    return _newlib_heap_cur - _newlib_heap_base;
 }
 
 int GetUTF8Count(const char *utf8)

@@ -61,10 +61,6 @@ void UnlockOledDimming();
 
 void InitPowerTickThread();
 
-uint64_t GetTotalHeadMemSize();
-uint64_t GetFreeHeadMemSize();
-uint64_t GetUsedHeadMemSize();
-
 int GetUTF8Count(const char *utf8);
 
 #endif

@@ -43,7 +43,7 @@ static int OverlayThreadFunc(SceSize args, void *argp)
     }
 
     Setting_SetOverlayOption(graphics_overlay_list);
-    sceKernelExitDeleteThread(0);
+    sceKernelExitThread(0);
     return 0;
 }
 

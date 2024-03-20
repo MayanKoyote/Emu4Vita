@@ -300,6 +300,18 @@ int Setting_onAutoSaveLoadOptionChanged(SettingMenu *menu, SettingMenuItem *menu
     return 0;
 }
 
+int Setting_onRewindEnabledOptionChanged(SettingMenu *menu, SettingMenuItem *menu_item, int id)
+{
+    if (Emu_IsGameLoaded())
+    {
+        if (misc_config.enable_rewind)
+            Emu_InitRewind();
+        else
+            Emu_DeinitRewind();
+    }
+    return 0;
+}
+
 int Setting_onSaveScreenshotItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id)
 {
     int ret = 0;

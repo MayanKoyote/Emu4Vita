@@ -362,7 +362,7 @@ static SettingMenuItem hotkey_menu_items[] = {
 // 杂项 (菜单条目)
 static SettingMenuItem misc_menu_items[] = {
     STRARRAY_OPTION_ITEM(LANG_AUTO_SAVE_LOAD_STATE, &auto_save_load_option, NULL, Setting_onAutoSaveLoadOptionChanged),
-    STRARRAY_OPTION_ITEM(LANG_ENABLE_REWIND, &rewind_enabled_option, NULL, NULL),
+    STRARRAY_OPTION_ITEM(LANG_ENABLE_REWIND, &rewind_enabled_option, NULL, Setting_onRewindEnabledOptionChanged),
     INTRANGE_OPTION_ITEM(LANG_REWIND_MAX_COUNT, &rewind_max_count_option, NULL, NULL),
     INTRANGE_OPTION_ITEM(LANG_REWIND_INTERVAL_TIME, &rewind_interval_time_option, NULL, NULL),
     FUCNTION_ITEM(LANG_SAVE_SCREENSHOT, &setting_game_is_loaded, Setting_onSaveScreenshotItemClick),

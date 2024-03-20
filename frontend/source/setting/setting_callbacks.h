@@ -62,7 +62,7 @@ int Setting_onResetCheatConfigItemClick(SettingMenu *menu, SettingMenuItem *menu
 int Setting_onMiscMenuStart(SettingMenu *menu);
 int Setting_onMiscMenuFinish(SettingMenu *menu);
 int Setting_onAutoSaveLoadOptionChanged(SettingMenu *menu, SettingMenuItem *menu_item, int id);
-int Setting_onRewindOptionChanged(SettingMenu *menu, SettingMenuItem *menu_item, int id);
+int Setting_onRewindEnabledOptionChanged(SettingMenu *menu, SettingMenuItem *menu_item, int id);
 int Setting_onSaveScreenshotItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id);
 int Setting_onSavePreviewItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id);
 int Setting_onResetMiscConfigItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id);

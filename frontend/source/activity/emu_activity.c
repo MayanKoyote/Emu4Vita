@@ -92,3 +92,8 @@ void Emu_SetMicrosPerFrame(uint64_t micros)
 {
     micros_per_frame = micros;
 }
+
+uint64_t Emu_GetMicrosPerFrame()
+{
+    return micros_per_frame;
+}

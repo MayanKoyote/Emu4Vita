@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include <psp2/kernel/threadmgr/thread.h>
+#include <psp2/kernel/processmgr.h>
 
 #include "activity/activity.h"
 #include "list/cheat_list.h"
@@ -153,7 +154,7 @@ static int ApplyCheatOption()
     return 0;
 }
 
-static int ApplyCheatOptionThreadFunc(SceSize args, void *argp)
+static int cheatThreadEntry(SceSize args, void *argp)
 {
     AppLog("[CHEAT] Cheat thread start.\n");
 
@@ -165,8 +166,13 @@ static int ApplyCheatOptionThreadFunc(SceSize args, void *argp)
             continue;
         }
 
+        uint64_t next_micros = sceKernelGetProcessTimeWide() + Emu_GetMicrosPerFrame();
+        Emu_LockRunGame();
         ApplyCheatOption();
-        sceKernelDelayThread(1000);
+        Emu_UnlockRunGame();
+        uint64_t cur_micros = sceKernelGetProcessTimeWide();
+        if (cur_micros < next_micros)
+            sceKernelDelayThread(next_micros - cur_micros);
     }
 
     AppLog("[CHEAT] Cheat thread exit.\n");
@@ -174,7 +180,30 @@ static int ApplyCheatOptionThreadFunc(SceSize args, void *argp)
     return 0;
 }
 
-static int ExitApplyCheatOptiontThread()
+static int startCheatThread()
+{
+    int ret = 0;
+
+    if (cheat_thid < 0)
+    {
+        ret = cheat_thid = sceKernelCreateThread("emu_cheat_thread", cheatThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
+        if (cheat_thid >= 0)
+        {
+            cheat_run = 1;
+            ret = sceKernelStartThread(cheat_thid, 0, NULL);
+            if (ret < 0)
+            {
+                sceKernelDeleteThread(cheat_thid);
+                cheat_thid = -1;
+                cheat_run = 0;
+            }
+        }
+    }
+
+    return ret;
+}
+
+static int finishCheatThread()
 {
     if (cheat_thid >= 0)
     {
@@ -187,38 +216,19 @@ static int ExitApplyCheatOptiontThread()
     return 0;
 }
 
-static int StartApplyCheatOptionThread()
-{
-    int ret = -1;
-
-    if (cheat_thid >= 0)
-        ExitApplyCheatOptiontThread();
-
-    ret = cheat_thid = sceKernelCreateThread("cheat_thread", ApplyCheatOptionThreadFunc, 0x10000100, 0x10000, 0, 0, NULL);
-    if (cheat_thid >= 0)
-    {
-        cheat_run = 1;
-        ret = sceKernelStartThread(cheat_thid, 0, NULL);
-    }
-
-    return ret;
-}
-
 int Emu_InitCheat()
 {
-    retro_cheat_reset();
-    cheat_reset = 0;
-    cheat_pause = 1;
-
     if (Emu_LoadCheatOption() < 0)
         return -1;
 
-    return StartApplyCheatOptionThread();
+    cheat_pause = 1;
+
+    return startCheatThread();
 }
 
 int Emu_DeinitCheat()
 {
-    ExitApplyCheatOptiontThread();
+    finishCheatThread();
     Emu_CleanCheatOption();
 
     return 0;

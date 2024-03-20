@@ -18,16 +18,17 @@
 #include "lang.h"
 #include "init.h"
 
-#define STATE_LISTVIEW_PADDING_L 0.0f
-#define STATE_LISTVIEW_PADDING_T 8.0f
+#define STATE_LISTVIEW_PADDING_L 0
+#define STATE_LISTVIEW_PADDING_T 8
 
-#define STATE_ITEMVIEW_PADDING 8.0f
-#define STATE_ITEMVIEW_MARGIN 8.0f
+#define STATE_ITEMVIEW_PADDING 8
+#define STATE_ITEMVIEW_MARGIN 8
 
-#define OPTION_LINE_SPACE 4.0f
+#define OPTION_LINE_SPACE 6
 
 #define STATE_PREVIEW_HEIGHT ((GUI_GetLineHeight() + OPTION_LINE_SPACE) * 4 - OPTION_LINE_SPACE)
 #define STATE_PREVIEW_WIDTH(h) (h * 4.0f / 3.0f)
+#define STATE_ITEMVIEW_HEIGHT (STATE_PREVIEW_HEIGHT + STATE_ITEMVIEW_PADDING * 2)
 
 #define STATE_ITEMVIEW_COLOR_DEF_BG COLOR_ALPHA(COLOR_DARKGRAY, 0xAF)
 #define STATE_ITEMVIEW_COLOR_FOCUS_BG GUI_DEF_COLOR_FOCUS
@@ -36,8 +37,8 @@
 #define N_STATE_COUNTS_PER_LINE 2
 #define N_STATE_DRAW_LINES 4
 
-#define STATE_INFO_MARGIN_L 6.0f
-#define STATE_INFO_LINE_SPACE 4.0f
+#define STATE_INFO_MARGIN_L 6
+#define STATE_INFO_LINE_SPACE 6
 
 #define STATE_PREVIEW_COLOR_BG COLOR_ALPHA(COLOR_GRAY, 0xAF)
 
@@ -67,54 +68,71 @@ StateListItem *state_list = NULL;
 static SceUID state_thid = -1;
 static int state_thread_stop = 0;
 
-static int list_top_pos = 0, list_focus_pos = 0;
+static int listview_scroll_y = 0;
+static int state_focus_pos = 0;
 static int option_open = 0;
 static int option_focus_pos = 0;
 
-static void refreshStateListPos(int *top_pos, int *focus_pos)
+static void updateStateLayout()
 {
-    int temp_top_pos = *top_pos;
-    int temp_focus_pos = *focus_pos;
+    int layout_h = 0;
+    Setting_GetWindowMenuAvailableSize(NULL, &layout_h);
 
-    if (temp_focus_pos > STATE_LIST_LEN - 1)
-        temp_focus_pos = STATE_LIST_LEN - 1;
-    if (temp_focus_pos < 0)
-        temp_focus_pos = 0;
+    int n_line = (STATE_LIST_LEN + N_STATE_COUNTS_PER_LINE - 1) / N_STATE_COUNTS_PER_LINE;
+    int itemview_h = STATE_ITEMVIEW_HEIGHT;
+    int itemview_y_space = itemview_h + STATE_ITEMVIEW_MARGIN;
+    int itemviews_h = layout_h - STATE_LISTVIEW_PADDING_T * 2;
+    int itemviews_wrap_h = itemview_y_space * n_line - STATE_ITEMVIEW_MARGIN;
 
-    int half_draw_lines = N_STATE_DRAW_LINES / 2;
-    int focus_pos_off_line = temp_focus_pos % N_STATE_COUNTS_PER_LINE;
-    int list_len_off_line = STATE_LIST_LEN % N_STATE_COUNTS_PER_LINE;
+    int scroll_y = 0 - (state_focus_pos / N_STATE_COUNTS_PER_LINE) * itemview_y_space;
+    scroll_y += (itemviews_h / 2 - itemview_h / 2);
 
-    // Make focus_pos in current line
-    temp_top_pos = temp_focus_pos - focus_pos_off_line - (half_draw_lines * N_STATE_COUNTS_PER_LINE);
+    int max_srcoll_y = 0;
+    int min_scroll_y = MIN(itemviews_h - itemviews_wrap_h, 0);
 
-    int max_top_pos = STATE_LIST_LEN - list_len_off_line - (N_STATE_DRAW_LINES - (list_len_off_line ? 1 : 0)) * N_STATE_COUNTS_PER_LINE;
-    if (temp_top_pos > max_top_pos)
-        temp_top_pos = max_top_pos;
-    if (temp_top_pos < 0)
-        temp_top_pos = 0;
+    if (scroll_y < min_scroll_y)
+        scroll_y = min_scroll_y;
+    if (scroll_y > max_srcoll_y)
+        scroll_y = max_srcoll_y;
 
-    *top_pos = temp_top_pos;
-    *focus_pos = temp_focus_pos;
+    listview_scroll_y = scroll_y;
 }
 
 static void moveStateListPos(int type)
 {
-    int temp_top_pos = list_top_pos;
-    int temp_focus_pos = list_focus_pos;
+    int pos = state_focus_pos;
 
-    if ((type == TYPE_MOVE_UP) && (temp_focus_pos >= N_STATE_COUNTS_PER_LINE))
-        temp_focus_pos -= N_STATE_COUNTS_PER_LINE;
-    else if ((type == TYPE_MOVE_DOWN) && (temp_focus_pos < STATE_LIST_LEN - N_STATE_COUNTS_PER_LINE))
-        temp_focus_pos += N_STATE_COUNTS_PER_LINE;
+    if ((type == TYPE_MOVE_UP))
+    {
+        if (pos >= N_STATE_COUNTS_PER_LINE)
+            pos -= N_STATE_COUNTS_PER_LINE;
+    }
+    else if ((type == TYPE_MOVE_DOWN))
+    {
+        if (pos < STATE_LIST_LEN - N_STATE_COUNTS_PER_LINE)
+            pos += N_STATE_COUNTS_PER_LINE;
+    }
     else if (type == TYPE_MOVE_LEFT)
-        temp_focus_pos--;
+    {
+        if (pos > 0)
+            pos--;
+    }
     else if (type == TYPE_MOVE_RIGHT)
-        temp_focus_pos++;
+    {
+        if (pos < STATE_LIST_LEN - 1)
+            pos++;
+    }
 
-    refreshStateListPos(&temp_top_pos, &temp_focus_pos);
-    list_top_pos = temp_top_pos;
-    list_focus_pos = temp_focus_pos;
+    if (pos > STATE_LIST_LEN - 1)
+        pos = STATE_LIST_LEN - 1;
+    if (pos < 0)
+        pos = 0;
+
+    if (pos != state_focus_pos)
+    {
+        state_focus_pos = pos;
+        updateStateLayout();
+    }
 }
 
 static void cleanStateItem(int num)
@@ -205,13 +223,13 @@ int Setting_GetStatePreviewSize(int *width, int *height)
 
 void Setting_SetStateSelectId(int id)
 {
-    list_focus_pos = id;
+    state_focus_pos = id;
     moveStateListPos(TYPE_MOVE_NONE);
 }
 
 int Setting_GetStateSelectId()
 {
-    return list_focus_pos;
+    return state_focus_pos;
 }
 
 int Setting_LoadState(int num)
@@ -247,6 +265,9 @@ int Setting_DeleteState(int num)
 
 void Setting_DrawState()
 {
+    if (!state_list)
+        return;
+
     int layout_x = 0, layout_y = 0;
     int layout_w = 0, layout_h = 0;
     int preview_w = 0, preview_h = 0;
@@ -268,10 +289,12 @@ void Setting_DrawState()
     int itemview_y_space = itemview_h + STATE_ITEMVIEW_MARGIN;
 
     int itemview_x = itemviews_sx;
-    int itemview_y = itemviews_sy;
+    int itemview_y = itemviews_sy + listview_scroll_y;
+
+    GUI_SetClipping(itemviews_sx, itemviews_sy, itemviews_w, itemviews_h);
 
     int i;
-    for (i = list_top_pos; i < STATE_LIST_LEN; i++)
+    for (i = 0; i < STATE_LIST_LEN; i++)
     {
         if (itemview_y + itemview_h <= itemviews_sy)
             goto NEXT;
@@ -280,7 +303,7 @@ void Setting_DrawState()
         if (itemview_y >= itemviews_dy)
             break;
 
-        uint32_t color = (i == list_focus_pos) ? STATE_ITEMVIEW_COLOR_FOCUS_BG : STATE_ITEMVIEW_COLOR_DEF_BG;
+        uint32_t color = (i == state_focus_pos) ? STATE_ITEMVIEW_COLOR_FOCUS_BG : STATE_ITEMVIEW_COLOR_DEF_BG;
         GUI_DrawFillRectangle(itemview_x, itemview_y, itemview_w, itemview_h, color);
 
         int preview_x = itemview_x + STATE_ITEMVIEW_PADDING;
@@ -317,7 +340,7 @@ void Setting_DrawState()
         }
 
         // If open menu
-        if (option_open && i == list_focus_pos)
+        if (option_open && i == state_focus_pos)
         {
             int j;
             int menu_dx = itemview_x + itemview_w - STATE_ITEMVIEW_PADDING;
@@ -345,6 +368,8 @@ void Setting_DrawState()
             itemview_x += itemview_x_space;
         }
     }
+
+    GUI_UnsetClipping();
 }
 
 static void openMenu()
@@ -352,7 +377,7 @@ static void openMenu()
     option_open = 1;
     option_focus_pos = 0;
 
-    if (state_list[list_focus_pos].exist)
+    if (state_list[state_focus_pos].exist)
     {
         state_menu[0].enable = 1;
         state_menu[2].enable = 1;
@@ -441,19 +466,19 @@ static void ctrlOption()
         {
             option_open = 0;
             Setting_CloseMenu();
-            Setting_LoadState(list_focus_pos);
+            Setting_LoadState(state_focus_pos);
             break;
         }
         case 1:
         {
             option_open = 0;
-            Setting_SaveState(list_focus_pos);
+            Setting_SaveState(state_focus_pos);
             break;
         }
         case 2:
         {
             option_open = 0;
-            Setting_DeleteState(list_focus_pos);
+            Setting_DeleteState(state_focus_pos);
             break;
         }
         case 3:
@@ -471,6 +496,9 @@ static void ctrlOption()
 
 void Setting_CtrlState()
 {
+    if (!state_list)
+        return;
+
     if (option_open)
         ctrlOption();
     else
@@ -516,23 +544,25 @@ static int stateThreadFunc(SceSize args, void *argp)
         sceIoDclose(dfd);
     }
 
-    sceKernelExitDeleteThread(0);
+    sceKernelExitThread(0);
     return 0;
 }
 
-int initStateThread()
+static int startStateThread()
 {
     int ret = 0;
 
-    state_thread_stop = 0;
     ret = state_thid = sceKernelCreateThread("state_thread", stateThreadFunc, 0x10000100, 0x10000, 0, 0, NULL);
     if (state_thid >= 0)
+    {
+        state_thread_stop = 0;
         ret = sceKernelStartThread(state_thid, 0, NULL);
+    }
 
     return ret;
 }
 
-void deinitStateThread()
+static void finishStateThread()
 {
     state_thread_stop = 1;
     if (state_thid >= 0)
@@ -552,14 +582,14 @@ int Setting_InitState()
         return -1;
 
     moveStateListPos(TYPE_MOVE_NONE);
-    initStateThread();
+    startStateThread();
 
     return 0;
 }
 
 int Setting_DeinitState()
 {
-    deinitStateThread();
+    finishStateThread();
     freeStateList();
 
     return 0;

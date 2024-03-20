@@ -215,17 +215,16 @@ int Emu_StartGame(EmuGameInfo *info)
     game_loading = 0;
     game_reloading = 0;
 
-    GUI_ExitThreadRun();
-    GUI_SetControlEnabled(1);
     Splash_SetListviewAutoScroll(0);
     if (ret < 0)
     {
+        GUI_ExitThreadRun();
+        GUI_SetControlEnabled(1);
         if (!app_config.show_log)
             GUI_FinishActivity(&splash_activity);
         AlertDialog_ShowSimpleDialog(cur_lang[LANG_TIP], cur_lang[LANG_MESSAGE_START_GAME_FAILED]);
         return -1;
     }
-    GUI_FinishActivity(&splash_activity);
     WriteFile((LASTFILE_PATH), info->path, strlen(info->path) + 1);
 
     AppLog("[GAME] Start game...\n");
@@ -253,8 +252,10 @@ int Emu_StartGame(EmuGameInfo *info)
     Emu_InitInput();
     Emu_InitRewind();
 
-    Emu_RequestUpdateVideoDisplay();
     Retro_UpdateCoreOptionsDisplay();
+    GUI_ExitThreadRun();
+    GUI_SetControlEnabled(1);
+    GUI_FinishActivity(&splash_activity);
     GUI_StartActivity(&emu_activity);
 
     game_loaded = 1;
@@ -271,6 +272,7 @@ void Emu_ExitGame()
 
     if (game_loaded)
     {
+        Emu_LockRunGame();
         game_exiting = 1;
         Emu_PauseGame();
 
@@ -304,11 +306,12 @@ void Emu_ExitGame()
         GUI_SetControlEnabled(1);
         GUI_FinishActivity(&emu_activity);
 
-        Emu_DeinitCheat();
         Emu_DeinitAudio();
         Emu_DeinitVideo();
         Emu_DeinitInput();
+        Emu_DeinitCheat();
         Emu_DeinitRewind();
+        Emu_UnlockRunGame();
         sceKernelDeleteLwMutex(&game_run_mutex);
         game_exiting = 0;
         game_loaded = 0;
@@ -388,30 +391,30 @@ static void Emu_EventRunGame()
     {
     case TYPE_GAME_RUN_EVENT_ACTION_SAVE_STATE:
     {
-        Emu_PauseGame();
+        Emu_LockRunGame();
         Emu_SaveState(Setting_GetStateSelectId());
         Emu_ResumeGame();
     }
     break;
     case TYPE_GAME_RUN_EVENT_ACTION_LOAD_STATE:
     {
-        Emu_PauseGame();
+        Emu_LockRunGame();
         Emu_LoadState(Setting_GetStateSelectId());
-        Emu_ResumeGame();
+        Emu_UnlockRunGame();
     }
     break;
     case TYPE_GAME_RUN_EVENT_ACTION_REWIND:
     {
-        Emu_PauseGame();
+        Emu_LockRunGame();
         Emu_RewindGame();
-        Emu_ResumeGame();
+        Emu_UnlockRunGame();
     }
     break;
     case TYPE_GAME_RUN_EVENT_ACTION_RESET:
     {
-        Emu_PauseGame();
+        Emu_LockRunGame();
         Emu_ResetGame();
-        Emu_ResumeGame();
+        Emu_UnlockRunGame();
     }
     break;
     case TYPE_GAME_RUN_EVENT_ACTION_EXIT:
@@ -433,8 +436,8 @@ void Emu_RunGame()
     Emu_LockRunGame();
     Emu_PollInput();
     retro_run();
-    Emu_EventRunGame();
     Emu_UnlockRunGame();
+    Emu_EventRunGame();
 }
 
 void Emu_LockRunGame()

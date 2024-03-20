@@ -41,7 +41,7 @@ static int ImagesThreadFunc(SceSize args, void *argp)
     GUI_SetCheckBoxTexture(LoadImageTextureByName(CHECKBOX_ON_PNG_NAME), LoadImageTextureByName(CHECKBOX_OFF_PNG_NAME));
     GUI_SetRadioButtonTexture(LoadImageTextureByName(RADIOBUTTON_ON_PNG_NAME), LoadImageTextureByName(RADIOBUTTON_OFF_PNG_NAME));
 
-    sceKernelExitDeleteThread(0);
+    sceKernelExitThread(0);
     return 0;
 }
 

@@ -547,17 +547,7 @@ static void refreshFps()
     }
     video_frames++;
 }
-/*
-static void drawHeadMemInfo()
-{
-    char total_string[16];
-    char used_string[16];
-    GetSizeString(total_string, GetTotalHeadMemSize());
-    GetSizeString(used_string, GetUsedHeadMemSize());
 
-    GUI_DrawTextf( 0, GUI_GetLineHeight(), COLOR_GREEN, "Mem:%s/%s", used_string, total_string);
-}
-*/
 void Emu_DrawVideo()
 {
     if (!video_okay)
@@ -632,6 +622,7 @@ void Retro_VideoRefreshCallback(const void *data, unsigned width, unsigned heigh
         Emu_CreateVideoTexture(width, height);
         next_texture_index = video_texture_index;
         next_texture = video_texture;
+        video_display_need_update = 1;
     }
 
     if (!data || pitch <= 0)
@@ -684,6 +675,7 @@ int Emu_InitVideo()
     AppLog("[VIDEO] video init OK!\n");
 
     video_okay = 1;
+    video_display_need_update = 1;
 
     return 0;
 }

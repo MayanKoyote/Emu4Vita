@@ -52,7 +52,7 @@ static void updateVariables()
     setting_visibility_app_menu = !setting_game_is_loaded;
     setting_visibility_core_menu = (setting_context.menus[ID_SETTING_MENU_CORE].items && (setting_game_is_loaded || setting_has_main_core_menu));
     setting_visibility_cheat_menu = (setting_context.menus[ID_SETTING_MENU_CHEAT].items && setting_game_is_loaded);
-    setting_visibility_disk_control_item = (setting_game_is_loaded && Emu_HasDiskControl() && Emu_DiskGetNumImages() > 0);
+    setting_visibility_disk_control_item = (setting_game_is_loaded && Emu_HasDiskControl() && Emu_DiskGetNumImages() > 1);
     setting_visibility_exit_to_arch_item = (BootGetMode() == BOOT_MODE_ARCH);
     setting_visibility_touch_to_button_item = !is_vitatv_model;
 }

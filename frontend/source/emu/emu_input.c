@@ -56,6 +56,7 @@ typedef struct
 
 static void saveStateEventCallback();
 static void loadStateEventCallback();
+static void rewindGameEventCallback();
 static void exitGameEventCallback();
 static void changeMapPortUpCallback();
 static void changeMapPortDownCallback();
@@ -113,7 +114,7 @@ HotKeyOption hot_key_options[] = {
     {&hotkey_config.hk_loadstate, loadStateEventCallback, {0}},
     {&hotkey_config.hk_speed_up, Emu_SpeedUpGame, {0}},
     {&hotkey_config.hk_speed_down, Emu_SpeedDownGame, {0}},
-    {&hotkey_config.hk_rewind_game, (void *)Emu_RewindGame, {0}},
+    {&hotkey_config.hk_rewind_game, rewindGameEventCallback, {0}},
     {&hotkey_config.hk_player_up, changeMapPortUpCallback, {0}},
     {&hotkey_config.hk_player_down, changeMapPortDownCallback, {0}},
     {&hotkey_config.hk_exit_game, exitGameEventCallback, {0}},
@@ -133,6 +134,11 @@ static void saveStateEventCallback()
 static void loadStateEventCallback()
 {
     Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_LOAD_STATE);
+}
+
+static void rewindGameEventCallback()
+{
+    Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_REWIND);
 }
 
 static void exitGameEventCallback()

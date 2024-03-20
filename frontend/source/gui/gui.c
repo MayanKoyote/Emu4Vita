@@ -185,7 +185,7 @@ static int guiRunThreadEntry(SceSize args, void *argp)
     while (gui_thread_run)
         GUI_RunBase();
 
-    sceKernelExitDeleteThread(0);
+    sceKernelExitThread(0);
     return 0;
 }
 
@@ -214,9 +214,9 @@ int GUI_StartThreadRun()
 
 void GUI_ExitThreadRun()
 {
-    gui_thread_run = 0;
     if (gui_thread_run_thid >= 0)
     {
+        gui_thread_run = 0;
         sceKernelWaitThreadEnd(gui_thread_run_thid, NULL, NULL);
         sceKernelDeleteThread(gui_thread_run_thid);
         gui_thread_run_thid = -1;
