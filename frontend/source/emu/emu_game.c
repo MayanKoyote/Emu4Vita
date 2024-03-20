@@ -393,7 +393,7 @@ static void Emu_EventRunGame()
     {
         Emu_LockRunGame();
         Emu_SaveState(Setting_GetStateSelectId());
-        Emu_ResumeGame();
+        Emu_UnlockRunGame();
     }
     break;
     case TYPE_GAME_RUN_EVENT_ACTION_LOAD_STATE:
