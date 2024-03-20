@@ -18,11 +18,10 @@
 #include "lang.h"
 #include "init.h"
 
-#define STATE_LISTVIEW_PADDING_L 0
-#define STATE_LISTVIEW_PADDING_T 8
+#define STATE_LISTVIEW_PADDING 8
 
-#define STATE_ITEMVIEW_PADDING 8
-#define STATE_ITEMVIEW_MARGIN 8
+#define STATE_ITEMVIEW_PADDING 6
+#define STATE_ITEMVIEW_MARGIN STATE_LISTVIEW_PADDING
 
 #define OPTION_LINE_SPACE 6
 
@@ -68,6 +67,7 @@ StateListItem *state_list = NULL;
 static SceUID state_thid = -1;
 static int state_thread_stop = 0;
 
+static int listview_wrap_h = 0;
 static int listview_scroll_y = 0;
 static int state_focus_pos = 0;
 static int option_open = 0;
@@ -81,7 +81,7 @@ static void updateStateLayout()
     int n_line = (STATE_LIST_LEN + N_STATE_COUNTS_PER_LINE - 1) / N_STATE_COUNTS_PER_LINE;
     int itemview_h = STATE_ITEMVIEW_HEIGHT;
     int itemview_y_space = itemview_h + STATE_ITEMVIEW_MARGIN;
-    int itemviews_h = layout_h - STATE_LISTVIEW_PADDING_T * 2;
+    int itemviews_h = layout_h - STATE_LISTVIEW_PADDING * 2;
     int itemviews_wrap_h = itemview_y_space * n_line - STATE_ITEMVIEW_MARGIN;
 
     int scroll_y = 0 - (state_focus_pos / N_STATE_COUNTS_PER_LINE) * itemview_y_space;
@@ -96,6 +96,7 @@ static void updateStateLayout()
         scroll_y = max_srcoll_y;
 
     listview_scroll_y = scroll_y;
+    listview_wrap_h = itemviews_wrap_h + STATE_LISTVIEW_PADDING * 2;
 }
 
 static void moveStateListPos(int type)
@@ -276,10 +277,13 @@ void Setting_DrawState()
     Setting_GetWindowMenuAvailableSize(&layout_w, &layout_h);
     Setting_GetStatePreviewSize(&preview_w, &preview_h);
 
-    int itemviews_sx = layout_x + STATE_LISTVIEW_PADDING_L;
-    int itemviews_sy = layout_y + STATE_LISTVIEW_PADDING_T;
-    int itemviews_w = layout_w - STATE_LISTVIEW_PADDING_L * 2;
-    int itemviews_h = layout_h - STATE_LISTVIEW_PADDING_T * 2;
+    GUI_SetClipping(layout_x, layout_y, layout_w, layout_h);
+
+    int itemviews_sx = layout_x + STATE_LISTVIEW_PADDING;
+    int itemviews_sy = layout_y + STATE_LISTVIEW_PADDING;
+    int itemviews_w = layout_w - STATE_LISTVIEW_PADDING * 2;
+    int itemviews_h = layout_h - STATE_LISTVIEW_PADDING * 2;
+    int itemviews_wrap_h = listview_wrap_h - STATE_LISTVIEW_PADDING * 2;
     int itemviews_dx = itemviews_sx + itemviews_w;
     int itemviews_dy = itemviews_sy + itemviews_h;
 
@@ -368,6 +372,14 @@ void Setting_DrawState()
             itemview_x += itemview_x_space;
         }
     }
+
+    GUI_UnsetClipping();
+
+    // Draw scrollbar
+    int track_x = layout_x + layout_w - GUI_DEF_SCROLLBAR_SIZE;
+    int track_y = layout_y;
+    int track_h = layout_h;
+    GUI_DrawVerticalScrollbar(track_x, track_y, track_h, itemviews_wrap_h, itemviews_h, 0 - listview_scroll_y, 0);
 
     GUI_UnsetClipping();
 }
