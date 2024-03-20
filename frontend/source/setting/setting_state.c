@@ -129,11 +129,8 @@ static void moveStateListPos(int type)
     if (pos < 0)
         pos = 0;
 
-    if (pos != state_focus_pos)
-    {
-        state_focus_pos = pos;
-        updateStateLayout();
-    }
+    state_focus_pos = pos;
+    updateStateLayout();
 }
 
 static void cleanStateItem(int num)
