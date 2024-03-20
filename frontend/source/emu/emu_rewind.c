@@ -273,7 +273,10 @@ static int RewindSaveState()
             state_data = malloc(state_size);
         }
         if (!state_data)
+        {
+            Emu_UnlockRunGame();
             goto FAILED;
+        }
     }
     if (!retro_serialize(state_data, state_size))
     {
