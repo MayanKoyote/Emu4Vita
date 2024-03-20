@@ -37,6 +37,7 @@ typedef struct RewindState
 
 #define MICROS_PER_SECOND 1000000llu
 
+static SceKernelLwMutexWork rewind_mutex = {0};
 static SceUID rewind_thid = -1;
 static LinkedList *rewind_list = NULL;
 static uint64_t last_save_micros = 0;
@@ -252,9 +253,14 @@ static int RewindSaveState()
     if (!rewind_okay)
         goto FAILED;
 
+    Emu_LockRunGame();
+
     state_size = retro_serialize_size();
     if (state_size == 0)
+    {
+        Emu_UnlockRunGame();
         goto FAILED;
+    }
 
     state_data = malloc(state_size);
     if (!state_data)
@@ -270,7 +276,12 @@ static int RewindSaveState()
             goto FAILED;
     }
     if (!retro_serialize(state_data, state_size))
+    {
+        Emu_UnlockRunGame();
         goto FAILED;
+    }
+
+    Emu_UnlockRunGame();
 
     void *parent_data = NULL;
     size_t parent_size = 0;
@@ -365,20 +376,20 @@ static int rewindThreadEntry(SceSize args, void *argp)
 
     while (rewind_run)
     {
-        if (rewind_pause || !rewind_list || !misc_config.enable_rewind)
+        if (rewind_pause || !rewind_okay || !misc_config.enable_rewind)
         {
             sceKernelDelayThread(1000);
             last_save_micros += 1000; // last_save_micros跟随休眠时间增加以对应正确的rewind_interval_micros
             continue;
         }
 
-        Emu_LockRunGame();
+        sceKernelLockLwMutex(&rewind_mutex, 1, NULL);
         uint64_t cur_micros = sceKernelGetProcessTimeWide();
         uint64_t rewind_interval_micros = (uint64_t)misc_config.rewind_interval_time * MICROS_PER_SECOND;
         uint64_t cur_interval_micros = cur_micros - last_save_micros;
         if (cur_interval_micros < rewind_interval_micros)
         {
-            Emu_UnlockRunGame();
+            sceKernelUnlockLwMutex(&rewind_mutex, 1);
             // 不休眠全部时间差，最大只休眠1000，continue重新判断。因为休眠时有可能会打开菜单，如此会造成真实的游戏运行间隔时间出现错误
             uint64_t delay_micros = MIN(rewind_interval_micros - cur_interval_micros, 1000);
             sceKernelDelayThread(delay_micros);
@@ -386,7 +397,7 @@ static int rewindThreadEntry(SceSize args, void *argp)
         }
 
         RewindSaveState();
-        Emu_UnlockRunGame();
+        sceKernelUnlockLwMutex(&rewind_mutex, 1);
     }
 
     AppLog("[REWIND] Rewind thread exit.\n");
@@ -442,9 +453,16 @@ void Emu_ResumeRewind()
 
 int Emu_RewindGame()
 {
-    if (misc_config.enable_rewind)
-        return RewindLoadState();
-    return 0;
+    int ret = 0;
+
+    if (rewind_okay && misc_config.enable_rewind)
+    {
+        sceKernelLockLwMutex(&rewind_mutex, 1, NULL);
+        ret = RewindLoadState();
+        sceKernelUnlockLwMutex(&rewind_mutex, 1);
+    }
+
+    return ret;
 }
 
 int Emu_InitRewind()
@@ -460,6 +478,9 @@ int Emu_InitRewind()
     rewind_list = NewRewindList();
     if (!rewind_list)
         goto FAILED;
+
+    // 保存与读取的互斥锁
+    sceKernelCreateLwMutex(&rewind_mutex, "emu_rewind_mutex", 2, 0, NULL);
 
     last_rewind_event = TYPE_REWIND_EVENT_NONE;
     rewind_pause = 1;
@@ -481,6 +502,7 @@ int Emu_DeinitRewind()
     AppLog("[REWIND] Rewind deinit...\n");
 
     finishRewindThread();
+    sceKernelDeleteLwMutex(&rewind_mutex);
     LinkedListDestroy(rewind_list);
     rewind_list = NULL;
     rewind_okay = 0;
