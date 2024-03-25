@@ -12,22 +12,26 @@ typedef struct
 
 typedef struct GUI_Activity
 {
-    int title;                                      // Title
-    GUI_ButtonInstruction *button_instructions;     // Button instructions
-    GUI_Texture *wallpaper;                         // Wallpaper
-    int nostatusbar;                                // Disable draw statusbar
-    int (*onStart)(struct GUI_Activity *activity);  // Start callback
-    int (*onFinish)(struct GUI_Activity *activity); // Finish callback
-    int (*onDraw)(struct GUI_Activity *activity);   // Draw callback
-    int (*onCtrl)(struct GUI_Activity *activity);   // Ctrl callback
-    int (*onEvent)(struct GUI_Activity *activity);  // Event callback
-    void *userdata;                                 // User data
+    int title;                                          // Title
+    GUI_ButtonInstruction *button_instructions;         // Button instructions
+    GUI_Texture *wallpaper;                             // Wallpaper
+    int no_statusbar;                                   // Disable draw statusbar
+    int disable_home_event;                             // Disable home event
+    int (*onStart)(struct GUI_Activity *activity);      // Start callback
+    int (*onFinish)(struct GUI_Activity *activity);     // Finish callback
+    int (*onBeforeDraw)(struct GUI_Activity *activity); // Before draw callback
+    int (*onDraw)(struct GUI_Activity *activity);       // Draw callback
+    int (*onAfterDraw)(struct GUI_Activity *activity);  // After draw callback
+    int (*onCtrl)(struct GUI_Activity *activity);       // Ctrl callback
+    int (*onEvent)(struct GUI_Activity *activity);      // Event callback
+    void *userdata;                                     // User data
 } GUI_Activity;
 
 int GUI_StartActivity(GUI_Activity *activity);
 int GUI_FinishActivity(GUI_Activity *activity);
 int GUI_BackToMainActivity();
 int GUI_IsInMainActivity();
+int GUI_IsHomeEventEnabled();
 
 int GUI_GetActivityCount();
 GUI_Activity *GUI_GetCurrentActivity();

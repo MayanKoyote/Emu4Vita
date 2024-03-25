@@ -14,8 +14,8 @@
 
 Pad old_pad, current_pad, pressed_pad, released_pad, hold_pad, hold2_pad;
 Pad hold_count, hold2_count;
-static uint64_t disable_psbutton_micros = 0;
-static int psbutton_enabled = 1;
+static uint64_t disable_homekey_micros = 0;
+static int homekey_enabled = 1;
 static int control_enabled = 1;
 
 void GUI_ReadPad()
@@ -164,14 +164,14 @@ void GUI_ReadPad()
     if (current_pad[PAD_PSBUTTON])
     {
         if (!old_pad[PAD_PSBUTTON])
-            disable_psbutton_micros = sceKernelGetProcessTimeWide() + DISABLE_PSBUTTON_HOLD_MICROS;
-        else if (sceKernelGetProcessTimeWide() >= disable_psbutton_micros)
-            GUI_SetPsbuttonEnabled(0);
+            disable_homekey_micros = sceKernelGetProcessTimeWide() + DISABLE_PSBUTTON_HOLD_MICROS;
+        else if (sceKernelGetProcessTimeWide() >= disable_homekey_micros)
+            GUI_SetHomeKeyEnabled(0);
     }
     else
     {
         if (!old_pad[PAD_PSBUTTON])
-            GUI_SetPsbuttonEnabled(1);
+            GUI_SetHomeKeyEnabled(1);
     }
 }
 
@@ -197,12 +197,12 @@ int GUI_IsControlEnabled()
     return control_enabled;
 }
 
-void GUI_SetPsbuttonEnabled(int enable)
+void GUI_SetHomeKeyEnabled(int enable)
 {
-    psbutton_enabled = enable;
+    homekey_enabled = enable;
 }
 
-int GUI_IsPsbuttonEnabled()
+int GUI_IsHomeKeyEnabled()
 {
-    return psbutton_enabled;
+    return homekey_enabled;
 }

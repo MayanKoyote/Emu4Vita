@@ -83,6 +83,8 @@ struct SettingMenu
     int option_changed;
     int (*onStart)(SettingMenu *menu);
     int (*onFinish)(SettingMenu *menu);
+    int (*onDraw)(SettingMenu *menu);
+    int (*onCtrl)(SettingMenu *menu);
 };
 
 struct SettingContext
@@ -124,9 +126,9 @@ struct SettingContext
         {lang, NULL}, {LANG_NULL, NULL}, option_data, visibility, onItemClick, onItemUpdate, onOptionChanged, onOptionClean \
     }
 
-#define SETTING_MENU(lang, items, n_items, visibility, onStart, onFinish) \
-    {                                                                     \
-        {lang, NULL}, items, n_items, visibility, 0, 0, onStart, onFinish \
+#define SIMPLE_SETTING_MENU(lang, items, n_items, visibility, onStart, onFinish)      \
+    {                                                                                 \
+        {lang, NULL}, items, n_items, visibility, 0, 0, onStart, onFinish, NULL, NULL \
     }
 
 #define CUSTOM_SETTING_MENU(lang, items, n_items, visibility, onStart, onFinish, onDraw, onCtrl) \

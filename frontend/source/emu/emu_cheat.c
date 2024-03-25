@@ -167,9 +167,9 @@ static int cheatThreadEntry(SceSize args, void *argp)
         }
 
         uint64_t next_micros = sceKernelGetProcessTimeWide() + Emu_GetMicrosPerFrame();
-        Emu_LockRunGame();
+        Emu_LockRunGameMutex();
         ApplyCheatOption();
-        Emu_UnlockRunGame();
+        Emu_UnlockRunGameMutex();
         uint64_t cur_micros = sceKernelGetProcessTimeWide();
         if (cur_micros < next_micros)
             sceKernelDelayThread(next_micros - cur_micros);
@@ -193,9 +193,9 @@ static int startCheatThread()
             ret = sceKernelStartThread(cheat_thid, 0, NULL);
             if (ret < 0)
             {
+                cheat_run = 0;
                 sceKernelDeleteThread(cheat_thid);
                 cheat_thid = -1;
-                cheat_run = 0;
             }
         }
     }

@@ -138,12 +138,12 @@ static void cleanStateItem(int num)
     if (!state_list || num < 0 || num >= STATE_LIST_LEN)
         return;
 
+    state_list[num].exist = 0;
     if (state_list[num].tex)
     {
         GUI_DestroyTexture(state_list[num].tex);
         state_list[num].tex = NULL;
     }
-    state_list[num].exist = 0;
 }
 
 static void freeStateList()
@@ -559,9 +559,7 @@ static int stateThreadFunc(SceSize args, void *argp)
 
 static int startStateThread()
 {
-    int ret = 0;
-
-    ret = state_thid = sceKernelCreateThread("state_thread", stateThreadFunc, 0x10000100, 0x10000, 0, 0, NULL);
+    int ret = state_thid = sceKernelCreateThread("state_thread", stateThreadFunc, 0x10000100, 0x10000, 0, 0, NULL);
     if (state_thid >= 0)
     {
         state_thread_stop = 0;
@@ -573,9 +571,9 @@ static int startStateThread()
 
 static void finishStateThread()
 {
-    state_thread_stop = 1;
     if (state_thid >= 0)
     {
+        state_thread_stop = 1;
         sceKernelWaitThreadEnd(state_thid, NULL, NULL);
         sceKernelDeleteThread(state_thid);
         state_thid = -1;

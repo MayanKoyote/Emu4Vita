@@ -515,8 +515,10 @@ static int onDrawWindow(GUI_Window *window)
 
     y += h;
     h = WINDOW_DY - y;
-    if (context->menus_pos == ID_SETTING_MENU_STATE)
-        Setting_DrawState();
+    SettingMenu *menu = &context->menus[context->menus_pos];
+
+    if (menu->onDraw)
+        menu->onDraw(menu);
     else
         drawMenu(st_window, x, y, w, h);
 
@@ -537,7 +539,7 @@ static int onCtrlWindow(GUI_Window *window)
 
     if (released_pad[PAD_PSBUTTON])
     {
-        if (GUI_IsPsbuttonEnabled())
+        if (GUI_IsHomeKeyEnabled())
         {
             if (context->menus_pos != 0)
             {
@@ -572,10 +574,9 @@ static int onCtrlWindow(GUI_Window *window)
         moveTabBarPos(context, TYPE_MOVE_DOWN);
         Setting_UpdateWindowLayout(st_window);
     }
-
-    if (menu == &context->menus[ID_SETTING_MENU_STATE])
+    else if (menu->onCtrl)
     {
-        Setting_CtrlState();
+        menu->onCtrl(menu);
     }
     else
     {
@@ -616,10 +617,6 @@ static int onEventWindow(GUI_Window *window)
         GUI_CloseWindow(window);
         return 0;
     }
-
-    SettingContext *context = st_window->context;
-    if (!context)
-        return -1;
 
     return 0;
 }

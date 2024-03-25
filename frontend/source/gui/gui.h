@@ -9,6 +9,17 @@
 #include "gui_init.h"
 #include "layout/Layout.h"
 
+typedef enum GUI_ImageId
+{
+    ID_GUI_IMAGE_WALLPAPER,
+    ID_GUI_IMAGE_SPLASH,
+    ID_GUI_IMAGE_CHECKBOX_ON,
+    ID_GUI_IMAGE_CHECKBOX_OFF,
+    ID_GUI_IMAGE_RADIOBUTTON_ON,
+    ID_GUI_IMAGE_RADIOBUTTON_OFF,
+    N_GUI_IMAGES,
+} GUI_ImageId;
+
 // Screen
 #define GUI_SCREEN_WIDTH 960
 #define GUI_SCREEN_HEIGHT 544
@@ -30,21 +41,13 @@
 
 void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int max_len, int draw_len, int scroll_len, int draw_track);
 
-void GUI_SetBackToMainActivityEnabled(int enabled);
-void GUI_SetDefaultWallpaper(GUI_Texture *texture);
-void GUI_SetDefaultSplash(GUI_Texture *texture);
-void GUI_SetCheckBoxTexture(GUI_Texture *on_texture, GUI_Texture *off_texture);
-void GUI_SetRadioButtonTexture(GUI_Texture *on_texture, GUI_Texture *off_texture);
-
-GUI_Texture *GUI_GetDefaultWallpaper();
-GUI_Texture *GUI_GetDefaultSplash();
-void GUI_GetCheckBoxTexture(GUI_Texture **on_texture, GUI_Texture **off_texture);
-void GUI_GetRadioButtonTexture(GUI_Texture **on_texture, GUI_Texture **off_texture);
+void GUI_SetImage(GUI_ImageId id, GUI_Texture *texture);
+GUI_Texture *GUI_GetImage(GUI_ImageId id);
 
 void GUI_Run();
-int GUI_StartThreadRun(); // 有些时候我们的事件无法在线程里执行，所以可以将gui切换到线程里执行
-void GUI_ExitThreadRun();
-int GUI_IsInThreadRun();
+
+int GUI_StartAsyncDraw();
+void GUI_FinishAsyncDraw();
 
 #include "gui_activity.h"
 #include "gui_window.h"

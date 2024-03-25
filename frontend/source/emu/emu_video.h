@@ -18,15 +18,19 @@ void Emu_EventVideo();
 int Emu_InitVideo();
 int Emu_DeinitVideo();
 
-GUI_Texture *Emu_GetVideoTexture();
-GUI_Texture *Emu_CreateVideoTexture(int width, int height);
-void Emu_DestroyVideoTexture();
-
+GUI_Texture *Emu_GetCurrentVideoTexture();
+GUI_Texture *Emu_GetNextVideoTexture();
 int Emu_GetVideoDisplayRotate();
 void Emu_GetVideoBaseWH(uint32_t *width, uint32_t *height);
 void Emu_GetVideoDisplayWH(uint32_t *width, uint32_t *height);
 
 uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t *size, int rotate, int use_shader);
 int Emu_SaveVideoScreenshot(char *path);
+
+int Emu_SignalVideoSema();
+int Emu_WaitVideoSema();
+
+void Emu_SetMicrosPerFrame(uint64_t micros);
+uint64_t Emu_GetMicrosPerFrame();
 
 #endif

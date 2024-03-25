@@ -17,7 +17,8 @@
 
 extern float _vita2d_ortho_matrix[4 * 4];
 
-static SceKernelLwMutexWork gui_draw_mutex;
+static SceKernelLwMutexWork gui_draw_mutex = {0};
+static SceUID gui_draw_sema = -1;
 static LinkedList *gui_clip_list = NULL;
 
 void GUI_DrawEmptyRectangle(float x, float y, float w, float h, float line_size, unsigned int color)
@@ -64,14 +65,24 @@ void GUI_DrawTextureShaderPartScalRotate(const GUI_Texture *texture, const GUI_S
     vita2d_draw_texture_part_scale_rotate_generic(texture, x, y, tex_x, tex_y, tex_w, tex_h, x_scale, y_scale, rad);
 }
 
-void GUI_LockDraw()
+int GUI_LockDrawMutex()
 {
-    sceKernelLockLwMutex(&gui_draw_mutex, 1, NULL);
+    return sceKernelLockLwMutex(&gui_draw_mutex, 1, NULL);
 }
 
-void GUI_UnlockDraw()
+int GUI_UnlockDrawMutex()
 {
-    sceKernelUnlockLwMutex(&gui_draw_mutex, 1);
+    return sceKernelUnlockLwMutex(&gui_draw_mutex, 1);
+}
+
+int GUI_SignalDrawSema()
+{
+    return sceKernelSignalSema(gui_draw_sema, 1);
+}
+
+int GUI_WaitDrawSema()
+{
+    return sceKernelWaitSema(gui_draw_sema, 1, NULL);
 }
 
 void GUI_StartDrawing(GUI_Texture *texture)
@@ -162,6 +173,7 @@ int GUI_UnsetClipping()
 int GUI_InitLib()
 {
     sceKernelCreateLwMutex(&gui_draw_mutex, "gui_draw_mutex", 2, 0, NULL);
+    gui_draw_sema = sceKernelCreateSema("gui_draw_sema", 0, 0, 1, NULL);
     vita2d_init();
     vita2d_ext_init(vita2d_get_context(), vita2d_get_shader_patcher());
     vita2d_set_vblank_wait(1);

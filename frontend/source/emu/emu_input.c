@@ -110,19 +110,19 @@ EmuKeyOption emu_key_options[] = {
 #define N_EMU_KEY_OPTIONS (sizeof(emu_key_options) / sizeof(EmuKeyOption))
 
 HotKeyOption hot_key_options[] = {
-    {&hotkey_config.hk_savestate, saveStateEventCallback, {0}},
-    {&hotkey_config.hk_loadstate, loadStateEventCallback, {0}},
-    {&hotkey_config.hk_speed_up, Emu_SpeedUpGame, {0}},
-    {&hotkey_config.hk_speed_down, Emu_SpeedDownGame, {0}},
-    {&hotkey_config.hk_rewind_game, rewindGameEventCallback, {0}},
-    {&hotkey_config.hk_player_up, changeMapPortUpCallback, {0}},
-    {&hotkey_config.hk_player_down, changeMapPortDownCallback, {0}},
-    {&hotkey_config.hk_exit_game, exitGameEventCallback, {0}},
+    {&hotkey_config.hk_savestate, saveStateEventCallback, {0}, {0}},
+    {&hotkey_config.hk_loadstate, loadStateEventCallback, {0}, {0}},
+    {&hotkey_config.hk_speed_up, Emu_SpeedUpGame, {0}, {0}},
+    {&hotkey_config.hk_speed_down, Emu_SpeedDownGame, {0}, {0}},
+    {&hotkey_config.hk_rewind_game, rewindGameEventCallback, {0}, {0}},
+    {&hotkey_config.hk_player_up, changeMapPortUpCallback, {0}, {0}},
+    {&hotkey_config.hk_player_down, changeMapPortDownCallback, {0}, {0}},
+    {&hotkey_config.hk_exit_game, exitGameEventCallback, {0}, {0}},
 };
 #define N_HOT_KEY_MAPPER_OPTIONS (sizeof(hot_key_options) / sizeof(HotKeyOption))
 
 static uint8_t psbutton_old_pressed[N_CTRL_PORTS];
-static uint64_t disable_psbutton_micros[N_CTRL_PORTS];
+static uint64_t disable_homekey_micros[N_CTRL_PORTS];
 static uint32_t emu_mapping_keys[N_CTRL_PORTS]; // bitmask
 static int input_okay = 0;
 
@@ -326,7 +326,7 @@ static int onHotKeyEvent(int port, uint32_t buttons)
             {
                 callback();
                 if (config_key & SCE_CTRL_PSBUTTON)
-                    GUI_SetPsbuttonEnabled(0);
+                    GUI_SetHomeKeyEnabled(0);
                 return 1;
             }
         }
@@ -335,7 +335,7 @@ static int onHotKeyEvent(int port, uint32_t buttons)
     return 0;
 }
 
-static int onPSbuttonEvent(int prot, uint32_t buttons)
+static int onHomeKeyEvent(int prot, uint32_t buttons)
 {
     uint8_t cur_pressed = ((buttons & SCE_CTRL_PSBUTTON) == SCE_CTRL_PSBUTTON);
     uint8_t old_pressed = psbutton_old_pressed[prot];
@@ -344,16 +344,16 @@ static int onPSbuttonEvent(int prot, uint32_t buttons)
     if (cur_pressed)
     {
         if (!old_pressed)
-            disable_psbutton_micros[prot] = sceKernelGetProcessTimeWide() + DISABLE_PSBUTTON_HOLD_MICROS;
-        else if (sceKernelGetProcessTimeWide() >= disable_psbutton_micros[prot])
-            GUI_SetPsbuttonEnabled(0);
+            disable_homekey_micros[prot] = sceKernelGetProcessTimeWide() + DISABLE_PSBUTTON_HOLD_MICROS;
+        else if (sceKernelGetProcessTimeWide() >= disable_homekey_micros[prot])
+            GUI_SetHomeKeyEnabled(0);
         return 1;
     }
     else
     {
         if (old_pressed)
         {
-            if (GUI_IsPsbuttonEnabled())
+            if (GUI_IsHomeKeyEnabled())
             {
                 float speed = Emu_GetCurrentRunSpeed();
                 if (speed != 1.0f)
@@ -363,16 +363,15 @@ static int onPSbuttonEvent(int prot, uint32_t buttons)
                 }
                 else
                 {
-                    Emu_PauseGame();
-                    GUI_SetPsbuttonEnabled(0);
-                    Setting_OpenMenu();
+                    GUI_SetHomeKeyEnabled(0);
+                    Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_OPEN_SETTING_MENU);
                 }
                 return 1;
             }
         }
         else
         {
-            GUI_SetPsbuttonEnabled(1);
+            GUI_SetHomeKeyEnabled(1);
         }
     }
 
@@ -416,7 +415,7 @@ void Emu_PollInput()
         if (onHotKeyEvent(local_port, ctrl_data.buttons))
             return;
 
-        if (onPSbuttonEvent(local_port, ctrl_data.buttons))
+        if (onHomeKeyEvent(local_port, ctrl_data.buttons))
             return;
 
         for (i = 0; i < N_EMU_KEY_OPTIONS; i++)

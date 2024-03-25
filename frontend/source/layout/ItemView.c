@@ -57,20 +57,30 @@ int ItemViewUpdate(void *view)
         return -1;
     }
 
-    int view_max_h = params->available_h - params->margin_top - params->margin_bottom;
-    int view_available_h = view_max_h - params->padding_top - params->padding_bottom;
+    itemView->layout = NewLayout();
+    // 从itemView传入layout
+    LayoutParamsSetOrientation(itemView->layout, TYPE_LAYOUT_PARAMS_ORIENTATION_HORIZONTAL);
+    LayoutParamsSetAvailableSize(itemView->layout, params->available_w, params->available_h);
+    LayoutParamsSetLayoutSize(itemView->layout, params->layout_w, params->layout_h);
+    LayoutParamsSetMargin(itemView->layout, params->margin_left, params->margin_right, params->margin_top, params->margin_bottom);
+    LayoutParamsSetPadding(itemView->layout, params->padding_left, params->padding_right, params->padding_top, params->padding_bottom);
+    LayoutSetBgColor(itemView->layout, itemView->bg_color);
+
+    int layout_available_h = params->available_h - params->margin_top - params->margin_bottom;
+    int children_available_h = layout_available_h - params->padding_top - params->padding_bottom;
 
     if (itemView->icon_tex)
     {
         int icon_layout_h = GUI_GetLineHeight() * 2;
-        if (icon_layout_h > view_available_h)
-            icon_layout_h = view_available_h;
+        if (icon_layout_h > children_available_h)
+            icon_layout_h = children_available_h;
 
         itemView->iconView = NewImageView();
         LayoutParamsSetLayoutSize(itemView->iconView, icon_layout_h, icon_layout_h);
         ImageViewSetTexture(itemView->iconView, itemView->icon_tex);
         ImageViewSetScaleType(itemView->iconView, TYPE_IMAGE_SCALE_FIT_CENTER_INSIDE);
         ImageViewSetTintColor(itemView->iconView, itemView->icon_tint_color);
+        LayoutAddView(itemView->layout, itemView->iconView);
     }
 
     if (itemView->name_text)
@@ -82,25 +92,15 @@ int ItemViewUpdate(void *view)
         TextViewSetText(itemView->nameView, itemView->name_text);
         TextViewSetSingleLine(itemView->nameView, 1);
         TextViewSetTextColor(itemView->nameView, itemView->name_text_color);
+        LayoutAddView(itemView->layout, itemView->nameView);
     }
 
     if (itemView->info_text)
     {
         // 待添加
+        // LayoutAddView(itemView->layout, itemView->infoView);
     }
 
-    itemView->layout = NewLayout();
-    // 从itemView传入layout
-    LayoutParamsSetOrientation(itemView->layout, TYPE_LAYOUT_PARAMS_ORIENTATION_HORIZONTAL);
-    LayoutParamsSetAvailableSize(itemView->layout, params->available_w, params->available_h);
-    LayoutParamsSetLayoutSize(itemView->layout, params->layout_w, params->layout_h);
-    LayoutParamsSetMargin(itemView->layout, params->margin_left, params->margin_right, params->margin_top, params->margin_bottom);
-    LayoutParamsSetPadding(itemView->layout, params->padding_left, params->padding_right, params->padding_top, params->padding_bottom);
-    LayoutSetBgColor(itemView->layout, itemView->bg_color);
-
-    LayoutAddView(itemView->layout, itemView->iconView);
-    LayoutAddView(itemView->layout, itemView->nameView);
-    LayoutAddView(itemView->layout, itemView->infoView);
     LayoutParamsUpdate(itemView->layout);
 
     // 从layout回传itemView

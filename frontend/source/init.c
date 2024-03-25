@@ -34,7 +34,7 @@
 unsigned int sceLibcHeapSize = SCE_LIBC_SIZE;
 #endif
 
-static int app_exit = 0;
+static int app_run = 0;
 
 int is_safe_mode = 0;
 int is_vitatv_model = 0;
@@ -114,10 +114,18 @@ static void finishSceAppUtil()
 
 void AppRunLoop()
 {
-    while (!app_exit)
+    app_run = 1;
+
+    while (app_run)
     {
         GUI_Run();
     }
+}
+
+int AppExit()
+{
+    app_run = 0;
+    return 0;
 }
 
 int AppInit(int argc, char *const argv[])
@@ -149,7 +157,7 @@ int AppInit(int argc, char *const argv[])
     LoadMiscConfig(TYPE_CONFIG_MAIN);
     LoadGraphicsConfig(TYPE_CONFIG_MAIN);
 
-    AppLog("[INIT] Init app...\n");
+    AppLog("[INIT] App init...\n");
 
     SetCurrentLang(app_config.language);
 
@@ -178,7 +186,7 @@ int AppInit(int argc, char *const argv[])
     // GUI_WaitInitEnd();
     GUI_StartActivity(&browser_activity);
 
-    AppLog("[INIT] Init app OK!\n");
+    AppLog("[INIT] App init OK!\n");
 
     if (BootGetMode() == BOOT_MODE_GAME)
         BootLoadGame();
@@ -191,7 +199,7 @@ END:
 
 int AppDeinit()
 {
-    AppLog("[INIT] Deinit app...\n");
+    AppLog("[INIT] App deinit...\n");
 
     Setting_Deinit();
     GUI_Deinit();
@@ -199,13 +207,7 @@ int AppDeinit()
 
     finishSceAppUtil();
 
-    AppLog("[INIT] Deinit app OK!\n");
+    AppLog("[INIT] App deinit OK!\n");
 
-    return 0;
-}
-
-int AppExit()
-{
-    app_exit = 1;
     return 0;
 }

@@ -98,47 +98,43 @@ static void Toast_Destroy(GUI_Toast *toast)
     }
 }
 
-static int Toast_Remove(GUI_Toast *toast)
+int GUI_BeforeDrawToast()
 {
-    if (!toast_list)
+    LinkedListEntry *entry = LinkedListHead(toast_list);
+    GUI_Toast *toast = (GUI_Toast *)LinkedListGetEntryData(entry);
+    if (!toast)
         return 0;
 
-    LinkedListEntry *entry = LinkedListFindByData(toast_list, toast);
-
-    return LinkedListRemove(toast_list, entry);
-}
-
-static int Toast_Show(GUI_Toast *toast)
-{
-    if (!toast)
-        return -1;
-
-    toast->start_show_micros = sceKernelGetProcessTimeWide();
-    toast->finish_show_micros = toast->start_show_micros + MAX_TOAST_GRADUAL_MICROS + toast->show_micros;
-    toast->status = TYPE_TOAST_STATUS_SHOW;
-
-    return 0;
-}
-
-static int Toast_Dismiss(GUI_Toast *toast)
-{
-    if (!toast)
-        return -1;
-
-    if (toast->status == TYPE_TOAST_STATUS_DISMISS)
-        return 0;
-
+    uint64_t cur_micros = sceKernelGetProcessTimeWide();
     if (toast->status == TYPE_TOAST_STATUS_SHOW)
-        toast->status = TYPE_TOAST_STATUS_DISMISS;
-    else if (!Toast_Remove(toast))
-        Toast_Destroy(toast);
+    {
+        if (cur_micros >= toast->finish_show_micros)
+            toast->status = TYPE_TOAST_STATUS_DISMISS;
+    }
+    else if (toast->status == TYPE_TOAST_STATUS_DISMISS)
+    {
+        if (cur_micros - toast->finish_show_micros >= MAX_TOAST_GRADUAL_MICROS)
+        {
+            GUI_LockDrawMutex();
+            LinkedListRemove(toast_list, entry);
+            GUI_UnlockDrawMutex();
+        }
+    }
+    else
+    {
+        toast->start_show_micros = sceKernelGetProcessTimeWide();
+        toast->finish_show_micros = toast->start_show_micros + MAX_TOAST_GRADUAL_MICROS + toast->show_micros;
+        toast->status = TYPE_TOAST_STATUS_SHOW;
+    }
 
     return 0;
 }
 
-static int Toast_Draw(GUI_Toast *toast)
+int GUI_DrawToast()
 {
-    if (!toast || !toast->textView)
+    LinkedListEntry *entry = LinkedListHead(toast_list);
+    GUI_Toast *toast = (GUI_Toast *)LinkedListGetEntryData(entry);
+    if (!toast)
         return -1;
 
     if (toast->status == TYPE_TOAST_STATUS_HIDE)
@@ -172,7 +168,8 @@ static int Toast_Draw(GUI_Toast *toast)
         }
         else
         {
-            return 0;
+            bg_color = 0;
+            text_color = 0;
         }
     }
 
@@ -183,47 +180,8 @@ static int Toast_Draw(GUI_Toast *toast)
     return 0;
 }
 
-int GUI_DrawToast()
+int GUI_AfterDrawToast()
 {
-    if (!toast_list)
-        return -1;
-
-    LinkedListEntry *entry = LinkedListHead(toast_list);
-    GUI_Toast *toast = (GUI_Toast *)LinkedListGetEntryData(entry);
-    if (!toast)
-        return 0;
-
-    Toast_Draw(toast);
-
-    return 0;
-}
-
-int GUI_EventToast()
-{
-    if (!toast_list)
-        return -1;
-
-    LinkedListEntry *entry = LinkedListHead(toast_list);
-    GUI_Toast *toast = (GUI_Toast *)LinkedListGetEntryData(entry);
-    if (!toast)
-        return 0;
-
-    uint64_t cur_micros = sceKernelGetProcessTimeWide();
-    if (toast->status == TYPE_TOAST_STATUS_SHOW)
-    {
-        if (cur_micros >= toast->finish_show_micros)
-            Toast_Dismiss(toast);
-    }
-    else if (toast->status == TYPE_TOAST_STATUS_DISMISS)
-    {
-        if (cur_micros - toast->finish_show_micros >= MAX_TOAST_GRADUAL_MICROS)
-            LinkedListRemove(toast_list, entry);
-    }
-    else
-    {
-        Toast_Show(toast);
-    }
-
     return 0;
 }
 
@@ -253,7 +211,9 @@ int GUI_ShowToast(const char *message, float second)
     LayoutParamsUpdate(toast->textView);
 
     // 添加到Toast列表里
+    GUI_LockDrawMutex();
     LinkedListAdd(toast_list, toast);
+    GUI_UnlockDrawMutex();
 
     return 0;
 }

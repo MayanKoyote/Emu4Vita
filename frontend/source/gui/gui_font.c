@@ -33,9 +33,11 @@ int GUI_InitFont()
     if (gui_font)
         return 0;
 
+    AppLog("[GUI] Font init...\n");
+
     gui_font = calloc(1, sizeof(GUI_Font));
     if (!gui_font)
-        return -1;
+        goto FAILED;
 
     if (private_assets_dir)
     {
@@ -49,29 +51,32 @@ int GUI_InitFont()
     }
 
     if (!gui_font->font)
-    {
-        AppLog("[GUI] GUI_InitFont failed!\n");
-        sceKernelExitProcess(0);
-        return -1;
-    }
+        goto FAILED;
 
     GUI_SetFontSize(DEFAULT_FONT_SIZE);
     GUI_SetLineSpace(DEFAULT_LINE_SPACE);
 
-    AppLog("[GUI] GUI_InitFont OK.\n");
-
+    AppLog("[GUI] Font init OK!\n");
     return 0;
+
+FAILED:
+    AppLog("[GUI] Font init failed!\n");
+    sceKernelExitProcess(0);
+    return -1;
 }
 
 void GUI_DeinitFont()
 {
     if (gui_font)
     {
+        AppLog("[GUI] Font deinit...\n");
+
         if (gui_font->font)
             vita2d_free_pgf(gui_font->font);
         free(gui_font);
         gui_font = NULL;
-        AppLog("[GUI] GUI_DeinitFont font OK.\n");
+
+        AppLog("[GUI] Font deinit OK!\n");
     }
 }
 
@@ -84,7 +89,7 @@ void GUI_SetFontSize(int size)
 {
     gui_font->font_size = size;
     gui_font->line_height = vita2d_pgf_get_lineheight(gui_font->font, size);
-    AppLog("[GUI] GUI_SetFontSize: font_size = %d, line_height = %d\n", gui_font->font_size, gui_font->line_height);
+    AppLog("[GUI] font_size = %d, line_height = %d\n", gui_font->font_size, gui_font->line_height);
 }
 
 int GUI_GetLineHeight()

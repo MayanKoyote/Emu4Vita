@@ -42,27 +42,6 @@ static LinkedList *NewActivityList()
     return list;
 }
 
-static int Activity_Add(GUI_Activity *activity)
-{
-    if (!activity_list)
-    {
-        activity_list = NewActivityList();
-        if (!activity_list)
-            return 0;
-    }
-
-    if (LinkedListAdd(activity_list, activity))
-        return 1;
-
-    return 0;
-}
-
-static int Activity_Remove(GUI_Activity *activity)
-{
-    LinkedListEntry *entry = LinkedListFindByData(activity_list, activity);
-    return LinkedListRemove(activity_list, entry);
-}
-
 static int Activity_Start(GUI_Activity *activity)
 {
     if (!activity)
@@ -85,6 +64,17 @@ static int Activity_Finish(GUI_Activity *activity)
     return 0;
 }
 
+static int Activity_BeforeDraw(GUI_Activity *activity)
+{
+    if (!activity)
+        return -1;
+
+    if (activity->onBeforeDraw)
+        activity->onBeforeDraw(activity);
+
+    return 0;
+}
+
 static int Activity_Draw(GUI_Activity *activity)
 {
     if (!activity)
@@ -92,6 +82,17 @@ static int Activity_Draw(GUI_Activity *activity)
 
     if (activity->onDraw)
         activity->onDraw(activity);
+
+    return 0;
+}
+
+static int Activity_AfterDraw(GUI_Activity *activity)
+{
+    if (!activity)
+        return -1;
+
+    if (activity->onAfterDraw)
+        activity->onAfterDraw(activity);
 
     return 0;
 }
@@ -216,33 +217,49 @@ static void Activity_DrawBottomStatusBar(GUI_ButtonInstruction *instructions)
 
 int GUI_StartActivity(GUI_Activity *activity)
 {
-    if (!Activity_Add(activity))
-        return -1;
+    int ret = 0;
+    GUI_LockDrawMutex();
+
+    if (!activity_list)
+    {
+        activity_list = NewActivityList();
+        if (!activity_list)
+            goto FAILED;
+    }
+
+    if (!LinkedListAdd(activity_list, activity))
+        goto FAILED;
 
     Activity_Start(activity);
 
-    return 0;
+EXIT:
+    GUI_UnlockDrawMutex();
+    return ret;
+
+FAILED:
+    ret = -1;
+    goto EXIT;
 }
 
 int GUI_FinishActivity(GUI_Activity *activity)
 {
-    if (!Activity_Remove(activity))
-    {
-        Activity_Finish(activity);
-        return -1;
-    }
+    GUI_LockDrawMutex();
 
+    LinkedListEntry *entry = LinkedListFindByData(activity_list, activity);
+    LinkedListRemove(activity_list, entry);
+
+    GUI_UnlockDrawMutex();
     return 0;
+}
+
+int GUI_BeforeDrawActivity()
+{
+    return Activity_BeforeDraw(GUI_GetCurrentActivity());
 }
 
 int GUI_DrawActivity()
 {
-    if (!activity_list)
-        return -1;
-
-    LinkedListEntry *tail = LinkedListTail(activity_list);
-    GUI_Activity *activity = (GUI_Activity *)LinkedListGetEntryData(tail);
-
+    GUI_Activity *activity = GUI_GetCurrentActivity();
     if (!activity)
         return -1;
 
@@ -251,7 +268,7 @@ int GUI_DrawActivity()
 
     Activity_Draw(activity);
 
-    if (!activity->nostatusbar)
+    if (!activity->no_statusbar)
     {
         Activity_DrawTopStatusBar(cur_lang[activity->title]);
         Activity_DrawBottomStatusBar(activity->button_instructions);
@@ -260,26 +277,19 @@ int GUI_DrawActivity()
     return 0;
 }
 
+int GUI_AfterDrawActivity()
+{
+    return Activity_AfterDraw(GUI_GetCurrentActivity());
+}
+
 int GUI_CtrlActivity()
 {
-    if (!activity_list)
-        return -1;
-
-    LinkedListEntry *tail = LinkedListTail(activity_list);
-    GUI_Activity *activity = (GUI_Activity *)LinkedListGetEntryData(tail);
-
-    return Activity_Ctrl(activity);
+    return Activity_Ctrl(GUI_GetCurrentActivity());
 }
 
 int GUI_EventActivity()
 {
-    if (!activity_list)
-        return -1;
-
-    LinkedListEntry *tail = LinkedListTail(activity_list);
-    GUI_Activity *activity = (GUI_Activity *)LinkedListGetEntryData(tail);
-
-    return Activity_Event(activity);
+    return Activity_Event(GUI_GetCurrentActivity());
 }
 
 int GUI_BackToMainActivity()
@@ -305,6 +315,12 @@ int GUI_BackToMainActivity()
 int GUI_IsInMainActivity()
 {
     return LinkedListGetLength(activity_list) == 1;
+}
+
+int GUI_IsHomeEventEnabled()
+{
+    GUI_Activity *activity = GUI_GetCurrentActivity();
+    return activity ? !activity->disable_home_event : 0;
 }
 
 int GUI_GetActivityCount()
@@ -341,7 +357,7 @@ int GUI_GetActivityLayoutPosition(GUI_Activity *activity, int *x, int *y)
         *x = 0;
     if (y)
     {
-        if (activity && !activity->nostatusbar)
+        if (activity && !activity->no_statusbar)
             *y = STATUS_BAR_HEIGHT;
         else
             *y = 0;
@@ -355,7 +371,7 @@ int GUI_GetActivityAvailableSize(GUI_Activity *activity, int *w, int *h)
         *w = GUI_SCREEN_WIDTH;
     if (h)
     {
-        if (activity && !activity->nostatusbar)
+        if (activity && !activity->no_statusbar)
             *h = GUI_SCREEN_HEIGHT - STATUS_BAR_HEIGHT * 2;
         else
             *h = GUI_SCREEN_HEIGHT;

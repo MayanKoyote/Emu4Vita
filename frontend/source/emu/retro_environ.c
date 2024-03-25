@@ -117,7 +117,7 @@ static bool getCurrentSoftwareFramebuffer(struct retro_framebuffer *fb)
     if (!fb)
         return false;
 
-    GUI_Texture *texture = Emu_GetVideoTexture();
+    GUI_Texture *texture = Emu_GetNextVideoTexture();
     if (!texture || GUI_GetTextureWidth(texture) != fb->width || GUI_GetTextureHeight(texture) != fb->height ||
         GUI_GetTextureFormat(texture) != core_video_pixel_format)
         return false;

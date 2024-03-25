@@ -20,7 +20,6 @@ typedef struct
 {
     int16_t *data[2];
     size_t data_len;
-    int n_samples;
 } AudioSoundOut;
 
 typedef struct
@@ -49,6 +48,7 @@ typedef struct
     int pause;
     int stop;
     int stereo;
+    int samples;
     uint32_t sample_rate;
     int left_volume;
     int right_volume;
@@ -63,12 +63,12 @@ typedef struct
 
 static AudioState game_audio_state = {0};
 
-static void AudioResamplerDestroy(AudioResampler *resampler)
+static void AudioResamplerDeinit(AudioResampler *resampler)
 {
-    AppLog("[AUDIO] Resampler destroy...\n");
-
     if (resampler)
     {
+        AppLog("[AUDIO] Audio resampler deinit...\n");
+
         if (resampler->resampler_state)
             speex_resampler_destroy(resampler->resampler_state);
         resampler->resampler_state = NULL;
@@ -78,9 +78,9 @@ static void AudioResamplerDestroy(AudioResampler *resampler)
         resampler->out_data = NULL;
 
         memset(resampler, 0, sizeof(AudioResampler));
-    }
 
-    AppLog("[AUDIO] Resampler destroy OK!\n");
+        AppLog("[AUDIO] Audio resampler deinit OK!\n");
+    }
 }
 
 static int AudioResamplerInit(AudioResampler *resampler)
@@ -170,7 +170,7 @@ int Emu_SetAudioConfig(int samples, uint16_t freq, int stereo)
     if (!game_audio_state.okay)
         return -1;
 
-    game_audio_state.sound_out.n_samples = samples;
+    game_audio_state.samples = samples;
     game_audio_state.sample_rate = freq;
     game_audio_state.stereo = stereo;
 
@@ -235,7 +235,7 @@ int Emu_UpdateAudioSampleRate(uint32_t sample_rate)
         Emu_PauseAudio();
 
     AudioSetSampleRate(sample_rate);
-    ret = Emu_SetAudioConfig(game_audio_state.sound_out.n_samples, game_audio_state.sample_rate, game_audio_state.stereo);
+    ret = Emu_SetAudioConfig(game_audio_state.samples, game_audio_state.sample_rate, game_audio_state.stereo);
     Emu_CleanAudioSound();
 
     if (!audio_pause)
@@ -248,7 +248,7 @@ int Emu_UpdateAudioSampleRate(uint32_t sample_rate)
 
 static int AudioThreadFunc(unsigned int args, void *argp)
 {
-    AppLog("[AUDIO] Audio thread start\n");
+    AppLog("[AUDIO] Audio thread start run.\n");
 
     AudioSoundOut *sound_out = &(game_audio_state.sound_out);
     AudioSoundBuffer *sound_buffer = &(game_audio_state.sound_buffer);
@@ -296,17 +296,17 @@ static int AudioThreadFunc(unsigned int args, void *argp)
         out_data_idx = (out_data_idx ? 0 : 1);
     }
 
-    AppLog("[AUDIO] Audio thread exit!\n");
+    AppLog("[AUDIO] Audio thread stop run.\n");
     sceKernelExitThread(0);
     return 0;
 }
 
-static void AudioOutputShutdown()
+static void AudioOutputDeinit()
 {
     AudioSoundOut *sound_out = &(game_audio_state.sound_out);
     AudioSoundBuffer *sound_buffer = &(game_audio_state.sound_buffer);
 
-    AppLog("[AUDIO] Audio output shutdown...\n");
+    AppLog("[AUDIO] Audio output deinit...\n");
 
     // Deinit audio out_data port
     if (game_audio_state.output_handle != -1)
@@ -314,8 +314,6 @@ static void AudioOutputShutdown()
         sceAudioOutReleasePort(game_audio_state.output_handle);
         game_audio_state.output_handle = -1;
     }
-
-    AppLog("[AUDIO] Deinit sound out data...\n");
 
     // Deinit sound out data
     int i;
@@ -328,9 +326,6 @@ static void AudioOutputShutdown()
         }
     }
     sound_out->data_len = 0;
-    sound_out->n_samples = 0;
-
-    AppLog("[AUDIO] Deinit sound buffer data...\n");
 
     // Deinit sound buffer data
     if (sound_buffer->data)
@@ -342,23 +337,23 @@ static void AudioOutputShutdown()
     sound_buffer->write_pos = 0;
     sound_buffer->read_pos = 0;
 
-    AppLog("[AUDIO] Audio output shutdown OK!\n");
+    AppLog("[AUDIO] Audio output deinit OK!\n");
 }
 
 static int AudioOutputInit()
 {
     size_t soud_out_size;
-    size_t soud_buffer_size;
+    size_t sound_buffer_size;
 
     AudioSoundOut *sound_out = &(game_audio_state.sound_out);
     AudioSoundBuffer *sound_buffer = &(game_audio_state.sound_buffer);
 
     AppLog("[AUDIO] Audio output init...\n");
 
-    sound_out->n_samples = AUDIO_OUTPUT_COUNT;
+    game_audio_state.samples = AUDIO_OUTPUT_COUNT;
 
     // Init audio out_data port
-    game_audio_state.output_handle = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_VOICE, sound_out->n_samples,
+    game_audio_state.output_handle = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_VOICE, game_audio_state.samples,
                                                          game_audio_state.sample_rate, game_audio_state.stereo);
     if (game_audio_state.output_handle < 0)
     {
@@ -368,9 +363,9 @@ static int AudioOutputInit()
 
     // Init sound out_data data
     if (game_audio_state.stereo)
-        sound_out->data_len = sound_out->n_samples * 2;
+        sound_out->data_len = game_audio_state.samples * 2;
     else
-        sound_out->data_len = sound_out->n_samples;
+        sound_out->data_len = game_audio_state.samples;
     soud_out_size = sound_out->data_len * sizeof(int16_t);
 
     int i;
@@ -384,11 +379,11 @@ static int AudioOutputInit()
 
     // Init sound buffer data
     sound_buffer->data_len = sound_out->data_len * 10;
-    soud_buffer_size = sound_buffer->data_len * sizeof(int16_t);
-    sound_buffer->data = (int16_t *)malloc(soud_buffer_size);
+    sound_buffer_size = sound_buffer->data_len * sizeof(int16_t);
+    sound_buffer->data = (int16_t *)malloc(sound_buffer_size);
     if (!sound_buffer->data)
         goto FAILED;
-    memset(sound_buffer->data, 0, soud_buffer_size);
+    memset(sound_buffer->data, 0, sound_buffer_size);
     sound_buffer->read_pos = 0;
     sound_buffer->write_pos = 0;
 
@@ -397,13 +392,13 @@ static int AudioOutputInit()
 
 FAILED:
     AppLog("[AUDIO] Audio output init failed!\n");
-    AudioOutputShutdown();
+    AudioOutputDeinit();
     return -1;
 }
 
-static void AudioThreadShutdown()
+static void AudioThreadFinish()
 {
-    AppLog("[AUDIO] Audio thread shutdown...\n");
+    AppLog("[AUDIO] Audio thread finish...\n");
 
     game_audio_state.pause = 1;
     game_audio_state.stop = 1;
@@ -416,19 +411,17 @@ static void AudioThreadShutdown()
         game_audio_state.thread_handle = -1;
     }
 
-    AppLog("[AUDIO] Audio thread shutdown OK!\n");
+    AppLog("[AUDIO] Audio thread finish OK!\n");
 }
 
-static int AudioThreadInit()
+static int AudioThreadStart()
 {
-    AppLog("[AUDIO] Audio thread init...\n");
+    AppLog("[AUDIO] Audio thread start...\n");
 
     game_audio_state.pause = 1;
     game_audio_state.stop = 0;
 
-    // Init audio thread
-    game_audio_state.thread_handle = sceKernelCreateThread("emu_audio_thread", AudioThreadFunc,
-                                                           0x10000100, 0x10000, 0, 0, NULL);
+    game_audio_state.thread_handle = sceKernelCreateThread("emu_audio_thread", AudioThreadFunc, 0x10000100, 0x10000, 0, 0, NULL);
 
     if (game_audio_state.thread_handle < 0)
     {
@@ -439,12 +432,12 @@ static int AudioThreadInit()
     if (sceKernelStartThread(game_audio_state.thread_handle, 0, NULL) != 0)
         goto FAILED;
 
-    AppLog("[AUDIO] Audio thread init OK!\n");
+    AppLog("[AUDIO] Audio thread start OK!\n");
     return 0;
 
 FAILED:
-    AppLog("[AUDIO] Audio thread init failed!\n");
-    AudioThreadShutdown();
+    AppLog("[AUDIO] Audio thread start failed!\n");
+    AudioThreadFinish();
     return -1;
 }
 
@@ -470,7 +463,7 @@ int Emu_InitAudio()
     if (AudioOutputInit() < 0)
         goto FAILED;
 
-    if (AudioThreadInit() < 0)
+    if (AudioThreadStart() < 0)
         goto FAILED;
 
     game_audio_state.okay = 1;
@@ -493,9 +486,9 @@ int Emu_DeinitAudio()
     game_audio_state.pause = 1;
     game_audio_state.stop = 1;
 
-    AudioThreadShutdown(); // Thread shutdown must do befor output shutdown!
-    AudioOutputShutdown();
-    AudioResamplerDestroy(&game_audio_state.resampler);
+    AudioThreadFinish(); // Thread shutdown must do befor output shutdown!
+    AudioOutputDeinit();
+    AudioResamplerDeinit(&game_audio_state.resampler);
 
     AppLog("[AUDIO] Audio deinit OK!\n");
 

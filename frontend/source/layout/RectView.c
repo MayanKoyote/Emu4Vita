@@ -40,35 +40,35 @@ static int RectViewUpdate(void *view)
         return -1;
     }
 
-    int view_max_w = params->available_w - params->margin_left - params->margin_right; // 最大宽度
-    int view_max_h = params->available_h - params->margin_top - params->margin_bottom; // 最大高度
-    int view_wrap_w = params->padding_left + params->padding_right;                    // 包裹宽度
-    int view_wrap_h = params->padding_top + params->padding_bottom;                    // 包裹高度
+    int layout_available_w = params->available_w - params->margin_left - params->margin_right; // 最大宽度
+    int layout_available_h = params->available_h - params->margin_top - params->margin_bottom; // 最大高度
+    int layout_wrap_w = params->padding_left + params->padding_right;                    // 包裹宽度
+    int layout_wrap_h = params->padding_top + params->padding_bottom;                    // 包裹高度
 
-    params->wrap_w = view_wrap_w;
-    params->wrap_h = view_wrap_h;
+    params->wrap_w = layout_wrap_w;
+    params->wrap_h = layout_wrap_h;
 
     // 测量宽度（绘制时确定的宽度）
     if (params->layout_w == TYPE_LAYOUT_PARAMS_MATH_PARENT)
-        params->measured_w = view_max_w;
+        params->measured_w = layout_available_w;
     else if (params->layout_w == TYPE_LAYOUT_PARAMS_WRAP_CONTENT)
-        params->measured_w = view_wrap_w;
+        params->measured_w = layout_wrap_w;
     else
         params->measured_w = params->layout_w;
-    if (params->measured_w > view_max_w)
-        params->measured_w = view_max_w;
+    if (params->measured_w > layout_available_w)
+        params->measured_w = layout_available_w;
     if (params->measured_w < 0)
         params->measured_w = 0;
 
     // 测量高度（绘制时确定的高度）
     if (params->layout_h == TYPE_LAYOUT_PARAMS_MATH_PARENT)
-        params->measured_h = view_max_h;
+        params->measured_h = layout_available_h;
     else if (params->layout_h == TYPE_LAYOUT_PARAMS_WRAP_CONTENT)
-        params->measured_h = view_wrap_h;
+        params->measured_h = layout_wrap_h;
     else
         params->measured_h = params->layout_h;
-    if (params->measured_h > view_max_h)
-        params->measured_h = view_max_h;
+    if (params->measured_h > layout_available_h)
+        params->measured_h = layout_available_h;
     if (params->measured_h < 0)
         params->measured_h = 0;
 
@@ -86,20 +86,20 @@ static int RectViewDraw(void *view)
     if (params->measured_w <= 0 || params->measured_h <= 0)
         return 0;
 
-    int view_x = params->layout_x + params->margin_left;
-    int view_y = params->layout_y + params->margin_top;
-    int view_max_w = params->measured_w;
-    int view_max_h = params->measured_h;
+    int layout_x = params->layout_x + params->margin_left;
+    int layout_y = params->layout_y + params->margin_top;
+    int layout_w = params->measured_w;
+    int layout_h = params->measured_h;
 
     if (rectView->bg_color)
-        GUI_DrawFillRectangle(view_x, view_y, view_max_w, view_max_h, rectView->bg_color);
+        GUI_DrawFillRectangle(layout_x, layout_y, layout_w, layout_h, rectView->bg_color);
 
     if (rectView->rect_color)
     {
-        int rect_x = view_x + params->padding_left;
-        int rect_y = view_y + params->padding_top;
-        int rect_w = view_max_w - params->padding_left - params->padding_right;
-        int rect_h = view_max_h - params->padding_top - params->padding_bottom;
+        int rect_x = layout_x + params->padding_left;
+        int rect_y = layout_y + params->padding_top;
+        int rect_w = layout_w - params->padding_left - params->padding_right;
+        int rect_h = layout_h - params->padding_top - params->padding_bottom;
 
         GUI_DrawFillRectangle(rect_x, rect_y, rect_w, rect_h, rectView->rect_color);
     }

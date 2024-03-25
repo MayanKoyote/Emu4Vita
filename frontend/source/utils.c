@@ -304,7 +304,7 @@ void UnlockQuickMenu()
 
 void AutoUnlockQuickMenu()
 {
-    if (quick_menu_locked && !Emu_IsGameLoaded() && !Emu_IsGameLoading() && GUI_IsPsbuttonEnabled())
+    if (quick_menu_locked && !Emu_IsGameLoaded() && GUI_IsHomeKeyEnabled())
     {
         sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_QUICK_MENU);
         quick_menu_locked = 0;

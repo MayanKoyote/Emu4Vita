@@ -235,6 +235,28 @@ static int onCloseWindow(GUI_Window *window)
     return 0;
 }
 
+static int onBeforeDrawWindow(GUI_Window *window)
+{
+    AlertDialog *dialog = (AlertDialog *)GUI_GetWindowData(window);
+    if (!dialog)
+        return -1;
+
+    if (dialog->status == TYPE_ALERT_DIALOG_STATUS_SHOW)
+    {
+        if (dialog->gradual_count < MAX_DIALOG_GRADUAL_COUNT)
+            dialog->gradual_count++;
+    }
+    else if (dialog->status == TYPE_ALERT_DIALOG_STATUS_DISMISS)
+    {
+        if (dialog->gradual_count > 0)
+            dialog->gradual_count--;
+        else
+            GUI_CloseWindow(window);
+    }
+
+    return 0;
+}
+
 static int onDrawWindow(GUI_Window *window)
 {
     AlertDialog *dialog = (AlertDialog *)GUI_GetWindowData(window);
@@ -253,12 +275,12 @@ static int onDrawWindow(GUI_Window *window)
     int dialog_dx = dialog_sx + dialog_w;
     int dialog_dy = dialog_sy + dialog_h;
 
-    int child_sx = dialog_sx + DIALOG_PADDING_L;
-    int child_sy = dialog_sy + DIALOG_PADDING_T;
-    int child_dx = dialog_dx - DIALOG_PADDING_L;
-    int child_dy = dialog_dy - DIALOG_PADDING_T;
-    int child_w = child_dx - child_sx;
-    int child_h = child_dy - child_sy;
+    int children_sx = dialog_sx + DIALOG_PADDING_L;
+    int children_sy = dialog_sy + DIALOG_PADDING_T;
+    int children_dx = dialog_dx - DIALOG_PADDING_L;
+    int children_dy = dialog_dy - DIALOG_PADDING_T;
+    int children_w = children_dx - children_sx;
+    int children_h = children_dy - children_sy;
 
     int dialog_show_x = dialog_sx;
     int dialog_show_y = dialog_sy;
@@ -309,18 +331,18 @@ static int onDrawWindow(GUI_Window *window)
     GUI_DrawFillRectangle(dialog_sx, dialog_sy, dialog_w, dialog_h, dialog_bg_color);
     GUI_DrawEmptyRectangle(dialog_sx, dialog_sy, dialog_w, dialog_h, 1, dialog_border_color);
 
-    // Set childs clip
-    GUI_SetClipping(child_sx, child_sy, child_w, child_h);
+    // Set children clip
+    GUI_SetClipping(children_sx, children_sy, children_w, children_h);
 
-    int child_x = child_sx;
-    int child_y = child_sy;
+    int child_x = children_sx;
+    int child_y = children_sy;
 
     // Draw title
     if (dialog->title)
     {
         int view_x = child_x;
         int view_y = child_y;
-        int view_w = child_w;
+        int view_w = children_w;
         int view_h = TITLE_VIEW_HEIGHT;
         int text_x = view_x + TITLE_VIEW_PADDING_L;
         int text_y = view_y + TITLE_VIEW_PADDING_T;
@@ -444,7 +466,7 @@ static int onDrawWindow(GUI_Window *window)
     {
         int view_x = child_x;
         int view_y = child_y;
-        int view_w = child_w;
+        int view_w = children_w;
         int view_h = BUTTON_VIEW_HEIGHT;
         int text_x = view_x + BUTTON_VIEW_PADDING_L;
         int text_y = view_y + BUTTON_VIEW_PADDING_T;
@@ -490,7 +512,7 @@ static int onDrawWindow(GUI_Window *window)
         GUI_UnsetClipping();
     }
 
-    // Unset childs clip
+    // Unset children clip
     GUI_UnsetClipping();
     // Unset dialog clip
     GUI_UnsetClipping();
@@ -519,7 +541,7 @@ static int onCtrlWindow(GUI_Window *window)
         if (dialog->onPositiveClick)
             dialog->onPositiveClick(dialog, dialog->focus_pos);
     }
-    else if (released_pad[PAD_CANCEL] || released_pad[PAD_PSBUTTON])
+    else if (released_pad[PAD_CANCEL])
     {
         if (dialog->onNegativeClick)
             dialog->onNegativeClick(dialog, dialog->focus_pos);
@@ -528,28 +550,6 @@ static int onCtrlWindow(GUI_Window *window)
     {
         if (dialog->onNeutralClick)
             dialog->onNeutralClick(dialog, dialog->focus_pos);
-    }
-
-    return 0;
-}
-
-static int onEventWindow(GUI_Window *window)
-{
-    AlertDialog *dialog = (AlertDialog *)GUI_GetWindowData(window);
-    if (!dialog)
-        return -1;
-
-    if (dialog->status == TYPE_ALERT_DIALOG_STATUS_SHOW)
-    {
-        if (dialog->gradual_count < MAX_DIALOG_GRADUAL_COUNT)
-            dialog->gradual_count++;
-    }
-    else if (dialog->status == TYPE_ALERT_DIALOG_STATUS_DISMISS)
-    {
-        if (dialog->gradual_count > 0)
-            dialog->gradual_count--;
-        else
-            GUI_CloseWindow(window);
     }
 
     return 0;
@@ -618,9 +618,9 @@ int AlertDialog_Show(AlertDialog *dialog)
     memset(&callbacks, 0, sizeof(GUI_WindowCallbacks));
     callbacks.onOpen = onOpenWindow;
     callbacks.onClose = onCloseWindow;
+    callbacks.onBeforeDraw = onBeforeDrawWindow;
     callbacks.onDraw = onDrawWindow;
     callbacks.onCtrl = onCtrlWindow;
-    callbacks.onEvent = onEventWindow;
     GUI_SetWindowCallbacks(dialog->window, &callbacks);
     GUI_SetWindowData(dialog->window, dialog);
 

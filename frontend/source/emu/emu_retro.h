@@ -28,6 +28,7 @@ extern int core_input_supports_bitmasks;
 int Retro_InitLib();
 int Retro_DeinitLib();
 
+void Retro_SetCallbacks();
 void Retro_SetControllerPortDevices();
 
 #endif

@@ -20,6 +20,7 @@
 static int video_okay = 0, video_pause = 1;
 static int video_display_need_update = 1;
 
+static SceUID video_semaid = -1;
 static int video_texture_index = 0;
 static GUI_Texture *video_texture_bufs[MAX_TEXTURE_BUFS] = {0};
 static GUI_Texture *video_texture = NULL;
@@ -35,6 +36,9 @@ static float video_rotate_rad = 0.0f;
 static unsigned int video_frames = 0;
 static float video_fps = 0.0f;
 
+static uint64_t micros_per_frame = 0;
+static uint64_t last_frame_micros = 0;
+
 static uint64_t last_fps_micros = 0;
 static uint64_t show_player_micros = 0;
 
@@ -42,12 +46,14 @@ void Emu_PauseVideo()
 {
     video_pause = 1;
     GUI_SetVblankWait(1);
+    Emu_SignalVideoSema(); // 防止卡死
 }
 
 void Emu_ResumeVideo()
 {
     video_pause = 0;
     GUI_SetVblankWait(0);
+    GUI_SignalDrawSema(); // 防止卡死
 }
 
 int Emu_IsVideoPaused()
@@ -65,9 +71,16 @@ void Emu_ShowCtrlPlayerToast()
     show_player_micros = sceKernelGetProcessTimeWide() + SHOW_PLAYER_DURATION_MICROS;
 }
 
-GUI_Texture *Emu_GetVideoTexture()
+GUI_Texture *Emu_GetCurrentVideoTexture()
 {
     return video_texture;
+}
+
+GUI_Texture *Emu_GetNextVideoTexture()
+{
+    int next_texture_index = (video_texture_index + 1) % MAX_TEXTURE_BUFS;
+    GUI_Texture *next_texture = video_texture_bufs[next_texture_index];
+    return next_texture;
 }
 
 static int converRotateCWToCCW(int rotate_cw)
@@ -237,7 +250,7 @@ void Emu_GetVideoDisplayWH(uint32_t *width, uint32_t *height)
 
 uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t *size, int rotate, int use_shader)
 {
-    if (!video_texture)
+    if (!video_okay || !video_texture)
         return NULL;
 
     GUI_Texture *rendert_tex = NULL;
@@ -286,7 +299,7 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
         goto END;
     }
 
-    GUI_LockDraw();
+    GUI_LockDrawMutex();
     GUI_WaitRenderingDone();
     GUI_StartDrawing(rendert_tex);
     if (video_shader && use_shader)
@@ -297,7 +310,7 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
                                        video_width, video_height, x_scale, y_scale, rotate_rad);
     GUI_EndDrawing();
     GUI_WaitRenderingDone();
-    GUI_UnlockDraw();
+    GUI_UnlockDrawMutex();
 
     // Alloc and copy screenshot data
     uint64_t conver_size = conver_width * conver_height * 4;
@@ -325,6 +338,7 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
 END:
     if (rendert_tex)
         GUI_DestroyTexture(rendert_tex);
+
     return conver_data;
 }
 
@@ -363,7 +377,7 @@ int Emu_SaveVideoScreenshot(char *path)
     return ret;
 }
 
-void Emu_DestroyVideoTexture()
+static void destroyVideoTexture()
 {
     int i;
     for (i = 0; i < 2; i++)
@@ -377,13 +391,12 @@ void Emu_DestroyVideoTexture()
     video_texture = NULL;
 }
 
-GUI_Texture *Emu_CreateVideoTexture(int width, int height)
+static GUI_Texture *createVideoTexture(int width, int height)
 {
-    Emu_DestroyVideoTexture();
+    destroyVideoTexture();
 
     video_width = width;
     video_height = height;
-    video_display_need_update = 1;
 
     int i;
     for (i = 0; i < MAX_TEXTURE_BUFS; i++)
@@ -462,12 +475,15 @@ static int updateVideoDisplay()
     uint32_t width = 0, height = 0;
     int rotate = 0;
 
-    if (!video_okay || !video_texture)
+    if (!video_okay)
         return -1;
 
     // Overlay texture
     if (video_overlay_select != graphics_config.overlay_select)
         createOverlayTexture();
+
+    if (!video_texture)
+        return -1;
 
     // Overlay config
     if (graphics_overlay_list && graphics_config.overlay_select > 0)
@@ -548,6 +564,22 @@ static void refreshFps()
     video_frames++;
 }
 
+static void checkFrameDelay()
+{
+    uint64_t cur_micros = sceKernelGetProcessTimeWide();
+    uint64_t interval_micros = cur_micros - last_frame_micros;
+    if (interval_micros < micros_per_frame)
+    {
+        uint64_t delay_micros = micros_per_frame - interval_micros;
+        sceKernelDelayThread(delay_micros);
+        last_frame_micros = cur_micros + delay_micros;
+    }
+    else
+    {
+        last_frame_micros = cur_micros;
+    }
+}
+
 void Emu_DrawVideo()
 {
     if (!video_okay)
@@ -598,36 +630,40 @@ void Emu_EventVideo()
     if (!video_okay)
         return;
 
+    GUI_LockDrawMutex();
+
     if (video_display_need_update)
     {
         updateVideoDisplay();
         video_display_need_update = 0;
     }
+
+    GUI_UnlockDrawMutex();
 }
 
 void Retro_VideoRefreshCallback(const void *data, unsigned width, unsigned height, size_t pitch)
 {
-    if (!video_okay || video_pause)
+    if (!video_okay)
         return;
 
-    GUI_LockDraw();
+    if (video_pause)
+        goto SIGNAL_EXIT;
 
-    void *texture_data = video_texture ? GUI_GetTextureDatap(video_texture) : NULL;
-    int next_texture_index = (video_texture_index + 1) % MAX_TEXTURE_BUFS;
-    GUI_Texture *next_texture = video_texture_bufs[next_texture_index];
+    GUI_LockDrawMutex();
 
-    if (video_width != width || video_height != height || !next_texture ||
-        GUI_GetTextureFormat(next_texture) != core_video_pixel_format)
+    if (video_width != width || video_height != height || !video_texture ||
+        GUI_GetTextureFormat(video_texture) != core_video_pixel_format)
     {
-        Emu_CreateVideoTexture(width, height);
-        next_texture_index = video_texture_index;
-        next_texture = video_texture;
+        createVideoTexture(width, height);
         video_display_need_update = 1;
     }
 
+    int next_texture_index = (video_texture_index + 1) % MAX_TEXTURE_BUFS;
+    GUI_Texture *next_texture = video_texture_bufs[next_texture_index];
+
     if (!data || pitch <= 0)
-        goto END;
-    else if (texture_data == data)
+        goto UNLOCK_EXIT;
+    else if (next_texture && GUI_GetTextureDatap(next_texture) == data)
         goto SET_NEXT_FRAME;
 
     if (next_texture)
@@ -650,48 +686,77 @@ SET_NEXT_FRAME:
     video_texture_index = next_texture_index;
     video_texture = next_texture;
 
-END:
-    GUI_UnlockDraw();
+UNLOCK_EXIT:
+    GUI_UnlockDrawMutex();
+    checkFrameDelay();
+SIGNAL_EXIT:
+    Emu_SignalVideoSema();
 }
 
 int Emu_InitVideo()
 {
-    AppLog("[VIDEO] video init...\n");
+    AppLog("[VIDEO] Video init...\n");
 
     video_okay = 0;
     video_pause = 1;
 
-    if (!video_texture && Emu_CreateVideoTexture(core_system_av_info.geometry.base_width, core_system_av_info.geometry.base_height) == NULL)
+    if (!createVideoTexture(core_system_av_info.geometry.base_width, core_system_av_info.geometry.base_height))
         return -1;
 
     createOverlayTexture();
+    video_semaid = sceKernelCreateSema("emu_video_sema", 0, 0, 1, NULL);
 
     if (control_config.ctrl_player != 0)
         Emu_ShowCtrlPlayerToast();
 
     AppLog("[VIDEO] max width: %d, max height: %d\n", core_system_av_info.geometry.max_width, core_system_av_info.geometry.max_height);
     AppLog("[VIDEO] base width: %d, base height: %d\n", core_system_av_info.geometry.base_width, core_system_av_info.geometry.base_height);
-    AppLog("[VIDEO] fps: %.2f\n", core_system_av_info.timing.fps);
-    AppLog("[VIDEO] video init OK!\n");
+    AppLog("[VIDEO] FPS: %.2f\n", core_system_av_info.timing.fps);
+    AppLog("[VIDEO] Video init OK!\n");
 
+    updateVideoDisplay();
     video_okay = 1;
-    video_display_need_update = 1;
 
     return 0;
 }
 
 int Emu_DeinitVideo()
 {
-    AppLog("[VIDEO] video deinit...\n");
+    AppLog("[VIDEO] Video deinit...\n");
 
     video_okay = 0;
     video_pause = 1;
 
-    Emu_DestroyVideoTexture();
+    destroyVideoTexture();
     destroyOverlayTexture();
+    if (video_semaid >= 0)
+    {
+        sceKernelDeleteSema(video_semaid);
+        video_semaid = -1;
+    }
 
     GUI_SetVblankWait(1);
 
-    AppLog("[VIDEO] video deinit OK!\n");
+    AppLog("[VIDEO] Video deinit OK!\n");
     return 0;
+}
+
+int Emu_SignalVideoSema()
+{
+    return sceKernelSignalSema(video_semaid, 1);
+}
+
+int Emu_WaitVideoSema()
+{
+    return sceKernelWaitSema(video_semaid, 1, NULL);
+}
+
+void Emu_SetMicrosPerFrame(uint64_t micros)
+{
+    micros_per_frame = micros;
+}
+
+uint64_t Emu_GetMicrosPerFrame()
+{
+    return micros_per_frame;
 }

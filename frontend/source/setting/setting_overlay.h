@@ -2,7 +2,7 @@
 #define __M_SETTING_OVERLAY_H__
 
 int Setting_InitOverlay();
-int Setting_WaitOverlayInitEnd();
-int Setting_DeinitOverlay();
+void Setting_WaitOverlayInitEnd();
+void Setting_DeinitOverlay();
 
 #endif

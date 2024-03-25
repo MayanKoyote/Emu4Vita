@@ -54,7 +54,7 @@ enum PadButtons
 
 #define N_CTRL_PORTS 4
 
-#define DISABLE_PSBUTTON_HOLD_MICROS (500000llu) // 0.5 second (当按住到达这个时间时会禁用ps键)
+#define DISABLE_PSBUTTON_HOLD_MICROS (500000llu) // 0.5 second (当按住home键到达这个时间时会禁用)
 
 typedef uint8_t Pad[PAD_N_BUTTONS];
 
@@ -66,7 +66,7 @@ void GUI_CleanPad();
 
 void GUI_SetControlEnabled(int enable); // 设置禁用后会一直禁用获取不到键值，需要手动去再开启
 int GUI_IsControlEnabled();
-void GUI_SetPsbuttonEnabled(int enable); // 只是内部传递，通过ReadPad仍能获取键值，接收判断为GUI_IsPsbuttonEnabled
-int GUI_IsPsbuttonEnabled();
+void GUI_SetHomeKeyEnabled(int enable); // 只是内部传递，通过ReadPad仍能获取键值，接收判断为GUI_IsHomeKeyEnabled
+int GUI_IsHomeKeyEnabled();
 
 #endif

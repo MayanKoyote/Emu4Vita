@@ -156,6 +156,28 @@ static int onCloseWindow(GUI_Window *window)
     return 0;
 }
 
+static int onBeforeDrawWindow(GUI_Window *window)
+{
+    SlidingMenu *slidingMenu = (SlidingMenu *)GUI_GetWindowData(window);
+    if (!slidingMenu)
+        return -1;
+
+    if (slidingMenu->status == TYPE_SLIDING_MENU_STATUS_SHOW)
+    {
+        if (slidingMenu->gradual_count < MAX_SLIDINGMENU_GRADUAL_COUNT)
+            slidingMenu->gradual_count++;
+    }
+    else if (slidingMenu->status == TYPE_SLIDING_MENU_STATUS_DISMISS)
+    {
+        if (slidingMenu->gradual_count > 0)
+            slidingMenu->gradual_count--;
+        else
+            GUI_CloseWindow(window);
+    }
+
+    return 0;
+}
+
 static int onDrawWindow(GUI_Window *window)
 {
     SlidingMenu *slidingMenu = (SlidingMenu *)GUI_GetWindowData(window);
@@ -201,12 +223,12 @@ static int onDrawWindow(GUI_Window *window)
         }
     }
 
-    int child_sx = slidingmenu_sx + SLIDINGMENU_PADDING_L;
-    int child_sy = slidingmenu_sy + SLIDINGMENU_PADDING_T;
-    int child_dx = slidingmenu_dx - SLIDINGMENU_PADDING_L;
-    int child_dy = slidingmenu_dy - SLIDINGMENU_PADDING_T;
-    int child_w = child_dx - child_sx;
-    int child_h = child_dy - child_sy;
+    int children_sx = slidingmenu_sx + SLIDINGMENU_PADDING_L;
+    int children_sy = slidingmenu_sy + SLIDINGMENU_PADDING_T;
+    int children_dx = slidingmenu_dx - SLIDINGMENU_PADDING_L;
+    int children_dy = slidingmenu_dy - SLIDINGMENU_PADDING_T;
+    int children_w = children_dx - children_sx;
+    int children_h = children_dy - children_sy;
 
     // Set slidingMenu clip
     GUI_SetClipping(slidingmenu_show_x, slidingmenu_show_y, slidingmenu_show_w, slidingmenu_show_h);
@@ -214,11 +236,11 @@ static int onDrawWindow(GUI_Window *window)
     // Draw slidingMenu bg
     GUI_DrawFillRectangle(slidingmenu_sx, slidingmenu_sy, slidingmenu_w, slidingmenu_h, SLIDINGMENU_COLOR_BG);
 
-    // Set childs clip
-    GUI_SetClipping(child_sx, child_sy, child_w, child_h);
+    // Set children clip
+    GUI_SetClipping(children_sx, children_sy, children_w, children_h);
 
-    int child_x = child_sx;
-    int child_y = child_sy;
+    int child_x = children_sx;
+    int child_y = children_sy;
 
     // Draw items
     if (slidingMenu->items)
@@ -272,9 +294,15 @@ static int onDrawWindow(GUI_Window *window)
                 choicebox_y = itemview_y + ITEMS_ITEMVIEW_PADDING_T;
 
                 if (slidingMenu->choice_type == TYPE_SLIDING_MENU_CHOICE_SINGLE)
-                    GUI_GetRadioButtonTexture(&on_texture, &off_texture);
+                {
+                    on_texture = GUI_GetImage(ID_GUI_IMAGE_RADIOBUTTON_ON);
+                    off_texture = GUI_GetImage(ID_GUI_IMAGE_RADIOBUTTON_OFF);
+                }
                 else if (slidingMenu->choice_type == TYPE_SLIDING_MENU_CHOICE_MULTIPLE)
-                    GUI_GetCheckBoxTexture(&on_texture, &off_texture);
+                {
+                    on_texture = GUI_GetImage(ID_GUI_IMAGE_CHECKBOX_ON);
+                    off_texture = GUI_GetImage(ID_GUI_IMAGE_CHECKBOX_OFF);
+                }
                 if (slidingMenu->selects[i])
                     choicebox_texture = on_texture;
                 else
@@ -320,7 +348,7 @@ static int onDrawWindow(GUI_Window *window)
         GUI_UnsetClipping();
     }
 
-    // Unset childs clip
+    // Unset children clip
     GUI_UnsetClipping();
     // Unset slidingMenu clip
     GUI_UnsetClipping();
@@ -385,31 +413,9 @@ static int onCtrlWindow(GUI_Window *window)
         if (slidingMenu->onSelectChanged)
             slidingMenu->onSelectChanged(slidingMenu);
     }
-    else if (released_pad[PAD_CANCEL] || released_pad[PAD_PSBUTTON])
+    else if (released_pad[PAD_CANCEL])
     {
         SlidingMenu_Dismiss(slidingMenu);
-    }
-
-    return 0;
-}
-
-static int onEventWindow(GUI_Window *window)
-{
-    SlidingMenu *slidingMenu = (SlidingMenu *)GUI_GetWindowData(window);
-    if (!slidingMenu)
-        return -1;
-
-    if (slidingMenu->status == TYPE_SLIDING_MENU_STATUS_SHOW)
-    {
-        if (slidingMenu->gradual_count < MAX_SLIDINGMENU_GRADUAL_COUNT)
-            slidingMenu->gradual_count++;
-    }
-    else if (slidingMenu->status == TYPE_SLIDING_MENU_STATUS_DISMISS)
-    {
-        if (slidingMenu->gradual_count > 0)
-            slidingMenu->gradual_count--;
-        else
-            GUI_CloseWindow(window);
     }
 
     return 0;
@@ -482,9 +488,9 @@ int SlidingMenu_Show(SlidingMenu *slidingMenu)
     memset(&callbacks, 0, sizeof(GUI_WindowCallbacks));
     callbacks.onOpen = onOpenWindow;
     callbacks.onClose = onCloseWindow;
+    callbacks.onBeforeDraw = onBeforeDrawWindow;
     callbacks.onDraw = onDrawWindow;
     callbacks.onCtrl = onCtrlWindow;
-    callbacks.onEvent = onEventWindow;
     GUI_SetWindowCallbacks(slidingMenu->window, &callbacks);
     GUI_SetWindowData(slidingMenu->window, slidingMenu);
 

@@ -17,9 +17,9 @@
 
 static int onStartActivity(GUI_Activity *activity);
 static int onFinishActivity(GUI_Activity *activity);
+static int onBeforeDrawActivity(GUI_Activity *activity);
 static int onDrawActivity(GUI_Activity *activity);
 static int onCtrlActivity(GUI_Activity *activity);
-static int onEventActivity(GUI_Activity *activity);
 
 static GUI_ButtonInstruction button_instructions[] = {
     {LANG_BUTTON_CANCEL, LANG_PARENT_DIR, 1},
@@ -32,16 +32,19 @@ static GUI_ButtonInstruction button_instructions[] = {
 };
 
 GUI_Activity browser_activity = {
-    LANG_APP_TITLE,      // Title
-    button_instructions, // Button instructions
-    NULL,                // Wallpaper
-    0,                   // Disable draw statusbar
-    onStartActivity,     // Start callback
-    onFinishActivity,    // Finish callback
-    onDrawActivity,      // Draw callback
-    onCtrlActivity,      // Ctrl callback
-    onEventActivity,     // Event callback
-    NULL,                // User data
+    LANG_APP_TITLE,       // Title
+    button_instructions,  // Button instructions
+    NULL,                 // Wallpaper
+    0,                    // Disable draw statusbar
+    1,                    // Disable home event
+    onStartActivity,      // Start callback
+    onFinishActivity,     // Finish callback
+    onBeforeDrawActivity, // Before draw callback
+    onDrawActivity,       // Draw callback
+    NULL,                 // After callback
+    onCtrlActivity,       // Ctrl callback
+    NULL,                 // Event callback
+    NULL,                 // User data
 };
 
 enum IndexOptionItem
@@ -249,7 +252,7 @@ static int destroyLayout()
     return 0;
 }
 
-int CurrentPathIsFile()
+int CurrentPathIsGame()
 {
     int focus_pos = ListViewGetFocusPos(browser_listview);
     LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
@@ -369,11 +372,11 @@ static void updatePreviewImageView()
     LayoutParamsUpdate(preview_imageview);
 }
 
-static void refreshPreview()
+static void updatePreview()
 {
     GUI_Texture *texture = NULL;
 
-    if (CurrentPathIsFile())
+    if (CurrentPathIsGame())
     {
         switch (app_config.preview_path)
         {
@@ -397,17 +400,25 @@ static void refreshPreview()
     updatePreviewImageView();
 }
 
-static void onUpdatePreviewEvent()
+static void checkPreviewUpdate()
 {
     if (preview_need_refresh)
     {
+        // 销毁旧预览图的texture
+        GUI_Texture *texture = (GUI_Texture *)ImageViewGetTexture(preview_imageview);
+        if (texture)
+        {
+            ImageViewSetTexture(preview_imageview, NULL);
+            GUI_DestroyTexture(texture);
+        }
+
         if (preview_refresh_delay_frames > 0)
         {
             preview_refresh_delay_frames--;
         }
         else
         {
-            refreshPreview();
+            updatePreview();
             preview_need_refresh = 0;
         }
     }
@@ -427,7 +438,7 @@ static void moveFileListPos(int type)
         Setting_SetStateSelectId(0);
     }
 
-    if (CurrentPathIsFile())
+    if (CurrentPathIsGame())
     {
         button_instructions[1].instruction = LANG_START_GAME;
         button_instructions[2].visibility = 1;
@@ -713,7 +724,7 @@ static int onOptionMenuAlertDialogPositiveClick(AlertDialog *dialog, int which)
     }
     case INDEX_OPTION_ITEM_DELETE_GAME:
     {
-        if (CurrentPathIsFile())
+        if (CurrentPathIsGame())
         {
             AlertDialog *ask_dialog = AlertDialog_Create();
             AlertDialog_SetTitle(ask_dialog, cur_lang[LANG_TIP]);
@@ -727,7 +738,7 @@ static int onOptionMenuAlertDialogPositiveClick(AlertDialog *dialog, int which)
     }
     case INDEX_OPTION_ITEM_DELETE_AUTO_SAVESTATE:
     {
-        if (CurrentPathIsFile())
+        if (CurrentPathIsGame())
         {
             AlertDialog *ask_dialog = AlertDialog_Create();
             AlertDialog_SetTitle(ask_dialog, cur_lang[LANG_TIP]);
@@ -741,7 +752,7 @@ static int onOptionMenuAlertDialogPositiveClick(AlertDialog *dialog, int which)
     }
     case INDEX_OPTION_ITEM_DELETE_AUTO_SAVEFILE:
     {
-        if (CurrentPathIsFile())
+        if (CurrentPathIsGame())
         {
             AlertDialog *ask_dialog = AlertDialog_Create();
             AlertDialog_SetTitle(ask_dialog, cur_lang[LANG_TIP]);
@@ -755,7 +766,7 @@ static int onOptionMenuAlertDialogPositiveClick(AlertDialog *dialog, int which)
     }
     case INDEX_OPTION_ITEM_DELETE_CACHE_FILES:
     {
-        if (CurrentPathIsFile())
+        if (CurrentPathIsGame())
         {
             AlertDialog *ask_dialog = AlertDialog_Create();
             AlertDialog_SetTitle(ask_dialog, cur_lang[LANG_TIP]);
@@ -813,7 +824,7 @@ static void onFileListViewItemClick(ListView *listView, void *itemView, int id)
 
 static int onStartActivity(GUI_Activity *activity)
 {
-    browser_activity.wallpaper = GUI_GetDefaultWallpaper();
+    browser_activity.wallpaper = GUI_GetImage(ID_GUI_IMAGE_WALLPAPER);
 
     // 先创建file_list，createLayout要用到
     file_list = NewFileList();
@@ -839,6 +850,16 @@ static int onFinishActivity(GUI_Activity *activity)
     destroyLayout();
     LinkedListDestroy(file_list);
     file_list = NULL;
+    return 0;
+}
+
+static int onBeforeDrawActivity(GUI_Activity *activity)
+{
+    if (!browser_activity.wallpaper)
+        browser_activity.wallpaper = GUI_GetImage(ID_GUI_IMAGE_WALLPAPER);
+
+    checkPreviewUpdate();
+
     return 0;
 }
 
@@ -888,33 +909,16 @@ static int onCtrlActivity(GUI_Activity *activity)
     }
     else if (released_pad[PAD_PSBUTTON])
     {
-        if (GUI_IsPsbuttonEnabled())
+        if (GUI_IsHomeKeyEnabled())
             Setting_OpenMenu();
     }
 
     return 0;
 }
 
-static int onEventActivity(GUI_Activity *activity)
-{
-    if (!browser_activity.wallpaper)
-        browser_activity.wallpaper = GUI_GetDefaultWallpaper();
-    onUpdatePreviewEvent();
-    return 0;
-}
-
 void Browser_RequestRefreshPreview(int urgent)
 {
-    // 销毁旧预览图的texture
-    GUI_Texture *texture = (GUI_Texture *)ImageViewGetTexture(preview_imageview);
-    if (texture)
-    {
-        ImageViewSetTexture(preview_imageview, NULL);
-        GUI_DestroyTexture(texture);
-    }
-
-    // 是否迫切要更新预览图
-    if (urgent)
+    if (urgent) // 立即更新
         preview_refresh_delay_frames = 0;
     else
         preview_refresh_delay_frames = PREVIEW_REFRESH_DELAY_FRAMES;

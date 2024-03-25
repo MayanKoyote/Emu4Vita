@@ -12,7 +12,7 @@
 
 static SceUID overlay_thid = -1;
 
-static int OverlayThreadFunc(SceSize args, void *argp)
+static int OverlayThreadEntry(SceSize args, void *argp)
 {
     int ret;
     char path[MAX_PATH_LENGTH];
@@ -49,17 +49,14 @@ static int OverlayThreadFunc(SceSize args, void *argp)
 
 int Setting_InitOverlay()
 {
+    int ret = overlay_thid = sceKernelCreateThread("overlay_thread", OverlayThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
     if (overlay_thid >= 0)
-        Setting_WaitOverlayInitEnd();
+        ret = sceKernelStartThread(overlay_thid, 0, NULL);
 
-    overlay_thid = sceKernelCreateThread("overlay_thread", OverlayThreadFunc, 0x10000100, 0x10000, 0, 0, NULL);
-    if (overlay_thid >= 0)
-        sceKernelStartThread(overlay_thid, 0, NULL);
-
-    return overlay_thid;
+    return ret;
 }
 
-int Setting_WaitOverlayInitEnd()
+void Setting_WaitOverlayInitEnd()
 {
     if (overlay_thid >= 0)
     {
@@ -67,15 +64,11 @@ int Setting_WaitOverlayInitEnd()
         sceKernelDeleteThread(overlay_thid);
         overlay_thid = -1;
     }
-
-    return 0;
 }
 
-int Setting_DeinitOverlay()
+void Setting_DeinitOverlay()
 {
     Setting_WaitOverlayInitEnd();
     LinkedListDestroy(graphics_overlay_list);
     graphics_overlay_list = NULL;
-
-    return 0;
 }

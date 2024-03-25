@@ -25,9 +25,12 @@ GUI_Activity about_activity = {
     button_instructions, // Button instructions
     NULL,                // Wallpaper
     0,                   // Disable draw statusbar
+    0,                   // Disable home event
     onStartActivity,     // Start callback
     onFinishActivity,    // Finish callback
+    NULL,                // Before draw callback
     onDrawActivity,      // Draw callback
+    NULL,                // After callback
     onCtrlActivity,      // Ctrl callback
     NULL,                // Event callback
     NULL,                // User data
@@ -35,8 +38,8 @@ GUI_Activity about_activity = {
 
 #define LISTVIEW_PADDING_L 6
 #define LISTVIEW_PADDING_T 6
-#define ITEMVIEW_PADDING_L 6
-#define ITEMVIEW_PADDING_T 6
+#define ITEMVIEW_PADDING_L 4
+#define ITEMVIEW_PADDING_T 4
 
 #define TEXT_COLOR COLOR_ORANGE
 
@@ -133,7 +136,7 @@ static int destroyLayout()
 
 static int onStartActivity(GUI_Activity *activity)
 {
-    about_activity.wallpaper = GUI_GetDefaultWallpaper();
+    about_activity.wallpaper = GUI_GetImage(ID_GUI_IMAGE_WALLPAPER);
     createLayout();
     return 0;
 }

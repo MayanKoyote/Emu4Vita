@@ -62,12 +62,15 @@ int Setting_onDiskControlItemClick(SettingMenu *menu, SettingMenuItem *menu_item
     if (!dialog)
         return -1;
 
-    AlertDialog_SetTitle(dialog, cur_lang[LANG_SWITCH_DISK]);
-
     int n_items = Emu_DiskGetNumImages();
     char **items = (char **)malloc(n_items * sizeof(char *));
-    int cur_index = Emu_DiskGetImageIndex();
+    if (!items)
+    {
+        AlertDialog_Destroy(dialog);
+        return -1;
+    }
 
+    int cur_index = Emu_DiskGetImageIndex();
     int i;
     for (i = 0; i < n_items; i++)
     {
@@ -81,10 +84,18 @@ int Setting_onDiskControlItemClick(SettingMenu *menu, SettingMenuItem *menu_item
         }
     }
 
+    AlertDialog_SetTitle(dialog, cur_lang[LANG_SWITCH_DISK]);
     AlertDialog_SetItems(dialog, items, n_items);
     AlertDialog_SetPositiveButton(dialog, cur_lang[LANG_CONFIRM], onDiskControlAlertDialogPositiveClick);
     AlertDialog_SetNegativeButton(dialog, cur_lang[LANG_CANCEL], AlertDialog_OnClickDismiss);
     AlertDialog_Show(dialog);
+
+    for (i = 0; i < n_items; i++)
+    {
+        if (items[i])
+            free(items[i]);
+    }
+    free(items);
 
     return 0;
 }
@@ -122,15 +133,21 @@ int Setting_onStateMenuFinish(SettingMenu *menu)
     return 0;
 }
 
-//--------------------------------------------------------------------------------------------------------
-//                          Graphics menu callbacks
-//--------------------------------------------------------------------------------------------------------
-int Setting_onGraphicsMenuStart(SettingMenu *menu)
+int Setting_onStateMenuDraw(SettingMenu *menu)
 {
-    Setting_UpdateMenu(menu);
+    Setting_DrawState();
     return 0;
 }
 
+int Setting_onStateMenuCtrl(SettingMenu *menu)
+{
+    Setting_CtrlState();
+    return 0;
+}
+
+//--------------------------------------------------------------------------------------------------------
+//                          Graphics menu callbacks
+//--------------------------------------------------------------------------------------------------------
 int Setting_onGraphicsMenuFinish(SettingMenu *menu)
 {
     if (menu->option_changed)
@@ -160,12 +177,6 @@ int Setting_onResetGraphicsConfigItemClick(SettingMenu *menu, SettingMenuItem *m
 //--------------------------------------------------------------------------------------------------------
 //                          Control menu callbacks
 //--------------------------------------------------------------------------------------------------------
-int Setting_onControlMenuStart(SettingMenu *menu)
-{
-    Setting_UpdateMenu(menu);
-    return 0;
-}
-
 int Setting_onControlMenuFinish(SettingMenu *menu)
 {
     if (menu->option_changed)
@@ -187,12 +198,6 @@ int Setting_onResetControlConfigItemClick(SettingMenu *menu, SettingMenuItem *me
 //--------------------------------------------------------------------------------------------------------
 //                          Hotkey menu callbacks
 //--------------------------------------------------------------------------------------------------------
-int Setting_onHotkeyMenuStart(SettingMenu *menu)
-{
-    Setting_UpdateMenu(menu);
-    return 0;
-}
-
 int Setting_onHotkeyMenuFinish(SettingMenu *menu)
 {
     if (menu->option_changed)
@@ -214,12 +219,6 @@ int Setting_onResetHotkeyConfigItemClick(SettingMenu *menu, SettingMenuItem *men
 //--------------------------------------------------------------------------------------------------------
 //                          Core menu callbacks
 //--------------------------------------------------------------------------------------------------------
-int Setting_onCoreMenuStart(SettingMenu *menu)
-{
-    Setting_UpdateMenu(menu);
-    return 0;
-}
-
 int Setting_onCoreMenuFinish(SettingMenu *menu)
 {
     if (menu->option_changed)
@@ -250,12 +249,6 @@ int Setting_onResetCoreConfigItemClick(SettingMenu *menu, SettingMenuItem *menu_
 //--------------------------------------------------------------------------------------------------------
 //                          Cheat menu callbacks
 //--------------------------------------------------------------------------------------------------------
-int Setting_onCheatMenuStart(SettingMenu *menu)
-{
-    Setting_UpdateMenu(menu);
-    return 0;
-}
-
 int Setting_onCheatMenuFinish(SettingMenu *menu)
 {
     if (menu->option_changed)
@@ -278,12 +271,6 @@ int Setting_onResetCheatConfigItemClick(SettingMenu *menu, SettingMenuItem *menu
 //--------------------------------------------------------------------------------------------------------
 //                          Misc menu callbacks
 //--------------------------------------------------------------------------------------------------------
-int Setting_onMiscMenuStart(SettingMenu *menu)
-{
-    Setting_UpdateMenu(menu);
-    return 0;
-}
-
 int Setting_onMiscMenuFinish(SettingMenu *menu)
 {
     if (menu->option_changed)
@@ -324,9 +311,9 @@ int Setting_onSaveScreenshotItemClick(SettingMenu *menu, SettingMenuItem *menu_i
 
 END:
     if (ret < 0)
-        GUI_ShowToast(cur_lang[LANG_SAVE_SCREENSHOT_FAILED], 2);
+        GUI_ShowToast(cur_lang[LANG_SAVE_SCREENSHOT_FAILED], 1);
     else
-        GUI_ShowToast(cur_lang[LANG_SAVE_SCREENSHOT_OK], 2);
+        GUI_ShowToast(cur_lang[LANG_SAVE_SCREENSHOT_OK], 1);
     return ret;
 
 FAILED:
@@ -347,12 +334,12 @@ int Setting_onSavePreviewItemClick(SettingMenu *menu, SettingMenuItem *menu_item
 END:
     if (ret < 0)
     {
-        GUI_ShowToast(cur_lang[LANG_SAVE_PREVIEW_FAILED], 2);
+        GUI_ShowToast(cur_lang[LANG_SAVE_PREVIEW_FAILED], 1);
     }
     else
     {
         Browser_RequestRefreshPreview(1);
-        GUI_ShowToast(cur_lang[LANG_SAVE_PREVIEW_OK], 2);
+        GUI_ShowToast(cur_lang[LANG_SAVE_PREVIEW_OK], 1);
     }
     return ret;
 
@@ -372,12 +359,6 @@ int Setting_onResetMiscConfigItemClick(SettingMenu *menu, SettingMenuItem *menu_
 //--------------------------------------------------------------------------------------------------------
 //                          App menu callbacks
 //--------------------------------------------------------------------------------------------------------
-int Setting_onAppMenuStart(SettingMenu *menu)
-{
-    Setting_UpdateMenu(menu);
-    return 0;
-}
-
 int Setting_onAppMenuFinish(SettingMenu *menu)
 {
     if (menu->option_changed)

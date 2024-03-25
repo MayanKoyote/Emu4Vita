@@ -30,7 +30,7 @@ int setting_resume_game_enabled = 0;
 int setting_config_type = 0;
 int setting_has_main_core_menu = 0;
 int setting_game_is_loaded = 0;
-int setting_current_path_is_file = 0;
+int setting_current_path_is_game = 0;
 
 int setting_visibility_core_menu = 0;
 int setting_visibility_cheat_menu = 0;
@@ -48,11 +48,11 @@ static void updateVariables()
     setting_resume_game_enabled = 1;
     setting_game_is_loaded = Emu_IsGameLoaded();
     setting_config_type = setting_game_is_loaded ? TYPE_CONFIG_GAME : TYPE_CONFIG_MAIN;
-    setting_current_path_is_file = CurrentPathIsFile();
+    setting_current_path_is_game = CurrentPathIsGame();
     setting_visibility_app_menu = !setting_game_is_loaded;
     setting_visibility_core_menu = (setting_context.menus[ID_SETTING_MENU_CORE].items && (setting_game_is_loaded || setting_has_main_core_menu));
     setting_visibility_cheat_menu = (setting_context.menus[ID_SETTING_MENU_CHEAT].items && setting_game_is_loaded);
-    setting_visibility_disk_control_item = (setting_game_is_loaded && Emu_HasDiskControl() && Emu_DiskGetNumImages() > 1);
+    setting_visibility_disk_control_item = (setting_game_is_loaded && Emu_HasDiskControl() && Emu_DiskGetNumImages() > 0);
     setting_visibility_exit_to_arch_item = (BootGetMode() == BOOT_MODE_ARCH);
     setting_visibility_touch_to_button_item = !is_vitatv_model;
 }

@@ -33,23 +33,33 @@ static GUI_Texture *LoadImageTextureByName(const char *name)
     return texture;
 }
 
-static int ImagesThreadFunc(SceSize args, void *argp)
+static int ImagesThreadEntry(SceSize args, void *argp)
 {
-    GUI_SetDefaultWallpaper(LoadImageTextureByName(WALLPAPER_PNG_NAME));
-    GUI_SetDefaultSplash(LoadImageTextureByName(SPLASH_PNG_NAME));
+    GUI_Texture *texture;
 
-    GUI_SetCheckBoxTexture(LoadImageTextureByName(CHECKBOX_ON_PNG_NAME), LoadImageTextureByName(CHECKBOX_OFF_PNG_NAME));
-    GUI_SetRadioButtonTexture(LoadImageTextureByName(RADIOBUTTON_ON_PNG_NAME), LoadImageTextureByName(RADIOBUTTON_OFF_PNG_NAME));
+    texture = LoadImageTextureByName(WALLPAPER_PNG_NAME);
+    GUI_SetImage(ID_GUI_IMAGE_WALLPAPER, texture);
+    texture = LoadImageTextureByName(SPLASH_PNG_NAME);
+    GUI_SetImage(ID_GUI_IMAGE_SPLASH, texture);
+    texture = LoadImageTextureByName(CHECKBOX_ON_PNG_NAME);
+    GUI_SetImage(ID_GUI_IMAGE_CHECKBOX_ON, texture);
+    texture = LoadImageTextureByName(CHECKBOX_OFF_PNG_NAME);
+    GUI_SetImage(ID_GUI_IMAGE_CHECKBOX_OFF, texture);
+    texture = LoadImageTextureByName(RADIOBUTTON_ON_PNG_NAME);
+    GUI_SetImage(ID_GUI_IMAGE_RADIOBUTTON_ON, texture);
+    texture = LoadImageTextureByName(RADIOBUTTON_OFF_PNG_NAME);
+    GUI_SetImage(ID_GUI_IMAGE_RADIOBUTTON_OFF, texture);
 
     sceKernelExitThread(0);
     return 0;
 }
 
-static void GUI_InitImages()
+static int GUI_InitImages()
 {
-    gui_images_thid = sceKernelCreateThread("gui_images_thread", ImagesThreadFunc, 0x10000100, 0x10000, 0, 0, NULL);
+    int ret = gui_images_thid = sceKernelCreateThread("gui_images_thread", ImagesThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
     if (gui_images_thid >= 0)
-        sceKernelStartThread(gui_images_thid, 0, NULL);
+        ret = sceKernelStartThread(gui_images_thid, 0, NULL);
+    return ret;
 }
 
 static void GUI_DeinitImages()
@@ -60,8 +70,13 @@ static void GUI_DeinitImages()
         sceKernelDeleteThread(gui_images_thid);
         gui_images_thid = -1;
     }
-    GUI_SetDefaultWallpaper(NULL);
-    GUI_SetDefaultSplash(NULL);
+
+    GUI_SetImage(ID_GUI_IMAGE_WALLPAPER, NULL);
+    GUI_SetImage(ID_GUI_IMAGE_SPLASH, NULL);
+    GUI_SetImage(ID_GUI_IMAGE_CHECKBOX_ON, NULL);
+    GUI_SetImage(ID_GUI_IMAGE_CHECKBOX_OFF, NULL);
+    GUI_SetImage(ID_GUI_IMAGE_RADIOBUTTON_ON, NULL);
+    GUI_SetImage(ID_GUI_IMAGE_RADIOBUTTON_OFF, NULL);
 }
 
 void GUI_WaitInitEnd()

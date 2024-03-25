@@ -5,7 +5,7 @@
 
 extern GUI_Activity browser_activity;
 
-int CurrentPathIsFile();
+int CurrentPathIsGame();
 int GetCurrentFileType();
 int MakeCurrentFileName(char *name);
 int MakeCurrentFilePath(char *path);

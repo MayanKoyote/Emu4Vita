@@ -13,23 +13,25 @@
 #include "lang.h"
 #include "init.h"
 
-static int gui_thread_run = 0;
-static SceUID gui_thread_run_thid = -1;
-static int gui_back_to_main_activity_enabled = 1;
-static GUI_Texture *wallpaper_texture = NULL, *splash_texture = NULL;
-static GUI_Texture *checkbox_on_texture = NULL, *checkbox_off_texture = NULL;
-static GUI_Texture *radiobutton_on_texture = NULL, *radiobutton_off_texture = NULL;
+static int gui_async_draw = 0;
+static SceUID gui_draw_thid = -1;
+static GUI_Texture *gui_images[N_GUI_IMAGES] = {0};
 
-extern int GUI_DrawWindow();
-extern int GUI_CtrlWindow();
-extern int GUI_EventWindow();
-
+extern int GUI_BeforeDrawActivity();
 extern int GUI_DrawActivity();
+extern int GUI_AfterDrawActivity();
 extern int GUI_CtrlActivity();
 extern int GUI_EventActivity();
 
+extern int GUI_BeforeDrawWindow();
+extern int GUI_DrawWindow();
+extern int GUI_AfterDrawWindow();
+extern int GUI_CtrlWindow();
+extern int GUI_EventWindow();
+
+extern int GUI_BeforeDrawToast();
 extern int GUI_DrawToast();
-extern int GUI_EventToast();
+extern int GUI_AfterDrawToast();
 
 void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int max_len, int draw_len, int scroll_len, int draw_track)
 {
@@ -56,94 +58,57 @@ void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int m
     GUI_DrawFillRectangle(track_x, thumb_y, GUI_DEF_SCROLLBAR_SIZE, thumb_height, GUI_DEF_SCROLLBAR_COLOR_THUMB);
 }
 
-void GUI_SetBackToMainActivityEnabled(int enabled)
+void GUI_SetImage(GUI_ImageId id, GUI_Texture *texture)
 {
-    gui_back_to_main_activity_enabled = enabled;
+    if (id >= 0 && id < N_GUI_IMAGES)
+    {
+        if (gui_images[id])
+            GUI_DestroyTexture(gui_images[id]);
+        gui_images[id] = texture;
+    }
 }
 
-void GUI_SetDefaultWallpaper(GUI_Texture *texture)
+GUI_Texture *GUI_GetImage(GUI_ImageId id)
 {
-    if (wallpaper_texture)
-        GUI_DestroyTexture(wallpaper_texture);
-    wallpaper_texture = texture;
+    if (id >= 0 && id < N_GUI_IMAGES)
+        return gui_images[id];
+    return NULL;
 }
 
-void GUI_SetDefaultSplash(GUI_Texture *texture)
+static void GUI_BeforeDrawMain()
 {
-    if (splash_texture)
-        GUI_DestroyTexture(splash_texture);
-    splash_texture = texture;
-}
-
-void GUI_SetCheckBoxTexture(GUI_Texture *on_texture, GUI_Texture *off_texture)
-{
-    if (checkbox_on_texture)
-        GUI_DestroyTexture(checkbox_on_texture);
-    if (checkbox_off_texture)
-        GUI_DestroyTexture(checkbox_off_texture);
-    checkbox_on_texture = on_texture;
-    checkbox_off_texture = off_texture;
-}
-
-void GUI_SetRadioButtonTexture(GUI_Texture *on_texture, GUI_Texture *off_texture)
-{
-    if (radiobutton_on_texture)
-        GUI_DestroyTexture(radiobutton_on_texture);
-    if (radiobutton_off_texture)
-        GUI_DestroyTexture(radiobutton_off_texture);
-    radiobutton_on_texture = on_texture;
-    radiobutton_off_texture = off_texture;
-}
-
-GUI_Texture *GUI_GetDefaultWallpaper()
-{
-    return wallpaper_texture;
-}
-
-GUI_Texture *GUI_GetDefaultSplash()
-{
-    return splash_texture;
-}
-
-void GUI_GetCheckBoxTexture(GUI_Texture **on_texture, GUI_Texture **off_texture)
-{
-    if (on_texture)
-        *on_texture = checkbox_on_texture;
-    if (off_texture)
-        *off_texture = checkbox_off_texture;
-}
-
-void GUI_GetRadioButtonTexture(GUI_Texture **on_texture, GUI_Texture **off_texture)
-{
-    if (on_texture)
-        *on_texture = radiobutton_on_texture;
-    if (off_texture)
-        *off_texture = radiobutton_off_texture;
+    GUI_BeforeDrawActivity();
+    GUI_BeforeDrawWindow();
+    GUI_BeforeDrawToast();
 }
 
 static void GUI_DrawMain()
 {
-    GUI_LockDraw();
+    GUI_LockDrawMutex();
     GUI_StartDrawing(NULL);
     GUI_DrawActivity();
     GUI_DrawWindow();
     GUI_DrawToast();
     GUI_EndDrawing();
-    GUI_UnlockDraw();
+    GUI_UnlockDrawMutex();
 }
 
-static void onHomeButtonEvent()
+static void GUI_AfterDrawMain()
+{
+    GUI_AfterDrawActivity();
+    GUI_AfterDrawWindow();
+    GUI_AfterDrawToast();
+}
+
+static void onHomeKeyEvent()
 {
     if (released_pad[PAD_PSBUTTON])
     {
-        if (GUI_IsPsbuttonEnabled())
+        if (GUI_IsHomeKeyEnabled() && GUI_IsHomeEventEnabled() && !GUI_IsInMainActivity())
         {
-            if (gui_back_to_main_activity_enabled && !GUI_IsInMainActivity())
-            {
-                GUI_SetPsbuttonEnabled(0);
-                GUI_CloseWindowEx(TYPE_WINDOW_CLOSE_ALL, NULL);
-                GUI_BackToMainActivity();
-            }
+            GUI_SetHomeKeyEnabled(0);
+            GUI_CloseWindowEx(TYPE_WINDOW_CLOSE_ALL, NULL);
+            GUI_BackToMainActivity();
         }
     }
 }
@@ -151,7 +116,7 @@ static void onHomeButtonEvent()
 static void GUI_CtrlMain()
 {
     GUI_ReadPad();
-    onHomeButtonEvent();
+    onHomeKeyEvent();
     if (GUI_GetWindowCount() > 0)
         GUI_CtrlWindow();
     else
@@ -162,49 +127,50 @@ static void GUI_EventMain()
 {
     GUI_EventActivity();
     GUI_EventWindow();
-    GUI_EventToast();
 }
 
-static void GUI_RunBase()
+void GUI_Run()
 {
-    GUI_DrawMain();
+    if (!gui_async_draw)
+    {
+        GUI_BeforeDrawMain();
+        GUI_DrawMain();
+        GUI_AfterDrawMain();
+    }
     GUI_CtrlMain();
     GUI_EventMain();
     AutoUnlockQuickMenu();
 }
 
-void GUI_Run()
+static int guiDrawThreadEntry(SceSize args, void *argp)
 {
-    if (gui_thread_run && gui_thread_run_thid >= 0)
-        sceKernelWaitThreadEnd(gui_thread_run_thid, NULL, NULL);
-    GUI_RunBase();
-}
-
-static int guiRunThreadEntry(SceSize args, void *argp)
-{
-    while (gui_thread_run)
-        GUI_RunBase();
+    while (gui_async_draw)
+    {
+        GUI_BeforeDrawMain();
+        GUI_DrawMain();
+        GUI_AfterDrawMain();
+    }
 
     sceKernelExitThread(0);
     return 0;
 }
 
-int GUI_StartThreadRun()
+int GUI_StartAsyncDraw()
 {
     int ret = 0;
 
-    if (gui_thread_run_thid < 0)
+    if (gui_draw_thid < 0)
     {
-        ret = gui_thread_run_thid = sceKernelCreateThread("gui_run_thread", guiRunThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
-        if (gui_thread_run_thid >= 0)
+        ret = gui_draw_thid = sceKernelCreateThread("gui_draw_thread", guiDrawThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
+        if (gui_draw_thid >= 0)
         {
-            gui_thread_run = 1;
-            ret = sceKernelStartThread(gui_thread_run_thid, 0, NULL);
+            gui_async_draw = 1;
+            ret = sceKernelStartThread(gui_draw_thid, 0, NULL);
             if (ret < 0)
             {
-                sceKernelDeleteThread(gui_thread_run_thid);
-                gui_thread_run_thid = -1;
-                gui_thread_run = 0;
+                gui_async_draw = 0;
+                sceKernelDeleteThread(gui_draw_thid);
+                gui_draw_thid = -1;
             }
         }
     }
@@ -212,18 +178,13 @@ int GUI_StartThreadRun()
     return ret;
 }
 
-void GUI_ExitThreadRun()
+void GUI_FinishAsyncDraw()
 {
-    if (gui_thread_run_thid >= 0)
+    if (gui_draw_thid >= 0)
     {
-        gui_thread_run = 0;
-        sceKernelWaitThreadEnd(gui_thread_run_thid, NULL, NULL);
-        sceKernelDeleteThread(gui_thread_run_thid);
-        gui_thread_run_thid = -1;
+        gui_async_draw = 0;
+        sceKernelWaitThreadEnd(gui_draw_thid, NULL, NULL);
+        sceKernelDeleteThread(gui_draw_thid);
+        gui_draw_thid = -1;
     }
-}
-
-int GUI_IsInThreadRun()
-{
-    return gui_thread_run;
 }

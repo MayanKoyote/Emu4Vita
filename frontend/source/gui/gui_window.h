@@ -17,9 +17,11 @@ typedef struct GUI_WindowCallbacks
 {
     int (*onOpen)(GUI_Window *window);
     int (*onClose)(GUI_Window *window);
+    int (*onBeforeDraw)(GUI_Window *window);
     int (*onDraw)(GUI_Window *window);
+    int (*onAfterDraw)(GUI_Window *window);
     int (*onCtrl)(GUI_Window *window);
-    int (*onEvent)(GUI_Window *window); // onEvent任何时候都会执行，可以在此更新一些操作，onCtrl只会调用最后一个window的onCtrl，onDraw是在帧执行中的，onEvent是在帧执行后，onEvent比较安全
+    int (*onEvent)(GUI_Window *window);
 } GUI_WindowCallbacks;
 
 GUI_Window *GUI_CreateWindow();

@@ -55,10 +55,10 @@ static int TextViewUpdate(void *view)
         return -1;
     }
 
-    int view_max_w = params->available_w - params->margin_left - params->margin_right;
-    int view_max_h = params->available_h - params->margin_top - params->margin_bottom;
-    int view_wrap_w = textView->text_ori_w + params->padding_left + params->padding_right;
-    int view_wrap_h = textView->text_ori_h + params->padding_top + params->padding_bottom;
+    int layout_available_w = params->available_w - params->margin_left - params->margin_right;
+    int layout_available_h = params->available_h - params->margin_top - params->margin_bottom;
+    int layout_wrap_w = textView->text_ori_w + params->padding_left + params->padding_right;
+    int layout_wrap_h = textView->text_ori_h + params->padding_top + params->padding_bottom;
 
     if (textView->text_buf)
         free(textView->text_buf);
@@ -66,7 +66,7 @@ static int TextViewUpdate(void *view)
 
     if (textView->text_ori)
     {
-        int text_max_w = view_max_w - params->padding_left - params->padding_right;
+        int text_max_w = layout_available_w - params->padding_left - params->padding_right;
 
         if (textView->text_ori_w > text_max_w)
         {
@@ -74,32 +74,32 @@ static int TextViewUpdate(void *view)
                 textView->text_buf = StringMakeShortByWidth(textView->text_ori, text_max_w);
             else
                 textView->text_buf = StringBreakLineByWidth(textView->text_ori, text_max_w);
-            view_wrap_h = GUI_GetTextHeight(textView->text_buf) + params->padding_top + params->padding_bottom;
+            layout_wrap_h = GUI_GetTextHeight(textView->text_buf) + params->padding_top + params->padding_bottom;
         }
     }
 
-    params->wrap_w = view_wrap_w;
-    params->wrap_h = view_wrap_h;
+    params->wrap_w = layout_wrap_w;
+    params->wrap_h = layout_wrap_h;
 
     if (params->layout_w == TYPE_LAYOUT_PARAMS_MATH_PARENT)
-        params->measured_w = view_max_w;
+        params->measured_w = layout_available_w;
     else if (params->layout_w == TYPE_LAYOUT_PARAMS_WRAP_CONTENT)
-        params->measured_w = view_wrap_w;
+        params->measured_w = layout_wrap_w;
     else
         params->measured_w = params->layout_w;
-    if (params->measured_w > view_max_w)
-        params->measured_w = view_max_w;
+    if (params->measured_w > layout_available_w)
+        params->measured_w = layout_available_w;
     if (params->measured_w < 0)
         params->measured_w = 0;
 
     if (params->layout_h == TYPE_LAYOUT_PARAMS_MATH_PARENT)
-        params->measured_h = view_max_h;
+        params->measured_h = layout_available_h;
     else if (params->layout_h == TYPE_LAYOUT_PARAMS_WRAP_CONTENT)
-        params->measured_h = view_wrap_h;
+        params->measured_h = layout_wrap_h;
     else
         params->measured_h = params->layout_h;
-    if (params->measured_h > view_max_h)
-        params->measured_h = view_max_h;
+    if (params->measured_h > layout_available_h)
+        params->measured_h = layout_available_h;
     if (params->measured_h < 0)
         params->measured_h = 0;
 
@@ -117,20 +117,20 @@ static int TextViewDraw(void *view)
     if (params->measured_w <= 0 || params->measured_h <= 0)
         return 0;
 
-    int view_x = params->layout_x + params->margin_left;
-    int view_y = params->layout_y + params->margin_top;
-    int view_max_w = params->measured_w;
-    int view_max_h = params->measured_h;
+    int layout_x = params->layout_x + params->margin_left;
+    int layout_y = params->layout_y + params->margin_top;
+    int layout_w = params->measured_w;
+    int layout_h = params->measured_h;
 
     if (textView->bg_color)
-        GUI_DrawFillRectangle(view_x, view_y, view_max_w, view_max_h, textView->bg_color);
+        GUI_DrawFillRectangle(layout_x, layout_y, layout_w, layout_h, textView->bg_color);
 
     if (textView->text_ori)
     {
-        int text_x = view_x + params->padding_left + textView->text_x;
-        int text_y = view_y + params->padding_top + textView->text_y;
-        int text_max_w = view_max_w - params->padding_left - params->padding_right;
-        int text_max_h = view_max_h - params->padding_top; // - params->padding_bottom;
+        int text_x = layout_x + params->padding_left + textView->text_x;
+        int text_y = layout_y + params->padding_top + textView->text_y;
+        int text_max_w = layout_w - params->padding_left - params->padding_right;
+        int text_max_h = layout_h - params->padding_top; // - params->padding_bottom;
 
         if (params->wrap_w < params->measured_w)
         {

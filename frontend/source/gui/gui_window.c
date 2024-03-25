@@ -51,31 +51,6 @@ static void Window_Destroy(GUI_Window *window)
         free(window);
 }
 
-static int Window_Add(GUI_Window *window)
-{
-    if (!window_list)
-    {
-        window_list = NewWindowList();
-        if (!window_list)
-            return 0;
-    }
-
-    if (LinkedListAdd(window_list, window))
-        return 1;
-
-    return 0;
-}
-
-static int Window_Remove(GUI_Window *window)
-{
-    if (!window_list)
-        return -1;
-
-    LinkedListEntry *entry = LinkedListFindByData(window_list, window);
-
-    return LinkedListRemove(window_list, entry);
-}
-
 static int Window_Open(GUI_Window *window)
 {
     if (!window)
@@ -98,6 +73,17 @@ static int Window_Close(GUI_Window *window)
     return 0;
 }
 
+static int Window_BeforeDraw(GUI_Window *window)
+{
+    if (!window)
+        return -1;
+
+    if (window->callbacks.onBeforeDraw)
+        window->callbacks.onBeforeDraw(window);
+
+    return 0;
+}
+
 static int Window_Draw(GUI_Window *window)
 {
     if (!window)
@@ -105,6 +91,17 @@ static int Window_Draw(GUI_Window *window)
 
     if (window->callbacks.onDraw)
         window->callbacks.onDraw(window);
+
+    return 0;
+}
+
+static int Window_AfterDraw(GUI_Window *window)
+{
+    if (!window)
+        return -1;
+
+    if (window->callbacks.onAfterDraw)
+        window->callbacks.onAfterDraw(window);
 
     return 0;
 }
@@ -143,22 +140,39 @@ void GUI_DestroyWindow(GUI_Window *window)
 
 int GUI_OpenWindow(GUI_Window *window)
 {
-    if (!Window_Add(window))
-        return -1;
+    int ret = 0;
+    GUI_LockDrawMutex();
+
+    if (!window_list)
+    {
+        window_list = NewWindowList();
+        if (!window_list)
+            goto FAILED;
+    }
+
+    if (!LinkedListAdd(window_list, window))
+        goto FAILED;
 
     Window_Open(window);
 
-    return 0;
+EXIT:
+    GUI_UnlockDrawMutex();
+    return ret;
+
+FAILED:
+    ret = -1;
+    goto EXIT;
 }
 
 int GUI_CloseWindow(GUI_Window *window)
 {
-    if (!Window_Remove(window))
-    {
-        Window_Destroy(window);
-        return -1;
-    }
+    GUI_LockDrawMutex();
 
+    LinkedListEntry *entry = LinkedListFindByData(window_list, window);
+    if (!LinkedListRemove(window_list, entry))
+        Window_Destroy(window);
+
+    GUI_UnlockDrawMutex();
     return 0;
 }
 
@@ -176,11 +190,14 @@ int GUI_CloseWindowEx(GUI_WindowCloseType type, GUI_Window *window)
         return GUI_CloseWindow(GUI_GetNextWindow(window));
 
     case TYPE_WINDOW_CLOSE_ALL:
+        GUI_LockDrawMutex();
         LinkedListEmpty(window_list);
+        GUI_UnlockDrawMutex();
         break;
 
     case TYPE_WINDOW_CLOSE_ALL_PREV:
     {
+        GUI_LockDrawMutex();
         LinkedListEntry *entry = LinkedListFindByData(window_list, window);
         entry = LinkedListPrev(entry);
         while (entry)
@@ -189,11 +206,13 @@ int GUI_CloseWindowEx(GUI_WindowCloseType type, GUI_Window *window)
             LinkedListRemove(window_list, entry);
             entry = prev;
         }
+        GUI_UnlockDrawMutex();
         break;
     }
 
     case TYPE_WINDOW_CLOSE_ALL_NEXT:
     {
+        GUI_LockDrawMutex();
         LinkedListEntry *entry = LinkedListFindByData(window_list, window);
         entry = LinkedListNext(entry);
         while (entry)
@@ -202,6 +221,7 @@ int GUI_CloseWindowEx(GUI_WindowCloseType type, GUI_Window *window)
             LinkedListRemove(window_list, entry);
             entry = next;
         }
+        GUI_UnlockDrawMutex();
         break;
     }
 
@@ -212,11 +232,23 @@ int GUI_CloseWindowEx(GUI_WindowCloseType type, GUI_Window *window)
     return 0;
 }
 
+int GUI_BeforeDrawWindow()
+{
+    LinkedListEntry *entry = LinkedListHead(window_list);
+
+    while (entry)
+    {
+        LinkedListEntry *next = LinkedListNext(entry);
+        GUI_Window *window = (GUI_Window *)LinkedListGetEntryData(entry);
+        Window_BeforeDraw(window);
+        entry = next;
+    }
+
+    return 0;
+}
+
 int GUI_DrawWindow()
 {
-    if (!window_list)
-        return -1;
-
     LinkedListEntry *entry = LinkedListHead(window_list);
 
     while (entry)
@@ -230,33 +262,29 @@ int GUI_DrawWindow()
     return 0;
 }
 
-int GUI_CtrlWindow()
+int GUI_AfterDrawWindow()
 {
-    if (!window_list)
-        return -1;
-
-    LinkedListEntry *tail = LinkedListTail(window_list);
-    GUI_Window *window = (GUI_Window *)LinkedListGetEntryData(tail);
-
-    return Window_Ctrl(window);
-}
-
-int GUI_EventWindow()
-{
-    if (!window_list)
-        return -1;
-
     LinkedListEntry *entry = LinkedListHead(window_list);
 
     while (entry)
     {
         LinkedListEntry *next = LinkedListNext(entry);
         GUI_Window *window = (GUI_Window *)LinkedListGetEntryData(entry);
-        Window_Event(window);
+        Window_AfterDraw(window);
         entry = next;
     }
 
     return 0;
+}
+
+int GUI_CtrlWindow()
+{
+    return Window_Ctrl(GUI_GetCurrentWindow());
+}
+
+int GUI_EventWindow()
+{
+    return Window_Event(GUI_GetCurrentWindow());
 }
 
 int GUI_SetWindowAutoFree(GUI_Window *window, int auto_free)

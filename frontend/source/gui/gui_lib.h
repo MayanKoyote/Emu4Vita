@@ -28,8 +28,11 @@ int GUI_InitLib();
 int GUI_DeinitLib();
 
 // Renderer
-void GUI_LockDraw();
-void GUI_UnlockDraw();
+int GUI_LockDrawMutex();
+int GUI_UnlockDrawMutex();
+int GUI_SignalDrawSema();
+int GUI_WaitDrawSema();
+
 void GUI_StartDrawing(GUI_Texture *texture);
 void GUI_EndDrawing();
 #define GUI_WaitRenderingDone() vita2d_wait_rendering_done()

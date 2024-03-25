@@ -10,7 +10,7 @@
 #include "lang.h"
 #include "config.h"
 
-extern int setting_current_path_is_file;
+extern int setting_current_path_is_game;
 extern int setting_game_is_loaded;
 
 extern int setting_visibility_core_menu;
@@ -383,15 +383,15 @@ static SettingMenuItem app_menu_items[] = {
 
 // 菜单列表
 static SettingMenu setting_menus[] = {
-    SETTING_MENU(LANG_MENU_MAIN, main_menu_items, sizeof(main_menu_items) / sizeof(SettingMenuItem), NULL, NULL, NULL),                                                            // 主菜单                                                                                 // 主菜单
-    SETTING_MENU(LANG_MENU_STATE, NULL, 0, &setting_current_path_is_file, Setting_onStateMenuStart, Setting_onStateMenuFinish),                                                    // 即时存档
-    SETTING_MENU(LANG_MENU_GRAPHICS, graphics_menu_items, sizeof(graphics_menu_items) / sizeof(SettingMenuItem), NULL, Setting_onGraphicsMenuStart, Setting_onGraphicsMenuFinish), // 图形
-    SETTING_MENU(LANG_MENU_CONTROL, control_menu_items, sizeof(control_menu_items) / sizeof(SettingMenuItem), NULL, Setting_onControlMenuStart, Setting_onControlMenuFinish),      // 控制
-    SETTING_MENU(LANG_MENU_HOTKEY, hotkey_menu_items, sizeof(hotkey_menu_items) / sizeof(SettingMenuItem), NULL, Setting_onHotkeyMenuStart, Setting_onHotkeyMenuFinish),           // 热键
-    SETTING_MENU(LANG_MENU_CORE, NULL, 0, &setting_visibility_core_menu, Setting_onCoreMenuStart, Setting_onCoreMenuFinish),                                                       // 核心
-    SETTING_MENU(LANG_MENU_CHEAT, NULL, 0, &setting_visibility_cheat_menu, Setting_onCheatMenuStart, Setting_onCheatMenuFinish),                                                   // 金手指
-    SETTING_MENU(LANG_MENU_MISC, misc_menu_items, sizeof(misc_menu_items) / sizeof(SettingMenuItem), NULL, Setting_onMiscMenuStart, Setting_onMiscMenuFinish),                     // 杂项
-    SETTING_MENU(LANG_MENU_APP, app_menu_items, sizeof(app_menu_items) / sizeof(SettingMenuItem), &setting_visibility_app_menu, Setting_onAppMenuStart, Setting_onAppMenuFinish),  // 程序
+    SIMPLE_SETTING_MENU(LANG_MENU_MAIN, main_menu_items, sizeof(main_menu_items) / sizeof(SettingMenuItem), NULL, NULL, NULL),                                                           // 主菜单                                                                                 // 主菜单
+    CUSTOM_SETTING_MENU(LANG_MENU_STATE, NULL, 0, &setting_current_path_is_game, Setting_onStateMenuStart, Setting_onStateMenuFinish, Setting_onStateMenuDraw, Setting_onStateMenuCtrl), // 即时存档
+    SIMPLE_SETTING_MENU(LANG_MENU_GRAPHICS, graphics_menu_items, sizeof(graphics_menu_items) / sizeof(SettingMenuItem), NULL, NULL, Setting_onGraphicsMenuFinish),                       // 图形
+    SIMPLE_SETTING_MENU(LANG_MENU_CONTROL, control_menu_items, sizeof(control_menu_items) / sizeof(SettingMenuItem), NULL, NULL, Setting_onControlMenuFinish),                           // 控制
+    SIMPLE_SETTING_MENU(LANG_MENU_HOTKEY, hotkey_menu_items, sizeof(hotkey_menu_items) / sizeof(SettingMenuItem), NULL, NULL, Setting_onHotkeyMenuFinish),                               // 热键
+    SIMPLE_SETTING_MENU(LANG_MENU_CORE, NULL, 0, &setting_visibility_core_menu, NULL, Setting_onCoreMenuFinish),                                                                         // 核心
+    SIMPLE_SETTING_MENU(LANG_MENU_CHEAT, NULL, 0, &setting_visibility_cheat_menu, NULL, Setting_onCheatMenuFinish),                                                                      // 金手指
+    SIMPLE_SETTING_MENU(LANG_MENU_MISC, misc_menu_items, sizeof(misc_menu_items) / sizeof(SettingMenuItem), NULL, NULL, Setting_onMiscMenuFinish),                                       // 杂项
+    SIMPLE_SETTING_MENU(LANG_MENU_APP, app_menu_items, sizeof(app_menu_items) / sizeof(SettingMenuItem), &setting_visibility_app_menu, NULL, Setting_onAppMenuFinish),                   // 程序
 };
 
 SettingContext setting_context = {

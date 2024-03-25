@@ -9,6 +9,7 @@
 #include <pthread.h>
 #include <time/rtime.h>
 
+#include "gui/gui.h"
 #include "emu/emu.h"
 #include "utils.h"
 #include "file.h"
@@ -115,7 +116,7 @@ static int creatCoreValidExtensions()
     return ret;
 }
 
-static void setRetroCallbacks()
+void Retro_SetCallbacks()
 {
     retro_set_environment(Retro_EnvironmentCallback);
     retro_set_video_refresh(Retro_VideoRefreshCallback);
@@ -127,13 +128,13 @@ static void setRetroCallbacks()
 void Retro_SetControllerPortDevices()
 {
     int i;
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < N_CTRL_PORTS; i++)
         retro_set_controller_port_device(i, emu_device_type);
 }
 
 int Retro_InitLib()
 {
-    AppLog("[RETRO] Init retro lib...\n");
+    AppLog("[RETRO] Retro lib init...\n");
 
     pthread_init();
     rtime_init();
@@ -141,24 +142,24 @@ int Retro_InitLib()
     makeCoreAssetsDirPath(core_assets_dir);
     makeCoreSystemDirPath(core_system_dir);
 
-    setRetroCallbacks();
+    Retro_SetCallbacks();
     retro_get_system_info(&core_system_info);
     creatCoreValidExtensions();
 
-    AppLog("[RETRO] Init retro lib OK!\n");
+    AppLog("[RETRO] Retro lib init OK!\n");
 
     return 0;
 }
 
 int Retro_DeinitLib()
 {
-    AppLog("[RETRO] Deinit retro lib...\n");
+    AppLog("[RETRO] Retro lib deinit...\n");
 
     rtime_deinit();
     pthread_terminate();
     freeCoreValidExtensions();
 
-    AppLog("[RETRO] Deinit retro lib OK!\n");
+    AppLog("[RETRO] Retro lib deinit OK!\n");
 
     return 0;
 }

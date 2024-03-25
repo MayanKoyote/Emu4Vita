@@ -253,12 +253,12 @@ static int RewindSaveState()
     if (!rewind_okay)
         goto FAILED;
 
-    Emu_LockRunGame();
+    Emu_LockRunGameMutex();
 
     state_size = retro_serialize_size();
     if (state_size == 0)
     {
-        Emu_UnlockRunGame();
+        Emu_UnlockRunGameMutex();
         goto FAILED;
     }
 
@@ -274,17 +274,17 @@ static int RewindSaveState()
         }
         if (!state_data)
         {
-            Emu_UnlockRunGame();
+            Emu_UnlockRunGameMutex();
             goto FAILED;
         }
     }
     if (!retro_serialize(state_data, state_size))
     {
-        Emu_UnlockRunGame();
+        Emu_UnlockRunGameMutex();
         goto FAILED;
     }
 
-    Emu_UnlockRunGame();
+    Emu_UnlockRunGameMutex();
 
     void *parent_data = NULL;
     size_t parent_size = 0;
@@ -374,7 +374,7 @@ FAILED:
 
 static int rewindThreadEntry(SceSize args, void *argp)
 {
-    AppLog("[REWIND] Rewind thread start.\n");
+    AppLog("[REWIND] Rewind thread start run.\n");
     last_save_micros = sceKernelGetProcessTimeWide();
 
     while (rewind_run)
@@ -403,7 +403,7 @@ static int rewindThreadEntry(SceSize args, void *argp)
         sceKernelUnlockLwMutex(&rewind_mutex, 1);
     }
 
-    AppLog("[REWIND] Rewind thread exit.\n");
+    AppLog("[REWIND] Rewind thread stop run.\n");
     sceKernelExitThread(0);
     return 0;
 }
@@ -421,9 +421,9 @@ static int startRewindThread()
             ret = sceKernelStartThread(rewind_thid, 0, NULL);
             if (ret < 0)
             {
+                rewind_run = 0;
                 sceKernelDeleteThread(rewind_thid);
                 rewind_thid = -1;
-                rewind_run = 0;
             }
         }
     }
@@ -504,11 +504,11 @@ int Emu_DeinitRewind()
 {
     AppLog("[REWIND] Rewind deinit...\n");
 
+    rewind_okay = 0;
     finishRewindThread();
     sceKernelDeleteLwMutex(&rewind_mutex);
     LinkedListDestroy(rewind_list);
     rewind_list = NULL;
-    rewind_okay = 0;
 
     AppLog("[REWIND] Rewind deinit OK!\n");
 
