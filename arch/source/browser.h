@@ -9,7 +9,8 @@ typedef struct
 	float w, h;
 	uint32_t selview_border_color;
 	uint32_t selview_bg_color;
-	uint32_t short_name_color;
+	uint32_t shortname_color;
+	uint32_t shortname_bg_color;
 } IconLayout;
 
 typedef struct

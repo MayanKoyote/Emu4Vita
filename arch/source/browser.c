@@ -33,10 +33,11 @@
 #define ICON_SHORT_NAME_HEIGHT(h) ((float)(GUI_getLineHeight() + ICON_SHORT_NAME_PADDING * 2) * \
                                    (float)(h - ICON_UNFOCUS_HIEGHT) / (float)(ICON_FOCUS_HIEGHT - ICON_UNFOCUS_HIEGHT))
 #define ICON_SHORT_NAME_COLOR 0xFFFFFFFF
+#define ICON_SHORT_NAME_BG_COLOR 0x9F6F480A
 #define ICON_LONG_NAME_COLOR 0xFFFFFFFF
 
-#define ICON_UNFOCUS_MARGIN 4
-#define ICON_FOCUS_MARGIN 8
+#define ICON_UNFOCUS_MARGIN 3
+#define ICON_FOCUS_MARGIN 6
 #define ICON_UNFOCUS_WIDTH 120
 #define ICON_UNFOCUS_HIEGHT 120
 #define ICON_FOCUS_WIDTH 160
@@ -52,14 +53,16 @@
 #define ICON_SELVIEW_BORDER_COLOR 0xE0F0F0F0
 #define ICON_SELVIEW_BG_COLOR 0x9F1F1F1F
 
-#define CORE_ITEM_PADDING 6
+#define CORE_ITEM_PADDING 8
 #define CORE_ITEM_MARGIN_L 40
+#define CORE_ITEM_DIVIDER_SIZE 3
 #define CORE_ITEM_WIDTH 400
 #define CORE_ITEM_HEIGHT (GUI_getLineHeight() + CORE_ITEM_PADDING * 2)
+#define CORE_ITEM_BORDER_SIZE 2
 #define CORE_ITEM_NAME_COLOR 0xFFFFFFFF
-#define CORE_ITEM_SEL_NAME_COLOR SPRING_GREEN
 #define CORE_ITEM_BG_COLOR 0x9F1F1F1F
-#define CORE_ITEM_SEL_BG_COLOR 0xAFFF7F00
+#define CORE_ITEM_SEL_BG_COLOR 0x9F6F480A
+#define CORE_ITEM_BORDER_COLOR 0xE0F0F0F0
 
 CoreEntry nes_entries[] = {
     {"FCEUmm", "fceumm", NES_SHOR_NAME},
@@ -132,8 +135,8 @@ static uint32_t icon_tint_color = ICON_TINT_COLOR;
 
 static uint32_t core_name_color = 0;
 static uint32_t core_bg_color = 0;
-static uint32_t core_sel_name_color = 0;
 static uint32_t core_sel_bg_color = 0;
+static uint32_t core_border_color = 0;
 
 static void makeCorePath(char *path, char *name)
 {
@@ -225,7 +228,7 @@ static void initSoftwareEntriesLayout()
         IconLayout *layout = &software_entries[i].layout;
         layout->selview_border_color = 0;
         layout->selview_bg_color = 0;
-        layout->short_name_color = 0;
+        layout->shortname_color = 0;
         layout->x = x;
         layout->y = y;
         layout->w = ICON_UNFOCUS_WIDTH;
@@ -280,14 +283,16 @@ static void updateSoftwareEntriesLayout()
 
             if (layout->h == ICON_FOCUS_HIEGHT)
             {
-                layout->short_name_color = makeAlphaColor(layout->short_name_color, ICON_SHORT_NAME_COLOR, COLOR_GET_ALPHA(ICON_SHORT_NAME_COLOR) / (float)ICON_MAX_STEP_COUNT);
+                layout->shortname_color = makeAlphaColor(layout->shortname_color, ICON_SHORT_NAME_COLOR, COLOR_GET_ALPHA(ICON_SHORT_NAME_COLOR) / (float)ICON_MAX_STEP_COUNT);
             }
+            layout->shortname_bg_color = makeAlphaColor(layout->shortname_bg_color, ICON_SHORT_NAME_BG_COLOR, COLOR_GET_ALPHA(ICON_SHORT_NAME_BG_COLOR) / (float)ICON_MAX_STEP_COUNT);
             layout->selview_bg_color = makeAlphaColor(layout->selview_bg_color, ICON_SELVIEW_BG_COLOR, COLOR_GET_ALPHA(ICON_SELVIEW_BG_COLOR) / (float)ICON_MAX_STEP_COUNT);
             layout->selview_border_color = makeAlphaColor(layout->selview_border_color, ICON_SELVIEW_BORDER_COLOR, COLOR_GET_ALPHA(ICON_SELVIEW_BORDER_COLOR) / (float)BORDER_COLOR_MAX_STEP_COUNT);
         }
         else
         {
-            layout->short_name_color = 0;
+            layout->shortname_color = 0;
+            layout->shortname_bg_color = makeAlphaColor(layout->shortname_bg_color, COLOR_SET_ALPHA(ICON_SHORT_NAME_BG_COLOR, 0), COLOR_GET_ALPHA(ICON_SHORT_NAME_BG_COLOR) / (float)ICON_MAX_STEP_COUNT);
             layout->selview_bg_color = makeAlphaColor(layout->selview_bg_color, COLOR_SET_ALPHA(ICON_SELVIEW_BG_COLOR, 0), COLOR_GET_ALPHA(ICON_SELVIEW_BG_COLOR) / (float)ICON_MAX_STEP_COUNT);
             layout->selview_border_color = makeAlphaColor(layout->selview_border_color, COLOR_SET_ALPHA(ICON_SELVIEW_BORDER_COLOR, 0), COLOR_GET_ALPHA(ICON_SELVIEW_BORDER_COLOR) / (float)BORDER_COLOR_MAX_STEP_COUNT);
         }
@@ -384,16 +389,16 @@ static void updateCoreEntriesLayout()
     {
         // 核心列表文字和背景颜色渐变
         core_name_color = makeAlphaColor(core_name_color, CORE_ITEM_NAME_COLOR, COLOR_GET_ALPHA(CORE_ITEM_NAME_COLOR) / (float)ICON_MAX_STEP_COUNT);
-        core_sel_name_color = makeAlphaColor(core_sel_name_color, CORE_ITEM_SEL_NAME_COLOR, COLOR_GET_ALPHA(CORE_ITEM_NAME_COLOR) / (float)ICON_MAX_STEP_COUNT);
         core_bg_color = makeAlphaColor(core_bg_color, CORE_ITEM_BG_COLOR, COLOR_GET_ALPHA(CORE_ITEM_BG_COLOR) / (float)ICON_MAX_STEP_COUNT);
         core_sel_bg_color = makeAlphaColor(core_sel_bg_color, CORE_ITEM_SEL_BG_COLOR, COLOR_GET_ALPHA(CORE_ITEM_SEL_BG_COLOR) / (float)ICON_MAX_STEP_COUNT);
+        core_border_color = makeAlphaColor(core_border_color, CORE_ITEM_BORDER_COLOR, COLOR_GET_ALPHA(CORE_ITEM_BORDER_COLOR) / (float)ICON_MAX_STEP_COUNT);
     }
     else
     { // 核心列表文字和背景颜色渐变
         core_name_color = makeAlphaColor(core_name_color, COLOR_SET_ALPHA(CORE_ITEM_NAME_COLOR, 0), COLOR_GET_ALPHA(CORE_ITEM_NAME_COLOR) / (float)ICON_MAX_STEP_COUNT);
-        core_sel_name_color = makeAlphaColor(core_sel_name_color, COLOR_SET_ALPHA(CORE_ITEM_SEL_NAME_COLOR, 0), COLOR_GET_ALPHA(CORE_ITEM_NAME_COLOR) / (float)ICON_MAX_STEP_COUNT);
         core_bg_color = makeAlphaColor(core_bg_color, COLOR_SET_ALPHA(CORE_ITEM_BG_COLOR, 0), COLOR_GET_ALPHA(CORE_ITEM_BG_COLOR) / (float)ICON_MAX_STEP_COUNT);
         core_sel_bg_color = makeAlphaColor(core_sel_bg_color, COLOR_SET_ALPHA(CORE_ITEM_SEL_BG_COLOR, 0), COLOR_GET_ALPHA(CORE_ITEM_SEL_BG_COLOR) / (float)ICON_MAX_STEP_COUNT);
+        core_border_color = makeAlphaColor(core_border_color, COLOR_SET_ALPHA(CORE_ITEM_BORDER_COLOR, 0), COLOR_GET_ALPHA(CORE_ITEM_BORDER_COLOR) / (float)ICON_MAX_STEP_COUNT);
     }
 }
 
@@ -430,7 +435,7 @@ static void openCoreEntries()
 
     core_name_color = 0;
     core_bg_color = 0;
-    core_sel_bg_color = 0;
+    core_border_color = 0;
 }
 
 static void closeCoreEntries()
@@ -450,27 +455,30 @@ static int drawCoreEntries()
     SoftwareEntry *software_entry = &software_entries[g_config.software_pos];
     CoreEntry *core_entries = software_entry->entries;
 
-    int x = software_entry->layout.x + software_entry->layout.w + CORE_ITEM_MARGIN_L;
-    int y = software_entry->layout.y;
-    uint32_t name_color, bg_color;
+    int item_x = software_entry->layout.x + software_entry->layout.w + CORE_ITEM_MARGIN_L;
+    int item_y = software_entry->layout.y;
+    int item_w = CORE_ITEM_WIDTH;
+    int item_h = CORE_ITEM_HEIGHT;
 
     int i;
     for (i = 0; i < software_entry->n_entries; i++)
     {
+        vita2d_draw_rectangle(item_x, item_y, item_w, item_h, core_bg_color);
+
         if (i == *software_entry->entries_pos)
         {
-            name_color = core_sel_name_color;
-            bg_color = core_sel_bg_color;
-        }
-        else
-        {
-            name_color = core_name_color;
-            bg_color = core_bg_color;
-        }
-        vita2d_draw_rectangle(x, y, CORE_ITEM_WIDTH, CORE_ITEM_HEIGHT, bg_color);
-        GUI_drawText(x + CORE_ITEM_PADDING, y + CORE_ITEM_PADDING, name_color, core_entries[i].desc);
+            vita2d_draw_rectangle(item_x, item_y, item_w, item_h, core_sel_bg_color);
 
-        y += (CORE_ITEM_HEIGHT + 2);
+            int border_x = item_x - CORE_ITEM_BORDER_SIZE;
+            int border_y = item_y - CORE_ITEM_BORDER_SIZE;
+            int border_w = item_w + CORE_ITEM_BORDER_SIZE * 2;
+            int border_h = item_h + CORE_ITEM_BORDER_SIZE * 2;
+            vita2d_draw_empty_rectangle(border_x, border_y, border_w, border_h, CORE_ITEM_BORDER_SIZE, core_border_color);
+        }
+
+        GUI_drawText(item_x + CORE_ITEM_PADDING, item_y + CORE_ITEM_PADDING, core_name_color, core_entries[i].desc);
+
+        item_y += (item_h + CORE_ITEM_DIVIDER_SIZE);
     }
 
     return 0;
@@ -548,6 +556,16 @@ static int drawSoftwareEntries()
             vita2d_draw_rectangle(layout->x, layout->y, layout->w, layout->h, ICON_COLOR_NONE & tint_color);
         }
 
+        // Draw short name
+        int shortname_view_x = selview_x;
+        int shortname_view_y = selview_y + layout->h;
+        int shortname_view_w = selview_w;
+        int shortname_view_h = selview_h - layout->h;
+        int shortname_text_x = shortname_view_x + (shortname_view_w - GUI_getTextWidth(entry->short_name)) / 2;
+        int shortname_text_y = shortname_view_y + (shortname_view_h - GUI_getLineHeight()) / 2;
+        vita2d_draw_rectangle(shortname_view_x, shortname_view_y, shortname_view_w, shortname_view_h, layout->shortname_bg_color);
+        GUI_drawText(shortname_text_x, shortname_text_y, layout->shortname_color, entry->short_name);
+
         // Draw selview border
         int selview_border_x = selview_x - 1 - ICON_SELVIEW_BORDER_SIZE;
         int selview_border_y = selview_y - 1 - ICON_SELVIEW_BORDER_SIZE;
@@ -555,10 +573,6 @@ static int drawSoftwareEntries()
         int selview_border_h = selview_h + 2 + ICON_SELVIEW_BORDER_SIZE * 2;
         vita2d_draw_empty_rectangle(selview_border_x, selview_border_y, selview_border_w, selview_border_h,
                                     ICON_SELVIEW_BORDER_SIZE, layout->selview_border_color);
-        // Draw icon short name
-        int short_name_x = selview_x + (selview_w - GUI_getTextWidth(entry->short_name)) / 2;
-        int short_name_y = selview_y + layout->h + (selview_h - layout->h - GUI_getLineHeight()) / 2;
-        GUI_drawText(short_name_x, short_name_y, layout->short_name_color, entry->short_name);
     }
 
     return 0;
@@ -602,7 +616,7 @@ int ctrlBrowser()
     return 0;
 }
 
-static int iconsThreadCallback(SceSize args, void *argp)
+static int iconsThreadEntry(SceSize args, void *argp)
 {
     vita2d_texture *texture;
     char path[MAX_PATH_LENGTH];
@@ -621,7 +635,7 @@ static int iconsThreadCallback(SceSize args, void *argp)
 
 static void initIconsThread()
 {
-    SceUID thid = sceKernelCreateThread("init_icons_thread", iconsThreadCallback, 0x10000100, 0x10000, 0, 0, NULL);
+    SceUID thid = sceKernelCreateThread("init_icons_thread", iconsThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
     if (thid >= 0)
         sceKernelStartThread(thid, 0, NULL);
 }

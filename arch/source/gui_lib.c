@@ -11,13 +11,12 @@
 #include "config.h"
 #include "utils.h"
 
-#define DEFAULT_FONT_SIZE 17
-#define DEFAULT_LINE_HEIGHT 21
+#define DEFAULT_FONT_SIZE 20
 #define DEFAULT_LINE_SPACE 2
 
 static vita2d_pgf *gui_font = NULL;
 static int gui_font_size = DEFAULT_FONT_SIZE;
-static int gui_line_height = DEFAULT_LINE_HEIGHT;
+static int gui_line_height = DEFAULT_FONT_SIZE;
 static int gui_line_space = DEFAULT_LINE_SPACE;
 
 static int initFont()
@@ -50,9 +49,8 @@ int GUI_getFontSize()
 
 void GUI_setFontSize(int size)
 {
-    float scale = (float)size / (float)DEFAULT_FONT_SIZE;
     gui_font_size = size;
-    gui_line_height = scale * DEFAULT_LINE_HEIGHT;
+    gui_line_height = vita2d_pgf_get_lineheight(gui_font, size);
 }
 
 int GUI_getLineHeight()
