@@ -13,7 +13,7 @@
 #include "setting_callbacks.h"
 #include "setting_state.h"
 #include "utils.h"
-#include "init.h"
+#include "app.h"
 #include "boot.h"
 
 typedef enum SettingWindowStatusType
@@ -47,8 +47,8 @@ struct SettingWindow
 
 #define MENU_TABVIEW_PADDING_L 10
 #define MENU_TABVIEW_PADDING_T 10
-#define MENU_TABVIEW_DIVIER_SIZE 3
-#define MENU_TABVIEW_HEIGHT (GUI_GetLineHeight() + MENU_TABVIEW_PADDING_T * 2 + MENU_TABVIEW_DIVIER_SIZE)
+#define MENU_TABVIEW_DIVIDER_SIZE 3
+#define MENU_TABVIEW_HEIGHT (GUI_GetLineHeight() + MENU_TABVIEW_PADDING_T * 2 + MENU_TABVIEW_DIVIDER_SIZE)
 
 #define MENU_LISTVIEW_PADDING_L 0
 #define MENU_LISTVIEW_PADDING_T 8
@@ -130,27 +130,23 @@ static int moveMenuPos(SettingMenu *menu, int move_type)
 
     if (move_type == TYPE_MOVE_UP)
     {
-        int n = 0;
         do
         {
             if (pos > 0)
                 pos--;
             else
                 break;
-            n++;
-        } while (!SETTING_IS_VISIBLE(items[pos].visibility) && n < menu->n_items); // n < n_items 防止死循环
+        } while (!SETTING_IS_VISIBLE(items[pos].visibility));
     }
     else if (move_type == TYPE_MOVE_DOWN)
     {
-        int n = 0;
         do
         {
-            if (pos < menu->n_items - 1)
+            if (pos < n_items - 1)
                 pos++;
             else
                 break;
-            n++;
-        } while (!SETTING_IS_VISIBLE(items[pos].visibility) && n < menu->n_items); // n < n_items 防止死循环
+        } while (!SETTING_IS_VISIBLE(items[pos].visibility));
     }
     else // 尝试修正pos
     {
@@ -159,7 +155,7 @@ static int moveMenuPos(SettingMenu *menu, int move_type)
         if (pos < 0)
             pos = 0;
         int n = 0;
-        while (!SETTING_IS_VISIBLE(items[pos].visibility) && n < n_items - 1) // n < n_items - 1 防止死循环
+        while (!SETTING_IS_VISIBLE(items[pos].visibility) && n < n_items) // n < n_items 防止死循环
         {
             if (pos < n_items - 1)
                 pos++;
@@ -290,8 +286,27 @@ static int onCloseWindow(GUI_Window *window)
     }
 
 EXIT:
+    st_window->window = NULL;
+    GUI_SetWindowData(window, NULL);
+    Setting_DestroyWindow(st_window);
+
     if (Emu_IsGameLoaded() && Setting_IsResumeGameEnabled())
         Emu_ResumeGame();
+
+    return 0;
+}
+
+static int onBeforeDrawWindow(GUI_Window *window)
+{
+    SettingWindow *st_window = (SettingWindow *)GUI_GetWindowData(window);
+    if (!st_window)
+        return -1;
+
+    if (st_window->status == TYPE_SETTING_WINDOW_STATUS_DISMISS)
+    {
+        GUI_CloseWindow(window);
+        return 0;
+    }
 
     return 0;
 }
@@ -307,9 +322,9 @@ static int drawTabBar(SettingWindow *st_window, int x, int y, int w, int h)
     SettingMenu *menus = context->menus;
     int n_menus = context->n_menus;
     int menus_pos = context->menus_pos;
-    int divier_size = MENU_TABVIEW_DIVIER_SIZE;
+    int divider_size = MENU_TABVIEW_DIVIDER_SIZE;
     int layout_w = w;
-    int layout_h = h - divier_size;
+    int layout_h = h - divider_size;
     int layout_sx = x;
     int layout_sy = y;
     int layout_dx = layout_sx + layout_w;
@@ -327,7 +342,7 @@ static int drawTabBar(SettingWindow *st_window, int x, int y, int w, int h)
     text_y = view_y + MENU_TABVIEW_PADDING_T;
 
     // Draw battery
-    if (!is_vitatv_model)
+    if (!IsVitatvModel())
     {
         uint32_t color;
         if (scePowerIsBatteryCharging())
@@ -351,7 +366,7 @@ static int drawTabBar(SettingWindow *st_window, int x, int y, int w, int h)
     SceDateTime time;
     sceRtcGetCurrentClock(&time, 0);
     char time_string[16];
-    GetTimeString(time_string, time_format, &time);
+    GetTimeString(time_string, system_time_format, &time);
     view_w = GUI_GetTextWidth(time_string) + MENU_TABVIEW_PADDING_L;
     available_w -= view_w;
     view_x -= view_w;
@@ -391,8 +406,8 @@ static int drawTabBar(SettingWindow *st_window, int x, int y, int w, int h)
 
     GUI_UnsetClipping(); // Unset layout clip
 
-    // Draw divier
-    GUI_DrawFillRectangle(layout_sx, layout_dy, layout_w, divier_size, MENU_ITEMVIEW_COLOR_FOCUS_BG);
+    // Draw divider
+    GUI_DrawFillRectangle(layout_sx, layout_dy, layout_w, divider_size, MENU_ITEMVIEW_COLOR_FOCUS_BG);
 
     GUI_UnsetClipping(); // Unset tabview clip
 
@@ -537,7 +552,7 @@ static int onCtrlWindow(GUI_Window *window)
 
     SettingMenu *menu = &context->menus[context->menus_pos];
 
-    if (released_pad[PAD_PSBUTTON])
+    if (released_pad[PAD_HOME])
     {
         if (GUI_IsHomeKeyEnabled())
         {
@@ -549,7 +564,7 @@ static int onCtrlWindow(GUI_Window *window)
             }
             else
             {
-                GUI_CloseWindow(window);
+                Setting_CloseWindow(st_window);
             }
         }
     }
@@ -606,27 +621,9 @@ static int onCtrlWindow(GUI_Window *window)
     return 0;
 }
 
-static int onEventWindow(GUI_Window *window)
-{
-    SettingWindow *st_window = (SettingWindow *)GUI_GetWindowData(window);
-    if (!st_window)
-        return -1;
-
-    if (st_window->status == TYPE_SETTING_WINDOW_STATUS_DISMISS)
-    {
-        GUI_CloseWindow(window);
-        return 0;
-    }
-
-    return 0;
-}
-
 SettingWindow *Setting_CreateWindow()
 {
     SettingWindow *st_window = (SettingWindow *)calloc(1, sizeof(SettingWindow));
-    if (!st_window)
-        return NULL;
-
     return st_window;
 }
 
@@ -637,8 +634,8 @@ int Setting_DestroyWindow(SettingWindow *window)
 
     if (window->window)
     {
-        GUI_SetWindowData(window->window, NULL); // 设置为NULL，防止onWindowClose时销毁dialog
-        GUI_CloseWindow(window->window);         // 关闭窗口
+        GUI_SetWindowData(window->window, NULL);
+        GUI_CloseWindow(window->window);
         window->window = NULL;
     }
 
@@ -672,9 +669,9 @@ int Setting_OpenWindow(SettingWindow *window)
     memset(&callbacks, 0, sizeof(GUI_WindowCallbacks));
     callbacks.onOpen = onOpenWindow;
     callbacks.onClose = onCloseWindow;
+    callbacks.onBeforeDraw = onBeforeDrawWindow;
     callbacks.onDraw = onDrawWindow;
     callbacks.onCtrl = onCtrlWindow;
-    callbacks.onEvent = onEventWindow;
     GUI_SetWindowCallbacks(window->window, &callbacks);
     GUI_SetWindowData(window->window, window);
 

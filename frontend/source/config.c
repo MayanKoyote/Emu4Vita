@@ -16,7 +16,7 @@
 #include "config.h"
 #include "file.h"
 #include "utils.h"
-#include "init.h"
+#include "app.h"
 #include "lang.h"
 
 AppConfig app_config;
@@ -32,12 +32,12 @@ LinkedList *core_cheat_list = NULL;
 LinkedList *core_option_list = NULL;
 LinkedList *graphics_overlay_list = NULL;
 
-void MakeConfigPath(char *path, char *config_name, int type)
+int MakeConfigPath(char *path, char *config_name, int type)
 {
     if (type == TYPE_CONFIG_GAME)
     {
         char name[MAX_NAME_LENGTH];
-        MakeCurrentFileName(name);
+        MakeCurrentGameName(name);
         char base_name[MAX_NAME_LENGTH];
         MakeBaseName(base_name, name, MAX_NAME_LENGTH);
         snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s", (CORE_CONFIGS_DIR), base_name, config_name);
@@ -46,6 +46,7 @@ void MakeConfigPath(char *path, char *config_name, int type)
     {
         snprintf(path, MAX_PATH_LENGTH, "%s/%s", (CORE_CONFIGS_DIR), config_name);
     }
+    return 0;
 }
 
 int ResetGraphicsConfig()
@@ -68,17 +69,17 @@ int ResetControlConfig()
 {
     memset(&control_config, 0, sizeof(ControlConfig));
     control_config.version = CONTROL_CONFIG_VERSION;
-    control_config.ctrl_player = DEFAULT_CONFIG_VALUE_CONTROL_CTRL_PLAYER;
+    control_config.controller_port = DEFAULT_CONFIG_VALUE_CONTROL_CTRL_PLAYER;
     control_config.button_up = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_UP;
     control_config.button_down = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_DOWN;
     control_config.button_left = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_LEFT;
     control_config.button_right = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_RIGHT;
-    control_config.button_circle = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_CIRCLE;
-    control_config.button_cross = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_CROSS;
-    control_config.button_triangle = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_TRIANGLE;
-    control_config.button_square = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_SQUARE;
-    control_config.button_l = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_L;
-    control_config.button_r = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_R;
+    control_config.button_b = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_B;
+    control_config.button_a = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_A;
+    control_config.button_y = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_Y;
+    control_config.button_x = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_X;
+    control_config.button_l1 = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_L1;
+    control_config.button_r1 = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_R1;
     control_config.button_l2 = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_L2;
     control_config.button_r2 = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_R2;
     control_config.button_l3 = DEFAULT_CONFIG_VALUE_CONTROL_BUTTON_L3;
@@ -104,13 +105,13 @@ int ResetHotkeyConfig()
 {
     memset(&hotkey_config, 0, sizeof(HotkeyConfig));
     hotkey_config.version = HOTKEY_CONFIG_VERSION;
-    hotkey_config.hk_savestate = DEFAULT_CONFIG_VALUE_HOTKEY_SAVE_STATE;
-    hotkey_config.hk_loadstate = DEFAULT_CONFIG_VALUE_HOTKEY_LOAD_STATE;
+    hotkey_config.hk_save_state = DEFAULT_CONFIG_VALUE_HOTKEY_SAVE_STATE;
+    hotkey_config.hk_load_state = DEFAULT_CONFIG_VALUE_HOTKEY_LOAD_STATE;
     hotkey_config.hk_speed_up = DEFAULT_CONFIG_VALUE_HOTKEY_SPEED_UP;
     hotkey_config.hk_speed_down = DEFAULT_CONFIG_VALUE_HOTKEY_SPEED_DOWN;
     hotkey_config.hk_rewind_game = DEFAULT_CONFIG_VALUE_HOTKEY_REWIND_GAME;
-    hotkey_config.hk_player_up = DEFAULT_CONFIG_VALUE_HOTKEY_PLAYER_UP;
-    hotkey_config.hk_player_down = DEFAULT_CONFIG_VALUE_HOTKEY_PLAYER_DOWN;
+    hotkey_config.hk_controller_up = DEFAULT_CONFIG_VALUE_HOTKEY_CONTROLLER_UP;
+    hotkey_config.hk_controller_down = DEFAULT_CONFIG_VALUE_HOTKEY_CONTROLLER_DOWN;
     hotkey_config.hk_exit_game = DEFAULT_CONFIG_VALUE_HOTKEY_EXIT_GAME;
 
     return 0;
@@ -137,7 +138,7 @@ int ResetAppConfig()
     app_config.app_log = DEFAULT_CONFIG_VALUE_APP_APP_LOG;
     app_config.core_log = DEFAULT_CONFIG_VALUE_APP_CORE_LOG;
     app_config.show_log = DEFAULT_CONFIG_VALUE_APP_SHOW_LOG;
-    app_config.language = GetLangIndexByLocalLang(language); // DEFAULT_CONFIG_VALUE_APP_LANGUAGE
+    app_config.language = GetLangIdBySystemLang(system_language); // DEFAULT_CONFIG_VALUE_APP_LANGUAGE
 
     return 0;
 }

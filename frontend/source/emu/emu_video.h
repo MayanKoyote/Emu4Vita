@@ -4,16 +4,17 @@
 #include <stdint.h>
 #include "gui/gui.h"
 
+#define SCEEENSHOT_PIXEL_FORMAT GUI_PIXEL_FORMAT_U8U8U8U8_ABGR
+
 void Emu_PauseVideo();
 void Emu_ResumeVideo();
-int Emu_IsVideoPaused();
 
 void Emu_RequestUpdateVideoDisplay();
-void Emu_ShowCtrlPlayerToast();
+void Emu_ShowControllerPortToast();
 
+void Emu_BeforeDrawVideo();
 void Emu_DrawVideo();
 void Emu_DrawVideoWidgets();
-void Emu_EventVideo();
 
 int Emu_InitVideo();
 int Emu_DeinitVideo();

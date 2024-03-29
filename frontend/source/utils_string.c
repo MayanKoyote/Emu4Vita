@@ -22,16 +22,6 @@ void TrimString(char *str)
     }
 }
 
-char *TrimStringEx(char *str)
-{
-    char *res = str;
-    while (*res == ' ' || *res == '\t')
-        res++;
-    TrimString(res);
-
-    return res;
-}
-
 int StringToDecimal(const char *str)
 {
     return strtol(str, NULL, 0);
@@ -285,7 +275,7 @@ char *StringBreakLineByWidth(const char *string, int limit_w)
     return res;
 }
 
-int StringToListByWidthEx(LinkedList *list, char *buffer, size_t size, int limit_width)
+int StringToListByWidthFromBuffer(LinkedList *list, char *buffer, size_t size, int limit_width)
 {
     if (!list || !buffer)
         return 0;
@@ -318,7 +308,7 @@ int StringToListByWidthEx(LinkedList *list, char *buffer, size_t size, int limit
         if (*p == '\n' || line_w + w > limit_width)
         {
             cut = p;
-            
+
             // Check english word truncated
             if ((p > start && last_space_p > start) && (IS_ENGLISH_CHARACTER(*p) && IS_ENGLISH_CHARACTER(*(p - 1))))
             {
@@ -375,7 +365,7 @@ int StringToListByWidth(LinkedList *list, const char *str, int limit_width)
         return 0;
     strcpy(buf, str);
 
-    int ret = StringToListByWidthEx(list, buf, len, limit_width);
+    int ret = StringToListByWidthFromBuffer(list, buf, len, limit_width);
     free(buf);
 
     return ret;

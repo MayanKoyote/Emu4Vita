@@ -12,7 +12,7 @@
 #include "emu/emu.h"
 #include "utils.h"
 #include "config.h"
-#include "init.h"
+#include "app.h"
 
 typedef struct
 {
@@ -35,18 +35,18 @@ typedef struct
     uint32_t *value;
     int local_key;
     uint8_t old_presseds[N_CTRL_PORTS];
-    uint32_t hold_counts[N_CTRL_PORTS];
+    uint32_t hold_count[N_CTRL_PORTS];
 } EmuKeyOption;
 
 typedef struct
 {
     uint32_t *value;
-    void (*callback)();
+    EmuGameEventAction action;
     uint8_t old_presseds[N_CTRL_PORTS];
-    uint32_t hold_counts[N_CTRL_PORTS];
+    uint32_t hold_count[N_CTRL_PORTS];
 } HotKeyOption;
 
-#define RETRO_PAD_N_BUTTONS 16
+#define RETRO_N_PAD_BUTTONS 16
 
 #define FRONT_TOUCH_WIDTH 200
 #define FRONT_TOUCH_HEIGHT 200
@@ -54,25 +54,18 @@ typedef struct
 #define BACK_TOUCH_HEIGHT 300
 #define BACK_TOUCH_PADDING_L 0
 
-static void saveStateEventCallback();
-static void loadStateEventCallback();
-static void rewindGameEventCallback();
-static void exitGameEventCallback();
-static void changeMapPortUpCallback();
-static void changeMapPortDownCallback();
-
 TouchMap front_touch_maps[] = {
-    {SCE_CTRL_L2, 0, 0, FRONT_TOUCH_WIDTH, FRONT_TOUCH_HEIGHT},
-    {SCE_CTRL_R2, GUI_SCREEN_WIDTH - FRONT_TOUCH_WIDTH, 0, GUI_SCREEN_WIDTH, FRONT_TOUCH_HEIGHT},
-    {SCE_CTRL_L3, 0, GUI_SCREEN_HEIGHT - FRONT_TOUCH_HEIGHT, FRONT_TOUCH_WIDTH, GUI_SCREEN_HEIGHT},
-    {SCE_CTRL_R3, GUI_SCREEN_WIDTH - FRONT_TOUCH_WIDTH, GUI_SCREEN_HEIGHT - FRONT_TOUCH_HEIGHT, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT},
+    {GUI_CTRL_BUTTON_L2, 0, 0, FRONT_TOUCH_WIDTH, FRONT_TOUCH_HEIGHT},
+    {GUI_CTRL_BUTTON_R2, GUI_SCREEN_WIDTH - FRONT_TOUCH_WIDTH, 0, GUI_SCREEN_WIDTH, FRONT_TOUCH_HEIGHT},
+    {GUI_CTRL_BUTTON_L3, 0, GUI_SCREEN_HEIGHT - FRONT_TOUCH_HEIGHT, FRONT_TOUCH_WIDTH, GUI_SCREEN_HEIGHT},
+    {GUI_CTRL_BUTTON_R3, GUI_SCREEN_WIDTH - FRONT_TOUCH_WIDTH, GUI_SCREEN_HEIGHT - FRONT_TOUCH_HEIGHT, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT},
 };
 
 TouchMap back_touch_maps[] = {
-    {SCE_CTRL_L2, BACK_TOUCH_PADDING_L, 0, BACK_TOUCH_PADDING_L + BACK_TOUCH_WIDTH, BACK_TOUCH_HEIGHT},
-    {SCE_CTRL_R2, GUI_SCREEN_WIDTH - BACK_TOUCH_PADDING_L - BACK_TOUCH_WIDTH, 0, GUI_SCREEN_WIDTH, BACK_TOUCH_HEIGHT},
-    {SCE_CTRL_L3, BACK_TOUCH_PADDING_L, GUI_SCREEN_HEIGHT - BACK_TOUCH_HEIGHT, BACK_TOUCH_PADDING_L + BACK_TOUCH_WIDTH, GUI_SCREEN_HEIGHT},
-    {SCE_CTRL_R3, GUI_SCREEN_WIDTH - BACK_TOUCH_PADDING_L - BACK_TOUCH_WIDTH, GUI_SCREEN_HEIGHT - BACK_TOUCH_HEIGHT, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT},
+    {GUI_CTRL_BUTTON_L2, BACK_TOUCH_PADDING_L, 0, BACK_TOUCH_PADDING_L + BACK_TOUCH_WIDTH, BACK_TOUCH_HEIGHT},
+    {GUI_CTRL_BUTTON_R2, GUI_SCREEN_WIDTH - BACK_TOUCH_PADDING_L - BACK_TOUCH_WIDTH, 0, GUI_SCREEN_WIDTH, BACK_TOUCH_HEIGHT},
+    {GUI_CTRL_BUTTON_L3, BACK_TOUCH_PADDING_L, GUI_SCREEN_HEIGHT - BACK_TOUCH_HEIGHT, BACK_TOUCH_PADDING_L + BACK_TOUCH_WIDTH, GUI_SCREEN_HEIGHT},
+    {GUI_CTRL_BUTTON_R3, GUI_SCREEN_WIDTH - BACK_TOUCH_PADDING_L - BACK_TOUCH_WIDTH, GUI_SCREEN_HEIGHT - BACK_TOUCH_HEIGHT, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT},
 };
 
 TouchOption touch_options[2] = {
@@ -82,89 +75,49 @@ TouchOption touch_options[2] = {
 #define N_TOUCH_OPTIONS (sizeof(touch_options) / sizeof(TouchOption))
 
 EmuKeyOption emu_key_options[] = {
-    {&control_config.button_left, SCE_CTRL_LEFT, {0}, {0}},
-    {&control_config.button_up, SCE_CTRL_UP, {0}, {0}},
-    {&control_config.button_right, SCE_CTRL_RIGHT, {0}, {0}},
-    {&control_config.button_down, SCE_CTRL_DOWN, {0}, {0}},
-    {&control_config.button_cross, SCE_CTRL_CROSS, {0}, {0}},
-    {&control_config.button_circle, SCE_CTRL_CIRCLE, {0}, {0}},
-    {&control_config.button_square, SCE_CTRL_SQUARE, {0}, {0}},
-    {&control_config.button_triangle, SCE_CTRL_TRIANGLE, {0}, {0}},
-    {&control_config.button_select, SCE_CTRL_SELECT, {0}, {0}},
-    {&control_config.button_start, SCE_CTRL_START, {0}, {0}},
-    {&control_config.button_l, SCE_CTRL_L1, {0}, {0}},
-    {&control_config.button_r, SCE_CTRL_R1, {0}, {0}},
-    {&control_config.button_l2, SCE_CTRL_L2, {0}, {0}},
-    {&control_config.button_r2, SCE_CTRL_R2, {0}, {0}},
-    {&control_config.button_l3, SCE_CTRL_L3, {0}, {0}},
-    {&control_config.button_r3, SCE_CTRL_R3, {0}, {0}},
-    {&control_config.left_analog_left, EXT_CTRL_LEFT_ANLOG_LEFT, {0}, {0}},
-    {&control_config.left_analog_up, EXT_CTRL_LEFT_ANLOG_UP, {0}, {0}},
-    {&control_config.left_analog_right, EXT_CTRL_LEFT_ANLOG_RIGHT, {0}, {0}},
-    {&control_config.left_analog_down, EXT_CTRL_LEFT_ANLOG_DOWN, {0}, {0}},
-    {&control_config.right_analog_left, EXT_CTRL_RIGHT_ANLOG_LEFT, {0}, {0}},
-    {&control_config.right_analog_up, EXT_CTRL_RIGHT_ANLOG_UP, {0}, {0}},
-    {&control_config.right_analog_right, EXT_CTRL_RIGHT_ANLOG_RIGHT, {0}, {0}},
-    {&control_config.right_analog_down, EXT_CTRL_RIGHT_ANLOG_DOWN, {0}, {0}},
+    {&control_config.button_left, GUI_CTRL_BUTTON_LEFT, {0}, {0}},
+    {&control_config.button_up, GUI_CTRL_BUTTON_UP, {0}, {0}},
+    {&control_config.button_right, GUI_CTRL_BUTTON_RIGHT, {0}, {0}},
+    {&control_config.button_down, GUI_CTRL_BUTTON_DOWN, {0}, {0}},
+    {&control_config.button_a, GUI_CTRL_BUTTON_A, {0}, {0}},
+    {&control_config.button_b, GUI_CTRL_BUTTON_B, {0}, {0}},
+    {&control_config.button_x, GUI_CTRL_BUTTON_X, {0}, {0}},
+    {&control_config.button_y, GUI_CTRL_BUTTON_Y, {0}, {0}},
+    {&control_config.button_select, GUI_CTRL_BUTTON_SELECT, {0}, {0}},
+    {&control_config.button_start, GUI_CTRL_BUTTON_START, {0}, {0}},
+    {&control_config.button_l1, GUI_CTRL_BUTTON_L1, {0}, {0}},
+    {&control_config.button_r1, GUI_CTRL_BUTTON_R1, {0}, {0}},
+    {&control_config.button_l2, GUI_CTRL_BUTTON_L2, {0}, {0}},
+    {&control_config.button_r2, GUI_CTRL_BUTTON_R2, {0}, {0}},
+    {&control_config.button_l3, GUI_CTRL_BUTTON_L3, {0}, {0}},
+    {&control_config.button_r3, GUI_CTRL_BUTTON_R3, {0}, {0}},
+    {&control_config.left_analog_left, GUI_CTRL_BUTTON_LEFT_ANLOG_LEFT, {0}, {0}},
+    {&control_config.left_analog_up, GUI_CTRL_BUTTON_LEFT_ANLOG_UP, {0}, {0}},
+    {&control_config.left_analog_right, GUI_CTRL_BUTTON_LEFT_ANLOG_RIGHT, {0}, {0}},
+    {&control_config.left_analog_down, GUI_CTRL_BUTTON_LEFT_ANLOG_DOWN, {0}, {0}},
+    {&control_config.right_analog_left, GUI_CTRL_BUTTON_RIGHT_ANLOG_LEFT, {0}, {0}},
+    {&control_config.right_analog_up, GUI_CTRL_BUTTON_RIGHT_ANLOG_UP, {0}, {0}},
+    {&control_config.right_analog_right, GUI_CTRL_BUTTON_RIGHT_ANLOG_RIGHT, {0}, {0}},
+    {&control_config.right_analog_down, GUI_CTRL_BUTTON_RIGHT_ANLOG_DOWN, {0}, {0}},
 };
 #define N_EMU_KEY_OPTIONS (sizeof(emu_key_options) / sizeof(EmuKeyOption))
 
 HotKeyOption hot_key_options[] = {
-    {&hotkey_config.hk_savestate, saveStateEventCallback, {0}, {0}},
-    {&hotkey_config.hk_loadstate, loadStateEventCallback, {0}, {0}},
-    {&hotkey_config.hk_speed_up, Emu_SpeedUpGame, {0}, {0}},
-    {&hotkey_config.hk_speed_down, Emu_SpeedDownGame, {0}, {0}},
-    {&hotkey_config.hk_rewind_game, rewindGameEventCallback, {0}, {0}},
-    {&hotkey_config.hk_player_up, changeMapPortUpCallback, {0}, {0}},
-    {&hotkey_config.hk_player_down, changeMapPortDownCallback, {0}, {0}},
-    {&hotkey_config.hk_exit_game, exitGameEventCallback, {0}, {0}},
+    {&hotkey_config.hk_save_state, EMU_GAME_EVENT_ACTION_SAVE_STATE, {0}, {0}},
+    {&hotkey_config.hk_load_state, EMU_GAME_EVENT_ACTION_LOAD_STATE, {0}, {0}},
+    {&hotkey_config.hk_speed_up, EMU_GAME_EVENT_ACTION_SPEED_UP, {0}, {0}},
+    {&hotkey_config.hk_speed_down, EMU_GAME_EVENT_ACTION_SPEED_DOWN, {0}, {0}},
+    {&hotkey_config.hk_rewind_game, EMU_GAME_EVENT_ACTION_REWIND, {0}, {0}},
+    {&hotkey_config.hk_controller_up, EMU_GAME_EVENT_ACTION_CONTROLLER_PORT_UP, {0}, {0}},
+    {&hotkey_config.hk_controller_down, EMU_GAME_EVENT_ACTION_CONTROLLER_PORT_DOWN, {0}, {0}},
+    {&hotkey_config.hk_exit_game, EMU_GAME_EVENT_ACTION_EXIT, {0}, {0}},
 };
-#define N_HOT_KEY_MAPPER_OPTIONS (sizeof(hot_key_options) / sizeof(HotKeyOption))
+#define N_HOT_KEY_OPTIONS (sizeof(hot_key_options) / sizeof(HotKeyOption))
 
-static uint8_t psbutton_old_pressed[N_CTRL_PORTS];
-static uint64_t disable_homekey_micros[N_CTRL_PORTS];
+static uint8_t homekey_old_pressed[N_CTRL_PORTS];
+static uint64_t homekey_disable_micros[N_CTRL_PORTS];
 static uint32_t emu_mapping_keys[N_CTRL_PORTS]; // bitmask
 static int input_okay = 0;
-
-static void saveStateEventCallback()
-{
-    Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_SAVE_STATE);
-}
-
-static void loadStateEventCallback()
-{
-    Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_LOAD_STATE);
-}
-
-static void rewindGameEventCallback()
-{
-    Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_REWIND);
-}
-
-static void exitGameEventCallback()
-{
-    Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_EXIT);
-}
-
-static void changeMapPortUpCallback()
-{
-    if (control_config.ctrl_player < N_CTRL_PORTS - 1)
-        control_config.ctrl_player++;
-    else
-        control_config.ctrl_player = 0;
-    SaveControlConfig(TYPE_CONFIG_GAME);
-    Emu_ShowCtrlPlayerToast();
-}
-
-static void changeMapPortDownCallback()
-{
-    if (control_config.ctrl_player > 0)
-        control_config.ctrl_player--;
-    else
-        control_config.ctrl_player = N_CTRL_PORTS - 1;
-    SaveControlConfig(TYPE_CONFIG_GAME);
-    Emu_ShowCtrlPlayerToast();
-}
 
 static void cleanInputKeys()
 {
@@ -175,28 +128,28 @@ static void cleanInputKeys()
         for (j = 0; j < N_CTRL_PORTS; j++)
         {
             emu_key_options[i].old_presseds[j] = 0;
-            emu_key_options[i].hold_counts[j] = 0;
+            emu_key_options[i].hold_count[j] = 0;
         }
     }
 
-    for (i = 0; i < N_HOT_KEY_MAPPER_OPTIONS; i++)
+    for (i = 0; i < N_HOT_KEY_OPTIONS; i++)
     {
         for (j = 0; j < N_CTRL_PORTS; j++)
         {
             hot_key_options[i].old_presseds[j] = 0;
-            hot_key_options[i].hold_counts[j] = 0;
+            hot_key_options[i].hold_count[j] = 0;
         }
     }
 
     for (i = 0; i < N_CTRL_PORTS; i++)
     {
-        psbutton_old_pressed[i] = 0;
+        homekey_old_pressed[i] = 0;
     }
 }
 
 static void TouchToButtons(uint32_t *buttons)
 {
-    if (is_vitatv_model)
+    if (IsVitatvModel())
         return;
 
     SceTouchData touch_data;
@@ -229,25 +182,25 @@ static void TouchToButtons(uint32_t *buttons)
 static void AnalogToButtons(uint8_t lanalog_x, uint8_t lanalog_y, uint8_t ranalog_x, uint8_t ranalog_y, uint32_t *buttons)
 {
     if (lanalog_x < ANALOG_CENTER - ANALOG_THRESHOLD)
-        *buttons |= EXT_CTRL_LEFT_ANLOG_LEFT;
+        *buttons |= GUI_CTRL_BUTTON_LEFT_ANLOG_LEFT;
     else if (lanalog_x > ANALOG_CENTER + ANALOG_THRESHOLD)
-        *buttons |= EXT_CTRL_LEFT_ANLOG_RIGHT;
+        *buttons |= GUI_CTRL_BUTTON_LEFT_ANLOG_RIGHT;
     if (lanalog_y < ANALOG_CENTER - ANALOG_THRESHOLD)
-        *buttons |= EXT_CTRL_LEFT_ANLOG_UP;
+        *buttons |= GUI_CTRL_BUTTON_LEFT_ANLOG_UP;
     else if (lanalog_y > ANALOG_CENTER + ANALOG_THRESHOLD)
-        *buttons |= EXT_CTRL_LEFT_ANLOG_DOWN;
+        *buttons |= GUI_CTRL_BUTTON_LEFT_ANLOG_DOWN;
 
     if (ranalog_x < ANALOG_CENTER - ANALOG_THRESHOLD)
-        *buttons |= EXT_CTRL_RIGHT_ANLOG_LEFT;
+        *buttons |= GUI_CTRL_BUTTON_RIGHT_ANLOG_LEFT;
     else if (ranalog_x > ANALOG_CENTER + ANALOG_THRESHOLD)
-        *buttons |= EXT_CTRL_RIGHT_ANLOG_RIGHT;
+        *buttons |= GUI_CTRL_BUTTON_RIGHT_ANLOG_RIGHT;
     if (ranalog_y < ANALOG_CENTER - ANALOG_THRESHOLD)
-        *buttons |= EXT_CTRL_RIGHT_ANLOG_UP;
+        *buttons |= GUI_CTRL_BUTTON_RIGHT_ANLOG_UP;
     else if (ranalog_y > ANALOG_CENTER + ANALOG_THRESHOLD)
-        *buttons |= EXT_CTRL_RIGHT_ANLOG_DOWN;
+        *buttons |= GUI_CTRL_BUTTON_RIGHT_ANLOG_DOWN;
 }
 
-static void LocalKeyToEmuKey(EmuKeyOption *option, int local_port, int mapping_port, uint32_t buttons)
+static void LocalKeyToEmuKey(EmuKeyOption *option, int local_port, int map_port, uint32_t buttons)
 {
     uint8_t cur_pressed = ((buttons & option->local_key) != 0);
     uint8_t old_pressed = option->old_presseds[local_port];
@@ -255,7 +208,7 @@ static void LocalKeyToEmuKey(EmuKeyOption *option, int local_port, int mapping_p
 
     if (cur_pressed)
     {
-        int hold_count = ++option->hold_counts[local_port];
+        int hold_count = ++option->hold_count[local_port];
         uint32_t config_key = *(option->value);
         int trubo = config_key & TURBO_BITMASK_KEY;
         uint32_t map_key = config_key & 0x0FFFFFFF;
@@ -263,11 +216,11 @@ static void LocalKeyToEmuKey(EmuKeyOption *option, int local_port, int mapping_p
             return;
 
         if (!trubo || !old_pressed || (hold_count % (control_config.turbo_delay + 1) == 0))
-            emu_mapping_keys[mapping_port] |= map_key;
+            emu_mapping_keys[map_port] |= map_key;
     }
     else
     {
-        option->hold_counts[local_port] = 0;
+        option->hold_count[local_port] = 0;
     }
 }
 
@@ -282,7 +235,7 @@ static int onHotKeyEvent(int port, uint32_t buttons)
     int hotkey_pressed;
 
     int i;
-    for (i = 0; i < N_HOT_KEY_MAPPER_OPTIONS; i++)
+    for (i = 0; i < N_HOT_KEY_OPTIONS; i++)
     {
         hotkey_pressed = 0;
         option = &hot_key_options[i];
@@ -298,37 +251,33 @@ static int onHotKeyEvent(int port, uint32_t buttons)
 
         if (cur_pressed)
         {
-            ++option->hold_counts[port];
+            ++option->hold_count[port];
             if (trubo)
             {
                 if (!old_pressed)
                 {
                     hotkey_pressed = 1;
                 }
-                else if (option->hold_counts[port] >= 10)
+                else if (option->hold_count[port] >= 10)
                 {
                     hotkey_pressed = 1;
-                    option->hold_counts[port] = 6; // 第二次开始加快
+                    option->hold_count[port] = 6; // 第二次开始加快
                 }
             }
         }
         else
         {
-            option->hold_counts[port] = 0;
+            option->hold_count[port] = 0;
             if (!trubo && old_pressed) // 连发时取消按键弹出事件，连发是(!old && cur)，非连发是(!cur && old)
                 hotkey_pressed = 1;
         }
 
         if (hotkey_pressed)
         {
-            void (*callback)() = option->callback;
-            if (callback)
-            {
-                callback();
-                if (config_key & SCE_CTRL_PSBUTTON)
-                    GUI_SetHomeKeyEnabled(0);
-                return 1;
-            }
+            Emu_SetGameEventAction(option->action);
+            if (config_key & GUI_CTRL_BUTTON_HOME)
+                GUI_SetHomeKeyEnabled(0);
+            return 1;
         }
     }
 
@@ -337,15 +286,15 @@ static int onHotKeyEvent(int port, uint32_t buttons)
 
 static int onHomeKeyEvent(int prot, uint32_t buttons)
 {
-    uint8_t cur_pressed = ((buttons & SCE_CTRL_PSBUTTON) == SCE_CTRL_PSBUTTON);
-    uint8_t old_pressed = psbutton_old_pressed[prot];
-    psbutton_old_pressed[prot] = cur_pressed;
+    uint8_t cur_pressed = ((buttons & GUI_CTRL_BUTTON_HOME) == GUI_CTRL_BUTTON_HOME);
+    uint8_t old_pressed = homekey_old_pressed[prot];
+    homekey_old_pressed[prot] = cur_pressed;
 
     if (cur_pressed)
     {
         if (!old_pressed)
-            disable_homekey_micros[prot] = sceKernelGetProcessTimeWide() + DISABLE_PSBUTTON_HOLD_MICROS;
-        else if (sceKernelGetProcessTimeWide() >= disable_homekey_micros[prot])
+            homekey_disable_micros[prot] = sceKernelGetProcessTimeWide() + DISABLE_PSBUTTON_HOLD_MICROS;
+        else if (sceKernelGetProcessTimeWide() >= homekey_disable_micros[prot])
             GUI_SetHomeKeyEnabled(0);
         return 1;
     }
@@ -355,7 +304,7 @@ static int onHomeKeyEvent(int prot, uint32_t buttons)
         {
             if (GUI_IsHomeKeyEnabled())
             {
-                float speed = Emu_GetCurrentRunSpeed();
+                float speed = Emu_GetRunSpeed();
                 if (speed != 1.0f)
                 {
                     speed = 1.0f;
@@ -364,7 +313,7 @@ static int onHomeKeyEvent(int prot, uint32_t buttons)
                 else
                 {
                     GUI_SetHomeKeyEnabled(0);
-                    Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_OPEN_SETTING_MENU);
+                    Emu_SetGameEventAction(EMU_GAME_EVENT_ACTION_OPEN_SETTING_MENU);
                 }
                 return 1;
             }
@@ -381,7 +330,7 @@ static int onHomeKeyEvent(int prot, uint32_t buttons)
 void Emu_PollInput()
 {
     SceCtrlData ctrl_data;
-    int read_port, local_port, mapping_port;
+    int read_port, local_port, map_port;
     int i;
 
     memset(emu_mapping_keys, 0, sizeof(emu_mapping_keys));
@@ -394,19 +343,19 @@ void Emu_PollInput()
         if (local_port == 0)
         {
             read_port = 0;
-            mapping_port = control_config.ctrl_player;
+            map_port = control_config.controller_port;
         }
         else
         {
             read_port = local_port + 1;
-            mapping_port = local_port;
+            map_port = local_port;
         }
 
         memset(&ctrl_data, 0, sizeof(SceCtrlData));
         if (sceCtrlPeekBufferPositiveExt2(read_port, &ctrl_data, 1) < 0)
             continue;
 
-        ctrl_data.buttons &= 0x0001FFFF;
+        ctrl_data.buttons &= GUI_CTRL_BUTTONS_BITMASK;
 
         if (local_port == 0)
             TouchToButtons(&ctrl_data.buttons);
@@ -419,7 +368,7 @@ void Emu_PollInput()
             return;
 
         for (i = 0; i < N_EMU_KEY_OPTIONS; i++)
-            LocalKeyToEmuKey(&emu_key_options[i], local_port, mapping_port, ctrl_data.buttons);
+            LocalKeyToEmuKey(&emu_key_options[i], local_port, map_port, ctrl_data.buttons);
     }
 }
 

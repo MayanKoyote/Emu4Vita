@@ -17,7 +17,7 @@
 static int home_locked = 0, usb_connection_locked = 0, quick_menu_locked = 0;
 static int suspend_locked = 0, oled_off_locked = 0, oled_dimming_locked = 0;
 
-int AppLog(const char *text, ...)
+int APP_LOG(const char *text, ...)
 {
     if (!app_config.app_log)
         return 0;
@@ -110,12 +110,12 @@ void GetSizeString(char string[16], uint64_t size)
     snprintf(string, 16, "%.*f %s", (i == 0) ? 0 : 2, double_size, units[i]);
 }
 
-void GetDateString(char string[24], int date_format, SceDateTime *time)
+void GetDateString(char string[24], int system_date_format, SceDateTime *time)
 {
     SceDateTime time_local;
     ConvertUtcToLocalTime(&time_local, time);
 
-    switch (date_format)
+    switch (system_date_format)
     {
     case SCE_SYSTEM_PARAM_DATE_FORMAT_YYYYMMDD:
         snprintf(string, 24, "%04d/%02d/%02d", time_local.year, time_local.month, time_local.day);
@@ -131,12 +131,12 @@ void GetDateString(char string[24], int date_format, SceDateTime *time)
     }
 }
 
-void GetTimeString(char string[16], int time_format, SceDateTime *time)
+void GetTimeString(char string[16], int system_time_format, SceDateTime *time)
 {
     SceDateTime time_local;
     ConvertUtcToLocalTime(&time_local, time);
 
-    switch (time_format)
+    switch (system_time_format)
     {
     case SCE_SYSTEM_PARAM_TIME_FORMAT_12HR:
         snprintf(string, 16, "%02d:%02d %s", (time_local.hour > 12) ? (time_local.hour - 12) : ((time_local.hour == 0) ? 12 : time_local.hour),
@@ -359,7 +359,7 @@ void UnlockOledDimming()
         oled_dimming_locked = 0;
 }
 
-static int powerTickThreadEntry(SceSize args, void *argp)
+static int PowerTickThreadEntry(SceSize args, void *argp)
 {
     while (1)
     {
@@ -382,7 +382,7 @@ static int powerTickThreadEntry(SceSize args, void *argp)
 
 void InitPowerTickThread()
 {
-    SceUID thid = sceKernelCreateThread("power_tick_thread", powerTickThreadEntry, 0x10000100, 0x40000, 0, 0, NULL);
+    SceUID thid = sceKernelCreateThread("power_tick_thread", PowerTickThreadEntry, 0x10000100, 0x40000, 0, 0, NULL);
     if (thid >= 0)
         sceKernelStartThread(thid, 0, NULL);
 }

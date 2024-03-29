@@ -10,7 +10,7 @@
 #include "file.h"
 #include "config.h"
 #include "lang.h"
-#include "init.h"
+#include "app.h"
 
 static SceUID gui_images_thid = -1;
 
@@ -33,7 +33,7 @@ static GUI_Texture *LoadImageTextureByName(const char *name)
     return texture;
 }
 
-static int ImagesThreadEntry(SceSize args, void *argp)
+static int GuiImagesThreadEntry(SceSize args, void *argp)
 {
     GUI_Texture *texture;
 
@@ -50,19 +50,20 @@ static int ImagesThreadEntry(SceSize args, void *argp)
     texture = LoadImageTextureByName(RADIOBUTTON_OFF_PNG_NAME);
     GUI_SetImage(ID_GUI_IMAGE_RADIOBUTTON_OFF, texture);
 
-    sceKernelExitThread(0);
+    gui_images_thid = -1;
+    sceKernelExitDeleteThread(0);
     return 0;
 }
 
 static int GUI_InitImages()
 {
-    int ret = gui_images_thid = sceKernelCreateThread("gui_images_thread", ImagesThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
+    int ret = gui_images_thid = sceKernelCreateThread("gui_images_thread", GuiImagesThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
     if (gui_images_thid >= 0)
         ret = sceKernelStartThread(gui_images_thid, 0, NULL);
     return ret;
 }
 
-static void GUI_DeinitImages()
+static void GUI_WaitImagesThreadEnd()
 {
     if (gui_images_thid >= 0)
     {
@@ -70,6 +71,11 @@ static void GUI_DeinitImages()
         sceKernelDeleteThread(gui_images_thid);
         gui_images_thid = -1;
     }
+}
+
+static void GUI_DeinitImages()
+{
+    GUI_WaitImagesThreadEnd();
 
     GUI_SetImage(ID_GUI_IMAGE_WALLPAPER, NULL);
     GUI_SetImage(ID_GUI_IMAGE_SPLASH, NULL);
@@ -81,12 +87,7 @@ static void GUI_DeinitImages()
 
 void GUI_WaitInitEnd()
 {
-    if (gui_images_thid >= 0)
-    {
-        sceKernelWaitThreadEnd(gui_images_thid, NULL, NULL);
-        sceKernelDeleteThread(gui_images_thid);
-        gui_images_thid = -1;
-    }
+    GUI_WaitImagesThreadEnd();
 }
 
 void GUI_Init()
@@ -95,10 +96,18 @@ void GUI_Init()
     GUI_InitImages();
     GUI_InitShaders();
     GUI_InitFont();
+    GUI_InitDraw();
+    GUI_InitActivity();
+    GUI_InitWindow();
+    GUI_InitToast();
 }
 
 void GUI_Deinit()
 {
+    GUI_DeinitActivity();
+    GUI_DeinitWindow();
+    GUI_DeinitToast();
+    GUI_DeinitDraw();
     GUI_DeinitImages();
     GUI_DeinitShaders();
     GUI_DeinitFont();

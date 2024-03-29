@@ -142,6 +142,9 @@ int LinkedListRemove(LinkedList *list, LinkedListEntry *entry)
     if (!list || !entry)
         return 0;
 
+    if (entry->parent != list)
+        return 0;
+
     if (entry->prev)
     {
         entry->prev->next = entry->next;
@@ -268,6 +271,7 @@ void LinkedListEmpty(LinkedList *list)
         LinkedListEntry *next = entry->next;
         if (entry->data)
         {
+            // printf("list->freeEntryData: %p, entry->freeEntryData: %p, entry->data: %p\n", list->freeEntryData, entry->freeEntryData, entry->data);
             if (entry->freeEntryData)
                 entry->freeEntryData(entry->data);
             else if (list->freeEntryData)

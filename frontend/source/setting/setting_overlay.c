@@ -43,13 +43,15 @@ static int OverlayThreadEntry(SceSize args, void *argp)
     }
 
     Setting_SetOverlayOption(graphics_overlay_list);
-    sceKernelExitThread(0);
+
+    overlay_thid = -1;
+    sceKernelExitDeleteThread(0);
     return 0;
 }
 
 int Setting_InitOverlay()
 {
-    int ret = overlay_thid = sceKernelCreateThread("overlay_thread", OverlayThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
+    int ret = overlay_thid = sceKernelCreateThread("setting_overlay_thread", OverlayThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
     if (overlay_thid >= 0)
         ret = sceKernelStartThread(overlay_thid, 0, NULL);
 

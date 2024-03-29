@@ -24,7 +24,7 @@ enum TypeMove
 
 #define lerp(value, from_max, to_max) ((((value * 10) * (to_max * 10)) / (from_max * 10)) / 10)
 
-int AppLog(const char *text, ...);
+int APP_LOG(const char *text, ...);
 
 int HasEndSlash(const char *path);
 int RemoveEndSlash(char *path);
@@ -34,8 +34,8 @@ void ConvertUtcToLocalTime(SceDateTime *time_local, SceDateTime *time_utc);
 void ConvertLocalTimeToUtc(SceDateTime *time_utc, SceDateTime *time_local);
 
 void GetSizeString(char string[16], uint64_t size);
-void GetDateString(char string[24], int date_format, SceDateTime *time);
-void GetTimeString(char string[16], int time_format, SceDateTime *time);
+void GetDateString(char string[24], int system_date_format, SceDateTime *time);
+void GetTimeString(char string[16], int system_time_format, SceDateTime *time);
 void GetDurationString(char string[16], uint64_t ms);
 
 void RefreshListPosEx(int *top_pos, int *focus_pos, int length, int lines);

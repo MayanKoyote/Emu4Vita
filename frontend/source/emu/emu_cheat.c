@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <psp2/kernel/threadmgr/thread.h>
 #include <psp2/kernel/processmgr.h>
 
 #include "activity/activity.h"
@@ -13,34 +12,25 @@
 #include "config.h"
 #include "utils.h"
 
+static SceKernelLwMutexWork cheat_mutex = {0};
 static SceUID cheat_thid = -1;
+static int cheat_okay = 0;
 static int cheat_run = 0;
 static int cheat_pause = 1;
 static int cheat_reset = 0;
 
-static int makeCheatPath(char *path)
-{
-    char name[MAX_NAME_LENGTH];
-    MakeCurrentFileName(name);
-    char base_name[MAX_NAME_LENGTH];
-    MakeBaseName(base_name, name, MAX_NAME_LENGTH);
-    snprintf(path, MAX_PATH_LENGTH, "%s/%s.cht", (CORE_CHEATS_DIR), base_name);
-    return 0;
-}
-
-static int makeCheatPath2(char *path)
-{
-    MakeCurrentFilePath(path);
-    char *p = strrchr(path, '.');
-    if (!p++)
-        p = path + strlen(path);
-    strcpy(p, "cht");
-    return 0;
-}
-
 void Emu_PauseCheat()
 {
-    cheat_pause = 1;
+    if (Emu_IsGameExiting())
+    {
+        sceKernelLockLwMutex(&cheat_mutex, 1, NULL);
+        cheat_pause = 1;
+        sceKernelUnlockLwMutex(&cheat_mutex, 1);
+    }
+    else
+    {
+        cheat_pause = 1;
+    }
 }
 
 void Emu_ResumeCheat()
@@ -48,12 +38,13 @@ void Emu_ResumeCheat()
     cheat_pause = 0;
 }
 
-void Emu_CleanCheatOption()
+int Emu_CleanCheatOption()
 {
     Setting_SetCheatMenu(NULL);
-    if (core_cheat_list)
-        LinkedListDestroy(core_cheat_list);
+    LinkedListDestroy(core_cheat_list);
     core_cheat_list = NULL;
+
+    return 0;
 }
 
 int Emu_UpdateCheatOption()
@@ -70,58 +61,42 @@ int Emu_ResetCheatOption()
 
 int Emu_LoadCheatOption()
 {
-    Emu_CleanCheatOption();
-
-    core_cheat_list = NewCheatList();
-    if (!core_cheat_list)
-        goto FAILED;
-
     char path[1024];
-    makeCheatPath2(path);
+
+    if (!core_cheat_list)
+    {
+        core_cheat_list = NewCheatList();
+        if (!core_cheat_list)
+            return -1;
+    }
+
+    MakeCheatPath2(path);
     if (CheatListGetEntries(core_cheat_list, path) < 0)
     {
-        AppLog("[CHEAT] CheatListGetEntries failed: %s\n", path);
-        makeCheatPath(path);
+        MakeCheatPath(path);
         CheatListGetEntries(core_cheat_list, path);
     }
     if (LinkedListGetLength(core_cheat_list) <= 0)
-    {
-        AppLog("[CHEAT] CheatListGetEntries failed: %s\n", path);
-        goto FAILED;
-    }
-    AppLog("[CHEAT] CheatListGetEntries OK: %s\n", path);
+        return -1;
 
     MakeConfigPath(path, CHEAT_CONFIG_NAME, TYPE_CONFIG_GAME);
     CheatListLoadConfig(core_cheat_list, path);
-
     Setting_SetCheatMenu(core_cheat_list);
-    AppLog("[CHEAT] Emu_LoadCheatOption OK!\n");
-    return 0;
 
-FAILED:
-    AppLog("[CHEAT] Emu_LoadCheatOption failed!\n");
-    return -1;
+    return 0;
 }
 
 int Emu_SaveCheatOption()
 {
     if (!core_cheat_list)
-        goto FAILED;
+        return -1;
 
     char path[1024];
     MakeConfigPath(path, CHEAT_CONFIG_NAME, TYPE_CONFIG_GAME);
-    if (CheatListSaveConfig(core_cheat_list, path) < 0)
-        goto FAILED;
-
-    AppLog("[CHEAT] Emu_SaveCheatOption OK!\n");
-    return 0;
-
-FAILED:
-    AppLog("[CHEAT] Emu_SaveCheatOption failed!\n");
-    return -1;
+    return CheatListSaveConfig(core_cheat_list, path);
 }
 
-static int ApplyCheatOption()
+int Emu_ApplyCheatOption()
 {
     if (cheat_reset)
     {
@@ -142,7 +117,7 @@ static int ApplyCheatOption()
         {
             if (data->code)
             {
-                // printf("[CHEAT] ApplyCheatOption: %s = %s\n", data->desc, data->code);
+                // printf("[CHEAT] Emu_ApplyCheatOption: %s = %s\n", data->desc, data->code);
                 retro_cheat_set(index, 1, data->code);
             }
         }
@@ -154,28 +129,34 @@ static int ApplyCheatOption()
     return 0;
 }
 
-static int cheatThreadEntry(SceSize args, void *argp)
+static int CheatThreadEntry(SceSize args, void *argp)
 {
-    AppLog("[CHEAT] Cheat thread start.\n");
+    APP_LOG("[CHEAT] Cheat thread start run.\n");
 
     while (cheat_run)
     {
-        if (cheat_pause || !core_cheat_list || LinkedListGetLength(core_cheat_list) <= 0)
+        sceKernelLockLwMutex(&cheat_mutex, 1, NULL);
+
+        if (cheat_pause || LinkedListGetLength(core_cheat_list) <= 0)
         {
+            sceKernelUnlockLwMutex(&cheat_mutex, 1);
             sceKernelDelayThread(1000);
             continue;
         }
 
         uint64_t next_micros = sceKernelGetProcessTimeWide() + Emu_GetMicrosPerFrame();
         Emu_LockRunGameMutex();
-        ApplyCheatOption();
+        Emu_ApplyCheatOption();
         Emu_UnlockRunGameMutex();
+
+        sceKernelUnlockLwMutex(&cheat_mutex, 1);
+
         uint64_t cur_micros = sceKernelGetProcessTimeWide();
         if (cur_micros < next_micros)
             sceKernelDelayThread(next_micros - cur_micros);
     }
 
-    AppLog("[CHEAT] Cheat thread exit.\n");
+    APP_LOG("[CHEAT] Cheat thread stop run.\n");
     sceKernelExitThread(0);
     return 0;
 }
@@ -185,18 +166,16 @@ static int startCheatThread()
     int ret = 0;
 
     if (cheat_thid < 0)
+        ret = cheat_thid = sceKernelCreateThread("emu_cheat_thread", CheatThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
+    if (cheat_thid >= 0)
     {
-        ret = cheat_thid = sceKernelCreateThread("emu_cheat_thread", cheatThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
-        if (cheat_thid >= 0)
+        cheat_run = 1;
+        ret = sceKernelStartThread(cheat_thid, 0, NULL);
+        if (ret < 0)
         {
-            cheat_run = 1;
-            ret = sceKernelStartThread(cheat_thid, 0, NULL);
-            if (ret < 0)
-            {
-                cheat_run = 0;
-                sceKernelDeleteThread(cheat_thid);
-                cheat_thid = -1;
-            }
+            cheat_run = 0;
+            sceKernelDeleteThread(cheat_thid);
+            cheat_thid = -1;
         }
     }
 
@@ -205,9 +184,9 @@ static int startCheatThread()
 
 static int finishCheatThread()
 {
+    cheat_run = 0;
     if (cheat_thid >= 0)
     {
-        cheat_run = 0;
         sceKernelWaitThreadEnd(cheat_thid, NULL, NULL);
         sceKernelDeleteThread(cheat_thid);
         cheat_thid = -1;
@@ -218,18 +197,40 @@ static int finishCheatThread()
 
 int Emu_InitCheat()
 {
+    if (cheat_okay)
+        Emu_DeinitCheat();
+
+    APP_LOG("[CHEAT] Cheat init...\n");
+
     if (Emu_LoadCheatOption() < 0)
-        return -1;
+        goto FAILED;
+
+    sceKernelCreateLwMutex(&cheat_mutex, "emu_cheat_mutex", 2, 0, NULL);
 
     cheat_pause = 1;
+    if (startCheatThread() < 0)
+        goto FAILED_DEINIT;
 
-    return startCheatThread();
+    cheat_okay = 1;
+    APP_LOG("[CHEAT] Cheat init OK!\n");
+    return 0;
+
+FAILED_DEINIT:
+    Emu_DeinitCheat();
+FAILED:
+    APP_LOG("[CHEAT] Cheat init failed!\n");
+    return -1;
 }
 
 int Emu_DeinitCheat()
 {
+    APP_LOG("[CHEAT] Cheat deinit...\n");
+
+    cheat_okay = 0;
     finishCheatThread();
+    sceKernelDeleteLwMutex(&cheat_mutex);
     Emu_CleanCheatOption();
 
+    APP_LOG("[CHEAT] Cheat deinit OK!\n");
     return 0;
 }

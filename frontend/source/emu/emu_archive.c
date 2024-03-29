@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <psp2/kernel/processmgr.h>
 #include <psp2/io/fcntl.h>
 
 #include "archive/archive_zip.h"
@@ -71,7 +70,7 @@ int Archive_CleanCache(int index)
 {
     if (archive_cache_entries[index].exist)
     {
-        AppLog("[ARCHIVE] Archive_CleanCache: index = %d, crc = %08X, name = %s\n", index, archive_cache_entries[index].crc, archive_cache_entries[index].name);
+        APP_LOG("[ARCHIVE] Archive_CleanCache: index = %d, crc = %08X, name = %s\n", index, archive_cache_entries[index].crc, archive_cache_entries[index].name);
 
         char path[MAX_PATH_LENGTH];
         snprintf(path, sizeof(path), "%s/%s", CORE_CACHE_DIR, archive_cache_entries[index].name);
@@ -85,14 +84,14 @@ int Archive_CleanCache(int index)
 
 int Archive_CleanCacheByPath(const char *path)
 {
-    int type = GetFileType(path);
-    if (type < n_core_valid_extensions)
+    int rom_type = GetRomType(path);
+    if (rom_type < n_core_valid_extensions)
         return 0;
 
     int n = 0;
     char entry_name[MAX_PATH_LENGTH];
 
-    ArchiveRomDriver *driver = Archive_GetDriver(type - n_core_valid_extensions);
+    ArchiveRomDriver *driver = Archive_GetDriver(rom_type - n_core_valid_extensions);
     if (!driver)
         return 0;
 
@@ -233,12 +232,12 @@ static int Archive_FindRomCache(int rom_crc, const char *rom_name)
     {
         if (archive_cache_entries[i].exist && archive_cache_entries[i].crc == rom_crc && strcasecmp(archive_cache_entries[i].name, rom_name) == 0)
         {
-            AppLog("[ARCHIVE] Archive_FindRomCache OK: index = %d, crc = %08X, name = %s\n", i, rom_crc, rom_name);
+            APP_LOG("[ARCHIVE] Archive_FindRomCache OK: index = %d, crc = %08X, name = %s\n", i, rom_crc, rom_name);
             return i;
         }
     }
 
-    AppLog("[ARCHIVE] Archive_FindRomCache failed: %s\n", rom_name);
+    APP_LOG("[ARCHIVE] Archive_FindRomCache failed: %s\n", rom_name);
     return -1;
 }
 
@@ -279,7 +278,7 @@ static int Archive_AddCacheEntry(int crc, const char *rom_name)
 
     Archive_SaveCacheConfig();
 
-    AppLog("[ARCHIVE] Archive_AddCacheEntry OK: index = %d, crc = %08X, name = %s\n", index, crc, rom_name);
+    APP_LOG("[ARCHIVE] Archive_AddCacheEntry OK: index = %d, crc = %08X, name = %s\n", index, crc, rom_name);
     return index;
 }
 
@@ -303,9 +302,9 @@ END:
         driver->closeRom();
 
     if (ret < 0)
-        AppLog("[ARCHIVE] Archive_GetRomMemory failed!\n");
+        APP_LOG("[ARCHIVE] Archive_GetRomMemory failed!\n");
     else
-        AppLog("[ARCHIVE] Archive_GetRomMemory OK!\n");
+        APP_LOG("[ARCHIVE] Archive_GetRomMemory OK!\n");
 
     return ret;
 
@@ -352,9 +351,9 @@ END:
         driver->closeRom();
 
     if (ret < 0)
-        AppLog("[ARCHIVE] Archive_GetRomPath failed!\n");
+        APP_LOG("[ARCHIVE] Archive_GetRomPath failed!\n");
     else
-        AppLog("[ARCHIVE] Archive_GetRomPath OK: %s\n", rom_path);
+        APP_LOG("[ARCHIVE] Archive_GetRomPath OK: %s\n", rom_path);
 
     return ret;
 

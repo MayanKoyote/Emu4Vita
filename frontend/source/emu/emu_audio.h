@@ -3,8 +3,7 @@
 
 #include <stdint.h>
 
-void Emu_CleanAudioSound();
-
+void Emu_CleanAudio();
 void Emu_PauseAudio();
 void Emu_ResumeAudio();
 
@@ -14,6 +13,5 @@ int Emu_UpdateAudioSampleRate(uint32_t sample_rate);
 
 int Emu_InitAudio();
 int Emu_DeinitAudio();
-
 
 #endif

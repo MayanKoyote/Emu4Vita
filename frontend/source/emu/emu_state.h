@@ -22,9 +22,6 @@ typedef struct
     char reserved[0x20];        // 0x48
 } EmuStateHeader;               // 0x68
 
-void MakeSavestateDir(char *path);
-void MakeSavestatePath(char *path, int num);
-
 GUI_Texture *Emu_GetStateScreenshotTexture(int num);
 GUI_Texture *Emu_GetStatePreviewTexture(int num);
 

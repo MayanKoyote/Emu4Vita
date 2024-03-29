@@ -4,7 +4,6 @@
 #include <stdio.h>
 
 #include <psp2/kernel/processmgr.h>
-#include <psp2/io/fcntl.h>
 
 #include "activity/activity.h"
 #include "setting/setting.h"
@@ -14,25 +13,32 @@
 #include "boot.h"
 #include "utils.h"
 #include "lang.h"
+#include "app.h"
 
 #define MAX_GAME_RUN_SPEED 2.0f
 #define STEP_GAME_RUN_SPEED 0.5f
 
-static EmuGameInfo game_info = {0};
-static int game_running = 0, game_exiting = 0, game_loading = 0, game_reloading = 0, game_loaded = 0;
-static int game_run_event_action_type = TYPE_GAME_RUN_EVENT_ACTION_NONE;
-static float game_run_speed = 1.0f;
-static double game_cur_fps = 0;
-static void *game_rom_data = NULL;
 static SceKernelLwMutexWork game_run_mutex = {0};
+static EmuGameInfo game_info = {0};
+static SceUID game_run_thid = -1;
+static int game_run = 0, game_running = 0, game_exiting = 0, game_loading = 0, game_reloading = 0, game_loaded = 0;
+static EmuGameEventAction game_event_action = EMU_GAME_EVENT_ACTION_NONE;
+static float game_run_speed = 1.0f;
+static void *game_rom_data = NULL;
 
-static int makeSplashPicPath(char *path)
+int Emu_GetCurrentRomType()
 {
-    char name[MAX_NAME_LENGTH];
-    MakeCurrentFileName(name);
-    char base_name[MAX_NAME_LENGTH];
-    MakeBaseName(base_name, name, MAX_NAME_LENGTH);
-    snprintf(path, MAX_PATH_LENGTH, "%s/%s.png", (CORE_SPLASHS_DIR), base_name);
+    return game_info.rom_type;
+}
+
+int Emu_MakeCurrentGameName(char *name)
+{
+    return MakeFileName(name, game_info.path, MAX_NAME_LENGTH);
+}
+
+int Emu_MakeCurrentGamePath(char *path)
+{
+    strcpy(path, game_info.path);
     return 0;
 }
 
@@ -56,26 +62,36 @@ int Emu_IsGameExiting()
     return game_exiting;
 }
 
-double Emu_GetCurrentFps()
+void Emu_SetRunSpeed(float speed)
 {
-    return game_cur_fps;
+    game_run_speed = speed;
+    Emu_SetMicrosPerFrame(1000000.0f / (core_system_av_info.timing.fps * speed));
 }
 
-float Emu_GetCurrentRunSpeed()
+void Emu_SetGameEventAction(EmuGameEventAction action)
+{
+    game_event_action = action;
+}
+
+float Emu_GetRunSpeed()
 {
     return game_run_speed;
 }
 
-void Emu_SetRunSpeed(float speed)
+EmuGameEventAction Emu_GetGameEventAction()
 {
-    game_run_speed = speed;
-    game_cur_fps = core_system_av_info.timing.fps * (double)speed;
-    Emu_SetMicrosPerFrame(1000000.0f / game_cur_fps);
+    return game_event_action;
 }
 
-void Emu_SpeedUpGame()
+void Emu_WaitGameEventDone()
 {
-    float speed = Emu_GetCurrentRunSpeed();
+    while (game_event_action != EMU_GAME_EVENT_ACTION_NONE)
+        sceKernelDelayThread(1000);
+}
+
+void Emu_GameSpeedUp()
+{
+    float speed = Emu_GetRunSpeed();
     if (speed < MAX_GAME_RUN_SPEED)
         speed += STEP_GAME_RUN_SPEED;
     else
@@ -83,14 +99,181 @@ void Emu_SpeedUpGame()
     Emu_SetRunSpeed(speed);
 }
 
-void Emu_SpeedDownGame()
+void Emu_GameSpeedDown()
 {
-    float speed = Emu_GetCurrentRunSpeed();
+    float speed = Emu_GetRunSpeed();
     if (speed > 1.0f)
         speed -= STEP_GAME_RUN_SPEED;
     else
         speed = MAX_GAME_RUN_SPEED;
     Emu_SetRunSpeed(speed);
+}
+
+void Emu_ControllerPortUp()
+{
+    if (control_config.controller_port < N_CTRL_PORTS - 1)
+        control_config.controller_port++;
+    else
+        control_config.controller_port = 0;
+    SaveControlConfig(TYPE_CONFIG_GAME);
+    Emu_ShowControllerPortToast();
+}
+
+void Emu_ControllerPortDown()
+{
+    if (control_config.controller_port > 0)
+        control_config.controller_port--;
+    else
+        control_config.controller_port = N_CTRL_PORTS - 1;
+    SaveControlConfig(TYPE_CONFIG_GAME);
+    Emu_ShowControllerPortToast();
+}
+
+void Emu_PauseGame()
+{
+    if (game_loaded)
+    {
+        game_running = 0;
+        Emu_PauseCheat();
+        Emu_PauseRewind();
+        Emu_PauseAudio();
+        Emu_PauseVideo();
+    }
+}
+
+void Emu_ResumeGame()
+{
+    if (game_loaded)
+    {
+        game_running = 1;
+        Emu_ResumeCheat();
+        Emu_ResumeRewind();
+        Emu_ResumeAudio();
+        Emu_ResumeVideo();
+        LockQuickMenu();
+    }
+}
+
+void Emu_ResetGame()
+{
+    if (game_loaded)
+    {
+        retro_reset();
+        Emu_CleanAudio();
+    }
+}
+
+void Emu_RunRetro()
+{
+    if (game_run)
+        retro_run();
+}
+
+void Emu_RunGame()
+{
+    Emu_LockRunGameMutex();
+    Emu_PollInput();
+    Emu_RunRetro();
+    Emu_UnlockRunGameMutex();
+}
+
+int Emu_EventGame()
+{
+    if (game_event_action == EMU_GAME_EVENT_ACTION_NONE)
+        return 0;
+
+    switch (game_event_action)
+    {
+    case EMU_GAME_EVENT_ACTION_OPEN_SETTING_MENU:
+    {
+        Emu_PauseGame();
+        Setting_OpenMenu();
+        UnlockQuickMenu();
+    }
+    break;
+    case EMU_GAME_EVENT_ACTION_SAVE_STATE:
+    {
+        Emu_LockRunGameMutex();
+        Emu_SaveState(Setting_GetStateSelectId());
+        Emu_UnlockRunGameMutex();
+    }
+    break;
+    case EMU_GAME_EVENT_ACTION_LOAD_STATE:
+    {
+        Emu_LockRunGameMutex();
+        Emu_LoadState(Setting_GetStateSelectId());
+        Emu_UnlockRunGameMutex();
+    }
+    break;
+    case EMU_GAME_EVENT_ACTION_REWIND:
+    {
+        Emu_LockRunGameMutex();
+        Emu_RewindGame();
+        Emu_UnlockRunGameMutex();
+    }
+    break;
+    case EMU_GAME_EVENT_ACTION_RESET:
+    {
+        Emu_LockRunGameMutex();
+        Emu_ResetGame();
+        Emu_UnlockRunGameMutex();
+    }
+    break;
+    case EMU_GAME_EVENT_ACTION_RELOAD:
+    {
+        Emu_ReloadGame();
+    }
+    break;
+    case EMU_GAME_EVENT_ACTION_EXIT:
+    {
+        Emu_ExitGame();
+        if (BootGetMode() == BOOT_MODE_GAME)
+            AppExitToArch();
+    }
+    break;
+    case EMU_GAME_EVENT_ACTION_SPEED_UP:
+    {
+        Emu_GameSpeedUp();
+    }
+    break;
+    case EMU_GAME_EVENT_ACTION_SPEED_DOWN:
+    {
+        Emu_GameSpeedDown();
+    }
+    break;
+    case EMU_GAME_EVENT_ACTION_CONTROLLER_PORT_UP:
+    {
+        Emu_ControllerPortUp();
+    }
+    break;
+    case EMU_GAME_EVENT_ACTION_CONTROLLER_PORT_DOWN:
+    {
+        Emu_ControllerPortDown();
+    }
+    break;
+    case EMU_GAME_EVENT_ACTION_CHANGE_DISK_IMAGE_INDEX:
+    {
+        Emu_LockRunGameMutex();
+        Emu_DiskChangeImageIndex(Setting_GetDiskImageIndex());
+        Emu_UnlockRunGameMutex();
+    }
+    break;
+    default:
+        break;
+    }
+
+    game_event_action = EMU_GAME_EVENT_ACTION_NONE;
+    return 0;
+}
+
+int Emu_LockRunGameMutex()
+{
+    return sceKernelLockLwMutex(&game_run_mutex, 1, NULL);
+}
+
+int Emu_UnlockRunGameMutex()
+{
+    return sceKernelUnlockLwMutex(&game_run_mutex, 1);
 }
 
 static int loadGameFromFile(const char *path, int type)
@@ -159,25 +342,18 @@ static int loadGameFromMemory(const char *path, int type)
     return 0;
 }
 
-int Emu_StartGame(EmuGameInfo *info)
+int Emu_LoadGame()
 {
-    if (!info)
-        return -1;
-
-    Emu_ExitGame();
-    memcpy(&game_info, info, sizeof(EmuGameInfo));
-
     int ret = 0;
 
-    AppLog("[GAME] Game load: %s\n", game_info.path);
-
     game_loading = 1;
+    APP_LOG("[GAME] Game load: %s\n", game_info.path);
 
-    GUI_StartAsyncDraw();
-    Splash_SetCtrlEnabled(0);
+    GUI_SetControlEnabled(0); // 禁止按键以避免主线程的其它操作
+    Splash_SetCtrlEnabled(0); // 禁用splash_activity的按键
     Splash_SetLogEnabled(app_config.show_log);
     char splash_path[MAX_PATH_LENGTH];
-    makeSplashPicPath(splash_path);
+    MakeSplashPath(splash_path);
     GUI_Texture *texture = GUI_LoadPNGFile(splash_path);
     Splash_SetBgTexture(texture);
     GUI_StartActivity(&splash_activity);
@@ -192,21 +368,21 @@ int Emu_StartGame(EmuGameInfo *info)
     }
 
     core_display_rotate = 0;
-    game_run_event_action_type = TYPE_GAME_RUN_EVENT_ACTION_NONE;
+    game_event_action = EMU_GAME_EVENT_ACTION_NONE;
     retro_init();
 
     if (core_system_info.need_fullpath)
-        ret = loadGameFromFile(game_info.path, game_info.type);
+        ret = loadGameFromFile(game_info.path, game_info.rom_type);
     else
-        ret = loadGameFromMemory(game_info.path, game_info.type);
+        ret = loadGameFromMemory(game_info.path, game_info.rom_type);
 
     if (ret < 0)
     {
-        AppLog("[GAME] Game load failed!\n");
+        APP_LOG("[GAME] Game load failed!\n");
         // retro_unload_game();
         retro_deinit();
 
-        GUI_FinishAsyncDraw();
+        GUI_SetControlEnabled(1);
         Splash_SetCtrlEnabled(1);
         if (!app_config.show_log)
             GUI_FinishActivity(&splash_activity);
@@ -220,17 +396,20 @@ int Emu_StartGame(EmuGameInfo *info)
     retro_get_system_av_info(&core_system_av_info);
     Emu_SetRunSpeed(1.0f);
     Retro_SetControllerPortDevices();
-    Emu_LoadSrm(); // Auto load srm
+    Emu_LoadSrm(); // Load srm
     retro_run();   // Run one frame to fix some bug for savestate
 
-    int state_num = game_info.state_num;
-    if (state_num == -2) // -2 auto check, < -2 disable
+    if (!game_reloading) // 重载游戏的话不加载存档
     {
-        if (misc_config.auto_save_load)
-            state_num = -1;
+        int state_num = game_info.state_num;
+        if (state_num == -2) // -2 auto check, < -2 disable
+        {
+            if (misc_config.auto_save_load)
+                state_num = -1;
+        }
+        if (state_num >= -1)
+            Emu_LoadState(state_num);
     }
-    if (state_num >= -1)
-        Emu_LoadState(state_num);
 
     Emu_InitCheat();
     Emu_InitAudio();
@@ -240,26 +419,25 @@ int Emu_StartGame(EmuGameInfo *info)
 
     Retro_UpdateCoreOptionsDisplay();
     GUI_StartActivity(&emu_activity);
+    GUI_SetControlEnabled(1);
     GUI_FinishActivity(&splash_activity);
 
-    game_loaded = 1;
+    APP_LOG("[GAME] Game load OK!\n");
     game_loading = 0;
-    Emu_ResumeGame();
-
-    AppLog("[GAME] Game load OK!\n");
+    game_loaded = 1;
 
     return ret;
 }
 
-void Emu_ExitGame()
+int Emu_UnloadGame()
 {
     if (game_loaded)
     {
-        AppLog("[GAME] Game unload...\n");
-
-        Emu_LockRunGameMutex();
         game_exiting = 1;
-        Emu_PauseGame();
+        APP_LOG("[GAME] Game unload...\n");
+
+        Emu_PauseGame(); // 需要先暂停游戏以确保无线程调用Emu_LockRunGameMutex以避免造成死锁
+        Emu_LockRunGameMutex();
 
         AlertDialog *dialog = AlertDialog_Create();
         AlertDialog_SetMessage(dialog, cur_lang[LANG_MESSAGE_WAIT_EXITING]);
@@ -290,7 +468,6 @@ void Emu_ExitGame()
             Retro_UpdateCoreOptionsDisplay();
         }
 
-        GUI_FinishAsyncDraw();
         AlertDialog_Close(dialog);
         GUI_FinishActivity(&emu_activity);
 
@@ -300,47 +477,15 @@ void Emu_ExitGame()
         Emu_DeinitCheat();
         Emu_DeinitRewind();
 
-        game_loaded = 0;
-        game_exiting = 0;
         Emu_UnlockRunGameMutex();
         sceKernelDeleteLwMutex(&game_run_mutex);
 
-        AppLog("[GAME] Game unload OK!\n");
+        APP_LOG("[GAME] Game unload OK!\n");
+        game_exiting = 0;
+        game_loaded = 0;
     }
-}
 
-void Emu_PauseGame()
-{
-    if (game_loaded)
-    {
-        game_running = 0;
-        Emu_PauseCheat();
-        Emu_PauseRewind();
-        Emu_PauseAudio();
-        Emu_PauseVideo();
-    }
-}
-
-void Emu_ResumeGame()
-{
-    if (game_loaded)
-    {
-        game_running = 1;
-        Emu_ResumeCheat();
-        Emu_ResumeRewind();
-        Emu_ResumeAudio();
-        Emu_ResumeVideo();
-        LockQuickMenu();
-    }
-}
-
-void Emu_ResetGame()
-{
-    if (game_loaded)
-    {
-        retro_reset();
-        Emu_CleanAudioSound();
-    }
+    return 0;
 }
 
 int Emu_ReloadGame()
@@ -348,94 +493,83 @@ int Emu_ReloadGame()
     if (game_loaded)
     {
         game_reloading = 1;
-        Emu_ExitGame();
-
-        EmuGameInfo info;
-        MakeCurrentFilePath(info.path);
-        info.type = GetCurrentFileType();
-        info.state_num = -3;
-        Emu_StartGame(&info);
-
+        Emu_UnloadGame();
+        Emu_LoadGame();
         game_reloading = 0;
     }
 
     return 0;
 }
 
-void Emu_SetGameRunEventAction(int type)
+/*
+    游戏需要切换到线程运行，或把GUI切换到线程运行，因为有些核心在retro_run时会输出不止1帧，
+    如果运行在同一线程的话会导致帧丢失。
+*/
+static int GameRunThreadEntry(SceSize args, void *argp)
 {
-    game_run_event_action_type = type;
-}
+    if (Emu_LoadGame() < 0)
+        return -1;
 
-void Emu_RunGame()
-{
-    Emu_LockRunGameMutex();
-    Emu_PollInput();
-    retro_run();
-    Emu_UnlockRunGameMutex();
-    Emu_EventRunGame();
-}
+    game_run = 1;
+    Emu_ResumeGame();
 
-int Emu_EventRunGame()
-{
-    if (game_run_event_action_type == TYPE_GAME_RUN_EVENT_ACTION_NONE)
-        return 0;
+    while (game_run)
+    {
+        if (game_running)
+            Emu_RunGame();
 
-    Emu_LockRunGameMutex();
-
-    switch (game_run_event_action_type)
-    {
-    case TYPE_GAME_RUN_EVENT_ACTION_SAVE_STATE:
-    {
-        Emu_SaveState(Setting_GetStateSelectId());
-    }
-    break;
-    case TYPE_GAME_RUN_EVENT_ACTION_LOAD_STATE:
-    {
-        Emu_LoadState(Setting_GetStateSelectId());
-    }
-    break;
-    case TYPE_GAME_RUN_EVENT_ACTION_REWIND:
-    {
-        Emu_RewindGame();
-    }
-    break;
-    case TYPE_GAME_RUN_EVENT_ACTION_RESET:
-    {
-        Emu_ResetGame();
-    }
-    break;
-    case TYPE_GAME_RUN_EVENT_ACTION_EXIT:
-    {
-        Emu_UnlockRunGameMutex();
-        Emu_ExitGame();
-        if (BootGetMode() == BOOT_MODE_GAME)
-            BootLoadParentExec();
-        return 0;
-    }
-    break;
-    case TYPE_GAME_RUN_EVENT_ACTION_OPEN_SETTING_MENU:
-    {
-        Emu_PauseGame();
-        Setting_OpenMenu();
-        UnlockQuickMenu();
-    }
-    break;
-    default:
-        break;
+        Emu_EventGame();
     }
 
-    game_run_event_action_type = TYPE_GAME_RUN_EVENT_ACTION_NONE;
-    Emu_UnlockRunGameMutex();
+    Emu_UnloadGame();
+
+    sceKernelExitThread(0);
     return 0;
 }
 
-void Emu_LockRunGameMutex()
+int Emu_StartGame(EmuGameInfo *info)
 {
-    sceKernelLockLwMutex(&game_run_mutex, 1, NULL);
+    if (!info)
+        return -1;
+
+    Emu_ExitGame();
+    Emu_WaitGameExitEnd();
+
+    memcpy(&game_info, info, sizeof(EmuGameInfo));
+
+    int ret = 0;
+
+    // 游戏线程创建后不能删除，一些核心(如PCSX-ReARMed)如果运行过一次游戏后删除了该线程再重新创建，游戏将无法运行会崩溃，原因暂不明
+    if (game_run_thid < 0)
+        ret = game_run_thid = sceKernelCreateThread("emu_game_run_thread", GameRunThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
+    if (game_run_thid >= 0)
+        ret = sceKernelStartThread(game_run_thid, 0, NULL);
+
+    return ret;
 }
 
-void Emu_UnlockRunGameMutex()
+int Emu_ExitGame()
 {
-    sceKernelUnlockLwMutex(&game_run_mutex, 1);
+    game_run = 0;
+    return 0;
+}
+
+int Emu_WaitGameExitEnd()
+{
+    if (game_run_thid >= 0)
+        sceKernelWaitThreadEnd(game_run_thid, NULL, NULL);
+
+    return 0;
+}
+
+int Emu_FinishGame()
+{
+    game_run = 0;
+    if (game_run_thid >= 0)
+    {
+        sceKernelWaitThreadEnd(game_run_thid, NULL, NULL);
+        sceKernelDeleteThread(game_run_thid);
+        game_run_thid = -1;
+    }
+    return 0;
 }

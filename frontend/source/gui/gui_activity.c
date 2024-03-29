@@ -3,12 +3,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <psp2/kernel/threadmgr.h>
 #include <psp2/power.h>
 #include <psp2/rtc.h>
 
 #include "list/linked_list.h"
 #include "gui.h"
-#include "init.h"
+#include "app.h"
 #include "lang.h"
 #include "utils.h"
 
@@ -18,7 +19,8 @@
 #define STATUS_BAR_WIDTH GUI_SCREEN_WIDTH
 #define STATUS_BAR_HEIGHT (GUI_GetLineHeight() + STATUS_BAR_PADDING_T * 2)
 
-static LinkedList *activity_list = NULL;
+static SceKernelLwMutexWork gui_activity_mutex = {0};
+static LinkedList *gui_activity_list = NULL;
 
 static int Activity_Finish(GUI_Activity *activity);
 
@@ -150,7 +152,7 @@ static void Activity_DrawTopStatusBar(char *title)
         GUI_DrawText(x, y, COLOR_WHITE, title);
 
     x = statusbar_x + statusbar_w - STATUS_BAR_PADDING_L;
-    if (!is_vitatv_model)
+    if (!IsVitatvModel())
     {
         uint32_t color;
         if (scePowerIsBatteryCharging())
@@ -173,10 +175,10 @@ static void Activity_DrawTopStatusBar(char *title)
     sceRtcGetCurrentClock(&time, 0);
 
     char date_string[24];
-    GetDateString(date_string, date_format, &time);
+    GetDateString(date_string, system_date_format, &time);
 
     char time_string[16];
-    GetTimeString(time_string, time_format, &time);
+    GetTimeString(time_string, system_time_format, &time);
 
     snprintf(string, sizeof(string), "%s  %s", date_string, time_string);
     int date_time_x = x - GUI_GetTextWidth(string);
@@ -215,140 +217,148 @@ static void Activity_DrawBottomStatusBar(GUI_ButtonInstruction *instructions)
     }
 }
 
+static GUI_Activity *Activity_GetCurrent()
+{
+    return (GUI_Activity *)LinkedListGetEntryData(LinkedListTail(gui_activity_list));
+}
+
 int GUI_StartActivity(GUI_Activity *activity)
 {
+    if (!activity)
+        return -1;
+
     int ret = 0;
-    GUI_LockDrawMutex();
-
-    if (!activity_list)
-    {
-        activity_list = NewActivityList();
-        if (!activity_list)
-            goto FAILED;
-    }
-
-    if (!LinkedListAdd(activity_list, activity))
-        goto FAILED;
-
-    Activity_Start(activity);
-
-EXIT:
-    GUI_UnlockDrawMutex();
+    sceKernelLockLwMutex(&gui_activity_mutex, 1, NULL);
+    if (!LinkedListAdd(gui_activity_list, activity))
+        ret = -1;
+    else
+        Activity_Start(activity);
+    sceKernelUnlockLwMutex(&gui_activity_mutex, 1);
     return ret;
-
-FAILED:
-    ret = -1;
-    goto EXIT;
 }
 
 int GUI_FinishActivity(GUI_Activity *activity)
 {
-    GUI_LockDrawMutex();
+    if (!activity)
+        return -1;
 
-    LinkedListEntry *entry = LinkedListFindByData(activity_list, activity);
-    LinkedListRemove(activity_list, entry);
+    sceKernelLockLwMutex(&gui_activity_mutex, 1, NULL);
+    LinkedListEntry *entry = LinkedListFindByData(gui_activity_list, activity);
+    LinkedListRemove(gui_activity_list, entry);
+    sceKernelUnlockLwMutex(&gui_activity_mutex, 1);
+    return 0;
+}
 
-    GUI_UnlockDrawMutex();
+int GUI_FinishAllActivities()
+{
+    sceKernelLockLwMutex(&gui_activity_mutex, 1, NULL);
+    LinkedListEmpty(gui_activity_list);
+    sceKernelUnlockLwMutex(&gui_activity_mutex, 1);
+    return 0;
+}
+
+int GUI_FinishOtherActivities()
+{
+    sceKernelLockLwMutex(&gui_activity_mutex, 1, NULL);
+    LinkedListEntry *entry = LinkedListPrev(LinkedListTail(gui_activity_list));
+    while (entry)
+    {
+        LinkedListEntry *prev = LinkedListPrev(entry);
+        LinkedListRemove(gui_activity_list, entry);
+        entry = prev;
+    }
+    sceKernelUnlockLwMutex(&gui_activity_mutex, 1);
     return 0;
 }
 
 int GUI_BeforeDrawActivity()
 {
-    return Activity_BeforeDraw(GUI_GetCurrentActivity());
+    sceKernelLockLwMutex(&gui_activity_mutex, 1, NULL);
+    int ret = Activity_BeforeDraw(Activity_GetCurrent());
+    sceKernelUnlockLwMutex(&gui_activity_mutex, 1);
+    return ret;
 }
 
 int GUI_DrawActivity()
 {
-    GUI_Activity *activity = GUI_GetCurrentActivity();
-    if (!activity)
-        return -1;
+    sceKernelLockLwMutex(&gui_activity_mutex, 1, NULL);
 
-    if (activity->wallpaper)
-        Activity_DrawWallpaper(activity->wallpaper);
-
-    Activity_Draw(activity);
-
-    if (!activity->no_statusbar)
+    GUI_Activity *activity = Activity_GetCurrent();
+    if (activity)
     {
-        Activity_DrawTopStatusBar(cur_lang[activity->title]);
-        Activity_DrawBottomStatusBar(activity->button_instructions);
+        if (activity->wallpaper)
+            Activity_DrawWallpaper(activity->wallpaper);
+
+        Activity_Draw(activity);
+
+        if (!activity->no_statusbar)
+        {
+            Activity_DrawTopStatusBar(cur_lang[activity->title]);
+            Activity_DrawBottomStatusBar(activity->button_instructions);
+        }
     }
 
+    sceKernelUnlockLwMutex(&gui_activity_mutex, 1);
     return 0;
 }
 
 int GUI_AfterDrawActivity()
 {
-    return Activity_AfterDraw(GUI_GetCurrentActivity());
+    sceKernelLockLwMutex(&gui_activity_mutex, 1, NULL);
+    int ret = Activity_AfterDraw(Activity_GetCurrent());
+    sceKernelUnlockLwMutex(&gui_activity_mutex, 1);
+    return ret;
 }
 
 int GUI_CtrlActivity()
 {
-    return Activity_Ctrl(GUI_GetCurrentActivity());
+    sceKernelLockLwMutex(&gui_activity_mutex, 1, NULL);
+    int ret = Activity_Ctrl(Activity_GetCurrent());
+    sceKernelUnlockLwMutex(&gui_activity_mutex, 1);
+    return ret;
 }
 
 int GUI_EventActivity()
 {
-    return Activity_Event(GUI_GetCurrentActivity());
+    sceKernelLockLwMutex(&gui_activity_mutex, 1, NULL);
+    int ret = Activity_Event(Activity_GetCurrent());
+    sceKernelUnlockLwMutex(&gui_activity_mutex, 1);
+    return ret;
 }
 
 int GUI_BackToMainActivity()
 {
-    if (!activity_list)
-        return -1;
+    sceKernelLockLwMutex(&gui_activity_mutex, 1, NULL);
 
-    LinkedListEntry *head = LinkedListHead(activity_list);
-    if (!head)
-        return -1;
-
-    LinkedListEntry *entry = LinkedListTail(activity_list);
-    while (entry && entry != head)
+    LinkedListEntry *entry = LinkedListNext(LinkedListHead(gui_activity_list));
+    while (entry)
     {
-        LinkedListEntry *prev = LinkedListPrev(entry);
-        LinkedListRemove(activity_list, entry);
-        entry = prev;
+        LinkedListEntry *next = LinkedListNext(entry);
+        LinkedListRemove(gui_activity_list, entry);
+        entry = next;
     }
 
+    sceKernelUnlockLwMutex(&gui_activity_mutex, 1);
     return 0;
 }
 
 int GUI_IsInMainActivity()
 {
-    return LinkedListGetLength(activity_list) == 1;
+    return LinkedListGetLength(gui_activity_list) == 1;
 }
 
 int GUI_IsHomeEventEnabled()
 {
-    GUI_Activity *activity = GUI_GetCurrentActivity();
-    return activity ? !activity->disable_home_event : 0;
+    sceKernelLockLwMutex(&gui_activity_mutex, 1, NULL);
+    GUI_Activity *activity = Activity_GetCurrent();
+    int ret = activity ? !activity->disable_home_event : 0;
+    sceKernelUnlockLwMutex(&gui_activity_mutex, 1);
+    return ret;
 }
 
 int GUI_GetActivityCount()
 {
-    return LinkedListGetLength(activity_list);
-}
-
-GUI_Activity *GUI_GetCurrentActivity()
-{
-    LinkedListEntry *tail = LinkedListTail(activity_list);
-
-    return (GUI_Activity *)LinkedListGetEntryData(tail);
-}
-
-GUI_Activity *GUI_GetPrevActivity(GUI_Activity *activity)
-{
-    LinkedListEntry *entry = LinkedListFindByData(activity_list, activity);
-    LinkedListEntry *prev = LinkedListPrev(entry);
-
-    return (GUI_Activity *)LinkedListGetEntryData(prev);
-}
-
-GUI_Activity *GUI_GetNextActivity(GUI_Activity *activity)
-{
-    LinkedListEntry *entry = LinkedListFindByData(activity_list, activity);
-    LinkedListEntry *next = LinkedListNext(entry);
-
-    return (GUI_Activity *)LinkedListGetEntryData(next);
+    return LinkedListGetLength(gui_activity_list);
 }
 
 int GUI_GetActivityLayoutPosition(GUI_Activity *activity, int *x, int *y)
@@ -376,5 +386,27 @@ int GUI_GetActivityAvailableSize(GUI_Activity *activity, int *w, int *h)
         else
             *h = GUI_SCREEN_HEIGHT;
     }
+    return 0;
+}
+
+int GUI_InitActivity()
+{
+    gui_activity_list = NewActivityList();
+    if (!gui_activity_list)
+        return -1;
+
+    sceKernelCreateLwMutex(&gui_activity_mutex, "gui_activity_mutex", 2, 0, NULL);
+
+    return 0;
+}
+
+int GUI_DeinitActivity()
+{
+    sceKernelLockLwMutex(&gui_activity_mutex, 1, NULL);
+    LinkedListDestroy(gui_activity_list);
+    gui_activity_list = NULL;
+    sceKernelUnlockLwMutex(&gui_activity_mutex, 1);
+    sceKernelDeleteLwMutex(&gui_activity_mutex);
+
     return 0;
 }

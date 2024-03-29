@@ -15,4 +15,6 @@ int Setting_SetOverlayOption(LinkedList *list);
 int Setting_OpenMenu();
 int Setting_CloseMenu();
 
+int Setting_GetDiskImageIndex();
+
 #endif

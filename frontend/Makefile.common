@@ -70,7 +70,8 @@ SRC_C += \
 	emu/emu_retro.c \
 	emu/emu_rewind.c \
 	emu/retro_environ.c \
-	emu/retro_option.c
+	emu/retro_option.c \
+	emu/emu.c
 
 SRC_C += \
 	gui/gui_ctrl.c \
@@ -115,12 +116,13 @@ SRC_C += \
 	setting/setting.c
 
 SRC_C += \
+	app.c \
 	boot.c \
 	config.c \
 	file.c \
-	init.c \
 	lang.c \
 	main.c \
+	path.c \
 	sbrk.c \
 	strnatcmp.c \
 	utils_string.c \
@@ -250,16 +252,16 @@ clean_files:
 create_dirs:
 	@mkdir -p $(BUILD_DIR)
 
-build-deps: build-vita2d build-libretro_comm build-7zip
+build-deps: build-libvita2d build-libretro_comm build-lib7zip
 
-build-vita2d: 
+build-libvita2d: 
 	cd $(FRONTEND_DIR) && make -f Makefile.libvita2d
 	cd $(FRONTEND_DIR) && make -f Makefile.libvita2d_ext
  
 build-libretro_comm:
 	cd $(FRONTEND_DIR) && make -f Makefile.libretro_comm
 
-build-7zip:
+build-lib7zip:
 	cd $(FRONTEND_DIR) && make -f Makefile.lib7zip EXT_DEFINES=$(SEVENZ_DEFINES)
 
 build-core:
@@ -308,16 +310,16 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
 	@mkdir -p $(dir $@)
 	$(CC) -c -o $@ $< $(ASFLAGS)
 
-clean-deps: clean-vita2d clean-libretro_comm clean-7zip
+clean-deps: clean-libvita2d clean-libretro_comm clean-lib7zip
 
-clean-vita2d: 
+clean-libvita2d: 
 	cd $(FRONTEND_DIR) && make -f Makefile.libvita2d clean
 	cd $(FRONTEND_DIR) && make -f Makefile.libvita2d_ext clean
 
 clean-libretro_comm:
 	cd $(FRONTEND_DIR) && make -f Makefile.libretro_comm clean
 
-clean-7zip:
+clean-lib7zip:
 	cd $(FRONTEND_DIR) && make -f Makefile.lib7zip clean EXT_DEFINES=$(SEVENZ_DEFINES)
 
 clean-core:

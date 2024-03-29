@@ -21,7 +21,7 @@
 #include "config.h"
 #include "utils.h"
 #include "lang.h"
-#include "init.h"
+#include "app.h"
 #include "boot.h"
 
 static SettingWindow *setting_window = NULL;
@@ -31,6 +31,7 @@ int setting_config_type = 0;
 int setting_has_main_core_menu = 0;
 int setting_game_is_loaded = 0;
 int setting_current_path_is_game = 0;
+int setting_disk_image_index = 0;
 
 int setting_visibility_core_menu = 0;
 int setting_visibility_cheat_menu = 0;
@@ -49,12 +50,14 @@ static void updateVariables()
     setting_game_is_loaded = Emu_IsGameLoaded();
     setting_config_type = setting_game_is_loaded ? TYPE_CONFIG_GAME : TYPE_CONFIG_MAIN;
     setting_current_path_is_game = CurrentPathIsGame();
+    setting_disk_image_index = Emu_DiskGetImageIndex();
+
     setting_visibility_app_menu = !setting_game_is_loaded;
     setting_visibility_core_menu = (setting_context.menus[ID_SETTING_MENU_CORE].items && (setting_game_is_loaded || setting_has_main_core_menu));
     setting_visibility_cheat_menu = (setting_context.menus[ID_SETTING_MENU_CHEAT].items && setting_game_is_loaded);
     setting_visibility_disk_control_item = (setting_game_is_loaded && Emu_HasDiskControl() && Emu_DiskGetNumImages() > 0);
     setting_visibility_exit_to_arch_item = (BootGetMode() == BOOT_MODE_ARCH);
-    setting_visibility_touch_to_button_item = !is_vitatv_model;
+    setting_visibility_touch_to_button_item = !IsVitatvModel();
 }
 
 int Setting_UpdateMenu(SettingMenu *menu)
@@ -367,11 +370,11 @@ int Setting_SetLangOption(LangEntry *entries, int n_entries)
     option->names = names;
     option->n_names = n_names;
 
-    setting_language_config_value = GetConfigValueByLangIndex(app_config.language);
+    setting_language_config_value = GetConfigLangByLangId(app_config.language);
     if (setting_language_config_value > n_names - 1)
     {
         setting_language_config_value = 0;
-        app_config.language = GetLangIndexByConfigValue(setting_language_config_value);
+        app_config.language = GetLangIdByConfigLang(setting_language_config_value);
     }
     SetCurrentLang(app_config.language);
 
@@ -428,4 +431,9 @@ int Setting_CloseMenu()
 int Setting_IsResumeGameEnabled()
 {
     return setting_resume_game_enabled;
+}
+
+int Setting_GetDiskImageIndex()
+{
+    return setting_disk_image_index;
 }

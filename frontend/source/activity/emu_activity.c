@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <psp2/kernel/processmgr.h>
-
 #include "gui/gui.h"
 #include "emu/emu.h"
 #include "config.h"
@@ -47,7 +45,9 @@ static int onFinishActivity(GUI_Activity *activity)
 static int onBeforeDrawActivity(GUI_Activity *activity)
 {
     if (Emu_IsGameRunning())
-        Emu_WaitVideoSema();
+        Emu_WaitVideoSema(); // 等待video的帧信号
+
+    Emu_BeforeDrawVideo();
 
     return 0;
 }
@@ -64,9 +64,6 @@ static int onDrawActivity(GUI_Activity *activity)
 
 static int onAfterDrawActivity(GUI_Activity *activity)
 {
-    if (!Emu_IsGameRunning())
-        GUI_SignalDrawSema();
-
     return 0;
 }
 
@@ -77,12 +74,5 @@ static int onCtrlActivity(GUI_Activity *activity)
 
 static int onEventActivity(GUI_Activity *activity)
 {
-    if (Emu_IsGameRunning())
-        Emu_RunGame();
-    else
-        GUI_WaitDrawSema();
-
-    Emu_EventVideo();
-
     return 0;
 }

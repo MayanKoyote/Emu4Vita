@@ -1,6 +1,6 @@
 #include <psp2/kernel/processmgr.h>
 
-#include "init.h"
+#include "app.h"
 
 int main(int argc, char *const argv[])
 {

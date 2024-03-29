@@ -8,7 +8,7 @@
 #include "setting.h"
 #include "config.h"
 #include "boot.h"
-#include "init.h"
+#include "app.h"
 #include "lang.h"
 #include "file.h"
 
@@ -18,6 +18,7 @@
 
 extern int setting_config_type;
 extern int setting_resume_game_enabled;
+extern int setting_disk_image_index;
 extern uint32_t setting_language_config_value;
 
 extern int Setting_UpdateMenu(SettingMenu *menu);
@@ -33,26 +34,26 @@ int Setting_onResumeGameItemClick(SettingMenu *menu, SettingMenuItem *menu_item,
 
 int Setting_onResetGameItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id)
 {
+    Emu_SetGameEventAction(EMU_GAME_EVENT_ACTION_RESET);
     Setting_CloseMenu();
-    Emu_ResetGame();
     return 0;
 }
 
 int Setting_onExitGameItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id)
 {
     setting_resume_game_enabled = 0;
+    Emu_SetGameEventAction(EMU_GAME_EVENT_ACTION_EXIT);
     Setting_CloseMenu();
-    Emu_ExitGame();
-    if (BootGetMode() == BOOT_MODE_GAME)
-        BootLoadParentExec();
     return 0;
 }
 
 static int onDiskControlAlertDialogPositiveClick(AlertDialog *dialog, int which)
 {
-    Setting_CloseMenu();
-    Emu_DiskChangeImageIndex(which);
+    setting_disk_image_index = which;
+    Emu_SetGameEventAction(EMU_GAME_EVENT_ACTION_CHANGE_DISK_IMAGE_INDEX);
+    Emu_WaitGameEventDone();
     AlertDialog_Dismiss(dialog);
+    Setting_CloseMenu();
     return 0;
 }
 
@@ -103,17 +104,17 @@ int Setting_onDiskControlItemClick(SettingMenu *menu, SettingMenuItem *menu_item
 int Setting_onExitToArchItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id)
 {
     setting_resume_game_enabled = 0;
+    Emu_SetGameEventAction(EMU_GAME_EVENT_ACTION_EXIT);
     Setting_CloseMenu();
-    Emu_ExitGame();
-    BootLoadParentExec();
+    AppExitToArch();
     return 0;
 }
 
 int Setting_onExitAppItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id)
 {
     setting_resume_game_enabled = 0;
+    Emu_SetGameEventAction(EMU_GAME_EVENT_ACTION_EXIT);
     Setting_CloseMenu();
-    Emu_ExitGame();
     AppExit();
     return 0;
 }
@@ -381,7 +382,7 @@ int Setting_onLanguageOptionChanged(SettingMenu *menu, SettingMenuItem *menu_ite
     if (!option)
         return -1;
 
-    app_config.language = GetLangIndexByConfigValue(*option->value);
+    app_config.language = GetLangIdByConfigLang(*option->value);
     SetCurrentLang(app_config.language);
     Setting_UpdateMenu(menu);
     return 0;
@@ -390,7 +391,7 @@ int Setting_onLanguageOptionChanged(SettingMenu *menu, SettingMenuItem *menu_ite
 int Setting_onResetAppConfigItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id)
 {
     ResetAppConfig();
-    setting_language_config_value = GetConfigValueByLangIndex(app_config.language);
+    setting_language_config_value = GetConfigLangByLangId(app_config.language);
     SetCurrentLang(app_config.language);
     Browser_RequestRefreshPreview(1);
     Setting_UpdateMenu(menu);

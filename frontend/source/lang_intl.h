@@ -36,10 +36,6 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "only then can this program be used normally.",
 
     /**************  Button string  *****************/
-    // LANG_BUTTON_ENTER
-    NULL,
-    // LANG_BUTTON_CANCEL
-    NULL,
     // LANG_BUTTON_LEFT
     "←",
     // LANG_BUTTON_UP
@@ -48,18 +44,22 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "→",
     // LANG_BUTTON_DOWN
     "↓",
-    // LANG_BUTTON_CROSS
-    "×",
-    // LANG_BUTTON_CIRCLE
-    "○",
-    // LANG_BUTTON_SQUARE
-    "□",
-    // LANG_BUTTON_TRIANGLE
-    "△",
+    // LANG_BUTTON_A
+    "A",
+    // LANG_BUTTON_B
+    "B",
+    // LANG_BUTTON_X
+    "X",
+    // LANG_BUTTON_Y
+    "Y",
     // LANG_BUTTON_L
     "L",
     // LANG_BUTTON_R
     "R",
+    // LANG_BUTTON_L1
+    "L1",
+    // LANG_BUTTON_R1
+    "R1",
     // LANG_BUTTON_L2
     "L2",
     // LANG_BUTTON_R2
@@ -72,10 +72,8 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "Select",
     // LANG_BUTTON_START
     "Start",
-    // LANG_BUTTON_PSBUTTON
+    // LANG_BUTTON_HOME
     "Home",
-    // LANG_BUTTON_LEFT_ANALOG
-    "Left analog",
     // LANG_BUTTON_LEFT_ANALOG_LEFT
     "Left analog ←",
     // LANG_BUTTON_LEFT_ANALOG_UP
@@ -84,8 +82,6 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "Left analog →",
     // LANG_BUTTON_LEFT_ANALOG_DOWN
     "Left analog ↓",
-    // LANG_BUTTON_RIGHT_ANALOG
-    "Right analog",
     // LANG_BUTTON_RIGHT_ANALOG_LEFT
     "Right analog ←",
     // LANG_BUTTON_RIGHT_ANALOG_UP
@@ -95,11 +91,21 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     // LANG_BUTTON_RIGHT_ANALOG_DOWN
     "Right analog ↓",
 
+    // LANG_BUTTON_ENTER
+    NULL,
+    // LANG_BUTTON_CANCEL
+    NULL,
+
     /**************  Button string 2  *****************/
-    // LANG_BUTTON_A
-    "A",
-    // LANG_BUTTON_B
-    "B",
+    // LANG_BUTTON_CROSS
+    "×",
+    // LANG_BUTTON_CIRCLE
+    "○",
+    // LANG_BUTTON_SQUARE
+    "□",
+    // LANG_BUTTON_TRIANGLE
+    "△",
+
     // LANG_BUTTON_C
     "C",
     // LANG_BUTTON_D
@@ -112,10 +118,6 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "G",
     // LANG_BUTTON_H
     "H",
-    // LANG_BUTTON_X
-    "X",
-    // LANG_BUTTON_Y
-    "Y",
     // LANG_BUTTON_Z
     "Z",
 
@@ -313,8 +315,8 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "Background",
 
     /**************  Menu control  *****************/
-    // LANG_CTRL_PLAYER
-    "Control player",
+    // LANG_CONTROLLER_PORT
+    "Controller port",
     // LANG_FRONT_TOUCH_TO_BUTTON
     "Front touch to button",
     // LANG_BACK_TOUCH_TO_BUTTON
@@ -356,10 +358,10 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "[Hotkey] Game speed down",
     // LANG_HOTKEY_GAME_REWIND
     "[Hotkey] Game rewind",
-    // LANG_HOTKEY_CONTROL_PLAYER_UP
-    "[Hotkey] Control player +",
-    // LANG_HOTKEY_CONTROL_PLAYER_DOWN
-    "[Hotkey] Control player -",
+    // LANG_HOTKEY_CONTROLLER_PORT_UP
+    "[Hotkey] Controller port +",
+    // LANG_HOTKEY_CONTROLLER_PORT_DOWN
+    "[Hotkey] Controller port -",
     // LANG_HOTKEY_EXIT_GAME
     "[Hotkey] Exit game",
 
@@ -434,10 +436,6 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "然后才能正常使用本程序。",
 
     /**************  Button string  *****************/
-    // LANG_BUTTON_ENTER
-    NULL,
-    // LANG_BUTTON_CANCEL
-    NULL,
     // LANG_BUTTON_LEFT
     "←",
     // LANG_BUTTON_UP
@@ -446,18 +444,22 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "→",
     // LANG_BUTTON_DOWN
     "↓",
-    // LANG_BUTTON_CROSS
-    "×",
-    // LANG_BUTTON_CIRCLE
-    "○",
-    // LANG_BUTTON_SQUARE
-    "□",
-    // LANG_BUTTON_TRIANGLE
-    "△",
+    // LANG_BUTTON_A
+    "A",
+    // LANG_BUTTON_B
+    "B",
+    // LANG_BUTTON_X
+    "X",
+    // LANG_BUTTON_Y
+    "Y",
     // LANG_BUTTON_L
     "L",
     // LANG_BUTTON_R
     "R",
+    // LANG_BUTTON_L1
+    "L1",
+    // LANG_BUTTON_R1
+    "R1",
     // LANG_BUTTON_L2
     "L2",
     // LANG_BUTTON_R2
@@ -470,10 +472,8 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "Select",
     // LANG_BUTTON_START
     "Start",
-    // LANG_BUTTON_PSBUTTON
+    // LANG_BUTTON_HOME
     "Home",
-    // LANG_BUTTON_LEFT_ANALOG
-    "左摇杆",
     // LANG_BUTTON_LEFT_ANALOG_LEFT
     "左摇杆←",
     // LANG_BUTTON_LEFT_ANALOG_UP
@@ -482,8 +482,6 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "左摇杆→",
     // LANG_BUTTON_LEFT_ANALOG_DOWN
     "左摇杆↓",
-    // LANG_BUTTON_RIGHT_ANALOG
-    "右摇杆",
     // LANG_BUTTON_RIGHT_ANALOG_LEFT
     "右摇杆←",
     // LANG_BUTTON_RIGHT_ANALOG_UP
@@ -493,11 +491,21 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     // LANG_BUTTON_RIGHT_ANALOG_DOWN
     "右摇杆↓",
 
+    // LANG_BUTTON_ENTER
+    NULL,
+    // LANG_BUTTON_CANCEL
+    NULL,
+
     /**************  Button string 2  *****************/
-    // LANG_BUTTON_A
-    "A",
-    // LANG_BUTTON_B
-    "B",
+    // LANG_BUTTON_CROSS
+    "×",
+    // LANG_BUTTON_CIRCLE
+    "○",
+    // LANG_BUTTON_SQUARE
+    "□",
+    // LANG_BUTTON_TRIANGLE
+    "△",
+
     // LANG_BUTTON_C
     "C",
     // LANG_BUTTON_D
@@ -510,10 +518,6 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "G",
     // LANG_BUTTON_H
     "H",
-    // LANG_BUTTON_X
-    "X",
-    // LANG_BUTTON_Y
-    "Y",
     // LANG_BUTTON_Z
     "Z",
 
@@ -711,8 +715,8 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "背景模式",
 
     /**************  Menu control  *****************/
-    // LANG_CTRL_PLAYER
-    "玩家控制",
+    // LANG_CONTROLLER_PORT
+    "控制器端口",
     // LANG_FRONT_TOUCH_TO_BUTTON
     "前触摸映射按键",
     // LANG_BACK_TOUCH_TO_BUTTON
@@ -754,10 +758,10 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "[快捷键] 减速游戏",
     // LANG_HOTKEY_GAME_REWIND
     "[快捷键] 回溯游戏",
-    // LANG_HOTKEY_CONTROL_PLAYER_UP
-    "[快捷键] 切换玩家+",
-    // LANG_HOTKEY_CONTROL_PLAYER_DOWN
-    "[快捷键] 切换玩家-",
+    // LANG_HOTKEY_CONTROLLER_PORT_UP
+    "[快捷键] 控制器端口+",
+    // LANG_HOTKEY_CONTROLLER_PORT_DOWN
+    "[快捷键] 控制器端口-",
     // LANG_HOTKEY_EXIT_GAME
     "[快捷键] 退出游戏",
 
@@ -832,10 +836,6 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     "然後才能正常使用本程序。",
 
     /**************  Button string  *****************/
-    // LANG_BUTTON_ENTER
-    NULL,
-    // LANG_BUTTON_CANCEL
-    NULL,
     // LANG_BUTTON_LEFT
     "←",
     // LANG_BUTTON_UP
@@ -844,18 +844,22 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     "→",
     // LANG_BUTTON_DOWN
     "↓",
-    // LANG_BUTTON_CROSS
-    "×",
-    // LANG_BUTTON_CIRCLE
-    "○",
-    // LANG_BUTTON_SQUARE
-    "□",
-    // LANG_BUTTON_TRIANGLE
-    "△",
+    // LANG_BUTTON_A
+    "A",
+    // LANG_BUTTON_B
+    "B",
+    // LANG_BUTTON_X
+    "X",
+    // LANG_BUTTON_Y
+    "Y",
     // LANG_BUTTON_L
     "L",
     // LANG_BUTTON_R
     "R",
+    // LANG_BUTTON_L1
+    "L1",
+    // LANG_BUTTON_R1
+    "R1",
     // LANG_BUTTON_L2
     "L2",
     // LANG_BUTTON_R2
@@ -868,10 +872,8 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     "Select",
     // LANG_BUTTON_START
     "Start",
-    // LANG_BUTTON_PSBUTTON
+    // LANG_BUTTON_HOME
     "Home",
-    // LANG_BUTTON_LEFT_ANALOG
-    "左搖桿",
     // LANG_BUTTON_LEFT_ANALOG_LEFT
     "左搖桿←",
     // LANG_BUTTON_LEFT_ANALOG_UP
@@ -880,8 +882,6 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     "左搖桿→",
     // LANG_BUTTON_LEFT_ANALOG_DOWN
     "左搖桿↓",
-    // LANG_BUTTON_RIGHT_ANALOG
-    "右搖桿",
     // LANG_BUTTON_RIGHT_ANALOG_LEFT
     "右搖桿←",
     // LANG_BUTTON_RIGHT_ANALOG_UP
@@ -891,11 +891,21 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     // LANG_BUTTON_RIGHT_ANALOG_DOWN
     "右搖桿↓",
 
+    // LANG_BUTTON_ENTER
+    NULL,
+    // LANG_BUTTON_CANCEL
+    NULL,
+
     /**************  Button string 2  *****************/
-    // LANG_BUTTON_A
-    "A",
-    // LANG_BUTTON_B
-    "B",
+    // LANG_BUTTON_CROSS
+    "×",
+    // LANG_BUTTON_CIRCLE
+    "○",
+    // LANG_BUTTON_SQUARE
+    "□",
+    // LANG_BUTTON_TRIANGLE
+    "△",
+
     // LANG_BUTTON_C
     "C",
     // LANG_BUTTON_D
@@ -908,10 +918,6 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     "G",
     // LANG_BUTTON_H
     "H",
-    // LANG_BUTTON_X
-    "X",
-    // LANG_BUTTON_Y
-    "Y",
     // LANG_BUTTON_Z
     "Z",
 
@@ -1109,8 +1115,8 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     "背景模式",
 
     /**************  Menu control  *****************/
-    // LANG_CTRL_PLAYER
-    "玩家控製",
+    // LANG_CONTROLLER_PORT
+    "控製器端口",
     // LANG_FRONT_TOUCH_TO_BUTTON
     "前觸摸映射按鍵",
     // LANG_BACK_TOUCH_TO_BUTTON
@@ -1152,10 +1158,10 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     "[快捷鍵] 減速遊戲",
     // LANG_HOTKEY_GAME_REWIND
     "[快捷鍵] 回溯遊戲",
-    // LANG_HOTKEY_CONTROL_PLAYER_UP
-    "[快捷鍵] 切換玩家+",
-    // LANG_HOTKEY_CONTROL_PLAYER_DOWN
-    "[快捷鍵] 切換玩家-",
+    // LANG_HOTKEY_CONTROLLER_PORT_UP
+    "[快捷鍵] 控製器端口+",
+    // LANG_HOTKEY_CONTROLLER_PORT_DOWN
+    "[快捷鍵] 控製器端口-",
     // LANG_HOTKEY_EXIT_GAME
     "[快捷鍵] 退出遊戲",
 

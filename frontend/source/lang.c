@@ -8,34 +8,34 @@
 
 #include "lang.h"
 #include "lang_intl.h"
-#include "init.h"
+#include "app.h"
 
-enum LangIndex
+enum LangId
 {
-    LANG_INDEX_ENGLISH,
-    LANG_INDEX_JAPANESE,
-    LANG_INDEX_FRENCH,
-    LANG_INDEX_SPANISH,
-    LANG_INDEX_GERMAN,
-    LANG_INDEX_ITALIAN,
-    LANG_INDEX_DUTCH,
-    LANG_INDEX_PORTUGUESE_BRAZIL,
-    LANG_INDEX_PORTUGUESE_PORTUGAL,
-    LANG_INDEX_RUSSIAN,
-    LANG_INDEX_KOREAN,
-    LANG_INDEX_CHINESE_TRADITIONAL,
-    LANG_INDEX_CHINESE_SIMPLIFIED,
-    LANG_INDEX_ESPERANTO,
-    LANG_INDEX_POLISH,
-    LANG_INDEX_VIETNAMESE,
-    LANG_INDEX_ARABIC,
-    LANG_INDEX_GREEK,
-    LANG_INDEX_TURKISH,
-    LANG_INDEX_SLOVAK,
-    LANG_INDEX_PERSIAN,
-    LANG_INDEX_HEBREW,
-    LANG_INDEX_ASTURIAN,
-    LANG_INDEX_FINNISH,
+    ID_LANG_ENGLISH,
+    ID_LANG_JAPANESE,
+    ID_LANG_FRENCH,
+    ID_LANG_SPANISH,
+    ID_LANG_GERMAN,
+    ID_LANG_ITALIAN,
+    ID_LANG_DUTCH,
+    ID_LANG_PORTUGUESE_BRAZIL,
+    ID_LANG_PORTUGUESE_PORTUGAL,
+    ID_LANG_RUSSIAN,
+    ID_LANG_KOREAN,
+    ID_LANG_CHINESE_TRADITIONAL,
+    ID_LANG_CHINESE_SIMPLIFIED,
+    ID_LANG_ESPERANTO,
+    ID_LANG_POLISH,
+    ID_LANG_VIETNAMESE,
+    ID_LANG_ARABIC,
+    ID_LANG_GREEK,
+    ID_LANG_TURKISH,
+    ID_LANG_SLOVAK,
+    ID_LANG_PERSIAN,
+    ID_LANG_HEBREW,
+    ID_LANG_ASTURIAN,
+    ID_LANG_FINNISH,
 };
 
 static LangEntry lang_entries[] = {
@@ -64,8 +64,7 @@ static LangEntry lang_entries[] = {
     {"Asturian", NULL, RETRO_LANGUAGE_ASTURIAN},
     {"Finnish", NULL, RETRO_LANGUAGE_FINNISH},
 };
-
-#define N_LANGS (sizeof(lang_entries) / sizeof(LangEntry))
+#define N_LANG_ENTRIES (sizeof(lang_entries) / sizeof(LangEntry))
 
 char **cur_lang = lang_us;
 
@@ -76,149 +75,149 @@ LangEntry *GetLangEntries()
 
 int GetLangEntriesLength()
 {
-    return N_LANGS;
+    return N_LANG_ENTRIES;
 }
 
-int GetLangIndexByLocalLang(int local_lang)
+int GetLangIdBySystemLang(int system_lang)
 {
     int ret = SCE_SYSTEM_PARAM_LANG_ENGLISH_US;
 
-    switch (local_lang)
+    switch (system_lang)
     {
     case SCE_SYSTEM_PARAM_LANG_JAPANESE:
-        ret = LANG_INDEX_JAPANESE;
+        ret = ID_LANG_JAPANESE;
         break;
     case SCE_SYSTEM_PARAM_LANG_FRENCH:
-        ret = LANG_INDEX_FRENCH;
+        ret = ID_LANG_FRENCH;
         break;
     case SCE_SYSTEM_PARAM_LANG_SPANISH:
-        ret = LANG_INDEX_SPANISH;
+        ret = ID_LANG_SPANISH;
         break;
     case SCE_SYSTEM_PARAM_LANG_GERMAN:
-        ret = LANG_INDEX_GERMAN;
+        ret = ID_LANG_GERMAN;
         break;
     case SCE_SYSTEM_PARAM_LANG_ITALIAN:
-        ret = LANG_INDEX_ITALIAN;
+        ret = ID_LANG_ITALIAN;
         break;
     case SCE_SYSTEM_PARAM_LANG_DUTCH:
-        ret = LANG_INDEX_DUTCH;
+        ret = ID_LANG_DUTCH;
         break;
     case SCE_SYSTEM_PARAM_LANG_PORTUGUESE_PT:
-        ret = LANG_INDEX_PORTUGUESE_PORTUGAL;
+        ret = ID_LANG_PORTUGUESE_PORTUGAL;
         break;
     case SCE_SYSTEM_PARAM_LANG_RUSSIAN:
-        ret = LANG_INDEX_RUSSIAN;
+        ret = ID_LANG_RUSSIAN;
         break;
     case SCE_SYSTEM_PARAM_LANG_KOREAN:
-        ret = LANG_INDEX_KOREAN;
+        ret = ID_LANG_KOREAN;
         break;
     case SCE_SYSTEM_PARAM_LANG_CHINESE_T:
-        ret = LANG_INDEX_CHINESE_TRADITIONAL;
+        ret = ID_LANG_CHINESE_TRADITIONAL;
         break;
     case SCE_SYSTEM_PARAM_LANG_CHINESE_S:
-        ret = LANG_INDEX_CHINESE_SIMPLIFIED;
+        ret = ID_LANG_CHINESE_SIMPLIFIED;
         break;
     case SCE_SYSTEM_PARAM_LANG_FINNISH:
-        ret = LANG_INDEX_FINNISH;
+        ret = ID_LANG_FINNISH;
         break;
     case SCE_SYSTEM_PARAM_LANG_POLISH:
-        ret = LANG_INDEX_POLISH;
+        ret = ID_LANG_POLISH;
         break;
     case SCE_SYSTEM_PARAM_LANG_PORTUGUESE_BR:
-        ret = LANG_INDEX_PORTUGUESE_BRAZIL;
+        ret = ID_LANG_PORTUGUESE_BRAZIL;
         break;
     case SCE_SYSTEM_PARAM_LANG_TURKISH:
-        ret = LANG_INDEX_TURKISH;
+        ret = ID_LANG_TURKISH;
         break;
     case SCE_SYSTEM_PARAM_LANG_ENGLISH_US:
     case SCE_SYSTEM_PARAM_LANG_ENGLISH_GB:
     default:
-        ret = LANG_INDEX_ENGLISH;
+        ret = ID_LANG_ENGLISH;
         break;
     }
 
     if (!lang_entries[ret].container)
-        return LANG_INDEX_ENGLISH; // Use default us
+        return ID_LANG_ENGLISH; // Use default us
 
     return ret;
 }
 
-int GetLangIndexByConfigValue(int config_value)
+int GetLangIdByConfigLang(int config_lang)
 {
     int index = 0;
-    int length = N_LANGS;
+    int length = N_LANG_ENTRIES;
 
     int i;
     for (i = 0; i < length; i++)
     {
         if (lang_entries[i].container)
         {
-            if (index == config_value)
+            if (index == config_lang)
                 break;
             else
                 index++;
         }
     }
-    if (i >= length)               // No finded
-        return LANG_INDEX_ENGLISH; // Use default us
+    if (i >= length)            // No found
+        return ID_LANG_ENGLISH; // Use default us
 
-    // printf("config_value: %d ==> lang_index: %d\n", config_value, i);
+    // printf("config_lang: %d ==> lang_id: %d\n", config_lang, i);
     return i;
 }
 
-int GetConfigValueByLangIndex(int lang_index)
+int GetConfigLangByLangId(int lang_id)
 {
-    int config_value = 0;
-    int length = N_LANGS;
+    int config_lang = 0;
+    int length = N_LANG_ENTRIES;
 
     int i;
     for (i = 0; i < length; i++)
     {
-        if (i == lang_index)
+        if (i == lang_id)
             break;
 
         if (lang_entries[i].container)
-            config_value++;
+            config_lang++;
     }
-    if (i >= length) // No finded
+    if (i >= length) // No found
         return 0;    // Use default us
 
-    // printf("lang_index: %d ==> config_value: %d\n", lang_index, config_value);
-    return config_value;
+    // printf("lang_id: %d ==> config_lang: %d\n", lang_id, config_lang);
+    return config_lang;
 }
 
-int GetRetroLangByLangIndex(int lang_index)
+int GetRetroLangByLangId(int lang_id)
 {
-    if (lang_index < 0 || lang_index >= N_LANGS)
+    if (lang_id < 0 || lang_id >= N_LANG_ENTRIES)
         return RETRO_LANGUAGE_ENGLISH;
 
-    return lang_entries[lang_index].retro_lang;
+    return lang_entries[lang_id].retro_lang;
 }
 
-int SetCurrentLang(int lang_index)
+int SetCurrentLang(int lang_id)
 {
     int ret = 0;
 
-    if (lang_index < 0 || lang_index >= N_LANGS || !lang_entries[lang_index].container)
+    if (lang_id < 0 || lang_id >= N_LANG_ENTRIES || !lang_entries[lang_id].container)
     {
         ret = -1;
         goto END;
     }
 
-    cur_lang = lang_entries[lang_index].container;
+    cur_lang = lang_entries[lang_id].container;
 
 END:
     if (cur_lang)
     {
-        if (enter_button == SCE_SYSTEM_PARAM_ENTER_BUTTON_CIRCLE)
+        if (system_enter_button == SCE_SYSTEM_PARAM_ENTER_BUTTON_CIRCLE)
         {
-            cur_lang[LANG_BUTTON_ENTER] = cur_lang[LANG_BUTTON_CIRCLE];
-            cur_lang[LANG_BUTTON_CANCEL] = cur_lang[LANG_BUTTON_CROSS];
+            cur_lang[LANG_LOCAL_BUTTON_ENTER] = cur_lang[LANG_LOCAL_BUTTON_B];
+            cur_lang[LANG_LOCAL_BUTTON_CANCEL] = cur_lang[LANG_LOCAL_BUTTON_A];
         }
         else
         {
-            cur_lang[LANG_BUTTON_ENTER] = cur_lang[LANG_BUTTON_CROSS];
-            cur_lang[LANG_BUTTON_CANCEL] = cur_lang[LANG_BUTTON_CIRCLE];
+            cur_lang[LANG_LOCAL_BUTTON_ENTER] = cur_lang[LANG_LOCAL_BUTTON_A];
+            cur_lang[LANG_LOCAL_BUTTON_CANCEL] = cur_lang[LANG_LOCAL_BUTTON_B];
         }
     }
 

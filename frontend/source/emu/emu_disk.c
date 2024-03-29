@@ -122,7 +122,7 @@ int Emu_DiskChangeImageIndex(int index)
         retro_run();
     }
     Emu_DiskSetImageIndex(index);
-    // retro_run();
+    retro_run();
     Emu_DiskSetEjectState(0);
 
     return 0;

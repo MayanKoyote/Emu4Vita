@@ -9,6 +9,7 @@
 #include "config_values.h"
 #include "utils_string.h"
 #include "file.h"
+#include "path.h"
 
 extern AppConfig app_config;
 extern GraphicsConfig graphics_config;
@@ -23,7 +24,7 @@ extern LinkedList *core_cheat_list;
 extern LinkedList *core_option_list;
 extern LinkedList *graphics_overlay_list;
 
-void MakeConfigPath(char *path, char *config_name, int type);
+int MakeConfigPath(char *path, char *config_name, int type);
 
 int ResetGraphicsConfig();
 int ResetControlConfig();

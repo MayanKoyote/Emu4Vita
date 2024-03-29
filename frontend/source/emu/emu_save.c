@@ -11,21 +11,6 @@
 #include "utils.h"
 #include "config.h"
 
-static int makeSavefilePath(char *path, int id)
-{
-    char name[MAX_NAME_LENGTH];
-    MakeCurrentFileName(name);
-    char base_name[MAX_NAME_LENGTH];
-    MakeBaseName(base_name, name, MAX_NAME_LENGTH);
-    if (id == RETRO_MEMORY_SAVE_RAM)
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s.srm", (CORE_SAVEFILES_DIR), base_name);
-    else if (id == RETRO_MEMORY_RTC)
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s.rtc", (CORE_SAVEFILES_DIR), base_name);
-    else
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s.unk", (CORE_SAVEFILES_DIR), base_name);
-    return 0;
-}
-
 static int loadMemoryFile(int id)
 {
     size_t dst_size = retro_get_memory_size(id);
@@ -37,7 +22,7 @@ static int loadMemoryFile(int id)
         return -1;
 
     char path[MAX_PATH_LENGTH];
-    makeSavefilePath(path, id);
+    MakeSavefilePath(path, id);
     SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
     if (fd < 0)
         return fd;
@@ -45,13 +30,13 @@ static int loadMemoryFile(int id)
     int64_t src_size = sceIoLseek(fd, 0, SCE_SEEK_END);
     if (src_size <= 0)
     {
-        AppLog("[SAVEFILE] Load memory file: get file size failed\n");
+        APP_LOG("[SAVE] Load memory file: get file size failed\n");
         sceIoClose(fd);
         return -1;
     }
     if (src_size > dst_size)
     {
-        AppLog("[SAVEFILE] Load memory file: SRAM is larger than implementation expects\n");
+        APP_LOG("[SAVE] Load memory file: SRAM is larger than implementation expects\n");
         sceIoClose(fd);
         return -1;
     }
@@ -60,7 +45,7 @@ static int loadMemoryFile(int id)
     if (src_data == NULL)
     {
         sceIoClose(fd);
-        AppLog("[SAVEFILE] Load memory file: alloc buf failed\n");
+        APP_LOG("[SAVE] Load memory file: alloc buf failed\n");
         return -1;
     }
 
@@ -81,7 +66,7 @@ static int loadMemoryFile(int id)
         {
             free(src_data);
             sceIoClose(fd);
-            AppLog("[SAVEFILE] Load memory file: read file failed\n");
+            APP_LOG("[SAVE] Load memory file: read file failed\n");
             return -1;
         }
         if (read == 0)
@@ -109,38 +94,14 @@ static int saveMemoryFile(int id)
         return -1;
 
     char path[MAX_PATH_LENGTH];
-    makeSavefilePath(path, id);
+    MakeSavefilePath(path, id);
     CreateFolder(CORE_SAVEFILES_DIR);
-    SceUID fd = sceIoOpen(path, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
-    if (fd < 0)
+    if (WriteFileEx(path, data, size) != size)
     {
-        AppLog("[SAVEFILE] Save memory file: open file failed\n");
-        return fd;
+        APP_LOG("[SAVE] Save memory file failed: %s!\n", path);
+        sceIoRemove(path);
+        return -1;
     }
-
-    char *buf = (char *)data;
-    int64_t remaining = size;
-    int64_t transfer = TRANSFER_SIZE;
-
-    while (remaining > 0)
-    {
-        if (remaining < TRANSFER_SIZE)
-            transfer = remaining;
-        else
-            transfer = TRANSFER_SIZE;
-
-        int written = sceIoWrite(fd, buf, transfer);
-        if (written < 0)
-        {
-            sceIoClose(fd);
-            AppLog("[SAVEFILE] Save memory file: write file failed\n");
-            return -1;
-        }
-
-        buf += written;
-        remaining -= written;
-    }
-    sceIoClose(fd);
 
     return 0;
 }
@@ -162,9 +123,9 @@ int Emu_SaveSrm()
 int Emu_DeleteSrm()
 {
     char path[MAX_PATH_LENGTH];
-    makeSavefilePath(path, RETRO_MEMORY_SAVE_RAM);
+    MakeSavefilePath(path, RETRO_MEMORY_SAVE_RAM);
     sceIoRemove(path);
-    makeSavefilePath(path, RETRO_MEMORY_RTC);
+    MakeSavefilePath(path, RETRO_MEMORY_RTC);
     sceIoRemove(path);
     return 0;
 }

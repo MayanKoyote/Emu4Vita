@@ -16,7 +16,7 @@
 #include "utils.h"
 #include "config.h"
 #include "lang.h"
-#include "init.h"
+#include "app.h"
 
 #define STATE_LISTVIEW_PADDING 8
 
@@ -138,27 +138,34 @@ static void cleanStateItem(int num)
     if (!state_list || num < 0 || num >= STATE_LIST_LEN)
         return;
 
-    state_list[num].exist = 0;
-    if (state_list[num].tex)
+    if (state_list[num].exist)
     {
-        GUI_DestroyTexture(state_list[num].tex);
-        state_list[num].tex = NULL;
+        GUI_LockDrawMutex();
+        state_list[num].exist = 0;
+        if (state_list[num].tex)
+        {
+            GUI_DestroyTexture(state_list[num].tex);
+            state_list[num].tex = NULL;
+        }
+        GUI_UnlockDrawMutex();
     }
 }
 
 static void freeStateList()
 {
-    if (!state_list)
-        return;
-
-    int i;
-    for (i = 0; i < STATE_LIST_LEN; i++)
+    if (state_list)
     {
-        if (state_list[i].tex)
-            GUI_DestroyTexture(state_list[i].tex);
+        GUI_LockDrawMutex();
+        int i;
+        for (i = 0; i < STATE_LIST_LEN; i++)
+        {
+            if (state_list[i].tex)
+                GUI_DestroyTexture(state_list[i].tex);
+        }
+        free(state_list);
+        state_list = NULL;
+        GUI_UnlockDrawMutex();
     }
-    free(state_list);
-    state_list = NULL;
 }
 
 static void refreshStateItem(int num)
@@ -187,7 +194,7 @@ static void refreshStateItem(int num)
     }
 
     // Read framebuffer
-    state_list[num].tex = GUI_CreateTextureFormat(header.preview_width, header.preview_height, GUI_PIXEL_FORMAT_U8U8U8U8_ABGR);
+    state_list[num].tex = GUI_CreateTextureFormat(header.preview_width, header.preview_height, SCEEENSHOT_PIXEL_FORMAT);
     if (state_list[num].tex)
     {
         sceIoLseek(fd, header.preview_offset, SCE_SEEK_SET);
@@ -235,13 +242,16 @@ int Setting_LoadState(int num)
     if (!Emu_IsGameLoaded())
     {
         EmuGameInfo info;
-        MakeCurrentFilePath(info.path);
-        info.type = GetCurrentFileType();
+        MakeCurrentGamePath(info.path);
+        info.rom_type = GetCurrentRomType();
         info.state_num = num;
         return Emu_StartGame(&info);
     }
 
-    return Emu_LoadState(num);
+    Emu_SetGameEventAction(EMU_GAME_EVENT_ACTION_LOAD_STATE);
+    Emu_WaitGameEventDone();
+    Emu_CleanAudio();
+    return 0;
 }
 
 int Setting_SaveState(int num)
@@ -249,16 +259,17 @@ int Setting_SaveState(int num)
     if (!Emu_IsGameLoaded())
         return -1;
 
-    int ret = Emu_SaveState(num);
-    refreshStateItem(num);
-    return ret;
+    Emu_SetGameEventAction(EMU_GAME_EVENT_ACTION_SAVE_STATE);
+    Emu_WaitGameEventDone();
+    refreshStateItem(state_focus_pos);
+    return 0;
 }
 
 int Setting_DeleteState(int num)
 {
-    int ret = Emu_DeleteState(num);
+    Emu_DeleteState(num);
     cleanStateItem(num);
-    return ret;
+    return 0;
 }
 
 void Setting_DrawState()
@@ -326,9 +337,9 @@ void Setting_DrawState()
 
             // Date & time
             char date_string[24];
-            GetDateString(date_string, date_format, &state_list[i].time);
+            GetDateString(date_string, system_date_format, &state_list[i].time);
             char time_string[16];
-            GetTimeString(time_string, time_format, &state_list[i].time);
+            GetTimeString(time_string, system_time_format, &state_list[i].time);
             GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %s", date_string, time_string);
             info_sy -= (GUI_GetLineHeight() + STATE_INFO_LINE_SPACE);
             GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %d", cur_lang[LANG_STATE_EXISTENT_STATE], i);
@@ -474,8 +485,8 @@ static void ctrlOption()
         case 0:
         {
             option_open = 0;
-            Setting_CloseMenu();
             Setting_LoadState(state_focus_pos);
+            Setting_CloseMenu();
             break;
         }
         case 1:
@@ -514,7 +525,7 @@ void Setting_CtrlState()
         ctrlStateList();
 }
 
-static int stateThreadFunc(SceSize args, void *argp)
+static int StateThreadEntry(SceSize args, void *argp)
 {
     char dir_path[MAX_PATH_LENGTH];
 
@@ -553,13 +564,17 @@ static int stateThreadFunc(SceSize args, void *argp)
         sceIoDclose(dfd);
     }
 
-    sceKernelExitThread(0);
+    state_thid = -1;
+    sceKernelExitDeleteThread(0);
     return 0;
 }
 
 static int startStateThread()
 {
-    int ret = state_thid = sceKernelCreateThread("state_thread", stateThreadFunc, 0x10000100, 0x10000, 0, 0, NULL);
+    int ret = 0;
+
+    if (state_thid < 0)
+        ret = state_thid = sceKernelCreateThread("setting_state_thread", StateThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
     if (state_thid >= 0)
     {
         state_thread_stop = 0;
@@ -571,9 +586,9 @@ static int startStateThread()
 
 static void finishStateThread()
 {
+    state_thread_stop = 1;
     if (state_thid >= 0)
     {
-        state_thread_stop = 1;
         sceKernelWaitThreadEnd(state_thid, NULL, NULL);
         sceKernelDeleteThread(state_thid);
         state_thid = -1;

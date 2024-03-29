@@ -39,7 +39,7 @@ int IsValidFile(const char *path)
     return 0;
 }
 
-int GetFileType(const char *filename)
+int GetRomType(const char *filename)
 {
     if (!core_valid_extensions)
         return -1;

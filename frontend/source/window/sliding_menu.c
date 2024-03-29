@@ -149,8 +149,8 @@ static int onCloseWindow(GUI_Window *window)
     if (slidingMenu)
     {
         slidingMenu->window = NULL;
-        SlidingMenu_Destroy(slidingMenu);
         GUI_SetWindowData(window, NULL);
+        SlidingMenu_Destroy(slidingMenu);
     }
 
     return 0;
@@ -396,7 +396,7 @@ static int onCtrlWindow(GUI_Window *window)
         if (slidingMenu->onItemClick)
             slidingMenu->onItemClick(slidingMenu, slidingMenu->focus_pos);
     }
-    else if (released_pad[PAD_TRIANGLE]) // 多选模式下清除所有选中
+    else if (released_pad[PAD_Y]) // 多选模式下清除所有选中
     {
         if (slidingMenu->selects)
         {

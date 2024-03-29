@@ -1,14 +1,6 @@
 #ifndef __M_GUI_H__
 #define __M_GUI_H__
 
-#include "gui_lib.h"
-#include "gui_color.h"
-#include "gui_font.h"
-#include "gui_ctrl.h"
-#include "gui_shader.h"
-#include "gui_init.h"
-#include "layout/Layout.h"
-
 typedef enum GUI_ImageId
 {
     ID_GUI_IMAGE_WALLPAPER,
@@ -39,16 +31,27 @@ typedef enum GUI_ImageId
 #define GUI_DEF_COLOR_BG 0xAF0F0F0F
 #define GUI_DEF_COLOR_FOCUS COLOR_ALPHA(COLOR_AZURE, 0xDF)
 
+#include "gui_lib.h"
+#include "gui_color.h"
+#include "gui_font.h"
+#include "gui_ctrl.h"
+#include "gui_shader.h"
+#include "gui_init.h"
+
 void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int max_len, int draw_len, int scroll_len, int draw_track);
 
 void GUI_SetImage(GUI_ImageId id, GUI_Texture *texture);
 GUI_Texture *GUI_GetImage(GUI_ImageId id);
 
-void GUI_Run();
+int GUI_InitDraw();
+int GUI_DeinitDraw();
 
-int GUI_StartAsyncDraw();
-void GUI_FinishAsyncDraw();
+int GUI_LockDrawMutex();
+int GUI_UnlockDrawMutex();
 
+void GUI_RunMain();
+
+#include "layout/Layout.h"
 #include "gui_activity.h"
 #include "gui_window.h"
 #include "gui_toast.h"

@@ -122,6 +122,8 @@ void Splash_SetCtrlEnabled(int enabled)
 
 void Splash_SetBgTexture(GUI_Texture *texture)
 {
+    GUI_LockDrawMutex();
+
     if (splash_activity.wallpaper && splash_activity.wallpaper != GUI_GetImage(ID_GUI_IMAGE_SPLASH))
     {
         GUI_DestroyTexture(splash_activity.wallpaper);
@@ -131,11 +133,13 @@ void Splash_SetBgTexture(GUI_Texture *texture)
         splash_activity.wallpaper = texture;
     else
         splash_activity.wallpaper = GUI_GetImage(ID_GUI_IMAGE_SPLASH);
+
+    GUI_UnlockDrawMutex();
 }
 
 static int onStartActivity(GUI_Activity *activity)
 {
-    splash_activity.disable_home_event = 0;
+    splash_activity.disable_home_event = ctrl_enabled;
     refreshLayout();
 
     return 0;
@@ -161,13 +165,9 @@ static int onBeforeDrawActivity(GUI_Activity *activity)
 {
     if (!ctrl_enabled)
     {
-        GUI_LockDrawMutex();
-
         int length = LinkedListGetLength(log_list);
         listview_top_pos = length;
         RefreshListPos(&listview_top_pos, length, listview_n_draw_items);
-
-        GUI_UnlockDrawMutex();
     }
 
     return 0;
@@ -230,8 +230,6 @@ static int onCtrlActivity(GUI_Activity *activity)
 {
     if (ctrl_enabled)
     {
-        GUI_LockDrawMutex();
-
         int length = LinkedListGetLength(log_list);
 
         if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
@@ -254,8 +252,6 @@ static int onCtrlActivity(GUI_Activity *activity)
         {
             GUI_FinishActivity(activity);
         }
-
-        GUI_UnlockDrawMutex();
     }
 
     return 0;

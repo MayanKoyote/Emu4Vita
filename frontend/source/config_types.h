@@ -3,12 +3,12 @@
 
 #include <stdint.h>
 
-#define APP_CONFIG_VERSION 0x0104      // v1.04
-#define GRAPHICS_CONFIG_VERSION 0x0104 // v1.04
-#define CONTROL_CONFIG_VERSION 0x0104  // v1.04
-#define CORE_CONFIG_VERSION 0x0104     // v1.04
-#define HOTKEY_CONFIG_VERSION 0x0104   // v1.04
-#define MISC_CONFIG_VERSION 0x0104     // v1.04
+#define APP_CONFIG_VERSION 0x010400      // v1.04
+#define GRAPHICS_CONFIG_VERSION 0x010400 // v1.04
+#define CONTROL_CONFIG_VERSION 0x010400  // v1.04
+#define CORE_CONFIG_VERSION 0x010400     // v1.04
+#define HOTKEY_CONFIG_VERSION 0x010400   // v1.04
+#define MISC_CONFIG_VERSION 0x010400     // v1.04
 
 #define APP_CONFIG_NAME "app.cfg"
 #define GRAPHICS_CONFIG_NAME "graphics.cfg"
@@ -141,14 +141,14 @@ typedef struct
     uint32_t button_down;        // 0x08
     uint32_t button_left;        // 0x0C
     uint32_t button_right;       // 0x10
-    uint32_t button_triangle;    // 0x14
-    uint32_t button_circle;      // 0x18
-    uint32_t button_cross;       // 0x1C
-    uint32_t button_square;      // 0x20
+    uint32_t button_a;           // 0x14
+    uint32_t button_b;           // 0x18
+    uint32_t button_x;           // 0x1C
+    uint32_t button_y;           // 0x20
     uint32_t button_select;      // 0x24
     uint32_t button_start;       // 0x28
-    uint32_t button_l;           // 0x2C
-    uint32_t button_r;           // 0x30
+    uint32_t button_l1;          // 0x2C
+    uint32_t button_r1;          // 0x30
     uint32_t button_l2;          // 0x34
     uint32_t button_r2;          // 0x38
     uint32_t button_l3;          // 0x3C
@@ -164,23 +164,23 @@ typedef struct
     uint32_t front_touch_pad;    // 0x64
     uint32_t back_touch_pad;     // 0x68
     int32_t turbo_delay;         // 0x6C
-    uint32_t ctrl_player;        // 0x70
+    uint32_t controller_port;    // 0x70
     char reserved[0x0C];         // 0x74
 } ControlConfig;                 // 0x80
 
 typedef struct
 {
-    uint32_t version;        // 0x00
-    uint32_t hk_loadstate;   // 0x04
-    uint32_t hk_savestate;   // 0x08
-    uint32_t hk_speed_up;    // 0x0C
-    uint32_t hk_speed_down;  // 0x10
-    uint32_t hk_rewind_game; // 0x14
-    uint32_t hk_player_up;   // 0x18
-    uint32_t hk_player_down; // 0x1c
-    uint32_t hk_exit_game;   // 0x20
-    char reserved[0x5c];     // 0x24
-} HotkeyConfig;              // 0x80
+    uint32_t version;            // 0x00
+    uint32_t hk_load_state;      // 0x04
+    uint32_t hk_save_state;      // 0x08
+    uint32_t hk_speed_up;        // 0x0C
+    uint32_t hk_speed_down;      // 0x10
+    uint32_t hk_rewind_game;     // 0x14
+    uint32_t hk_controller_up;   // 0x18
+    uint32_t hk_controller_down; // 0x1c
+    uint32_t hk_exit_game;       // 0x20
+    char reserved[0x5c];         // 0x24
+} HotkeyConfig;                  // 0x80
 
 typedef struct
 {

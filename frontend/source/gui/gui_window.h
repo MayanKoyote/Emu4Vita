@@ -1,16 +1,6 @@
 #ifndef __M_GUI_WINDOW_H__
 #define __M_GUI_WINDOW_H__
 
-typedef enum GUI_WindowCloseType
-{
-    TYPE_WINDOW_CLOSE_SELF = 0,
-    TYPE_WINDOW_CLOSE_PREV,
-    TYPE_WINDOW_CLOSE_NEXT,
-    TYPE_WINDOW_CLOSE_ALL,
-    TYPE_WINDOW_CLOSE_ALL_PREV,
-    TYPE_WINDOW_CLOSE_ALL_NEXT,
-} GUI_WindowCloseType;
-
 typedef struct GUI_Window GUI_Window;
 
 typedef struct GUI_WindowCallbacks
@@ -24,21 +14,22 @@ typedef struct GUI_WindowCallbacks
     int (*onEvent)(GUI_Window *window);
 } GUI_WindowCallbacks;
 
+int GUI_InitWindow();
+int GUI_DeinitWindow();
+
 GUI_Window *GUI_CreateWindow();
 void GUI_DestroyWindow(GUI_Window *window); // 如果window已打开，请使用GUI_CloseWindow
 
 int GUI_OpenWindow(GUI_Window *window);
 int GUI_CloseWindow(GUI_Window *window);
-int GUI_CloseWindowEx(GUI_WindowCloseType type, GUI_Window *window);
+int GUI_CloseAllWindows();
+int GUI_CloseOtherWindows();
 
 int GUI_SetWindowAutoFree(GUI_Window *window, int auto_free);
 int GUI_SetWindowData(GUI_Window *window, void *data);
 int GUI_SetWindowCallbacks(GUI_Window *window, GUI_WindowCallbacks *callbacks);
 
 int GUI_GetWindowCount();
-GUI_Window *GUI_GetCurrentWindow();
-GUI_Window *GUI_GetPrevWindow(GUI_Window *window);
-GUI_Window *GUI_GetNextWindow(GUI_Window *window);
 void *GUI_GetWindowData(GUI_Window *window);
 
 int GUI_GetWindowLayoutPosition(int *x, int *y);

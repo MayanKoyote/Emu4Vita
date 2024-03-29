@@ -16,4 +16,7 @@
 #include "emu_archive.h"
 #endif
 
+int Emu_Init();
+void Emu_Deinit();
+
 #endif

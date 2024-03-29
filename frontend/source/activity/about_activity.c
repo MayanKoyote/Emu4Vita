@@ -16,7 +16,7 @@ static int onDrawActivity(GUI_Activity *activity);
 static int onCtrlActivity(GUI_Activity *activity);
 
 static GUI_ButtonInstruction button_instructions[] = {
-    {LANG_BUTTON_CANCEL, LANG_BACK, 1},
+    {LANG_LOCAL_BUTTON_CANCEL, LANG_BACK, 1},
     {LANG_NULL, LANG_NULL, 1},
 };
 

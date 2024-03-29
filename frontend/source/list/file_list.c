@@ -10,7 +10,7 @@
 
 #include "file_list.h"
 #include "config.h"
-#include "init.h"
+#include "app.h"
 #include "utils.h"
 #include "strnatcmp.h"
 
@@ -135,7 +135,7 @@ int FileListGetDeviceEntries(LinkedList *list, int sort)
     {
         if (devices[i])
         {
-            if (is_safe_mode && strcmp(devices[i], "ux0:") != 0)
+            if (IsSafeMode() && strcmp(devices[i], "ux0:") != 0)
                 continue;
 
             SceIoStat stat;
@@ -187,7 +187,7 @@ int FileListGetDirectoryEntries(LinkedList *list, const char *path, int sort)
         if (res > 0)
         {
             int is_folder = SCE_S_ISDIR(dir.d_stat.st_mode);
-            int type = -1;
+            int rom_type = -1;
 
             if (is_folder)
             {
@@ -196,8 +196,8 @@ int FileListGetDirectoryEntries(LinkedList *list, const char *path, int sort)
             }
             else
             {
-                type = GetFileType(dir.d_name);
-                if (type < 0)
+                rom_type = GetRomType(dir.d_name);
+                if (rom_type < 0)
                     continue;
             }
 
@@ -206,7 +206,7 @@ int FileListGetDirectoryEntries(LinkedList *list, const char *path, int sort)
                 continue;
 
             e_data->is_folder = is_folder;
-            e_data->type = type;
+            e_data->rom_type = rom_type;
 
             if (is_folder)
             {

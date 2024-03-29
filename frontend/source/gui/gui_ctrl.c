@@ -8,13 +8,13 @@
 #include <psp2/ctrl.h>
 
 #include "gui.h"
-#include "init.h"
+#include "app.h"
 #include "config.h"
 #include "utils.h"
 
 Pad old_pad, current_pad, pressed_pad, released_pad, hold_pad, hold2_pad;
 Pad hold_count, hold2_count;
-static uint64_t disable_homekey_micros = 0;
+static uint64_t homekey_disable_micros = 0;
 static int homekey_enabled = 1;
 static int control_enabled = 1;
 
@@ -40,22 +40,26 @@ void GUI_ReadPad()
         if (sceCtrlPeekBufferPositiveExt2(port, &ctrl_data, 1) < 0)
             continue;
 
-        if (ctrl_data.buttons & SCE_CTRL_UP)
-            current_pad[PAD_UP] = 1;
-        if (ctrl_data.buttons & SCE_CTRL_DOWN)
-            current_pad[PAD_DOWN] = 1;
         if (ctrl_data.buttons & SCE_CTRL_LEFT)
             current_pad[PAD_LEFT] = 1;
         if (ctrl_data.buttons & SCE_CTRL_RIGHT)
             current_pad[PAD_RIGHT] = 1;
-        if (ctrl_data.buttons & SCE_CTRL_TRIANGLE)
-            current_pad[PAD_TRIANGLE] = 1;
-        if (ctrl_data.buttons & SCE_CTRL_CIRCLE)
-            current_pad[PAD_CIRCLE] = 1;
+        if (ctrl_data.buttons & SCE_CTRL_UP)
+            current_pad[PAD_UP] = 1;
+        if (ctrl_data.buttons & SCE_CTRL_DOWN)
+            current_pad[PAD_DOWN] = 1;
         if (ctrl_data.buttons & SCE_CTRL_CROSS)
-            current_pad[PAD_CROSS] = 1;
+            current_pad[PAD_A] = 1;
+        if (ctrl_data.buttons & SCE_CTRL_CIRCLE)
+            current_pad[PAD_B] = 1;
         if (ctrl_data.buttons & SCE_CTRL_SQUARE)
-            current_pad[PAD_SQUARE] = 1;
+            current_pad[PAD_X] = 1;
+        if (ctrl_data.buttons & SCE_CTRL_TRIANGLE)
+            current_pad[PAD_Y] = 1;
+        if (ctrl_data.buttons & SCE_CTRL_SELECT)
+            current_pad[PAD_SELECT] = 1;
+        if (ctrl_data.buttons & SCE_CTRL_START)
+            current_pad[PAD_START] = 1;
         if (ctrl_data.buttons & SCE_CTRL_L1)
             current_pad[PAD_L1] = 1;
         if (ctrl_data.buttons & SCE_CTRL_R1)
@@ -68,12 +72,8 @@ void GUI_ReadPad()
             current_pad[PAD_L3] = 1;
         if (ctrl_data.buttons & SCE_CTRL_R3)
             current_pad[PAD_R3] = 1;
-        if (ctrl_data.buttons & SCE_CTRL_START)
-            current_pad[PAD_START] = 1;
-        if (ctrl_data.buttons & SCE_CTRL_SELECT)
-            current_pad[PAD_SELECT] = 1;
         if (ctrl_data.buttons & SCE_CTRL_PSBUTTON)
-            current_pad[PAD_PSBUTTON] = 1;
+            current_pad[PAD_HOME] = 1;
 
         if (ctrl_data.lx < ANALOG_CENTER - ANALOG_THRESHOLD)
             current_pad[PAD_LEFT_ANALOG_LEFT] = 1;
@@ -96,7 +96,7 @@ void GUI_ReadPad()
             current_pad[PAD_RIGHT_ANALOG_DOWN] = 1;
     }
 
-    for (i = 0; i < PAD_N_BUTTONS; i++)
+    for (i = 0; i < N_PAD_BUTTONS; i++)
     {
         pressed_pad[i] = current_pad[i] & ~old_pad[i];
         released_pad[i] = ~current_pad[i] & old_pad[i];
@@ -128,49 +128,49 @@ void GUI_ReadPad()
         }
     }
 
-    if (enter_button == SCE_SYSTEM_PARAM_ENTER_BUTTON_CIRCLE)
+    if (system_enter_button == SCE_SYSTEM_PARAM_ENTER_BUTTON_CIRCLE)
     {
-        old_pad[PAD_ENTER] = old_pad[PAD_CIRCLE];
-        current_pad[PAD_ENTER] = current_pad[PAD_CIRCLE];
-        pressed_pad[PAD_ENTER] = pressed_pad[PAD_CIRCLE];
-        released_pad[PAD_ENTER] = released_pad[PAD_CIRCLE];
-        hold_pad[PAD_ENTER] = hold_pad[PAD_CIRCLE];
-        hold2_pad[PAD_ENTER] = hold2_pad[PAD_CIRCLE];
+        old_pad[PAD_ENTER] = old_pad[PAD_B];
+        current_pad[PAD_ENTER] = current_pad[PAD_B];
+        pressed_pad[PAD_ENTER] = pressed_pad[PAD_B];
+        released_pad[PAD_ENTER] = released_pad[PAD_B];
+        hold_pad[PAD_ENTER] = hold_pad[PAD_B];
+        hold2_pad[PAD_ENTER] = hold2_pad[PAD_B];
 
-        old_pad[PAD_CANCEL] = old_pad[PAD_CROSS];
-        current_pad[PAD_CANCEL] = current_pad[PAD_CROSS];
-        pressed_pad[PAD_CANCEL] = pressed_pad[PAD_CROSS];
-        released_pad[PAD_CANCEL] = released_pad[PAD_CROSS];
-        hold_pad[PAD_CANCEL] = hold_pad[PAD_CROSS];
-        hold2_pad[PAD_CANCEL] = hold2_pad[PAD_CROSS];
+        old_pad[PAD_CANCEL] = old_pad[PAD_A];
+        current_pad[PAD_CANCEL] = current_pad[PAD_A];
+        pressed_pad[PAD_CANCEL] = pressed_pad[PAD_A];
+        released_pad[PAD_CANCEL] = released_pad[PAD_A];
+        hold_pad[PAD_CANCEL] = hold_pad[PAD_A];
+        hold2_pad[PAD_CANCEL] = hold2_pad[PAD_A];
     }
     else
     {
-        old_pad[PAD_ENTER] = old_pad[PAD_CROSS];
-        current_pad[PAD_ENTER] = current_pad[PAD_CROSS];
-        pressed_pad[PAD_ENTER] = pressed_pad[PAD_CROSS];
-        released_pad[PAD_ENTER] = released_pad[PAD_CROSS];
-        hold_pad[PAD_ENTER] = hold_pad[PAD_CROSS];
-        hold2_pad[PAD_ENTER] = hold2_pad[PAD_CROSS];
+        old_pad[PAD_ENTER] = old_pad[PAD_A];
+        current_pad[PAD_ENTER] = current_pad[PAD_A];
+        pressed_pad[PAD_ENTER] = pressed_pad[PAD_A];
+        released_pad[PAD_ENTER] = released_pad[PAD_A];
+        hold_pad[PAD_ENTER] = hold_pad[PAD_A];
+        hold2_pad[PAD_ENTER] = hold2_pad[PAD_A];
 
-        old_pad[PAD_CANCEL] = old_pad[PAD_CIRCLE];
-        current_pad[PAD_CANCEL] = current_pad[PAD_CIRCLE];
-        pressed_pad[PAD_CANCEL] = pressed_pad[PAD_CIRCLE];
-        released_pad[PAD_CANCEL] = released_pad[PAD_CIRCLE];
-        hold_pad[PAD_CANCEL] = hold_pad[PAD_CIRCLE];
-        hold2_pad[PAD_CANCEL] = hold2_pad[PAD_CIRCLE];
+        old_pad[PAD_CANCEL] = old_pad[PAD_B];
+        current_pad[PAD_CANCEL] = current_pad[PAD_B];
+        pressed_pad[PAD_CANCEL] = pressed_pad[PAD_B];
+        released_pad[PAD_CANCEL] = released_pad[PAD_B];
+        hold_pad[PAD_CANCEL] = hold_pad[PAD_B];
+        hold2_pad[PAD_CANCEL] = hold2_pad[PAD_B];
     }
 
-    if (current_pad[PAD_PSBUTTON])
+    if (current_pad[PAD_HOME])
     {
-        if (!old_pad[PAD_PSBUTTON])
-            disable_homekey_micros = sceKernelGetProcessTimeWide() + DISABLE_PSBUTTON_HOLD_MICROS;
-        else if (sceKernelGetProcessTimeWide() >= disable_homekey_micros)
+        if (!old_pad[PAD_HOME])
+            homekey_disable_micros = sceKernelGetProcessTimeWide() + DISABLE_PSBUTTON_HOLD_MICROS;
+        else if (sceKernelGetProcessTimeWide() >= homekey_disable_micros)
             GUI_SetHomeKeyEnabled(0);
     }
     else
     {
-        if (!old_pad[PAD_PSBUTTON])
+        if (!old_pad[PAD_HOME])
             GUI_SetHomeKeyEnabled(1);
     }
 }

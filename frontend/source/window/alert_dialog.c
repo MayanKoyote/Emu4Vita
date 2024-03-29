@@ -228,8 +228,8 @@ static int onCloseWindow(GUI_Window *window)
     if (dialog)
     {
         dialog->window = NULL;           // 设为NULL防止AlertDialog_Destroy时重复关闭window
+        GUI_SetWindowData(window, NULL); // 设为NULL防止可能出现的再次销毁已被销毁的dialog的bug
         AlertDialog_Destroy(dialog);     // 销毁AlertDialog
-        GUI_SetWindowData(window, NULL); // 设为NULL以避免可能出现的再次销毁已被销毁的dialog的bug
     }
 
     return 0;
@@ -349,7 +349,7 @@ static int onDrawWindow(GUI_Window *window)
         int text_w = view_w - TITLE_VIEW_PADDING_L * 2;
         int text_h = view_h - TITLE_VIEW_PADDING_T;
 
-        GUI_DrawFillRectangle(view_x, view_y + view_h - 1, view_w, 1, dialog_border_color); // Draw divier
+        GUI_DrawFillRectangle(view_x, view_y + view_h - 1, view_w, 1, dialog_border_color); // Draw divider
         GUI_SetClipping(text_x, text_y, text_w, text_h);
         GUI_DrawText(text_x, text_y, title_text_color, dialog->title);
         GUI_UnsetClipping();
@@ -485,7 +485,7 @@ static int onDrawWindow(GUI_Window *window)
         {
             x -= GUI_GetTextWidth(dialog->positive_name);
             GUI_DrawText(x, y, button_text_color, dialog->positive_name);
-            snprintf(buf, 24, "%s:", cur_lang[LANG_BUTTON_ENTER]);
+            snprintf(buf, 24, "%s:", cur_lang[LANG_LOCAL_BUTTON_ENTER]);
             x -= GUI_GetTextWidth(buf);
             GUI_DrawText(x, y, button_key_color, buf);
             x -= BUTTON_VIEW_CHILD_MARGIN;
@@ -494,7 +494,7 @@ static int onDrawWindow(GUI_Window *window)
         {
             x -= GUI_GetTextWidth(dialog->neutral_name);
             GUI_DrawText(x, y, button_text_color, dialog->neutral_name);
-            snprintf(buf, 24, "%s:", cur_lang[LANG_BUTTON_TRIANGLE]);
+            snprintf(buf, 24, "%s:", cur_lang[LANG_LOCAL_BUTTON_Y]);
             x -= GUI_GetTextWidth(buf);
             GUI_DrawText(x, y, button_key_color, buf);
             x -= BUTTON_VIEW_CHILD_MARGIN;
@@ -503,7 +503,7 @@ static int onDrawWindow(GUI_Window *window)
         {
             x -= GUI_GetTextWidth(dialog->negative_name);
             GUI_DrawText(x, y, button_text_color, dialog->negative_name);
-            snprintf(buf, 24, "%s:", cur_lang[LANG_BUTTON_CANCEL]);
+            snprintf(buf, 24, "%s:", cur_lang[LANG_LOCAL_BUTTON_CANCEL]);
             x -= GUI_GetTextWidth(buf);
             GUI_DrawText(x, y, button_key_color, buf);
             x -= BUTTON_VIEW_CHILD_MARGIN;
@@ -546,7 +546,7 @@ static int onCtrlWindow(GUI_Window *window)
         if (dialog->onNegativeClick)
             dialog->onNegativeClick(dialog, dialog->focus_pos);
     }
-    else if (released_pad[PAD_TRIANGLE])
+    else if (released_pad[PAD_Y])
     {
         if (dialog->onNeutralClick)
             dialog->onNeutralClick(dialog, dialog->focus_pos);

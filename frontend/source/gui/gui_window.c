@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <psp2/kernel/threadmgr.h>
+
 #include "list/linked_list.h"
 #include "gui.h"
 
@@ -11,9 +13,11 @@ struct GUI_Window
     int dont_free;
     GUI_WindowCallbacks callbacks;
     void *userdata;
+    LinkedListEntry *entry;
 };
 
-static LinkedList *window_list = NULL;
+static SceKernelLwMutexWork gui_window_mutex = {0};
+static LinkedList *gui_window_list = NULL;
 
 static int Window_Close(GUI_Window *window);
 static void Window_Destroy(GUI_Window *window);
@@ -128,6 +132,11 @@ static int Window_Event(GUI_Window *window)
     return 0;
 }
 
+static GUI_Window *Window_GetCurrent()
+{
+    return (GUI_Window *)LinkedListGetEntryData(LinkedListTail(gui_window_list));
+}
+
 GUI_Window *GUI_CreateWindow()
 {
     return Window_Create();
@@ -140,102 +149,59 @@ void GUI_DestroyWindow(GUI_Window *window)
 
 int GUI_OpenWindow(GUI_Window *window)
 {
+    if (!window)
+        return -1;
+
     int ret = 0;
-    GUI_LockDrawMutex();
-
-    if (!window_list)
-    {
-        window_list = NewWindowList();
-        if (!window_list)
-            goto FAILED;
-    }
-
-    if (!LinkedListAdd(window_list, window))
-        goto FAILED;
-
-    Window_Open(window);
-
-EXIT:
-    GUI_UnlockDrawMutex();
+    sceKernelLockLwMutex(&gui_window_mutex, 1, NULL);
+    window->entry = LinkedListAdd(gui_window_list, window);
+    if (!window->entry)
+        ret = -1;
+    else
+        Window_Open(window);
+    sceKernelUnlockLwMutex(&gui_window_mutex, 1);
     return ret;
-
-FAILED:
-    ret = -1;
-    goto EXIT;
 }
 
 int GUI_CloseWindow(GUI_Window *window)
 {
-    GUI_LockDrawMutex();
+    if (!window)
+        return -1;
 
-    LinkedListEntry *entry = LinkedListFindByData(window_list, window);
-    if (!LinkedListRemove(window_list, entry))
+    sceKernelLockLwMutex(&gui_window_mutex, 1, NULL);
+    if (!LinkedListRemove(gui_window_list, window->entry))
         Window_Destroy(window);
-
-    GUI_UnlockDrawMutex();
+    sceKernelUnlockLwMutex(&gui_window_mutex, 1);
     return 0;
 }
 
-int GUI_CloseWindowEx(GUI_WindowCloseType type, GUI_Window *window)
+int GUI_CloseAllWindows()
 {
-    switch (type)
+    sceKernelLockLwMutex(&gui_window_mutex, 1, NULL);
+    LinkedListEmpty(gui_window_list);
+    sceKernelUnlockLwMutex(&gui_window_mutex, 1);
+    return 0;
+}
+
+int GUI_CloseOtherWindows()
+{
+    sceKernelLockLwMutex(&gui_window_mutex, 1, NULL);
+    LinkedListEntry *entry = LinkedListPrev(LinkedListTail(gui_window_list));
+    while (entry)
     {
-    case TYPE_WINDOW_CLOSE_SELF:
-        return GUI_CloseWindow(window);
-
-    case TYPE_WINDOW_CLOSE_PREV:
-        return GUI_CloseWindow(GUI_GetPrevWindow(window));
-
-    case TYPE_WINDOW_CLOSE_NEXT:
-        return GUI_CloseWindow(GUI_GetNextWindow(window));
-
-    case TYPE_WINDOW_CLOSE_ALL:
-        GUI_LockDrawMutex();
-        LinkedListEmpty(window_list);
-        GUI_UnlockDrawMutex();
-        break;
-
-    case TYPE_WINDOW_CLOSE_ALL_PREV:
-    {
-        GUI_LockDrawMutex();
-        LinkedListEntry *entry = LinkedListFindByData(window_list, window);
-        entry = LinkedListPrev(entry);
-        while (entry)
-        {
-            LinkedListEntry *prev = LinkedListPrev(entry);
-            LinkedListRemove(window_list, entry);
-            entry = prev;
-        }
-        GUI_UnlockDrawMutex();
-        break;
+        LinkedListEntry *prev = LinkedListPrev(entry);
+        LinkedListRemove(gui_window_list, entry);
+        entry = prev;
     }
-
-    case TYPE_WINDOW_CLOSE_ALL_NEXT:
-    {
-        GUI_LockDrawMutex();
-        LinkedListEntry *entry = LinkedListFindByData(window_list, window);
-        entry = LinkedListNext(entry);
-        while (entry)
-        {
-            LinkedListEntry *next = LinkedListNext(entry);
-            LinkedListRemove(window_list, entry);
-            entry = next;
-        }
-        GUI_UnlockDrawMutex();
-        break;
-    }
-
-    default:
-        break;
-    }
-
+    sceKernelUnlockLwMutex(&gui_window_mutex, 1);
     return 0;
 }
 
 int GUI_BeforeDrawWindow()
 {
-    LinkedListEntry *entry = LinkedListHead(window_list);
+    sceKernelLockLwMutex(&gui_window_mutex, 1, NULL);
 
+    LinkedListEntry *entry = LinkedListHead(gui_window_list);
     while (entry)
     {
         LinkedListEntry *next = LinkedListNext(entry);
@@ -244,13 +210,15 @@ int GUI_BeforeDrawWindow()
         entry = next;
     }
 
+    sceKernelUnlockLwMutex(&gui_window_mutex, 1);
     return 0;
 }
 
 int GUI_DrawWindow()
 {
-    LinkedListEntry *entry = LinkedListHead(window_list);
+    sceKernelLockLwMutex(&gui_window_mutex, 1, NULL);
 
+    LinkedListEntry *entry = LinkedListHead(gui_window_list);
     while (entry)
     {
         LinkedListEntry *next = LinkedListNext(entry);
@@ -259,13 +227,15 @@ int GUI_DrawWindow()
         entry = next;
     }
 
+    sceKernelUnlockLwMutex(&gui_window_mutex, 1);
     return 0;
 }
 
 int GUI_AfterDrawWindow()
 {
-    LinkedListEntry *entry = LinkedListHead(window_list);
+    sceKernelLockLwMutex(&gui_window_mutex, 1, NULL);
 
+    LinkedListEntry *entry = LinkedListHead(gui_window_list);
     while (entry)
     {
         LinkedListEntry *next = LinkedListNext(entry);
@@ -274,17 +244,24 @@ int GUI_AfterDrawWindow()
         entry = next;
     }
 
+    sceKernelUnlockLwMutex(&gui_window_mutex, 1);
     return 0;
 }
 
 int GUI_CtrlWindow()
 {
-    return Window_Ctrl(GUI_GetCurrentWindow());
+    sceKernelLockLwMutex(&gui_window_mutex, 1, NULL);
+    int ret = Window_Ctrl(Window_GetCurrent());
+    sceKernelUnlockLwMutex(&gui_window_mutex, 1);
+    return ret;
 }
 
 int GUI_EventWindow()
 {
-    return Window_Event(GUI_GetCurrentWindow());
+    sceKernelLockLwMutex(&gui_window_mutex, 1, NULL);
+    int ret = Window_Event(Window_GetCurrent());
+    sceKernelUnlockLwMutex(&gui_window_mutex, 1);
+    return ret;
 }
 
 int GUI_SetWindowAutoFree(GUI_Window *window, int auto_free)
@@ -322,30 +299,7 @@ int GUI_SetWindowCallbacks(GUI_Window *window, GUI_WindowCallbacks *callbacks)
 
 int GUI_GetWindowCount()
 {
-    return LinkedListGetLength(window_list);
-}
-
-GUI_Window *GUI_GetCurrentWindow()
-{
-    LinkedListEntry *tail = LinkedListTail(window_list);
-
-    return (GUI_Window *)LinkedListGetEntryData(tail);
-}
-
-GUI_Window *GUI_GetPrevWindow(GUI_Window *window)
-{
-    LinkedListEntry *entry = LinkedListFindByData(window_list, window);
-    LinkedListEntry *prev = LinkedListPrev(entry);
-
-    return (GUI_Window *)LinkedListGetEntryData(prev);
-}
-
-GUI_Window *GUI_GetNextWindow(GUI_Window *window)
-{
-    LinkedListEntry *entry = LinkedListFindByData(window_list, window);
-    LinkedListEntry *next = LinkedListNext(entry);
-
-    return (GUI_Window *)LinkedListGetEntryData(next);
+    return LinkedListGetLength(gui_window_list);
 }
 
 void *GUI_GetWindowData(GUI_Window *window)
@@ -368,5 +322,27 @@ int GUI_GetWindowAvailableSize(int *w, int *h)
         *w = GUI_SCREEN_WIDTH;
     if (h)
         *h = GUI_SCREEN_HEIGHT;
+    return 0;
+}
+
+int GUI_InitWindow()
+{
+    gui_window_list = NewWindowList();
+    if (!gui_window_list)
+        return -1;
+
+    sceKernelCreateLwMutex(&gui_window_mutex, "gui_window_mutex", 2, 0, NULL);
+
+    return 0;
+}
+
+int GUI_DeinitWindow()
+{
+    sceKernelLockLwMutex(&gui_window_mutex, 1, NULL);
+    LinkedListDestroy(gui_window_list);
+    gui_window_list = NULL;
+    sceKernelUnlockLwMutex(&gui_window_mutex, 1);
+    sceKernelDeleteLwMutex(&gui_window_mutex);
+
     return 0;
 }

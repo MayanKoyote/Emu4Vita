@@ -27,17 +27,18 @@ typedef struct GUI_Activity
     void *userdata;                                     // User data
 } GUI_Activity;
 
+int GUI_InitActivity();
+int GUI_DeinitActivity();
+
 int GUI_StartActivity(GUI_Activity *activity);
 int GUI_FinishActivity(GUI_Activity *activity);
+int GUI_FinishAllActivities();
+int GUI_FinishOtherActivities();
 int GUI_BackToMainActivity();
 int GUI_IsInMainActivity();
 int GUI_IsHomeEventEnabled();
 
 int GUI_GetActivityCount();
-GUI_Activity *GUI_GetCurrentActivity();
-GUI_Activity *GUI_GetPrevActivity(GUI_Activity *activity);
-GUI_Activity *GUI_GetNextActivity(GUI_Activity *activity);
-
 int GUI_GetActivityLayoutPosition(GUI_Activity *activity, int *x, int *y);
 int GUI_GetActivityAvailableSize(GUI_Activity *activity, int *w, int *h);
 

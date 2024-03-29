@@ -5,17 +5,14 @@
 
 extern GUI_Activity browser_activity;
 
-int CurrentPathIsGame();
-int GetCurrentFileType();
-int MakeCurrentFileName(char *name);
-int MakeCurrentFilePath(char *path);
-int MakePreviewPath(char *path, char *ext);
-int MakeScreenshotPath(char *path);
+int Browser_CurrentPathIsGame();
+int Browser_GetCurrentRomType();
+int Browser_MakeCurrentFileName(char *name);
+int Browser_MakeCurrentFilePath(char *path);
 
 GUI_Texture *GetDefaultPreviewTexture();
 
 void Browser_RequestRefreshPreview(int urgent);
-
 int Browser_ChangeDirByFilePath(const char *path);
 int Browser_ChangeDirBySaveFile(const char *path);
 

@@ -67,7 +67,7 @@ static LangString overlay_mode_names[] = {
     {LANG_OVERLAY_MODE_BACKGROUND, NULL},
 };
 
-static LangString ctrl_player_names[] = {
+static LangString controller_port_names[] = {
     {LANG_NULL, "1P"},
     {LANG_NULL, "2P"},
     {LANG_NULL, "3P"},
@@ -163,12 +163,12 @@ static KeyMapEntry emu_keymap_entries[] = {
     {{LANG_COIN, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_SELECT)},
     {{LANG_START, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_START)},
 #elif defined(PS_BUILD)
-    {{LANG_BUTTON_CROSS, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_B)},
-    {{LANG_BUTTON_CIRCLE, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_A)},
-    {{LANG_BUTTON_SQUARE, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_Y)},
-    {{LANG_BUTTON_TRIANGLE, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_X)},
-    {{LANG_BUTTON_L, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L)},
-    {{LANG_BUTTON_R, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R)},
+    {{LANG_BUTTON_A, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_B)},
+    {{LANG_BUTTON_B, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_A)},
+    {{LANG_BUTTON_X, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_Y)},
+    {{LANG_BUTTON_Y, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_X)},
+    {{LANG_BUTTON_L1, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L)},
+    {{LANG_BUTTON_R1, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R)},
     {{LANG_BUTTON_L2, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L2)},
     {{LANG_BUTTON_R2, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R2)},
     {{LANG_BUTTON_L3, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L3)},
@@ -176,12 +176,12 @@ static KeyMapEntry emu_keymap_entries[] = {
     {{LANG_BUTTON_SELECT, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_SELECT)},
     {{LANG_BUTTON_START, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_START)},
 #else
-    {{LANG_BUTTON_A, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_A)},
-    {{LANG_BUTTON_B, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_B)},
-    {{LANG_BUTTON_X, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_X)},
-    {{LANG_BUTTON_Y, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_Y)},
-    {{LANG_BUTTON_L, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L)},
-    {{LANG_BUTTON_R, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R)},
+    {{LANG_BUTTON_A, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_B)},
+    {{LANG_BUTTON_B, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_A)},
+    {{LANG_BUTTON_X, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_Y)},
+    {{LANG_BUTTON_Y, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_X)},
+    {{LANG_BUTTON_L1, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L)},
+    {{LANG_BUTTON_R1, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R)},
     {{LANG_BUTTON_L2, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L2)},
     {{LANG_BUTTON_R2, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R2)},
     {{LANG_BUTTON_L3, NULL}, RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L3)},
@@ -193,31 +193,31 @@ static KeyMapEntry emu_keymap_entries[] = {
 
 static KeyMapEntry hotkey_keymap_entries[] = {
     {{LANG_TURBO, NULL}, TURBO_BITMASK_KEY},
-    {{LANG_BUTTON_PSBUTTON, NULL}, SCE_CTRL_PSBUTTON},
-    {{LANG_BUTTON_LEFT, NULL}, SCE_CTRL_LEFT},
-    {{LANG_BUTTON_UP, NULL}, SCE_CTRL_UP},
-    {{LANG_BUTTON_RIGHT, NULL}, SCE_CTRL_RIGHT},
-    {{LANG_BUTTON_DOWN, NULL}, SCE_CTRL_DOWN},
-    {{LANG_BUTTON_CROSS, NULL}, SCE_CTRL_CROSS},
-    {{LANG_BUTTON_CIRCLE, NULL}, SCE_CTRL_CIRCLE},
-    {{LANG_BUTTON_SQUARE, NULL}, SCE_CTRL_SQUARE},
-    {{LANG_BUTTON_TRIANGLE, NULL}, SCE_CTRL_TRIANGLE},
-    {{LANG_BUTTON_L, NULL}, SCE_CTRL_L1},
-    {{LANG_BUTTON_R, NULL}, SCE_CTRL_R1},
-    {{LANG_BUTTON_L2, NULL}, SCE_CTRL_L2},
-    {{LANG_BUTTON_R2, NULL}, SCE_CTRL_R2},
-    {{LANG_BUTTON_L3, NULL}, SCE_CTRL_L3},
-    {{LANG_BUTTON_R3, NULL}, SCE_CTRL_R3},
-    {{LANG_BUTTON_SELECT, NULL}, SCE_CTRL_SELECT},
-    {{LANG_BUTTON_START, NULL}, SCE_CTRL_START},
-    {{LANG_BUTTON_LEFT_ANALOG_LEFT, NULL}, EXT_CTRL_LEFT_ANLOG_LEFT},
-    {{LANG_BUTTON_LEFT_ANALOG_UP, NULL}, EXT_CTRL_LEFT_ANLOG_UP},
-    {{LANG_BUTTON_LEFT_ANALOG_RIGHT, NULL}, EXT_CTRL_LEFT_ANLOG_RIGHT},
-    {{LANG_BUTTON_LEFT_ANALOG_DOWN, NULL}, EXT_CTRL_LEFT_ANLOG_DOWN},
-    {{LANG_BUTTON_RIGHT_ANALOG_LEFT, NULL}, EXT_CTRL_RIGHT_ANLOG_LEFT},
-    {{LANG_BUTTON_RIGHT_ANALOG_UP, NULL}, EXT_CTRL_RIGHT_ANLOG_UP},
-    {{LANG_BUTTON_RIGHT_ANALOG_RIGHT, NULL}, EXT_CTRL_RIGHT_ANLOG_RIGHT},
-    {{LANG_BUTTON_RIGHT_ANALOG_DOWN, NULL}, EXT_CTRL_RIGHT_ANLOG_DOWN},
+    {{LANG_LOCAL_BUTTON_HOME, NULL}, GUI_CTRL_BUTTON_HOME},
+    {{LANG_LOCAL_BUTTON_LEFT, NULL}, GUI_CTRL_BUTTON_LEFT},
+    {{LANG_LOCAL_BUTTON_UP, NULL}, GUI_CTRL_BUTTON_UP},
+    {{LANG_LOCAL_BUTTON_RIGHT, NULL}, GUI_CTRL_BUTTON_RIGHT},
+    {{LANG_LOCAL_BUTTON_DOWN, NULL}, GUI_CTRL_BUTTON_DOWN},
+    {{LANG_LOCAL_BUTTON_A, NULL}, GUI_CTRL_BUTTON_A},
+    {{LANG_LOCAL_BUTTON_B, NULL}, GUI_CTRL_BUTTON_B},
+    {{LANG_LOCAL_BUTTON_X, NULL}, GUI_CTRL_BUTTON_X},
+    {{LANG_LOCAL_BUTTON_Y, NULL}, GUI_CTRL_BUTTON_Y},
+    {{LANG_LOCAL_BUTTON_L1, NULL}, GUI_CTRL_BUTTON_L1},
+    {{LANG_LOCAL_BUTTON_R1, NULL}, GUI_CTRL_BUTTON_R1},
+    {{LANG_LOCAL_BUTTON_L2, NULL}, GUI_CTRL_BUTTON_L2},
+    {{LANG_LOCAL_BUTTON_R2, NULL}, GUI_CTRL_BUTTON_R2},
+    {{LANG_LOCAL_BUTTON_L3, NULL}, GUI_CTRL_BUTTON_L3},
+    {{LANG_LOCAL_BUTTON_R3, NULL}, GUI_CTRL_BUTTON_R3},
+    {{LANG_LOCAL_BUTTON_SELECT, NULL}, GUI_CTRL_BUTTON_SELECT},
+    {{LANG_LOCAL_BUTTON_START, NULL}, GUI_CTRL_BUTTON_START},
+    {{LANG_LOCAL_BUTTON_LEFT_ANALOG_LEFT, NULL}, GUI_CTRL_BUTTON_LEFT_ANLOG_LEFT},
+    {{LANG_LOCAL_BUTTON_LEFT_ANALOG_UP, NULL}, GUI_CTRL_BUTTON_LEFT_ANLOG_UP},
+    {{LANG_LOCAL_BUTTON_LEFT_ANALOG_RIGHT, NULL}, GUI_CTRL_BUTTON_LEFT_ANLOG_RIGHT},
+    {{LANG_LOCAL_BUTTON_LEFT_ANALOG_DOWN, NULL}, GUI_CTRL_BUTTON_LEFT_ANLOG_DOWN},
+    {{LANG_LOCAL_BUTTON_RIGHT_ANALOG_LEFT, NULL}, GUI_CTRL_BUTTON_RIGHT_ANLOG_LEFT},
+    {{LANG_LOCAL_BUTTON_RIGHT_ANALOG_UP, NULL}, GUI_CTRL_BUTTON_RIGHT_ANLOG_UP},
+    {{LANG_LOCAL_BUTTON_RIGHT_ANALOG_RIGHT, NULL}, GUI_CTRL_BUTTON_RIGHT_ANLOG_RIGHT},
+    {{LANG_LOCAL_BUTTON_RIGHT_ANALOG_DOWN, NULL}, GUI_CTRL_BUTTON_RIGHT_ANLOG_DOWN},
 };
 
 // 图形 (设置选项)
@@ -233,17 +233,17 @@ static StrArrayOption overlay_mode_option = {&graphics_config.overlay_mode, over
 static StrArrayOption show_fps_option = {&graphics_config.show_fps, no_yes_names, sizeof(no_yes_names) / sizeof(LangString)};
 
 // 控制 (设置选项)
-static StrArrayOption ctrl_player_option = {&control_config.ctrl_player, ctrl_player_names, sizeof(ctrl_player_names) / sizeof(LangString)};
+static StrArrayOption controller_port_option = {&control_config.controller_port, controller_port_names, sizeof(controller_port_names) / sizeof(LangString)};
 static KeyMapOption button_left_option = {&control_config.button_left, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
 static KeyMapOption button_up_option = {&control_config.button_up, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
 static KeyMapOption button_right_option = {&control_config.button_right, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
 static KeyMapOption button_down_option = {&control_config.button_down, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
-static KeyMapOption button_cross_option = {&control_config.button_cross, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
-static KeyMapOption button_circle_option = {&control_config.button_circle, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
-static KeyMapOption button_square_option = {&control_config.button_square, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
-static KeyMapOption button_triangle_option = {&control_config.button_triangle, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
-static KeyMapOption button_l_option = {&control_config.button_l, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
-static KeyMapOption button_r_option = {&control_config.button_r, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
+static KeyMapOption button_cross_option = {&control_config.button_a, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
+static KeyMapOption button_circle_option = {&control_config.button_b, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
+static KeyMapOption button_square_option = {&control_config.button_x, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
+static KeyMapOption button_triangle_option = {&control_config.button_y, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
+static KeyMapOption button_l_option = {&control_config.button_l1, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
+static KeyMapOption button_r_option = {&control_config.button_r1, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
 static KeyMapOption button_l2_option = {&control_config.button_l2, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
 static KeyMapOption button_r2_option = {&control_config.button_r2, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
 static KeyMapOption button_l3_option = {&control_config.button_l3, emu_keymap_entries, sizeof(emu_keymap_entries) / sizeof(KeyMapEntry)};
@@ -263,13 +263,13 @@ static StrArrayOption back_touch_pad_option = {&control_config.back_touch_pad, n
 static IntRangeOption turbo_delay_option = {&control_config.turbo_delay, 1, 30, 1, "%d"};
 
 // 热键 (设置选项)
-static KeyMapOption hk_savestate_option = {&hotkey_config.hk_savestate, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
-static KeyMapOption hk_loadstate_option = {&hotkey_config.hk_loadstate, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
+static KeyMapOption hk_savestate_option = {&hotkey_config.hk_save_state, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
+static KeyMapOption hk_loadstate_option = {&hotkey_config.hk_load_state, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
 static KeyMapOption hk_speed_up_option = {&hotkey_config.hk_speed_up, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
 static KeyMapOption hk_speed_down_option = {&hotkey_config.hk_speed_down, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
 static KeyMapOption hk_rewind_game_option = {&hotkey_config.hk_rewind_game, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
-static KeyMapOption hk_player_up_option = {&hotkey_config.hk_player_up, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
-static KeyMapOption hk_player_down_option = {&hotkey_config.hk_player_down, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
+static KeyMapOption hk_controller_up_option = {&hotkey_config.hk_controller_up, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
+static KeyMapOption hk_controller_down_option = {&hotkey_config.hk_controller_down, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
 static KeyMapOption hk_exit_game_option = {&hotkey_config.hk_exit_game, hotkey_keymap_entries, sizeof(hotkey_keymap_entries) / sizeof(KeyMapEntry)};
 
 // 杂项 (设置选项)
@@ -313,32 +313,32 @@ static SettingMenuItem graphics_menu_items[] = {
 
 // 控制 (菜单条目)
 static SettingMenuItem control_menu_items[] = {
-    STRARRAY_OPTION_ITEM(LANG_CTRL_PLAYER, &ctrl_player_option, NULL, NULL),
+    STRARRAY_OPTION_ITEM(LANG_CONTROLLER_PORT, &controller_port_option, NULL, NULL),
 
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_LEFT, &button_left_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_UP, &button_up_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_RIGHT, &button_right_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_DOWN, &button_down_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_CROSS, &button_cross_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_CIRCLE, &button_circle_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_SQUARE, &button_square_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_TRIANGLE, &button_triangle_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_L, &button_l_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_R, &button_r_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_L2, &button_l2_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_R2, &button_r2_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_L3, &button_l3_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_R3, &button_r3_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_SELECT, &button_select_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_START, &button_start_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_LEFT_ANALOG_UP, &left_analog_up_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_LEFT_ANALOG_LEFT, &left_analog_left_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_LEFT_ANALOG_RIGHT, &left_analog_right_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_LEFT_ANALOG_DOWN, &left_analog_down_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_RIGHT_ANALOG_LEFT, &right_analog_left_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_RIGHT_ANALOG_UP, &right_analog_up_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_RIGHT_ANALOG_RIGHT, &right_analog_right_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_BUTTON_RIGHT_ANALOG_DOWN, &right_analog_down_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_LEFT, &button_left_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_UP, &button_up_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_RIGHT, &button_right_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_DOWN, &button_down_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_A, &button_cross_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_B, &button_circle_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_X, &button_square_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_Y, &button_triangle_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_L1, &button_l_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_R1, &button_r_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_L2, &button_l2_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_R2, &button_r2_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_L3, &button_l3_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_R3, &button_r3_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_SELECT, &button_select_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_START, &button_start_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_LEFT_ANALOG_LEFT, &left_analog_left_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_LEFT_ANALOG_UP, &left_analog_up_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_LEFT_ANALOG_RIGHT, &left_analog_right_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_LEFT_ANALOG_DOWN, &left_analog_down_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_RIGHT_ANALOG_LEFT, &right_analog_left_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_RIGHT_ANALOG_UP, &right_analog_up_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_RIGHT_ANALOG_RIGHT, &right_analog_right_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_LOCAL_BUTTON_RIGHT_ANALOG_DOWN, &right_analog_down_option, NULL, NULL),
 
     STRARRAY_OPTION_ITEM(LANG_FRONT_TOUCH_TO_BUTTON, &front_touch_pad_option, &setting_visibility_touch_to_button_item, NULL),
     STRARRAY_OPTION_ITEM(LANG_BACK_TOUCH_TO_BUTTON, &back_touch_pad_option, &setting_visibility_touch_to_button_item, NULL),
@@ -353,8 +353,8 @@ static SettingMenuItem hotkey_menu_items[] = {
     KEYMAP_OPTION_ITEM(LANG_HOTKEY_GAME_SPEED_UP, &hk_speed_up_option, NULL, NULL),
     KEYMAP_OPTION_ITEM(LANG_HOTKEY_GAME_SPEED_DOWN, &hk_speed_down_option, NULL, NULL),
     KEYMAP_OPTION_ITEM(LANG_HOTKEY_GAME_REWIND, &hk_rewind_game_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_HOTKEY_CONTROL_PLAYER_UP, &hk_player_up_option, NULL, NULL),
-    KEYMAP_OPTION_ITEM(LANG_HOTKEY_CONTROL_PLAYER_DOWN, &hk_player_down_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_HOTKEY_CONTROLLER_PORT_UP, &hk_controller_up_option, NULL, NULL),
+    KEYMAP_OPTION_ITEM(LANG_HOTKEY_CONTROLLER_PORT_DOWN, &hk_controller_down_option, NULL, NULL),
     KEYMAP_OPTION_ITEM(LANG_HOTKEY_EXIT_GAME, &hk_exit_game_option, NULL, NULL),
     FUCNTION_ITEM(LANG_RESET_CONFIGS, NULL, Setting_onResetHotkeyConfigItemClick),
 };

@@ -22,12 +22,12 @@ static int onDrawActivity(GUI_Activity *activity);
 static int onCtrlActivity(GUI_Activity *activity);
 
 static GUI_ButtonInstruction button_instructions[] = {
-    {LANG_BUTTON_CANCEL, LANG_PARENT_DIR, 1},
-    {LANG_BUTTON_ENTER, LANG_OPEN_DIR, 1},
-    {LANG_BUTTON_TRIANGLE, LANG_OPTION_MENU, 1},
-    {LANG_BUTTON_PSBUTTON, LANG_SETTING_MENU, 1},
-    {LANG_BUTTON_SELECT, LANG_ABOUT, 1},
-    {LANG_BUTTON_START, LANG_CHANGE_DIR, 1},
+    {LANG_LOCAL_BUTTON_CANCEL, LANG_PARENT_DIR, 1},
+    {LANG_LOCAL_BUTTON_ENTER, LANG_OPEN_DIR, 1},
+    {LANG_LOCAL_BUTTON_Y, LANG_OPTION_MENU, 1},
+    {LANG_LOCAL_BUTTON_HOME, LANG_SETTING_MENU, 1},
+    {LANG_LOCAL_BUTTON_SELECT, LANG_ABOUT, 1},
+    {LANG_LOCAL_BUTTON_START, LANG_CHANGE_DIR, 1},
     {LANG_NULL, LANG_NULL, 0},
 };
 
@@ -47,7 +47,7 @@ GUI_Activity browser_activity = {
     NULL,                 // User data
 };
 
-enum IndexOptionItem
+enum OptionItemIndex
 {
     INDEX_OPTION_ITEM_LOAD_GAME,
     INDEX_OPTION_ITEM_DELETE_GAME,
@@ -252,7 +252,7 @@ static int destroyLayout()
     return 0;
 }
 
-int CurrentPathIsGame()
+int Browser_CurrentPathIsGame()
 {
     int focus_pos = ListViewGetFocusPos(browser_listview);
     LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
@@ -263,7 +263,7 @@ int CurrentPathIsGame()
     return 0;
 }
 
-int GetCurrentFileType()
+int Browser_GetCurrentRomType()
 {
     int focus_pos = ListViewGetFocusPos(browser_listview);
     LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
@@ -271,10 +271,10 @@ int GetCurrentFileType()
     if (!data)
         return -1;
 
-    return data->type;
+    return data->rom_type;
 }
 
-int MakeCurrentFileName(char *name)
+int Browser_MakeCurrentFileName(char *name)
 {
     int focus_pos = ListViewGetFocusPos(browser_listview);
     LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
@@ -282,11 +282,11 @@ int MakeCurrentFileName(char *name)
     if (!data || !data->name)
         return -1;
 
-    snprintf(name, MAX_NAME_LENGTH, data->name);
+    snprintf(name, MAX_NAME_LENGTH, "%s", data->name);
     return 0;
 }
 
-int MakeCurrentFilePath(char *path)
+int Browser_MakeCurrentFilePath(char *path)
 {
     FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
     int focus_pos = ListViewGetFocusPos(browser_listview);
@@ -296,48 +296,6 @@ int MakeCurrentFilePath(char *path)
         return -1;
 
     snprintf(path, MAX_PATH_LENGTH, "%s%s", ls_data->path, e_data->name);
-    return 0;
-}
-
-int MakePreviewPath(char *path, char *ext)
-{
-    FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
-    int focus_pos = ListViewGetFocusPos(browser_listview);
-    LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
-    FileListEntryData *e_data = (FileListEntryData *)LinkedListGetEntryData(entry);
-    if (!ls_data || !e_data || !e_data->name)
-        return -1;
-
-    char base_name[MAX_NAME_LENGTH];
-    int ret = MakeBaseName(base_name, e_data->name, MAX_NAME_LENGTH);
-    if (ret < 0)
-        return -1;
-
-    snprintf(path, MAX_PATH_LENGTH, "%s%s/%s.%s", ls_data->path, PREVIEW_DIR_NAME, base_name, ext);
-    return 0;
-}
-
-int MakeScreenshotPath(char *path)
-{
-    int focus_pos = ListViewGetFocusPos(browser_listview);
-    LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
-    FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
-    if (!data || !data->name)
-        return -1;
-
-    char base_name[MAX_NAME_LENGTH];
-    int ret = MakeBaseName(base_name, data->name, MAX_NAME_LENGTH);
-    if (ret < 0)
-        return -1;
-
-    int i;
-    for (i = 0; i < 1000; i++)
-    {
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s_%d.png", CORE_SCREENSHOTS_DIR, base_name, i);
-        if (!CheckFileExist(path))
-            return 1;
-    }
-
     return 0;
 }
 
@@ -623,7 +581,7 @@ static void startGame(LinkedListEntry *entry)
 
     EmuGameInfo info;
     snprintf(info.path, MAX_PATH_LENGTH, "%s%s", ls_data->path, e_data->name);
-    info.type = e_data->type;
+    info.rom_type = e_data->rom_type;
     info.state_num = -2;
     Emu_StartGame(&info);
 }
@@ -631,7 +589,7 @@ static void startGame(LinkedListEntry *entry)
 static int onAlertDialogDeleteGame(AlertDialog *dialog, int which)
 {
     char path[MAX_PATH_LENGTH];
-    if (MakeCurrentFilePath(path) < 0)
+    if (MakeCurrentGamePath(path) < 0)
         return -1;
 
     sceIoRemove(path);
@@ -688,7 +646,7 @@ static int onAlertDialogDeleteCacheFiles(AlertDialog *dialog, int which)
 {
 #if defined(WANT_EXT_ARCHIVE_ROM)
     char path[MAX_PATH_LENGTH];
-    MakeCurrentFilePath(path);
+    MakeCurrentGamePath(path);
     Archive_CleanCacheByPath(path);
 #endif
 
@@ -887,7 +845,7 @@ static int onCtrlActivity(GUI_Activity *activity)
     {
         moveFileListPos(TYPE_MOVE_RIGHT);
     }
-    else if (released_pad[PAD_TRIANGLE])
+    else if (released_pad[PAD_Y])
     {
         openOptionMenu();
     }
@@ -907,7 +865,7 @@ static int onCtrlActivity(GUI_Activity *activity)
     {
         Browser_ChangeDirBySaveFile(LASTFILE_PATH);
     }
-    else if (released_pad[PAD_PSBUTTON])
+    else if (released_pad[PAD_HOME])
     {
         if (GUI_IsHomeKeyEnabled())
             Setting_OpenMenu();

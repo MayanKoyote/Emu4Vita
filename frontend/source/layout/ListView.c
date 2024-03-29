@@ -60,7 +60,7 @@ static void ListViewDestroy(void *view)
     free(listView);
 }
 
-static int ListViewUpdateChild(ListView *listView, void *itemView, int available_w, int available_h, int *wrap_w, int *wrap_h, int has_divier)
+static int ListViewUpdateChild(ListView *listView, void *itemView, int available_w, int available_h, int *wrap_w, int *wrap_h, int has_divider)
 {
     if (!listView || !itemView)
         return -1;
@@ -77,7 +77,7 @@ static int ListViewUpdateChild(ListView *listView, void *itemView, int available
     if (ls_params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_HORIZONTAL)
     {
         *wrap_w += occupy_w;
-        if (has_divier)
+        if (has_divider)
             *wrap_w += listView->divider_size;
         if (occupy_h > *wrap_h)
             *wrap_h = occupy_h;
@@ -85,7 +85,7 @@ static int ListViewUpdateChild(ListView *listView, void *itemView, int available
     else if (ls_params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_VERTICAL)
     {
         *wrap_h += occupy_h;
-        if (has_divier)
+        if (has_divider)
             *wrap_h += listView->divider_size;
         if (occupy_w > *wrap_w)
             *wrap_w = occupy_w;
@@ -129,8 +129,8 @@ static int ListViewUpdate(void *view)
     {
         LinkedListEntry *next = LinkedListNext(entry);
         void *itemView = LinkedListGetEntryData(entry);
-        int has_divier = (next != NULL); // 不绘制最后一个 divier
-        ListViewUpdateChild(listView, itemView, children_available_w, children_available_h, &children_wrap_w, &children_wrap_h, has_divier);
+        int has_divider = (next != NULL); // 不绘制最后一个 divider
+        ListViewUpdateChild(listView, itemView, children_available_w, children_available_h, &children_wrap_w, &children_wrap_h, has_divider);
         entry = next;
     }
 
@@ -168,7 +168,7 @@ static int ListViewUpdate(void *view)
     return 0;
 }
 
-static int ListViewDrawChild(ListView *listView, void *itemView, int *x, int *y, int min_x, int min_y, int max_x, int max_y, int index, int has_divier)
+static int ListViewDrawChild(ListView *listView, void *itemView, int *x, int *y, int min_x, int min_y, int max_x, int max_y, int index, int has_divider)
 {
     if (!listView || !itemView)
         return 0;
@@ -186,7 +186,7 @@ static int ListViewDrawChild(ListView *listView, void *itemView, int *x, int *y,
     if (ls_params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_HORIZONTAL)
     {
         next_x = dx;
-        if (has_divier)
+        if (has_divider)
             next_x += listView->divider_size;
         if (dx <= min_x)
             goto NEXT;
@@ -196,7 +196,7 @@ static int ListViewDrawChild(ListView *listView, void *itemView, int *x, int *y,
     else if (ls_params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_VERTICAL)
     {
         next_y = dy;
-        if (has_divier)
+        if (has_divider)
             next_y += listView->divider_size;
         if (dy <= min_y)
             goto NEXT;
@@ -208,7 +208,7 @@ static int ListViewDrawChild(ListView *listView, void *itemView, int *x, int *y,
     LayoutParamsDraw(itemView);
 
     // 绘制分割线
-    if (has_divier && listView->divider_color && listView->divider_size > 0)
+    if (has_divider && listView->divider_color && listView->divider_size > 0)
     {
         if (ls_params->orientation == TYPE_LAYOUT_PARAMS_ORIENTATION_HORIZONTAL)
             GUI_DrawFillRectangle(dx, *y, listView->divider_size, it_params->measured_h, listView->divider_color);
@@ -266,12 +266,12 @@ int ListViewDraw(void *view)
         {
             LinkedListEntry *next = LinkedListNext(entry);
             void *itemView = LinkedListGetEntryData(entry);
-            int has_divier = (next != NULL); // 不绘制最后一个 divier
+            int has_divider = (next != NULL); // 不绘制最后一个 divider
 
             if (listView->callbacks.onBeforeDrawItemView)
                 listView->callbacks.onBeforeDrawItemView(listView, itemView, index);
 
-            if (ListViewDrawChild(listView, itemView, &child_x, &child_y, children_sx, children_sy, children_dx, children_dy, index, has_divier) < 0)
+            if (ListViewDrawChild(listView, itemView, &child_x, &child_y, children_sx, children_sy, children_dx, children_dy, index, has_divider) < 0)
                 break;
             entry = next;
             index++;

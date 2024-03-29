@@ -4,17 +4,12 @@
 #include <stdio.h>
 
 #include <psp2/kernel/threadmgr.h>
-#include <psp2/system_param.h>
-#include <psp2/power.h>
-#include <psp2/ctrl.h>
 
 #include "gui.h"
 #include "utils.h"
-#include "lang.h"
-#include "init.h"
+#include "app.h"
 
-static int gui_async_draw = 0;
-static SceUID gui_draw_thid = -1;
+static SceKernelLwMutexWork gui_draw_mutex = {0};
 static GUI_Texture *gui_images[N_GUI_IMAGES] = {0};
 
 extern int GUI_BeforeDrawActivity();
@@ -102,12 +97,12 @@ static void GUI_AfterDrawMain()
 
 static void onHomeKeyEvent()
 {
-    if (released_pad[PAD_PSBUTTON])
+    if (released_pad[PAD_HOME])
     {
         if (GUI_IsHomeKeyEnabled() && GUI_IsHomeEventEnabled() && !GUI_IsInMainActivity())
         {
             GUI_SetHomeKeyEnabled(0);
-            GUI_CloseWindowEx(TYPE_WINDOW_CLOSE_ALL, NULL);
+            GUI_CloseAllWindows();
             GUI_BackToMainActivity();
         }
     }
@@ -129,62 +124,34 @@ static void GUI_EventMain()
     GUI_EventWindow();
 }
 
-void GUI_Run()
+void GUI_RunMain()
 {
-    if (!gui_async_draw)
-    {
-        GUI_BeforeDrawMain();
-        GUI_DrawMain();
-        GUI_AfterDrawMain();
-    }
+    GUI_BeforeDrawMain();
+    GUI_DrawMain();
+    GUI_AfterDrawMain();
     GUI_CtrlMain();
     GUI_EventMain();
     AutoUnlockQuickMenu();
 }
 
-static int guiDrawThreadEntry(SceSize args, void *argp)
+int GUI_LockDrawMutex()
 {
-    while (gui_async_draw)
-    {
-        GUI_BeforeDrawMain();
-        GUI_DrawMain();
-        GUI_AfterDrawMain();
-    }
+    return sceKernelLockLwMutex(&gui_draw_mutex, 1, NULL);
+}
 
-    sceKernelExitThread(0);
+int GUI_UnlockDrawMutex()
+{
+    return sceKernelUnlockLwMutex(&gui_draw_mutex, 1);
+}
+
+int GUI_InitDraw()
+{
+    sceKernelCreateLwMutex(&gui_draw_mutex, "gui_draw_mutex", 2, 0, NULL);
     return 0;
 }
 
-int GUI_StartAsyncDraw()
+int GUI_DeinitDraw()
 {
-    int ret = 0;
-
-    if (gui_draw_thid < 0)
-    {
-        ret = gui_draw_thid = sceKernelCreateThread("gui_draw_thread", guiDrawThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
-        if (gui_draw_thid >= 0)
-        {
-            gui_async_draw = 1;
-            ret = sceKernelStartThread(gui_draw_thid, 0, NULL);
-            if (ret < 0)
-            {
-                gui_async_draw = 0;
-                sceKernelDeleteThread(gui_draw_thid);
-                gui_draw_thid = -1;
-            }
-        }
-    }
-
-    return ret;
-}
-
-void GUI_FinishAsyncDraw()
-{
-    if (gui_draw_thid >= 0)
-    {
-        gui_async_draw = 0;
-        sceKernelWaitThreadEnd(gui_draw_thid, NULL, NULL);
-        sceKernelDeleteThread(gui_draw_thid);
-        gui_draw_thid = -1;
-    }
+    sceKernelDeleteLwMutex(&gui_draw_mutex);
+    return 0;
 }

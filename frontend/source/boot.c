@@ -21,8 +21,8 @@
 static int boot_mode = 0;
 static char *boot_game_path = NULL;
 static char *restore_app_path = NULL;
-static int bootparams_argc = 0;
-static char **bootparams_argv = NULL;
+static int boot_argc = 0;
+static char **boot_argv = NULL;
 
 int BootGetMode()
 {
@@ -38,20 +38,20 @@ int BootLoadGame()
 
     EmuGameInfo info;
     strcpy(info.path, boot_game_path);
-    info.type = GetFileType(boot_game_path);
+    info.rom_type = GetRomType(boot_game_path);
     info.state_num = -2;
     Emu_StartGame(&info);
 
     return 0;
 }
 
-static int readBootParamString(const char *str)
+static int BootReadParam(const char *args)
 {
     char *name = NULL;
     char *value = NULL;
-    int ret = StringReadConfigLine(str, &name, &value);
-    if (ret < 0)
-        return ret;
+
+    if (StringReadConfigLine(args, &name, &value) < 0)
+        return -1;
 
     if (strcasecmp(name, STR_KEY_BOOT_MODE) == 0)
     {
@@ -91,20 +91,20 @@ int BootCheckParams(int argc, char *const *argv)
     if (argc < 2)
         goto END;
 
-    AppLog("[BOOT] argc: %d\n", argc);
-    bootparams_argc = argc;
-    bootparams_argv = (char **)calloc(argc, sizeof(char *));
+    APP_LOG("[BOOT] argc: %d\n", argc);
+    boot_argc = argc;
+    boot_argv = (char **)calloc(argc, sizeof(char *));
 
     int i, len;
     for (i = 1; i < argc; i++)
     {
         len = strlen(argv[i]);
-        bootparams_argv[i - 1] = (char *)malloc(len + 1);
-        strcpy(bootparams_argv[i - 1], argv[i]);
-        readBootParamString(argv[i]);
-        AppLog("[BOOT] argv[%d]: %s\n", i, argv[i]);
+        boot_argv[i - 1] = (char *)malloc(len + 1);
+        strcpy(boot_argv[i - 1], argv[i]);
+        BootReadParam(argv[i]);
+        APP_LOG("[BOOT] argv[%d]: %s\n", i, argv[i]);
     }
-    bootparams_argv[bootparams_argc - 1] = NULL;
+    boot_argv[boot_argc - 1] = NULL;
 
 END:
     if (!public_assets_dir)
@@ -112,34 +112,28 @@ END:
         public_assets_dir = (char *)malloc(MAX_PATH_LENGTH);
         strcpy(public_assets_dir, APP_ASSETS_DIR);
     }
-    AppLog("[BOOT] Public assets dir: %s\n", public_assets_dir);
+    APP_LOG("[BOOT] Public assets dir: %s\n", public_assets_dir);
 
     return 0;
 }
 
-int BootLoadExec(char *app_path, char *const *argv)
+int BootLoadExec(const char *app_path, char *const *argv)
 {
+    APP_LOG("[BOOT] BootLoadExec: %s\n", app_path);
     return sceAppMgrLoadExec(app_path, argv, NULL);
 }
 
-int BootLoadParentExec()
+int BootRestoreApp()
 {
     if (boot_mode <= 0)
         return -1;
 
-    char *app_path;
-    if (restore_app_path)
-        app_path = restore_app_path;
-    else
-        app_path = "app0:eboot.bin";
-    AppLog("[BOOT] Return to %s\n", app_path);
+    const char *app_path = restore_app_path ? restore_app_path : "app0:eboot.bin";
 
-    int ret = BootLoadExec(app_path, bootparams_argv);
-
-    return ret;
+    return BootLoadExec(app_path, boot_argv);
 }
 
-int BootLoadExecForGame(char *app_path, char *game_path, char *assets_dir)
+int BootLoadExecForGame(const char *app_path, char *game_path, char *assets_dir)
 {
     if (!CheckFileExist(app_path))
         return -1;
@@ -168,7 +162,7 @@ int BootLoadExecForGame(char *app_path, char *game_path, char *assets_dir)
     return ret;
 }
 
-int BootLoadExecForCore(char *app_path, char *assets_dir)
+int BootLoadExecForCore(const char *app_path, char *assets_dir)
 {
     if (!CheckFileExist(app_path))
         return -1;

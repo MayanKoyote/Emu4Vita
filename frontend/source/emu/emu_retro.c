@@ -72,7 +72,7 @@ static int creatCoreValidExtensions()
     if (!exts)
         return -1;
 
-    AppLog("[RETRO] Valid ext: %s\n", exts);
+    APP_LOG("[RETRO] Valid ext: %s\n", exts);
 
     exts_len = strlen(exts);
     if (exts_len == 0)
@@ -132,9 +132,9 @@ void Retro_SetControllerPortDevices()
         retro_set_controller_port_device(i, emu_device_type);
 }
 
-int Retro_InitLib()
+int Emu_InitRetro()
 {
-    AppLog("[RETRO] Retro lib init...\n");
+    APP_LOG("[RETRO] Retro lib init...\n");
 
     pthread_init();
     rtime_init();
@@ -146,20 +146,20 @@ int Retro_InitLib()
     retro_get_system_info(&core_system_info);
     creatCoreValidExtensions();
 
-    AppLog("[RETRO] Retro lib init OK!\n");
+    APP_LOG("[RETRO] Retro lib init OK!\n");
 
     return 0;
 }
 
-int Retro_DeinitLib()
+int Emu_DeinitRetro()
 {
-    AppLog("[RETRO] Retro lib deinit...\n");
+    APP_LOG("[RETRO] Retro lib deinit...\n");
 
     rtime_deinit();
     pthread_terminate();
     freeCoreValidExtensions();
 
-    AppLog("[RETRO] Retro lib deinit OK!\n");
+    APP_LOG("[RETRO] Retro lib deinit OK!\n");
 
     return 0;
 }

@@ -4,16 +4,16 @@
 enum BootMode
 {
     BOOT_MODE_NONE,
-	BOOT_MODE_GAME,
+    BOOT_MODE_GAME,
     BOOT_MODE_ARCH,
 };
 
 int BootGetMode();
 int BootLoadGame();
 int BootCheckParams(int argc, char *const *argv);
-int BootLoadExec(char *app_path, char *const *argv);
-int BootLoadParentExec();
-int BootLoadExecForGame(char *app_path, char *game_path, char *assets_dir);
-int BootLoadExecForCore(char *app_path, char *assets_dir);
+int BootLoadExec(const char *app_path, char *const *argv);
+int BootRestoreApp();
+int BootLoadExecForGame(const char *app_path, char *game_path, char *assets_dir);
+int BootLoadExecForCore(const char *app_path, char *assets_dir);
 
 #endif

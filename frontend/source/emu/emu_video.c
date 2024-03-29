@@ -53,12 +53,6 @@ void Emu_ResumeVideo()
 {
     video_pause = 0;
     GUI_SetVblankWait(0);
-    GUI_SignalDrawSema(); // 防止卡死
-}
-
-int Emu_IsVideoPaused()
-{
-    return video_pause;
 }
 
 void Emu_RequestUpdateVideoDisplay()
@@ -66,7 +60,7 @@ void Emu_RequestUpdateVideoDisplay()
     video_display_need_update = 1;
 }
 
-void Emu_ShowCtrlPlayerToast()
+void Emu_ShowControllerPortToast()
 {
     show_player_micros = sceKernelGetProcessTimeWide() + SHOW_PLAYER_DURATION_MICROS;
 }
@@ -292,10 +286,10 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
     }
 
     // Use gpu to conver image
-    rendert_tex = GUI_CreateTextureRendertarget(GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, GUI_PIXEL_FORMAT_U8U8U8U8_ABGR);
+    rendert_tex = GUI_CreateTextureRendertarget(GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, SCEEENSHOT_PIXEL_FORMAT);
     if (!rendert_tex)
     {
-        AppLog("[VIDEO] Emu_GetVideoScreenshotData failed: cannot creat the rendertarget texture!\n");
+        APP_LOG("[VIDEO] Emu_GetVideoScreenshotData failed: cannot creat the rendertarget texture!\n");
         goto END;
     }
 
@@ -409,7 +403,7 @@ static GUI_Texture *createVideoTexture(int width, int height)
 
     if (!video_texture)
     {
-        AppLog("[VIDEO] create video texture failed\n");
+        APP_LOG("[VIDEO] create video texture failed\n");
         return NULL;
     }
 
@@ -462,7 +456,7 @@ static GUI_Texture *createOverlayTexture()
 
     if (!overlay_texture)
     {
-        AppLog("[VIDEO] create overlay texture failed\n");
+        APP_LOG("[VIDEO] create overlay texture failed\n");
         return NULL;
     }
 
@@ -580,6 +574,22 @@ static void checkFrameDelay()
     }
 }
 
+void Emu_BeforeDrawVideo()
+{
+    if (!video_okay)
+        return;
+
+    GUI_LockDrawMutex();
+
+    if (video_display_need_update)
+    {
+        updateVideoDisplay();
+        video_display_need_update = 0;
+    }
+
+    GUI_UnlockDrawMutex();
+}
+
 void Emu_DrawVideo()
 {
     if (!video_okay)
@@ -608,10 +618,10 @@ void Emu_DrawVideoWidgets()
         GUI_DrawTextf(0.0f, 0.0f, COLOR_WHITE, "FPS: %.2f", video_fps);
     }
 
-    if (Emu_GetCurrentRunSpeed() != 1.0f)
+    if (Emu_GetRunSpeed() != 1.0f)
     {
         char fps_scale_string[12];
-        snprintf(fps_scale_string, 12, "%.2fX", Emu_GetCurrentRunSpeed());
+        snprintf(fps_scale_string, 12, "%.2fX", Emu_GetRunSpeed());
         GUI_DrawText(GUI_SCREEN_WIDTH - GUI_GetTextWidth(fps_scale_string), 0.0f, COLOR_WHITE, fps_scale_string);
     }
 
@@ -619,26 +629,10 @@ void Emu_DrawVideoWidgets()
     {
         uint64_t cur_micros = sceKernelGetProcessTimeWide();
         if (cur_micros < show_player_micros)
-            GUI_DrawTextf(0.0f, GUI_SCREEN_HEIGHT - GUI_GetLineHeight(), COLOR_WHITE, "%s: %dP", cur_lang[LANG_CTRL_PLAYER], control_config.ctrl_player + 1);
+            GUI_DrawTextf(0.0f, GUI_SCREEN_HEIGHT - GUI_GetLineHeight(), COLOR_WHITE, "%s: %dP", cur_lang[LANG_CONTROLLER_PORT], control_config.controller_port + 1);
         else
             show_player_micros = 0;
     }
-}
-
-void Emu_EventVideo()
-{
-    if (!video_okay)
-        return;
-
-    GUI_LockDrawMutex();
-
-    if (video_display_need_update)
-    {
-        updateVideoDisplay();
-        video_display_need_update = 0;
-    }
-
-    GUI_UnlockDrawMutex();
 }
 
 void Retro_VideoRefreshCallback(const void *data, unsigned width, unsigned height, size_t pitch)
@@ -649,22 +643,24 @@ void Retro_VideoRefreshCallback(const void *data, unsigned width, unsigned heigh
     if (video_pause)
         goto SIGNAL_EXIT;
 
-    GUI_LockDrawMutex();
-
-    if (video_width != width || video_height != height || !video_texture ||
-        GUI_GetTextureFormat(video_texture) != core_video_pixel_format)
-    {
-        createVideoTexture(width, height);
-        video_display_need_update = 1;
-    }
-
     int next_texture_index = (video_texture_index + 1) % MAX_TEXTURE_BUFS;
     GUI_Texture *next_texture = video_texture_bufs[next_texture_index];
 
+    if (video_width != width || video_height != height || !next_texture ||
+        GUI_GetTextureFormat(next_texture) != core_video_pixel_format)
+    {
+        GUI_LockDrawMutex();
+        createVideoTexture(width, height);
+        updateVideoDisplay();
+        GUI_UnlockDrawMutex();
+        next_texture_index = video_texture_index;
+        next_texture = video_texture;
+    }
+
     if (!data || pitch <= 0)
-        goto UNLOCK_EXIT;
+        goto NEXT_FRAME;
     else if (next_texture && GUI_GetTextureDatap(next_texture) == data)
-        goto SET_NEXT_FRAME;
+        goto SET_NEXT_TEXTURE;
 
     if (next_texture)
     {
@@ -682,20 +678,22 @@ void Retro_VideoRefreshCallback(const void *data, unsigned width, unsigned heigh
         }
     }
 
-SET_NEXT_FRAME:
+SET_NEXT_TEXTURE:
+    GUI_LockDrawMutex();
     video_texture_index = next_texture_index;
     video_texture = next_texture;
-
-UNLOCK_EXIT:
     GUI_UnlockDrawMutex();
+
+NEXT_FRAME:
     checkFrameDelay();
+
 SIGNAL_EXIT:
     Emu_SignalVideoSema();
 }
 
 int Emu_InitVideo()
 {
-    AppLog("[VIDEO] Video init...\n");
+    APP_LOG("[VIDEO] Video init...\n");
 
     video_okay = 0;
     video_pause = 1;
@@ -706,23 +704,25 @@ int Emu_InitVideo()
     createOverlayTexture();
     video_semaid = sceKernelCreateSema("emu_video_sema", 0, 0, 1, NULL);
 
-    if (control_config.ctrl_player != 0)
-        Emu_ShowCtrlPlayerToast();
+    if (control_config.controller_port != 0)
+        Emu_ShowControllerPortToast();
 
-    AppLog("[VIDEO] max width: %d, max height: %d\n", core_system_av_info.geometry.max_width, core_system_av_info.geometry.max_height);
-    AppLog("[VIDEO] base width: %d, base height: %d\n", core_system_av_info.geometry.base_width, core_system_av_info.geometry.base_height);
-    AppLog("[VIDEO] FPS: %.2f\n", core_system_av_info.timing.fps);
-    AppLog("[VIDEO] Video init OK!\n");
+    APP_LOG("[VIDEO] max width: %d, max height: %d\n", core_system_av_info.geometry.max_width, core_system_av_info.geometry.max_height);
+    APP_LOG("[VIDEO] base width: %d, base height: %d\n", core_system_av_info.geometry.base_width, core_system_av_info.geometry.base_height);
+    APP_LOG("[VIDEO] FPS: %.2f\n", core_system_av_info.timing.fps);
+    APP_LOG("[VIDEO] Video init OK!\n");
 
-    updateVideoDisplay();
     video_okay = 1;
+    GUI_LockDrawMutex();
+    updateVideoDisplay();
+    GUI_UnlockDrawMutex();
 
     return 0;
 }
 
 int Emu_DeinitVideo()
 {
-    AppLog("[VIDEO] Video deinit...\n");
+    APP_LOG("[VIDEO] Video deinit...\n");
 
     video_okay = 0;
     video_pause = 1;
@@ -737,7 +737,7 @@ int Emu_DeinitVideo()
 
     GUI_SetVblankWait(1);
 
-    AppLog("[VIDEO] Video deinit OK!\n");
+    APP_LOG("[VIDEO] Video deinit OK!\n");
     return 0;
 }
 

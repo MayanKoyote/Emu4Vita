@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <psp2/kernel/threadmgr.h>
 #include <psp2/kernel/processmgr.h>
 #include <psp2/kernel/modulemgr.h>
 #include <psp2/power.h>
@@ -23,54 +22,56 @@
 #include "setting/setting.h"
 #include "gui/gui.h"
 #include "emu/emu.h"
-#include "init.h"
+#include "app.h"
 #include "utils.h"
 #include "file.h"
 #include "config.h"
 #include "boot.h"
 #include "lang.h"
 
+typedef enum AppExitEventAction
+{
+    APP_EXIT_EVENT_ACTION_NONE,
+    APP_EXIT_EVENT_ACTION_BACK_TO_ARCH,
+} AppExitEventAction;
+
 #ifdef SCE_LIBC_SIZE
 unsigned int sceLibcHeapSize = SCE_LIBC_SIZE;
 #endif
 
 static int app_run = 0;
+static AppExitEventAction app_exit_event_action = APP_EXIT_EVENT_ACTION_NONE;
+static int is_safe_mode = 0;
+static int is_vitatv_model = 0;
 
-int is_safe_mode = 0;
-int is_vitatv_model = 0;
+int system_language = 0, system_enter_button = 0, system_date_format = 0, system_time_format = 0;
 
-int language = 0, enter_button = 0, date_format = 0, time_format = 0;
-
-int isSafeMode()
+int CheckSafeMode()
 {
+    is_safe_mode = (sceIoDevctl("ux0:", 0x3001, NULL, 0, NULL, 0) == 0x80010030);
     return is_safe_mode;
 }
 
-int checkSafeMode()
+int CheckVitatvModel()
 {
-    if (sceIoDevctl("ux0:", 0x3001, NULL, 0, NULL, 0) == 0x80010030)
-        is_safe_mode = 1;
-
-    return is_safe_mode;
-}
-
-int isVitatvModel()
-{
+    is_vitatv_model = (sceKernelGetModel() == SCE_KERNEL_MODEL_VITATV);
     return is_vitatv_model;
 }
 
-int checkVitatvModel()
+int IsSafeMode()
 {
-    if (sceKernelGetModel() == SCE_KERNEL_MODEL_VITATV)
-        is_vitatv_model = 1;
+    return is_safe_mode;
+}
 
+int IsVitatvModel()
+{
     return is_vitatv_model;
 }
 
 static int onSafeModeAlertDialogNegativeClick(AlertDialog *dialog, int which)
 {
     AppExit();
-
+    AlertDialog_Dismiss(dialog);
     return 0;
 }
 
@@ -83,7 +84,7 @@ static void showSafeModeDialog()
     AlertDialog_Show(tip_dialog);
 }
 
-static void initSceAppUtil()
+static void InitSceAppUtil()
 {
     // Init SceAppUtil
     SceAppUtilInitParam init_param;
@@ -93,10 +94,10 @@ static void initSceAppUtil()
     sceAppUtilInit(&init_param, &boot_param);
 
     // System params
-    sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_LANG, &language);
-    sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_ENTER_BUTTON, &enter_button);
-    sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_DATE_FORMAT, &date_format);
-    sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_TIME_FORMAT, &time_format);
+    sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_LANG, &system_language);
+    sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_ENTER_BUTTON, &system_enter_button);
+    sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_DATE_FORMAT, &system_date_format);
+    sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_TIME_FORMAT, &system_time_format);
 
     // Set common dialog config
     SceCommonDialogConfigParam config;
@@ -106,25 +107,45 @@ static void initSceAppUtil()
     sceCommonDialogSetConfigParam(&config);
 }
 
-static void finishSceAppUtil()
+static void DeinitSceAppUtil()
 {
     // Shutdown AppUtil
     sceAppUtilShutdown();
 }
 
-void AppRunLoop()
+int AppStart()
 {
     app_run = 1;
 
-    while (app_run)
+    while (app_run || Emu_IsGameLoaded()) // 游戏已加载的话，需要等待游戏结束后再结束程序
     {
-        GUI_Run();
+        GUI_RunMain();
     }
+
+    printf("AppStop...\n");
+
+    return 0;
 }
 
 int AppExit()
 {
+    GUI_FinishOtherActivities();
     app_run = 0;
+    return 0;
+}
+
+int AppExitToArch()
+{
+    app_exit_event_action = APP_EXIT_EVENT_ACTION_BACK_TO_ARCH;
+    AppExit();
+    return 0;
+}
+
+int AppEventExit()
+{
+    if (app_exit_event_action == APP_EXIT_EVENT_ACTION_BACK_TO_ARCH)
+        return BootRestoreApp();
+    
     return 0;
 }
 
@@ -141,11 +162,11 @@ int AppInit(int argc, char *const argv[])
     scePowerSetGpuClockFrequency(222);
     scePowerSetGpuXbarClockFrequency(166);
 
-    // Init SceShellUtil events
+    // Init sceShellUtil events
     sceShellUtilInitEvents(0);
 
-    // Init SceAppUtil
-    initSceAppUtil();
+    // Init sceAppUtil
+    InitSceAppUtil();
 
     sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG);
     sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
@@ -157,13 +178,13 @@ int AppInit(int argc, char *const argv[])
     LoadMiscConfig(TYPE_CONFIG_MAIN);
     LoadGraphicsConfig(TYPE_CONFIG_MAIN);
 
-    AppLog("[INIT] App init...\n");
+    APP_LOG("[APP] App init...\n");
 
     SetCurrentLang(app_config.language);
 
     BootCheckParams(argc, argv);
-    checkVitatvModel();
-    checkSafeMode();
+    CheckVitatvModel();
+    CheckSafeMode();
 
     GUI_Init();
 
@@ -173,7 +194,7 @@ int AppInit(int argc, char *const argv[])
         goto END;
     }
 
-    Retro_InitLib();
+    Emu_Init();
     Setting_Init();
 
 #if defined(WANT_EXT_ARCHIVE_ROM)
@@ -186,28 +207,29 @@ int AppInit(int argc, char *const argv[])
     // GUI_WaitInitEnd();
     GUI_StartActivity(&browser_activity);
 
-    AppLog("[INIT] App init OK!\n");
+    APP_LOG("[APP] App init OK!\n");
 
     if (BootGetMode() == BOOT_MODE_GAME)
         BootLoadGame();
 
 END:
-    AppRunLoop();
+    AppStart();
 
     return 0;
 }
 
 int AppDeinit()
 {
-    AppLog("[INIT] App deinit...\n");
+    APP_LOG("[APP] App deinit...\n");
 
     Setting_Deinit();
+    Emu_Deinit();
     GUI_Deinit();
-    Retro_DeinitLib();
+    DeinitSceAppUtil();
 
-    finishSceAppUtil();
+    APP_LOG("[APP] App deinit OK!\n");
 
-    AppLog("[INIT] App deinit OK!\n");
+    AppEventExit();
 
     return 0;
 }
