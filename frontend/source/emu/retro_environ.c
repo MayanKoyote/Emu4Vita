@@ -264,9 +264,11 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
 
     case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY:
     {
+        char path[MAX_PATH_LENGTH];
+        MakeSavefileDir(path);
+        CreateFolder(path);
         if (data)
-            *(const char **)data = CORE_SAVEFILES_DIR;
-        CreateFolder(CORE_SAVEFILES_DIR);
+            *(const char **)data = path;
     }
     break;
 

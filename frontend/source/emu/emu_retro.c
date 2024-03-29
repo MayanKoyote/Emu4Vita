@@ -36,13 +36,13 @@ int core_display_rotate = 0;
 
 static unsigned int emu_device_type = RETRO_DEVICE_JOYPAD;
 
-static int makeCoreAssetsDirPath(char *path)
+static int MakeCoreAssetsDir(char *path)
 {
     snprintf(path, MAX_PATH_LENGTH, "%s/%s", APP_DATA_DIR, CORE_ASSETS_DIR_NAME);
     return 0;
 }
 
-static int makeCoreSystemDirPath(char *path)
+static int MakeCoreSystemDir(char *path)
 {
     snprintf(path, MAX_PATH_LENGTH, "%s/%s", APP_DATA_DIR, CORE_SYSTEM_DIR_NAME);
     return 0;
@@ -139,8 +139,8 @@ int Emu_InitRetro()
     pthread_init();
     rtime_init();
 
-    makeCoreAssetsDirPath(core_assets_dir);
-    makeCoreSystemDirPath(core_system_dir);
+    MakeCoreAssetsDir(core_assets_dir);
+    MakeCoreSystemDir(core_system_dir);
 
     Retro_SetCallbacks();
     retro_get_system_info(&core_system_info);

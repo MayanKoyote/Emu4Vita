@@ -70,10 +70,10 @@ int Emu_LoadCheatOption()
             return -1;
     }
 
-    MakeCheatPath2(path);
+    MakeCheatPath(path);
     if (CheatListGetEntries(core_cheat_list, path) < 0)
     {
-        MakeCheatPath(path);
+        MakeCheatPath2(path);
         CheatListGetEntries(core_cheat_list, path);
     }
     if (LinkedListGetLength(core_cheat_list) <= 0)

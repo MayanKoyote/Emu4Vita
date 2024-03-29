@@ -84,15 +84,26 @@ int MakeSavefilePath(char *path, int id)
         *p = '\0';
 
     if (id == RETRO_MEMORY_SAVE_RAM)
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s.srm", (CORE_SAVEFILES_DIR), name);
+        snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s.srm", (CORE_SAVEFILES_DIR), name, name);
     else if (id == RETRO_MEMORY_RTC)
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s.rtc", (CORE_SAVEFILES_DIR), name);
+        snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s.rtc", (CORE_SAVEFILES_DIR), name, name);
     else
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s.unk", (CORE_SAVEFILES_DIR), name);
+        snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s.unk", (CORE_SAVEFILES_DIR), name, name);
     return 0;
 }
 
 int MakeCheatPath(char *path)
+{
+    MakeCurrentGamePath(path);
+    char *p = strrchr(path, '.');
+    if (!p++)
+        p = path + strlen(path);
+
+    strcpy(p, "cht");
+    return 0;
+}
+
+int MakeCheatPath2(char *path)
 {
     char name[MAX_NAME_LENGTH];
     MakeCurrentGameName(name);
@@ -101,17 +112,6 @@ int MakeCheatPath(char *path)
         *p = '\0';
 
     snprintf(path, MAX_PATH_LENGTH, "%s/%s.cht", (CORE_CHEATS_DIR), name);
-    return 0;
-}
-
-int MakeCheatPath2(char *path)
-{
-    MakeCurrentGamePath(path);
-    char *p = strrchr(path, '.');
-    if (!p++)
-        p = path + strlen(path);
-
-    strcpy(p, "cht");
     return 0;
 }
 

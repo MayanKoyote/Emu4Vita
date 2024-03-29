@@ -94,8 +94,12 @@ static int saveMemoryFile(int id)
         return -1;
 
     char path[MAX_PATH_LENGTH];
+    char parent_dir[MAX_PATH_LENGTH];
+
     MakeSavefilePath(path, id);
-    CreateFolder(CORE_SAVEFILES_DIR);
+    MakeParentDir(parent_dir, path, MAX_PATH_LENGTH);
+    CreateFolder(parent_dir);
+
     if (WriteFileEx(path, data, size) != size)
     {
         APP_LOG("[SAVE] Save memory file failed: %s!\n", path);
