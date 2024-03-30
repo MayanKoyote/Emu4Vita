@@ -17,16 +17,14 @@ extern float _vita2d_ortho_matrix[4 * 4];
 
 static LinkedList *gui_clip_list = NULL;
 
-void GUI_DrawEmptyRectangle(float x, float y, float w, float h, float line_size, unsigned int color)
+void GUI_DrawEmptyRectangle(int x, int y, int w, int h, int size, unsigned int color)
 {
-    float sx = x;
-    float sy = y;
-    float dx = x + w;
-    float dy = y + h;
-    vita2d_draw_rectangle(sx, sy, line_size, h - line_size, color);
-    vita2d_draw_rectangle(sx + line_size, sy, w - line_size, line_size, color);
-    vita2d_draw_rectangle(dx - line_size, sy + line_size, line_size, h - line_size, color);
-    vita2d_draw_rectangle(sx, dy - line_size, w - line_size, line_size, color);
+    int x2 = x + w;
+    int y2 = y + h;
+    vita2d_draw_rectangle(x, y, size, h - size, color);
+    vita2d_draw_rectangle(x + size, y, w - size, size, color);
+    vita2d_draw_rectangle(x2 - size, y + size, size, h - size, color);
+    vita2d_draw_rectangle(x, y2 - size, w - size, size, color);
 }
 
 void GUI_DestroyTexture(GUI_Texture *texture)
@@ -35,8 +33,8 @@ void GUI_DestroyTexture(GUI_Texture *texture)
     vita2d_free_texture(texture);
 }
 
-void GUI_DrawTextureShaderPartScalRotate(const GUI_Texture *texture, const GUI_Shader *shader, float x, float y,
-                                         float tex_x, float tex_y, float tex_w, float tex_h, float x_scale, float y_scale, float rad)
+void GUI_DrawTextureShaderPartScalRotate(const GUI_Texture *texture, const GUI_Shader *shader, int x, int y,
+                                         int tex_x, int tex_y, int tex_w, int tex_h, float x_scale, float y_scale, float rad)
 {
     vita2d_set_shader(shader);
 
@@ -89,36 +87,34 @@ int GUI_SetClipping(int x, int y, int w, int h)
     if (!cur_rect)
         return -1;
 
-    int sx = x;
-    int sy = y;
-    int dx = x + w;
-    int dy = y + h;
+    int x2 = x + w;
+    int y2 = y + h;
 
     LinkedListEntry *prev_entry = LinkedListTail(gui_clip_list);
     GUI_Rect *prev_rect = (GUI_Rect *)LinkedListGetEntryData(prev_entry);
 
     if (prev_rect)
     {
-        if (sx < prev_rect->x)
-            sx = prev_rect->x;
-        if (sy < prev_rect->y)
-            sy = prev_rect->y;
-        if (dx > prev_rect->x + prev_rect->w)
-            dx = prev_rect->x + prev_rect->w;
-        if (dy > prev_rect->y + prev_rect->h)
-            dy = prev_rect->y + prev_rect->h;
+        if (x < prev_rect->x)
+            x = prev_rect->x;
+        if (y < prev_rect->y)
+            y = prev_rect->y;
+        if (x2 > prev_rect->x + prev_rect->w)
+            x2 = prev_rect->x + prev_rect->w;
+        if (y2 > prev_rect->y + prev_rect->h)
+            y2 = prev_rect->y + prev_rect->h;
     }
     else
     {
         vita2d_enable_clipping();
     }
 
-    vita2d_set_clip_rectangle(sx, sy, dx, dy);
+    vita2d_set_clip_rectangle(x, y, x2, y2);
 
-    cur_rect->x = sx;
-    cur_rect->y = sy;
-    cur_rect->w = dx - sx;
-    cur_rect->h = dy - sy;
+    cur_rect->x = x;
+    cur_rect->y = y;
+    cur_rect->w = x2 - x;
+    cur_rect->h = y2 - y;
     LinkedListAdd(gui_clip_list, cur_rect);
 
     return 0;

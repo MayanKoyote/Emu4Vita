@@ -122,8 +122,6 @@ int AppStart()
         GUI_RunMain();
     }
 
-    printf("AppStop...\n");
-
     return 0;
 }
 

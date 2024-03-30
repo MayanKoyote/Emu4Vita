@@ -133,7 +133,7 @@ int BootRestoreApp()
     return BootLoadExec(app_path, boot_argv);
 }
 
-int BootLoadExecForGame(const char *app_path, char *game_path, char *assets_dir)
+int BootLoadExecForGame(const char *app_path, const char *game_path, const char *assets_dir)
 {
     if (!CheckFileExist(app_path))
         return -1;
@@ -162,7 +162,7 @@ int BootLoadExecForGame(const char *app_path, char *game_path, char *assets_dir)
     return ret;
 }
 
-int BootLoadExecForCore(const char *app_path, char *assets_dir)
+int BootLoadExecForCore(const char *app_path, const char *assets_dir)
 {
     if (!CheckFileExist(app_path))
         return -1;

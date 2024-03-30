@@ -185,7 +185,11 @@
 //                          Misc default config values
 //--------------------------------------------------------------------------------------------------------
 #define DEFAULT_CONFIG_VALUE_MISC_AUTO_SAVE_LOAD 1
+#if defined(VITA) && defined(PS_BUILD)
+#define DEFAULT_CONFIG_VALUE_MISC_ENABLE_REWIND 0
+#else
 #define DEFAULT_CONFIG_VALUE_MISC_ENABLE_REWIND 1
+#endif
 #define DEFAULT_CONFIG_VALUE_MISC_REWIND_MAX_COUNT 100
 #define DEFAULT_CONFIG_VALUE_MISC_REWIND_INTERVAL_TIME 1
 

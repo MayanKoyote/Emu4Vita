@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <psp2/kernel/processmgr.h>
 #include <psp2/io/fcntl.h>
 
 #include "archive/archive_zip.h"

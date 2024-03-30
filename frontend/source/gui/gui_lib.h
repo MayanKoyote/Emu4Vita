@@ -39,7 +39,7 @@ int GUI_UnsetClipping();
 #define GUI_DrawPixel(x, y, color) vita2d_draw_pixel(x, y, color)
 #define GUI_DrawLine(x0, y0, x1, y1, color) vita2d_draw_line(x, y, color)
 #define GUI_DrawFillRectangle(x, y, w, h, color) vita2d_draw_rectangle(x, y, w, h, color)
-void GUI_DrawEmptyRectangle(float x, float y, float w, float h, float line_size, unsigned int color);
+void GUI_DrawEmptyRectangle(int x, int y, int w, int h, int size, unsigned int color);
 #define GUI_DrawFillCircle(x, y, radius, color) vita2d_draw_fill_circle(x, y, radius, color)
 
 // Image
@@ -84,7 +84,7 @@ void GUI_DestroyTexture(GUI_Texture *texture);
 #define GUI_DrawTextureTintPartScaleRotate(texture, x, y, tex_x, tex_y, tex_w, tex_h, x_scale, y_scale, rad, color) \
     vita2d_draw_texture_part_tint_scale_rotate(texture, x, y, tex_x, tex_y, tex_w, tex_h, x_scale, y_scale, rad, color)
 
-void GUI_DrawTextureShaderPartScalRotate(const GUI_Texture *texture, const GUI_Shader *shader, float x, float y,
-                                         float tex_x, float tex_y, float tex_w, float tex_h, float x_scale, float y_scale, float rad);
+void GUI_DrawTextureShaderPartScalRotate(const GUI_Texture *texture, const GUI_Shader *shader, int x, int y,
+                                         int tex_x, int tex_y, int tex_w, int tex_h, float x_scale, float y_scale, float rad);
 
 #endif

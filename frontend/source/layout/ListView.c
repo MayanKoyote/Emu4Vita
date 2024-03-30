@@ -643,7 +643,7 @@ int ListViewMoveFocusPos(ListView *listView, int move_type)
     return 0;
 }
 
-int ListViewSetDivierSize(ListView *listView, int size)
+int ListViewSetDividerSize(ListView *listView, int size)
 {
     if (!listView)
         return -1;
@@ -653,7 +653,7 @@ int ListViewSetDivierSize(ListView *listView, int size)
     return 0;
 }
 
-int ListViewSetDivierColor(ListView *listView, uint32_t color)
+int ListViewSetDividerColor(ListView *listView, uint32_t color)
 {
     if (!listView)
         return -1;

@@ -13,7 +13,7 @@ int BootLoadGame();
 int BootCheckParams(int argc, char *const *argv);
 int BootLoadExec(const char *app_path, char *const *argv);
 int BootRestoreApp();
-int BootLoadExecForGame(const char *app_path, char *game_path, char *assets_dir);
-int BootLoadExecForCore(const char *app_path, char *assets_dir);
+int BootLoadExecForGame(const char *app_path, const char *game_path, const char *assets_dir);
+int BootLoadExecForCore(const char *app_path, const char *assets_dir);
 
 #endif

@@ -56,8 +56,8 @@ int ListViewGetFocusPos(ListView *listView);
 int ListViewMoveTopPos(ListView *listView, int move_type);
 int ListViewMoveFocusPos(ListView *listView, int move_type);
 
-int ListViewSetDivierSize(ListView *listView, int size);
-int ListViewSetDivierColor(ListView *listView, uint32_t color);
+int ListViewSetDividerSize(ListView *listView, int size);
+int ListViewSetDividerColor(ListView *listView, uint32_t color);
 
 ListView *NewListView();
 
