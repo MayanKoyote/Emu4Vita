@@ -68,31 +68,26 @@ extern Pad hold_count, hold2_count;
 
 int APP_LOG(char *text, ...);
 
-void readPad();
-void resetPad();
+void ReadPad();
+void CleanPad();
 
-int hasEndSlash(const char *path);
-int removeEndSlash(char *path);
-int addEndSlash(char *path);
+int HasEndSlash(const char *path);
+int RemoveEndSlash(char *path);
+int AddEndSlash(char *path);
 
-void convertUtcToLocalTime(SceDateTime *time_local, SceDateTime *time_utc);
-void convertLocalTimeToUtc(SceDateTime *time_utc, SceDateTime *time_local);
+void ConvertUtcToLocalTime(SceDateTime *time_local, SceDateTime *time_utc);
+void ConvertLocalTimeToUtc(SceDateTime *time_utc, SceDateTime *time_local);
 
-void getSizeString(char string[16], uint64_t size);
-void getDateString(char string[24], int date_format, SceDateTime *time);
-void getTimeString(char string[16], int time_format, SceDateTime *time);
+void GetSizeString(char string[16], uint64_t size);
+void GetDateString(char string[24], int date_format, SceDateTime *time);
+void GetTimeString(char string[16], int time_format, SceDateTime *time);
 
-void refreshListPos(int *top_pos, int *focus_pos, int length, int lines);
-void moveListPos(int type, int *top_pos, int *focus_pos, int length, int lines);
-
-void initPowerTickThread();
-
-void lockHome();
-void unlockHome();
-void unlockHomeEx();
-void lockUsbConnection();
-void unlockUsbConnection();
-void lockQuickMenu();
-void unlockQuickMenu();
+void LockHome();
+void UnlockHome();
+void UnlockHomeEx();
+void LockUsbConnection();
+void UnlockUsbConnection();
+void LockQuickMenu();
+void UnlockQuickMenu();
 
 #endif

@@ -143,7 +143,7 @@ int AppEventExit()
 {
     if (app_exit_event_action == APP_EXIT_EVENT_ACTION_BACK_TO_ARCH)
         return BootRestoreApp();
-    
+
     return 0;
 }
 
@@ -220,14 +220,13 @@ int AppDeinit()
 {
     APP_LOG("[APP] App deinit...\n");
 
+    AppEventExit();
     Setting_Deinit();
     Emu_Deinit();
     GUI_Deinit();
     DeinitSceAppUtil();
 
     APP_LOG("[APP] App deinit OK!\n");
-
-    AppEventExit();
 
     return 0;
 }

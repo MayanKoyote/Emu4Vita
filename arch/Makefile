@@ -51,15 +51,17 @@ LIBDIRS := \
 	-L$(LIB_DIR)
 
 SRC_C := \
+	app.c \
+	boot.c \
 	browser.c \
 	config.c \
 	file.c \
-	init.c \
-	main.c \
 	gui_lib.c \
 	gui.c \
+	main.c \
+	strnatcmp.c \
 	utils.c \
-	boot.c
+	wallpaper.c
 
 LIBS := \
 	-lvita2d \

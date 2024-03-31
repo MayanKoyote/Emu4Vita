@@ -1,25 +1,27 @@
 #ifndef __M_GUI_LIB_H__
 #define __M_GUI_LIB_H__
 
-int GUI_getFontSize();
-void GUI_setFontSize(int size);
-int GUI_getLineHeight();
+#include <vita2d.h>
 
-int GUI_getLineSpace();
-void GUI_setLineSpace(int space);
+int GUI_SetFontSize(int size);
+int GUI_SetLineSpace(int space);
 
-int GUI_drawText(int x, int y, unsigned int color, const char *text);
-int GUI_drawTextf(int x, int y, unsigned int color, const char *text, ...);
+int GUI_GetFontSize();
+int GUI_GetLineSpace();
+int GUI_GetLineHeight();
 
-int GUI_getTextWidth(const char *text);
-int GUI_getTextHeight(const char *text);
+int GUI_DrawText(int x, int y, unsigned int color, const char *text);
+int GUI_DrawTextf(int x, int y, unsigned int color, const char *text, ...);
 
-void GUI_startDrawing();
-void GUI_endDrawing();
+int GUI_GetTextWidth(const char *text);
+int GUI_GetTextHeight(const char *text);
 
-int GUI_initLib();
-int GUI_deinitLib();
+void vita2d_draw_empty_rectangle(float x, float y, float w, float h, float size, unsigned int color);
 
-void vita2d_draw_empty_rectangle(float x, float y, float w, float h, float line_size, unsigned int color);
+void GUI_StartDrawing();
+void GUI_EndDrawing();
+
+int GUI_InitLib();
+int GUI_DeinitLib();
 
 #endif

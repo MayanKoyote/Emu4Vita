@@ -7,17 +7,17 @@
 
 int ReadFile(const char *file, void *buf, int size);
 int WriteFile(const char *file, const void *buf, int size);
-int allocateReadFile(const char *file, void **buffer);
+int AllocateReadFile(const char *file, void **buffer);
 
-int checkFileExist(const char *file);
-int checkFolderExist(const char *folder);
+int CheckFileExist(const char *file);
+int CheckFolderExist(const char *folder);
 
-int createFolder(const char *path);
+int CreateFolder(const char *path);
 
-char *getBaseDirectory(const char *path);
-char *getFilename(const char *path);
-char *getBaseFilename(const char *path);
+char *GetBaseDirectory(const char *path);
+char *GetFilename(const char *path);
+char *GetBaseFilename(const char *path);
 
-int getFileSize(const char *file);
+int GetFileSize(const char *file);
 
 #endif

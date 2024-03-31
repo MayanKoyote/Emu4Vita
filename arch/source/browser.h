@@ -30,8 +30,10 @@ typedef struct
 	IconLayout layout;
 } SoftwareEntry;
 
-int initBrowser();
-int drawBrowser();
-int ctrlBrowser();
+int BrowserInit();
+int BrowserDeinit();
+
+int BrowserDraw();
+int BrowserCtrl();
 
 #endif

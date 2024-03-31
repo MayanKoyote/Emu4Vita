@@ -411,7 +411,7 @@ static void moveFileListPos(int type)
     old_focus_pos = focus_pos;
 }
 
-static int dirLeveForward(int pos)
+static int incrementDirLevels(int pos)
 {
     if (dir_level < MAX_DIR_LEVELS - 1)
     {
@@ -423,7 +423,7 @@ static int dirLeveForward(int pos)
     return 0;
 }
 
-static int dirLeveBackward()
+static int decrementDirLevels()
 {
     FileListData *ls_data = (FileListData *)LinkedListGetListData(file_list);
     RemoveEndSlash(ls_data->path);
@@ -482,7 +482,7 @@ static int refreshFileList(int pos, int update_views)
         if (res < 0)
         {
             ret = res;
-            focus_pos = dirLeveBackward();
+            focus_pos = decrementDirLevels();
         }
     } while (res < 0);
 
@@ -535,7 +535,7 @@ static int changeToDir(char *lastdir)
 
             lastdir[i + 1] = ch;
 
-            dirLeveForward(fcous_pos);
+            incrementDirLevels(fcous_pos);
         }
     }
     refreshFileList(fcous_pos, 1);
@@ -547,7 +547,7 @@ static void backToParentDir()
 {
     if (dir_level > 0)
     {
-        refreshFileList(dirLeveBackward(), 1);
+        refreshFileList(decrementDirLevels(), 1);
     }
 }
 
@@ -569,7 +569,7 @@ static void enterToChildDir(LinkedListEntry *entry)
         strcat(ls_data->path, e_data->name);
     }
 
-    refreshFileList(dirLeveForward(ListViewGetFocusPos(browser_listview)), 1);
+    refreshFileList(incrementDirLevels(ListViewGetFocusPos(browser_listview)), 1);
 }
 
 static void startGame(LinkedListEntry *entry)

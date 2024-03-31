@@ -24,6 +24,6 @@
 #define COLOR_BLACK 0xFF000000
 
 #define NOALPHA 0xFF
-#define COLOR_ALPHA(color, alpha) (color & 0x00FFFFFF) | ((alpha & 0xFF) << 24)
+#define COLOR_ALPHA(color, alpha) ((color & 0x00FFFFFF) | ((alpha & 0xFF) << 24))
 
 #endif

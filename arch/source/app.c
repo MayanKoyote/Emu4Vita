@@ -18,23 +18,24 @@
 #include <psp2/vshbridge.h>
 #include <psp2/common_dialog.h>
 
-#include "init.h"
+#include "app.h"
 #include "utils.h"
 #include "file.h"
 #include "gui.h"
 #include "config.h"
 
-int is_safe_mode = 0;
-int is_vitatv_model = 0;
+static int app_run = 0;
+static int is_safe_mode = 0;
+static int is_vitatv_model = 0;
 
 int language = 0, enter_button = 0, date_format = 0, time_format = 0;
 
-int isSafeMode()
+int IsSafeMode()
 {
     return is_safe_mode;
 }
 
-int checkSafeMode()
+int CheckSafeMode()
 {
     if (sceIoDevctl("ux0:", 0x3001, NULL, 0, NULL, 0) == 0x80010030)
         is_safe_mode = 1;
@@ -42,12 +43,12 @@ int checkSafeMode()
     return is_safe_mode;
 }
 
-int isVitatvModel()
+int IsVitatvModel()
 {
     return is_vitatv_model;
 }
 
-int checkVitatvModel()
+int CheckVitatvModel()
 {
     if (sceKernelGetModel() == SCE_KERNEL_MODEL_VITATV)
         is_vitatv_model = 1;
@@ -55,7 +56,7 @@ int checkVitatvModel()
     return is_vitatv_model;
 }
 
-static void initSceAppUtil()
+static void InitSceAppUtil()
 {
     // Init SceAppUtil
     SceAppUtilInitParam init_param;
@@ -78,16 +79,40 @@ static void initSceAppUtil()
     sceCommonDialogSetConfigParam(&config);
 }
 
-static void finishSceAppUtil()
+static void DeinitSceAppUtil()
 {
     // Shutdown AppUtil
     sceAppUtilShutdown();
 }
 
-int initMain()
+int AppStart()
+{
+    app_run = 1;
+
+    while (app_run)
+    {
+        GUI_RunMain();
+    }
+
+    return 0;
+}
+
+int AppExit()
+{
+    app_run = 0;
+
+    return 0;
+}
+
+int AppIsRunning()
+{
+    return app_run;
+}
+
+int AppInit()
 {
     sceIoRemove(APP_LOG_PATH);
-    createFolder(APP_DATA_DIR);
+    CreateFolder(APP_DATA_DIR);
 
     scePowerSetArmClockFrequency(444);
     scePowerSetBusClockFrequency(222);
@@ -95,24 +120,25 @@ int initMain()
     scePowerSetGpuXbarClockFrequency(166);
 
     sceShellUtilInitEvents(0);
-    initSceAppUtil();
+    InitSceAppUtil();
 
     sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG);
 
-    checkVitatvModel();
-    checkSafeMode();
+    LockUsbConnection();
 
-    GUI_init();
+    CheckVitatvModel();
+    CheckSafeMode();
 
-    lockUsbConnection();
+    GUI_Init();
+    AppStart();
 
     return 0;
 }
 
-int finishMain()
+int AppDeinit()
 {
-    GUI_deinit();
-    finishSceAppUtil();
+    GUI_Deinit();
+    DeinitSceAppUtil();
 
     return 0;
 }

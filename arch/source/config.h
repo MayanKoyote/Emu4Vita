@@ -1,21 +1,21 @@
 #ifndef __M_CONFIG_H__
 #define __M_CONFIG_H__
 
-#define CONFIG_VERSION 1
+#define CONFIG_VERSION 0x010900 // 1.09
+
+#define REPOSITORY_ADDRESS "https://gitee.com/yizhigai/Emu4Vita"
 
 #define APP_DATA_DIR "ux0:data/EMU4VITA/" APP_DIR_NAME
 #define APP_ASSETS_DIR "app0:assets"
 #define CORE_DATA_DIR "app0:data"
 
 #define FONT_PGF_PATH APP_ASSETS_DIR "/font.pgf"
-#define WALLPAPER_PNG_PATH APP_ASSETS_DIR "/bg.png"
-#define SPLASH_PNG_PATH APP_ASSETS_DIR "/splash.png"
+#define DEFAULT_WALLPAPER_PNG_PATH APP_ASSETS_DIR "/bg.png"
 
+#define WALLPAPER_DIR APP_ASSETS_DIR "/wallpapers"
+#define WALLPAPER_SAVEFILE_PATH APP_DATA_DIR "/lastwallpaper.txt"
 #define APP_LOG_PATH APP_DATA_DIR "/log.txt"
 #define CONFIG_PATH APP_DATA_DIR "/config.bin"
-#define LASTFILE_PATH APP_DATA_DIR "/lastfile.txt"
-
-#define REPOSITORY_ADDRESS "https://gitee.com/yizhigai/Emu4Vita"
 
 #define MAX_CONFIG_NAME_LENGTH 128
 #define MAX_CONFIG_STRING_LENGTH 1024
@@ -35,28 +35,23 @@ typedef struct
     uint32_t wsc_pos;      // 0x24
     uint32_t ngp_pos;      // 0x28
     uint32_t arc_pos;      // 0x2C
-    char reserved[0x10];   // 0x30
+    uint32_t bg_num;       // 0x30
+    char reserved[0x0C];   // 0x34
 } Config;                  // 0x40
 
-void trimString(char *str);
-char *trimStringEx(char *str);
+void TrimString(char *str);
 
-int configGetDecimal(const char *str);
-int configGetHexdecimal(const char *str);
-int configGetBoolean(const char *str);
-char *configGetString(const char *str);
+int StringToDecimal(const char *str);
+int StringToHexdecimal(const char *str);
+int StringToBoolean(const char *str);
 
-int configGetLine(const char *buf, int size, char **line);
-int configReadLine(const char *line, char **name, char **string);
+int GetConfigLine(const char *buf, int size, char **pline);
+int ReadConfigLine(const char *line, char **pkey, char **pvalue);
 
 int ResetConfig();
 int LoadConfig();
 int SaveConfig();
 
-/*
-extern char *private_assets_dir;
-extern char *public_assetss_dir;
-*/
-extern Config g_config;
+extern Config setting_config;
 
 #endif

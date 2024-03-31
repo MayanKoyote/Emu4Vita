@@ -17,7 +17,7 @@
 
 #include "utils.h"
 #include "gui.h"
-#include "init.h"
+#include "app.h"
 #include "browser.h"
 #include "gui.h"
 #include "config.h"
@@ -31,7 +31,7 @@ Pad hold_count, hold2_count;
 static int home_locked = 0, usb_connection_locked = 0, quick_menu_locked = 0;
 
 static int app_log_inited = 0;
-static SceKernelLwMutexWork app_log_mutex;
+static SceKernelLwMutexWork app_log_mutex = {0};
 
 static void initAppLog()
 {
@@ -69,7 +69,7 @@ int APP_LOG(char *text, ...)
     return 0;
 }
 
-void readPad()
+void ReadPad()
 {
     SceCtrlData ctrlData;
     int port, i;
@@ -211,7 +211,7 @@ void readPad()
     }
 }
 
-void resetPad()
+void CleanPad()
 {
     memset(&old_pad, 0, sizeof(Pad));
     memset(&current_pad, 0, sizeof(Pad));
@@ -221,12 +221,12 @@ void resetPad()
     memset(&hold2_pad, 0, sizeof(Pad));
 }
 
-int hasEndSlash(const char *path)
+int HasEndSlash(const char *path)
 {
     return path[strlen(path) - 1] == '/';
 }
 
-int removeEndSlash(char *path)
+int RemoveEndSlash(char *path)
 {
     int len = strlen(path);
 
@@ -239,7 +239,7 @@ int removeEndSlash(char *path)
     return 0;
 }
 
-int addEndSlash(char *path)
+int AddEndSlash(char *path)
 {
     int len = strlen(path);
     if (len < MAX_PATH_LENGTH - 2)
@@ -255,7 +255,7 @@ int addEndSlash(char *path)
     return 0;
 }
 
-void convertUtcToLocalTime(SceDateTime *time_local, SceDateTime *time_utc)
+void ConvertUtcToLocalTime(SceDateTime *time_local, SceDateTime *time_utc)
 {
     SceRtcTick tick;
     sceRtcGetTick(time_utc, &tick);
@@ -263,7 +263,7 @@ void convertUtcToLocalTime(SceDateTime *time_local, SceDateTime *time_utc)
     sceRtcSetTick(time_local, &tick);
 }
 
-void convertLocalTimeToUtc(SceDateTime *time_utc, SceDateTime *time_local)
+void ConvertLocalTimeToUtc(SceDateTime *time_utc, SceDateTime *time_local)
 {
     SceRtcTick tick;
     sceRtcGetTick(time_local, &tick);
@@ -271,7 +271,7 @@ void convertLocalTimeToUtc(SceDateTime *time_utc, SceDateTime *time_local)
     sceRtcSetTick(time_utc, &tick);
 }
 
-void getSizeString(char string[16], uint64_t size)
+void GetSizeString(char string[16], uint64_t size)
 {
     double double_size = (double)size;
 
@@ -286,10 +286,10 @@ void getSizeString(char string[16], uint64_t size)
     snprintf(string, 16, "%.*f %s", (i == 0) ? 0 : 2, double_size, units[i]);
 }
 
-void getDateString(char string[24], int date_format, SceDateTime *time)
+void GetDateString(char string[24], int date_format, SceDateTime *time)
 {
     SceDateTime time_local;
-    convertUtcToLocalTime(&time_local, time);
+    ConvertUtcToLocalTime(&time_local, time);
 
     switch (date_format)
     {
@@ -307,10 +307,10 @@ void getDateString(char string[24], int date_format, SceDateTime *time)
     }
 }
 
-void getTimeString(char string[16], int time_format, SceDateTime *time)
+void GetTimeString(char string[16], int time_format, SceDateTime *time)
 {
     SceDateTime time_local;
-    convertUtcToLocalTime(&time_local, time);
+    ConvertUtcToLocalTime(&time_local, time);
 
     switch (time_format)
     {
@@ -325,85 +325,29 @@ void getTimeString(char string[16], int time_format, SceDateTime *time)
     }
 }
 
-void refreshListPos(int *top_pos, int *focus_pos, int length, int lines)
-{
-    int temp_top_pos = *top_pos;
-    int temp_focus_pos = *focus_pos;
-
-    if (temp_focus_pos > length - 1)
-        temp_focus_pos = length - 1;
-    if (temp_focus_pos < 0)
-        temp_focus_pos = 0;
-
-    int lines_center = (int)((float)lines / 2 + 0.5f);
-    temp_top_pos = temp_focus_pos - lines_center + 1;
-    if (temp_top_pos > length - lines)
-        temp_top_pos = length - lines;
-    if (temp_top_pos < 0)
-        temp_top_pos = 0;
-
-    *top_pos = temp_top_pos;
-    *focus_pos = temp_focus_pos;
-}
-
-void moveListPos(int type, int *top_pos, int *focus_pos, int length, int lines)
-{
-    int temp_focus_pos = *focus_pos;
-    if (type == TYPE_MOVE_UP)
-        temp_focus_pos--;
-    else if (type == TYPE_MOVE_DOWN)
-        temp_focus_pos++;
-    if (type == TYPE_MOVE_LEFT)
-        temp_focus_pos -= lines;
-    else if (type == TYPE_MOVE_RIGHT)
-        temp_focus_pos += lines;
-
-    refreshListPos(top_pos, &temp_focus_pos, length, lines);
-    *focus_pos = temp_focus_pos;
-}
-
-static int power_tick_thread(SceSize args, void *argp)
-{
-    while (1)
-    {
-        if (home_locked > 0)
-            sceKernelPowerTick(SCE_KERNEL_POWER_TICK_DISABLE_AUTO_SUSPEND);
-        sceKernelDelayThread(10 * 1000 * 1000);
-    }
-
-    return 0;
-}
-
-void initPowerTickThread()
-{
-    SceUID thid = sceKernelCreateThread("power_tick_thread", power_tick_thread, 0x10000100, 0x40000, 0, 0, NULL);
-    if (thid >= 0)
-        sceKernelStartThread(thid, 0, NULL);
-}
-
-void lockHome()
+void LockHome()
 {
     if (!home_locked)
         sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
     home_locked++;
 }
 
-void unlockHome()
+void UnlockHome()
 {
     if (home_locked == 1)
         sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
-    home_locked--;
-    if (home_locked < 0)
+    if (--home_locked < 0)
         home_locked = 0;
 }
 
-void unlockHomeEx()
+void UnlockHomeEx()
 {
-    sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+    if (home_locked)
+        sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
     home_locked = 0;
 }
 
-void lockUsbConnection()
+void LockUsbConnection()
 {
     if (!usb_connection_locked)
     {
@@ -412,7 +356,7 @@ void lockUsbConnection()
     }
 }
 
-void unlockUsbConnection()
+void UnlockUsbConnection()
 {
     if (usb_connection_locked)
     {
@@ -421,7 +365,7 @@ void unlockUsbConnection()
     }
 }
 
-void lockQuickMenu()
+void LockQuickMenu()
 {
     if (!quick_menu_locked)
     {
@@ -430,9 +374,9 @@ void lockQuickMenu()
     }
 }
 
-void unlockQuickMenu()
+void UnlockQuickMenu()
 {
-    if (quick_menu_locked && !current_pad[PAD_PSBUTTON])
+    if (quick_menu_locked)
     {
         sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_QUICK_MENU);
         quick_menu_locked = 0;

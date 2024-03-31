@@ -39,7 +39,7 @@ int WriteFile(const char *file, const void *buf, int size)
     return written;
 }
 
-int allocateReadFile(const char *file, void **buffer)
+int AllocateReadFile(const char *file, void **buffer)
 {
     SceUID fd = sceIoOpen(file, SCE_O_RDONLY, 0);
     if (fd < 0)
@@ -61,7 +61,7 @@ int allocateReadFile(const char *file, void **buffer)
     return read;
 }
 
-int getFileSize(const char *file)
+int GetFileSize(const char *file)
 {
     SceUID fd = sceIoOpen(file, SCE_O_RDONLY, 0);
     if (fd < 0)
@@ -73,47 +73,43 @@ int getFileSize(const char *file)
     return fileSize;
 }
 
-int checkFileExist(const char *file)
+int CheckFileExist(const char *file)
 {
-    SceUID fd = sceIoOpen(file, SCE_O_RDONLY, 0);
-    if (fd < 0)
-        return 0;
-
-    sceIoClose(fd);
-    return 1;
+    SceIoStat st;
+    if (sceIoGetstat(file, &st) >= 0)
+        return SCE_S_ISREG(st.st_mode);
+    return 0;
 }
 
-int checkFolderExist(const char *folder)
+int CheckFolderExist(const char *folder)
 {
-    SceUID dfd = sceIoDopen(folder);
-    if (dfd < 0)
-        return 0;
-
-    sceIoDclose(dfd);
-    return 1;
+    SceIoStat st;
+    if (sceIoGetstat(folder, &st) >= 0)
+        return SCE_S_ISDIR(st.st_mode);
+    return 0;
 }
 
-int createFolder(const char *path)
+int CreateFolder(const char *path)
 {
-    int ret = -1;
-    char ch;
-    char str[MAX_PATH_LENGTH];
+    int ret = 0;
+    char buf[MAX_PATH_LENGTH];
 
     if (strlen(path) > MAX_PATH_LENGTH)
         return -1;
 
-    strcpy(str, path);
-    addEndSlash(str);
+    strcpy(buf, path);
+    AddEndSlash(buf);
 
+    char ch;
     int i;
     for (i = 0; i < MAX_PATH_LENGTH; i++)
     {
-        if (str[i] == '/')
+        if (buf[i] == '/')
         {
-            ch = str[i];
-            str[i] = '\0';
-            ret = sceIoMkdir(str, 0777);
-            str[i] = ch;
+            ch = buf[i];
+            buf[i] = '\0';
+            ret = sceIoMkdir(buf, 0777);
+            buf[i] = ch;
         }
     }
 
@@ -122,21 +118,22 @@ int createFolder(const char *path)
     return ret;
 }
 
-char *getBaseDirectory(const char *path)
+char *GetBaseDirectory(const char *path)
 {
     int len = strlen(path);
-    int sep_start = 0;
-    int sep_end = len;
-
     if (len <= 0)
         return NULL;
-    if (path[len - 1] == '/' || path[len - 1] == ':')
-        return NULL;
+
+    if (path[len - 1] == '/')
+        len--;
+
+    int sep_start = 0;
+    int sep_end = len;
 
     int i;
     for (i = sep_end - 1; i >= 0; i--)
     {
-        if (path[i] == '/' || path[i] == ':')
+        if (path[i] == '/')
         {
             sep_end = i;
             break;
@@ -160,16 +157,17 @@ char *getBaseDirectory(const char *path)
     return res;
 }
 
-char *getFilename(const char *path)
+char *GetFilename(const char *path)
 {
     int len = strlen(path);
-    int sep_start = 0;
-    int sep_end = len;
-
     if (len <= 0)
         return NULL;
+
     if (path[len - 1] == '/' || path[len - 1] == ':')
         return NULL; // no file
+
+    int sep_start = 0;
+    int sep_end = len;
 
     int i;
     for (i = sep_end - 1; i >= 0; i--)
@@ -198,16 +196,14 @@ char *getFilename(const char *path)
     return res;
 }
 
-char *getBaseFilename(const char *path)
+char *GetBaseFilename(const char *path)
 {
     int len = strlen(path);
-    int sep_start = 0;
-    int sep_end = len;
-
     if (len <= 0)
         return NULL;
-    if (path[len - 1] == '/' || path[len - 1] == ':')
-        return NULL; // no file
+
+    int sep_start = 0;
+    int sep_end = len;
 
     int i;
     for (i = sep_end - 1; i >= 0; i--)
@@ -217,7 +213,7 @@ char *getBaseFilename(const char *path)
             sep_start = i + 1;
             break;
         }
-        else if ((path[i] == '.') && (sep_end == len - 1))
+        else if ((path[i] == '.') && (sep_end == len))
         {
             sep_end = i;
         }

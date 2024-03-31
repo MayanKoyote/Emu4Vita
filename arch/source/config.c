@@ -6,13 +6,9 @@
 #include "config.h"
 #include "file.h"
 
-/*
-char *private_assets_dir = NULL;
-char *public_assetss_dir = NULL;
-*/
-Config g_config;
+Config setting_config;
 
-void trimString(char *str)
+void TrimString(char *str)
 {
     int len = strlen(str);
     int i;
@@ -30,27 +26,17 @@ void trimString(char *str)
     }
 }
 
-char *trimStringEx(char *str)
-{
-    char *res = str;
-    while (*res == ' ' || *res == '\t')
-        res++;
-    trimString(res);
-
-    return res;
-}
-
-int configGetDecimal(const char *str)
+int StringToDecimal(const char *str)
 {
     return strtol(str, NULL, 0);
 }
 
-int configGetHexdecimal(const char *str)
+int StringToHexdecimal(const char *str)
 {
     return strtoul(str, NULL, 16);
 }
 
-int configGetBoolean(const char *str)
+int StringToBoolean(const char *str)
 {
     if (strcasecmp(str, "false") == 0 ||
         strcasecmp(str, "off") == 0 ||
@@ -65,143 +51,124 @@ int configGetBoolean(const char *str)
     return -1;
 }
 
-char *configGetString(const char *str)
+int GetConfigLine(const char *buf, int size, char **pline)
 {
-    if (str[0] != '"')
-        return NULL;
-
-    char *p = strchr(str + 1, '"');
-    if (!p)
-        return NULL;
-
-    int len = p - (str + 1);
-
-    char *out = malloc(len + 1);
-    strncpy(out, str + 1, len);
-    out[len] = '\0';
-
-    int i;
-    for (i = 0; i < len; i++)
-    {
-        if (out[i] == '\\')
-            out[i] = '\n';
-    }
-
-    return out;
-}
-
-int configGetLine(const char *buf, int size, char **line)
-{
-    uint8_t ch = 0;
     int n = 0;
     int i = 0;
-    uint8_t *pbuf = (uint8_t *)buf;
+    uint8_t *p = (uint8_t *)buf;
 
     for (i = 0; i < size; i++)
     {
-        ch = pbuf[i];
-        if (ch < 0x20 && ch != '\t')
+        if (p[i] < 0x20 && p[i] != '\t')
         {
             i++;
             break;
         }
         n++;
     }
-    char *_line = NULL;
-    if (n > 0)
+
+    if (pline && n > 0)
     {
-        _line = malloc(n + 1);
-        strncpy(_line, buf, n);
-        _line[n] = '\0';
+        char *line = malloc(n + 1);
+        if (line)
+        {
+            strncpy(line, buf, n);
+            line[n] = '\0';
+            *pline = line;
+        }
     }
-    *line = _line;
 
     return i;
 }
 
-int configReadLine(const char *line, char **name, char **string)
+int ReadConfigLine(const char *line, char **pkey, char **pvalue)
 {
-    int ret = 1;
+    if (!line)
+        return -1;
+
+    char *key = NULL;
+    char *value = NULL;
+    const char *head = line;
+    const char *tail = line + strlen(line);
     int len;
 
-    char *_line = NULL;
-    char *_name = NULL;
-    char *_string = NULL;
-
-    len = strlen(line);
-    _line = malloc(len + 1);
-    if (!_line)
-    {
-        ret = -1;
-        goto end;
-    }
-    strcpy(_line, line);
-
     // Trim at beginning
-    char *_pline = _line;
-    while (*_pline == ' ' || *_pline == '\t')
-        _pline++;
+    while (*head == ' ' || *head == '\t')
+        head++;
 
     // Ignore comments #1
-    if (_pline[0] == '#')
+    if (head[0] == '#')
     {
-        ret = 0;
-        goto end;
+        // printf("IGNORE %s\n", line);
+        goto FAILED;
     }
 
     // Ignore comments #2
-    char *p = strchr(_pline, '#');
+    const char *p = strchr(head, '#');
     if (p)
     {
-        // APP_LOG("IGNORE %s\n", p);
-        *p = '\0';
+        // printf("IGNORE %s\n", p);
+        tail = p;
     }
 
     // Get token
-    p = strchr(_pline, '=');
-    if (!p)
+    p = strchr(head, '=');
+    if (!p || p >= tail)
+        goto FAILED;
+
+    // Key
+    len = p - head;
+    key = malloc(len + 1);
+    if (!key)
+        goto FAILED;
+    strncpy(key, head, len);
+    key[len] = '\0';
+    TrimString(key);
+    // printf("KEY: %s\n", key);
+
+    head = p + 1;
+    while (*head == ' ' || *head == '\t')
+        head++;
+
+    if (head[0] == '"') // String
     {
-        ret = -1;
-        goto end;
+        head++;
+        p = strchr(head, '"');
+        if (!p || p >= tail)
+            goto FAILED;
+    }
+    else // Decimal
+    {
+        p = tail;
+        while (p > head && (*(p - 1) == ' ' || *(p - 1) == '\t'))
+            p--;
     }
 
-    // Name
-    len = p - _pline;
-    _name = malloc(len + 1);
-    if (_name)
-    {
-        strncpy(_name, _pline, len);
-        _name[len] = '\0';
-        trimString(_name);
-    }
-    // APP_LOG("NAME: %s\n", _name);
+    // Value
+    len = p - head;
+    value = malloc(len + 1);
+    if (!value)
+        goto FAILED;
+    strncpy(value, head, len);
+    value[len] = '\0';
+    // printf("VALUE: %s\n", value);
 
-    p++;
-    while (*p == ' ' || *p == '\t')
-        p++;
-    trimString(p);
+    *pkey = key;
+    *pvalue = value;
+    return 0;
 
-    // String
-    len = strlen(p);
-    _string = malloc(len + 1);
-    if (_string)
-        strcpy(_string, p);
-    // APP_LOG("STRING: %s\n", _string);
-    ret = 1;
-
-end:
-    *name = _name;
-    *string = _string;
-    if (_line)
-        free(_line);
-
-    return ret;
+FAILED:
+    if (key)
+        free(key);
+    if (value)
+        free(value);
+    return -1;
 }
 
 int ResetConfig()
 {
-    memset(&g_config, 0, sizeof(Config));
-    g_config.version = CONFIG_VERSION;
+    memset(&setting_config, 0, sizeof(Config));
+    setting_config.version = CONFIG_VERSION;
 
     return 0;
 }
@@ -218,18 +185,18 @@ int LoadConfig()
         return -1;
     }
 
-    memcpy(&g_config, &config, sizeof(Config));
-
+    memcpy(&setting_config, &config, sizeof(Config));
     return 0;
 }
 
 int SaveConfig()
 {
-    char *parent_dir = getBaseDirectory(CONFIG_PATH);
+    char *parent_dir = GetBaseDirectory(CONFIG_PATH);
     if (!parent_dir)
         return -1;
-    createFolder(parent_dir);
+
+    CreateFolder(parent_dir);
     free(parent_dir);
 
-    return WriteFile(CONFIG_PATH, &g_config, sizeof(Config));
+    return WriteFile(CONFIG_PATH, &setting_config, sizeof(Config));
 }

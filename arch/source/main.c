@@ -1,39 +1,11 @@
-#include <string.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-
 #include <psp2/kernel/processmgr.h>
 
-#include "main.h"
-#include "init.h"
-#include "gui.h"
-#include "boot.h"
-
-static int vita_run = 1;
-
-int loopMain()
-{
-    while (vita_run)
-    {
-        GUI_main();
-    }
-
-    return 0;
-}
-
-int exitApp()
-{
-    vita_run = 0;
-
-    return 0;
-}
+#include "app.h"
 
 int main(int argc, char *const argv[])
 {
-    initMain();
-    loopMain();
-    finishMain();
+    AppInit();
+    AppDeinit();
 
     sceKernelExitProcess(0);
     return 0;

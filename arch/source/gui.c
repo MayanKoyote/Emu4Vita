@@ -3,70 +3,41 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <psp2/ctrl.h>
+#include <psp2/kernel/threadmgr.h>
 #include <psp2/power.h>
-#include <psp2/system_param.h>
-#include <psp2/kernel/processmgr.h>
-
-#include <vita2d.h>
 
 #include "gui.h"
-#include "utils.h"
 #include "browser.h"
-#include "init.h"
+#include "utils.h"
 #include "config.h"
-#include "file.h"
+#include "app.h"
 
 #define STATUS_BAR_PADDING_T 10
 #define STATUS_BAR_PADDING_L 10
-#define STATUS_BAR_BG_COLOR 0x4F1F1F1F
-
-#define SCROLL_BAR_MIN_HEIGHT 4
-#define SCROLL_BAR_COLOR COLOR_SET_ALPHA(LITEGRAY, 0x8F)
-#define SCROLL_BAR_BG_COLOR COLOR_SET_ALPHA(DARKGRAY, 0x8F)
+#define STATUS_BAR_HEIGHT (GUI_GetLineHeight() + STATUS_BAR_PADDING_T * 2)
 
 #define MAIN_BG_COLOR 0x4F1F1F1F
 
 #define MAIN_TITLE APP_NAME_STR " " APP_VER_STR
 
-char STR_BUTTON_ENTER[4], STR_BUTTON_CANCEL[4];
+static SceKernelLwMutexWork gui_draw_mutex = {0};
+static vita2d_texture *wallpaper_texture = NULL;
 
-static vita2d_texture *wallpaper_tex = NULL;
-static float wallpaper_x_scale, wallpaper_y_scale;
-
-float MAIN_FREE_DRAW_WIDTH, MAIN_FREE_DRAW_HEIGHT;
-float MAIN_FREE_DRAW_SX, MAIN_FREE_DRAW_DX, MAIN_FREE_DRAW_SY, MAIN_FREE_DRAW_DY;
-
-static float status_bar_width, status_bar_height;
-
-static void refreshLayout()
-{
-    status_bar_width = SCREEN_WIDTH;
-    status_bar_height = GUI_getLineHeight() + STATUS_BAR_PADDING_T * 2;
-
-    MAIN_FREE_DRAW_WIDTH = SCREEN_WIDTH;
-    MAIN_FREE_DRAW_HEIGHT = SCREEN_HEIGHT - status_bar_height * 2;
-    MAIN_FREE_DRAW_SX = 0;
-    MAIN_FREE_DRAW_DX = MAIN_FREE_DRAW_SX + MAIN_FREE_DRAW_WIDTH;
-    MAIN_FREE_DRAW_SY = status_bar_height;
-    MAIN_FREE_DRAW_DY = MAIN_FREE_DRAW_SY + MAIN_FREE_DRAW_HEIGHT;
-}
-
-void GUI_drawTopStatusBar(char *title)
+void GUI_DrawTopStatusBar(char *title)
 {
     int view_sx = 0;
-    int view_dx = SCREEN_WIDTH;
     int view_sy = 0;
+    int view_dx = GUI_SCREEN_WIDTH;
+    int view_dy = STATUS_BAR_HEIGHT;
 
-    // vita2d_draw_rectangle(view_sx, view_sy, status_bar_width, status_bar_height, STATUS_BAR_BG_COLOR);
-    vita2d_draw_line(view_sx, view_sy + status_bar_height, view_sx + status_bar_width, view_sy + status_bar_height, WHITE);
+    vita2d_draw_line(view_sx, view_dy, view_dx, view_dy, WHITE);
 
     int sx = view_sx + STATUS_BAR_PADDING_L;
     int sy = view_sy + STATUS_BAR_PADDING_T;
-    GUI_drawText(sx, sy, WHITE, title);
+    GUI_DrawText(sx, sy, WHITE, title);
 
     sx = view_dx - STATUS_BAR_PADDING_L;
-    if (!is_vitatv_model)
+    if (!IsVitatvModel())
     {
         uint32_t color;
         if (scePowerIsBatteryCharging())
@@ -79,9 +50,9 @@ void GUI_drawTopStatusBar(char *title)
         int percent = scePowerGetBatteryLifePercent();
         char battery_string[24];
         snprintf(battery_string, sizeof(battery_string), "%d%%", percent);
-        float battery_x = sx - GUI_getTextWidth(battery_string);
-        GUI_drawText(battery_x, sy, color, battery_string);
-        sx = battery_x - STATUS_BAR_PADDING_L;
+        sx -= GUI_GetTextWidth(battery_string);
+        GUI_DrawText(sx, sy, color, battery_string);
+        sx -= STATUS_BAR_PADDING_L;
     }
 
     // Date & time
@@ -89,96 +60,129 @@ void GUI_drawTopStatusBar(char *title)
     sceRtcGetCurrentClock(&time, 0);
 
     char date_string[24];
-    getDateString(date_string, date_format, &time);
+    GetDateString(date_string, date_format, &time);
 
     char time_string[16];
-    getTimeString(time_string, time_format, &time);
+    GetTimeString(time_string, time_format, &time);
 
     char string[64];
     snprintf(string, sizeof(string), "%s  %s", date_string, time_string);
-    int date_time_x = sx - GUI_getTextWidth(string);
-    GUI_drawText(date_time_x, sy, DEFALUT_FONT_COLOR, string);
+    sx -= GUI_GetTextWidth(string);
+    GUI_DrawText(sx, sy, WHITE, string);
 }
 
-void GUI_drawBottomStatusBar()
+void GUI_DrawBottomStatusBar()
 {
     int view_sx = 0;
-    int view_sy = SCREEN_HEIGHT - status_bar_height;
+    int view_sy = GUI_SCREEN_HEIGHT - STATUS_BAR_HEIGHT;
+    int view_dx = GUI_SCREEN_WIDTH;
 
-    // vita2d_draw_rectangle(view_sx, view_sy, status_bar_width, status_bar_height, STATUS_BAR_BG_COLOR);
-    vita2d_draw_line(view_sx, view_sy, view_sx + status_bar_width, view_sy, WHITE);
+    vita2d_draw_line(view_sx, view_sy, view_dx, view_sy, WHITE);
 
     int sx = view_sx + STATUS_BAR_PADDING_L;
     int sy = view_sy + STATUS_BAR_PADDING_T;
-    GUI_drawTextf(sx, sy, WHITE, "Built on  %s  %s", BUILD_DATE, REPOSITORY_ADDRESS);
+    GUI_DrawTextf(sx, sy, WHITE, "Built on  %s  %s", BUILD_DATE, REPOSITORY_ADDRESS);
 }
 
-static void drawMain()
+void GUI_DrawMain()
 {
-    if (wallpaper_tex)
-        vita2d_draw_texture_scale(wallpaper_tex, 0.0f, 0.0f, wallpaper_x_scale, wallpaper_y_scale);
+    GUI_LockDrawMutex();
+    GUI_StartDrawing();
 
-    vita2d_draw_rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, MAIN_BG_COLOR);
-
-    drawBrowser();
-    GUI_drawTopStatusBar(MAIN_TITLE);
-    GUI_drawBottomStatusBar();
-}
-
-static void controlMain()
-{
-    ctrlBrowser();
-}
-
-void GUI_main()
-{
-    readPad();
-    GUI_startDrawing();
-    drawMain();
-    GUI_endDrawing();
-    controlMain();
-}
-
-static int initImagesThreadCallback(SceSize args, void *argp)
-{
-    vita2d_texture *texture = vita2d_load_PNG_file(WALLPAPER_PNG_PATH);
-    if (texture)
+    if (wallpaper_texture)
     {
-        wallpaper_x_scale = (float)SCREEN_WIDTH / (float)vita2d_texture_get_width(texture);
-        wallpaper_y_scale = (float)SCREEN_HEIGHT / (float)vita2d_texture_get_height(texture);
-        wallpaper_tex = texture;
+        float x_scale = (float)GUI_SCREEN_WIDTH / (float)vita2d_texture_get_width(wallpaper_texture);
+        float y_scale = (float)GUI_SCREEN_HEIGHT / (float)vita2d_texture_get_height(wallpaper_texture);
+        vita2d_draw_texture_scale(wallpaper_texture, 0, 0, x_scale, y_scale);
     }
+    vita2d_draw_rectangle(0, 0, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, MAIN_BG_COLOR);
 
-    sceKernelExitDeleteThread(0);
+    BrowserDraw();
+
+    GUI_DrawTopStatusBar(MAIN_TITLE);
+    GUI_DrawBottomStatusBar();
+
+    GUI_EndDrawing();
+    GUI_UnlockDrawMutex();
+}
+
+void GUI_CtrlMain()
+{
+    ReadPad();
+    BrowserCtrl();
+}
+
+void GUI_RunMain()
+{
+    GUI_DrawMain();
+    GUI_CtrlMain();
+}
+
+void GUI_SetWallpaperTexture(vita2d_texture *texture)
+{
+    wallpaper_texture = texture;
+}
+
+int GUI_InitDraw()
+{
+    sceKernelCreateLwMutex(&gui_draw_mutex, "gui_draw_mutex", 2, 0, NULL);
     return 0;
 }
 
-void GUI_initImages()
+int GUI_DeinitDraw()
 {
-    SceUID thid = sceKernelCreateThread("init_images_thread", initImagesThreadCallback, 0x10000100, 0x10000, 0, 0, NULL);
-    if (thid >= 0)
-        sceKernelStartThread(thid, 0, NULL);
+    sceKernelDeleteLwMutex(&gui_draw_mutex);
+    return 0;
 }
 
-void GUI_deinitImages()
+int GUI_Init()
 {
-    if (wallpaper_tex)
+    GUI_InitLib();
+    GUI_InitDraw();
+    BrowserInit();
+
+    return 0;
+}
+
+void GUI_Deinit()
+{
+    BrowserDeinit();
+    GUI_DeinitDraw();
+    GUI_DeinitLib();
+
+    if (wallpaper_texture != NULL)
     {
-        vita2d_free_texture(wallpaper_tex);
-        wallpaper_tex = NULL;
+        vita2d_free_texture(wallpaper_texture);
+        wallpaper_texture = NULL;
     }
 }
 
-void GUI_init()
+int GUI_GetActivityLayoutPosition(int *x, int *y)
 {
-    GUI_initLib();
-    GUI_initImages();
-    refreshLayout();
-    initBrowser();
+    if (x)
+        *x = 0;
+    if (y)
+        *y = STATUS_BAR_HEIGHT;
+
+    return 0;
 }
 
-void GUI_deinit()
+int GUI_GetActivityAvailableSize(int *w, int *h)
 {
-    GUI_deinitImages();
-    GUI_deinitLib();
+    if (w)
+        *w = GUI_SCREEN_WIDTH;
+    if (h)
+        *h = GUI_SCREEN_HEIGHT - STATUS_BAR_HEIGHT * 2;
+
+    return 0;
+}
+
+int GUI_LockDrawMutex()
+{
+    return sceKernelLockLwMutex(&gui_draw_mutex, 1, NULL);
+}
+
+int GUI_UnlockDrawMutex()
+{
+    return sceKernelUnlockLwMutex(&gui_draw_mutex, 1);
 }
