@@ -294,7 +294,6 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
     }
 
     GUI_LockDrawMutex();
-    GUI_WaitRenderingDone();
     GUI_StartDrawing(rendert_tex);
     if (video_shader && use_shader)
         GUI_DrawTextureShaderPartScalRotate(video_texture, video_shader, conver_width / 2, conver_height / 2, 0, 0,

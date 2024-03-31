@@ -117,6 +117,10 @@ void GUI_EndDrawing()
 {
     vita2d_end_drawing();
     // vita2d_common_dialog_update();
+}
+
+void GUI_RenderPresent()
+{
     vita2d_swap_buffers();
 }
 

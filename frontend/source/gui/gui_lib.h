@@ -30,6 +30,7 @@ int GUI_DeinitLib();
 // Renderer
 void GUI_StartDrawing(GUI_Texture *texture);
 void GUI_EndDrawing();
+void GUI_RenderPresent();
 #define GUI_WaitRenderingDone() vita2d_wait_rendering_done()
 #define GUI_SetVblankWait(enable) vita2d_set_vblank_wait(enable)
 int GUI_SetClipping(int x, int y, int w, int h);

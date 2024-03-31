@@ -85,6 +85,7 @@ static void GUI_DrawMain()
     GUI_DrawWindow();
     GUI_DrawToast();
     GUI_EndDrawing();
+    GUI_RenderPresent();
     GUI_UnlockDrawMutex();
 }
 

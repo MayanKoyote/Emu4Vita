@@ -103,6 +103,7 @@ void GUI_DrawMain()
     GUI_DrawBottomStatusBar();
 
     GUI_EndDrawing();
+    GUI_RenderPresent();
     GUI_UnlockDrawMutex();
 }
 

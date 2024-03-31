@@ -20,6 +20,7 @@ void vita2d_draw_empty_rectangle(float x, float y, float w, float h, float size,
 
 void GUI_StartDrawing();
 void GUI_EndDrawing();
+void GUI_RenderPresent();
 
 int GUI_InitLib();
 int GUI_DeinitLib();
