@@ -1,7 +1,7 @@
 char *about_texts[] = {
-    APP_NAME_STR " " APP_NAME_EXT_STR,
+    APP_NAME " " APP_NAME_EXT,
     " * 作者: 一直改, noword",
-    " * 版本: " APP_VER_STR "    日期: " BUILD_DATE,
+    " * 版本: " APP_VER "    日期: " BUILD_DATE,
     "",
     "平台:",
     " * " CORE_SOFTWARE,

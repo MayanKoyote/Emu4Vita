@@ -282,12 +282,12 @@ int StringToListByWidthFromBuffer(LinkedList *list, char *buffer, size_t size, i
 
     char *start = buffer;
     char *finish = buffer + size;
-    char *last_space_p = start;
+    char *last_cut_p = start;
     char *p = start;
     char *cut = start;
     int line_w = 0;
     int max_w = 0;
-    int last_space_w = 0;
+    int last_cut_w = 0;
     int w;
     int count;
     char ch;
@@ -299,10 +299,10 @@ int StringToListByWidthFromBuffer(LinkedList *list, char *buffer, size_t size, i
         w = GUI_GetTextWidth(p);
         *(p + count) = ch;
 
-        if (*p == ' ' || *p == '\t')
+        if (*p == ' ' || *p == '\t' || count > 1)
         {
-            last_space_p = p;
-            last_space_w = line_w + w;
+            last_cut_p = p + count;
+            last_cut_w = line_w + w;
         }
 
         if (*p == '\n' || line_w + w > limit_width)
@@ -310,12 +310,12 @@ int StringToListByWidthFromBuffer(LinkedList *list, char *buffer, size_t size, i
             cut = p;
 
             // Check english word truncated
-            if ((p > start && last_space_p > start) && (IS_ENGLISH_CHARACTER(*p) && IS_ENGLISH_CHARACTER(*(p - 1))))
+            if ((p > start && last_cut_p > start) && (IS_ENGLISH_CHARACTER(*p) && IS_ENGLISH_CHARACTER(*(p - 1))))
             {
-                cut = last_space_p + 1; // Go back to the last space, current word will be in the next line
-                w = line_w + w - last_space_w;
-                line_w = last_space_w;
-                last_space_w = 0;
+                cut = last_cut_p; // Go back to the last space, current word will be in the next line
+                w = line_w + w - last_cut_w;
+                line_w = last_cut_w;
+                last_cut_w = 0;
             }
 
             ch = *cut;

@@ -155,7 +155,7 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
 
     /**************  Browser  *****************/
     // LANG_APP_TITLE
-    APP_NAME_STR " v" APP_VER_STR,
+    APP_NAME " v" APP_VER,
 
     // LANG_PARENT_DIR
     "Parent dir",
@@ -555,7 +555,7 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
 
     /**************  Browser  *****************/
     // LANG_APP_TITLE
-    APP_NAME_STR " v" APP_VER_STR,
+    APP_NAME " v" APP_VER,
 
     // LANG_PARENT_DIR
     "上层目录",
@@ -955,7 +955,7 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
 
     /**************  Browser  *****************/
     // LANG_APP_TITLE
-    APP_NAME_STR " v" APP_VER_STR,
+    APP_NAME " v" APP_VER,
 
     // LANG_PARENT_DIR
     "上層目錄",

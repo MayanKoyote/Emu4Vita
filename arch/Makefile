@@ -4,14 +4,15 @@ MINOR_VER  := 8
 
 PADDED_MAJOR_VER  := $(shell printf "%02d" $(MAJOR_VER))
 PADDED_MINOR_VER  := $(shell printf "%02d" $(MINOR_VER))
-APP_VER           := $(MAJOR_VER).$(PADDED_MINOR_VER)
-SFO_APP_VER       := $(PADDED_MAJOR_VER).$(PADDED_MINOR_VER)
-SFO_TITLE_ID      := EMUARCH01
-SFO_TITLE_NAME    := Emu4Vita Arch
 
-APP_NAME_STR      := Emu4Vita\ Arch
-APP_VER_STR       := $(APP_VER)
+SFO_APP_VER       := $(PADDED_MAJOR_VER).$(PADDED_MINOR_VER)
+SFO_TITLE_NAME    := Emu4Vita Arch
+SFO_TITLE_ID      := EMUARCH01
+
+APP_VER           := $(MAJOR_VER).$(PADDED_MINOR_VER)
+APP_NAME          := Emu4Vita\ Arch
 APP_DIR_NAME      := Arch
+
 BUILD_DATE        := $(shell date +"%Y/%m/%d")
 BUILD_DATE2       := $(shell date +"%Y_%m_%d")
 
@@ -41,7 +42,7 @@ else
 	TARGET_PATH   := $(RELEASES_DIR)/Emu4VitaArch/$(TARGET)_v$(APP_VER).vpk
 endif
 
-MAKE_ARGS := arch_build=1 ARCH_DIR=$(ROOT_DIR)
+CORE_MAKE_ARGS := build_self=1 SELF_DIR=$(CORES_DIR)
 
 INCDIRS := \
 	-I$(SRC_DIR) \
@@ -86,9 +87,9 @@ LIBS := \
 	-lSceShellSvc_stub
 
 DEFINES := \
-	-DAPP_NAME_STR=\"$(APP_NAME_STR)\" \
+	-DAPP_NAME=\"$(APP_NAME)\" \
 	-DAPP_NAME_EXT_STR=\"$(APP_NAME_EXT)\" \
-	-DAPP_VER_STR=\"$(APP_VER_STR)\" \
+	-DAPP_VER=\"$(APP_VER)\" \
 	-DAPP_DIR_NAME=\"$(APP_DIR_NAME)\" \
 	-DBUILD_DATE=\"$(BUILD_DATE)\"
 
@@ -96,7 +97,7 @@ WARNINGS := \
 	-Wall \
 	-Wno-format-truncation
 
-CFLAGS    += -DVITA -D__vita__ -O3
+CFLAGS    := -DVITA -D__vita__ -O3
 ASFLAGS   := $(CFLAGS) $(WARNINGS) $(INCDIRS)
 
 CFLAGS    += $(WARNINGS) $(INCDIRS) $(DEFINES)
@@ -180,37 +181,37 @@ clean-app:
 	rm -rf $(BUILD_DIR) $(TARGET_PATH) $(EBOOT_PATH) $(SFO_PATH)
 
 build-cores:
-	cd $(APPS_DIR)/fba_lite && make build-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/fceumm && make build-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/gambatte && make build-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/genesis_plus_gx && make build-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/gpsp && make build-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/mednafen_ngp && make build-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/mednafen_pce_fast && make build-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/mednafen_supergrafx && make build-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/mednafen_wswan && make build-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/nestopia && make build-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/pcsx_rearmed && make build-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/picodrive && make build-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/snes9x2002 && make build-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/snes9x2005 && make build-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/snes9x2005_plus && make build-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/vba_next && make build-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/fba_lite && make build-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/fceumm && make build-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/gambatte && make build-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/genesis_plus_gx && make build-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/gpsp && make build-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/mednafen_ngp && make build-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/mednafen_pce_fast && make build-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/mednafen_supergrafx && make build-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/mednafen_wswan && make build-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/nestopia && make build-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/pcsx_rearmed && make build-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/picodrive && make build-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/snes9x2002 && make build-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/snes9x2005 && make build-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/snes9x2005_plus && make build-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/vba_next && make build-self $(CORE_MAKE_ARGS)
 	
 clean-cores:
-	cd $(APPS_DIR)/fba_lite && make clean-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/fceumm && make clean-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/gambatte && make clean-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/genesis_plus_gx && make clean-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/gpsp && make clean-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/mednafen_ngp && make clean-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/mednafen_pce_fast && make clean-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/mednafen_supergrafx && make clean-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/mednafen_wswan && make clean-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/nestopia && make clean-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/pcsx_rearmed && make clean-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/picodrive && make clean-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/snes9x2002 && make clean-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/snes9x2005 && make clean-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/snes9x2005_plus && make clean-self $(MAKE_ARGS)
-	cd $(APPS_DIR)/vba_next && make clean-self $(MAKE_ARGS)
+	cd $(APPS_DIR)/fba_lite && make clean-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/fceumm && make clean-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/gambatte && make clean-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/genesis_plus_gx && make clean-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/gpsp && make clean-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/mednafen_ngp && make clean-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/mednafen_pce_fast && make clean-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/mednafen_supergrafx && make clean-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/mednafen_wswan && make clean-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/nestopia && make clean-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/pcsx_rearmed && make clean-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/picodrive && make clean-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/snes9x2002 && make clean-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/snes9x2005 && make clean-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/snes9x2005_plus && make clean-self $(CORE_MAKE_ARGS)
+	cd $(APPS_DIR)/vba_next && make clean-self $(CORE_MAKE_ARGS)

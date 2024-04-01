@@ -1,7 +1,6 @@
 APPS_DIR    := ./apps
 ARCH_DIR    := ./arch
 
-MAKE_ARGS   := 
 ifeq ($(nightly), 1)
 	MAKE_ARGS := nightly=1
 endif
@@ -88,7 +87,8 @@ clean-deps:
 	cd $(APPS_DIR)/snes9x2005_plus && make clean-deps $(MAKE_ARGS)
 	cd $(APPS_DIR)/vba_next && make clean-deps $(MAKE_ARGS)
 
-clean-all: clean-arch
+clean-all:
+	cd $(ARCH_DIR) && make clean-all $(MAKE_ARGS)
 	cd $(APPS_DIR)/fba_lite && make clean-all $(MAKE_ARGS)
 	cd $(APPS_DIR)/fceumm && make clean-all $(MAKE_ARGS)
 	cd $(APPS_DIR)/gambatte && make clean-all $(MAKE_ARGS)

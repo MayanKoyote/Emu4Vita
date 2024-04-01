@@ -68,19 +68,19 @@ int IsVitatvModel()
     return is_vitatv_model;
 }
 
-static int onSafeModeAlertDialogNegativeClick(AlertDialog *dialog, int which)
+static int onExitAppDialogNegativeClick(AlertDialog *dialog, int which)
 {
     AppExit();
     AlertDialog_Dismiss(dialog);
     return 0;
 }
 
-static void showSafeModeDialog()
+static void showExitAppDialog(const char *message)
 {
     AlertDialog *tip_dialog = AlertDialog_Create();
     AlertDialog_SetTitle(tip_dialog, cur_lang[LANG_TIP]);
-    AlertDialog_SetMessage(tip_dialog, cur_lang[LANG_MESSAGE_WARN_SAFE_MODE]);
-    AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_EXIT], onSafeModeAlertDialogNegativeClick);
+    AlertDialog_SetMessage(tip_dialog, message);
+    AlertDialog_SetNegativeButton(tip_dialog, cur_lang[LANG_EXIT], onExitAppDialogNegativeClick);
     AlertDialog_Show(tip_dialog);
 }
 
@@ -188,7 +188,7 @@ int AppInit(int argc, char *const argv[])
 
     if (is_safe_mode)
     {
-        showSafeModeDialog();
+        showExitAppDialog(cur_lang[LANG_MESSAGE_WARN_SAFE_MODE]);
         goto END;
     }
 
