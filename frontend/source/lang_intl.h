@@ -32,7 +32,7 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
 
     /**************  Safe mode  *****************/
     // LANG_MESSAGE_WARN_SAFE_MODE
-    "Currently in safe mode, please enable unsafe homemade software in HENkaku settings first, "
+    "Currently in safe mode, please enable unsafe homebrew in HENkaku settings first, "
     "only then can this program be used normally.",
 
     /**************  Button string  *****************/

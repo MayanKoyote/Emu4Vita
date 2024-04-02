@@ -26,11 +26,6 @@ static EmuGameEventAction game_event_action = EMU_GAME_EVENT_ACTION_NONE;
 static float game_run_speed = 1.0f;
 static void *game_rom_data = NULL;
 
-int Emu_GetCurrentRomType()
-{
-    return game_info.rom_type;
-}
-
 int Emu_MakeCurrentGameName(char *name)
 {
     return MakeFileName(name, game_info.path, MAX_NAME_LENGTH);
@@ -276,15 +271,17 @@ int Emu_UnlockRunGameMutex()
     return sceKernelUnlockLwMutex(&game_run_mutex, 1);
 }
 
-static int loadGameFromFile(const char *path, int type)
+static int loadGameFromFile(const char *path)
 {
     const char *rom_path = path;
 
-#if defined(WANT_EXT_ARCHIVE_ROM)
+#if defined(WANT_ARCHIVE_ROM)
     char cache_path[MAX_PATH_LENGTH];
-    if (type >= n_core_valid_extensions)
+    const char *ext = strrchr(path, '.');
+    if (ext++ && !Emu_IsValidExtension(ext)) // 非原生格式游戏，尝试压缩包读取
     {
-        if (Archive_GetRomPath(path, cache_path, Archive_GetDriver(type - n_core_valid_extensions)) < 0)
+        ArchiveRomDriver *driver = Archive_GetDriver(ext);
+        if (Archive_GetRomPath(path, cache_path, driver) < 0)
             return -1;
         rom_path = cache_path;
     }
@@ -302,20 +299,22 @@ static int loadGameFromFile(const char *path, int type)
     return 0;
 }
 
-static int loadGameFromMemory(const char *path, int type)
+static int loadGameFromMemory(const char *path)
 {
+    size_t size = 0;
+
     if (game_rom_data)
     {
         free(game_rom_data);
         game_rom_data = NULL;
     }
 
-    size_t size = 0;
-
-#if defined(WANT_EXT_ARCHIVE_ROM)
-    if (type >= n_core_valid_extensions)
+#if defined(WANT_ARCHIVE_ROM)
+    const char *ext = strrchr(path, '.');
+    if (ext++ && !Emu_IsValidExtension(ext)) // 非原生格式游戏，尝试压缩包读取
     {
-        if (Archive_GetRomMemory(path, &game_rom_data, &size, Archive_GetDriver(type - n_core_valid_extensions)) < 0)
+        ArchiveRomDriver *driver = Archive_GetDriver(ext);
+        if (Archive_GetRomMemory(path, &game_rom_data, &size, driver) < 0)
             return -1;
     }
     else
@@ -372,9 +371,9 @@ int Emu_LoadGame()
     retro_init();
 
     if (core_system_info.need_fullpath)
-        ret = loadGameFromFile(game_info.path, game_info.rom_type);
+        ret = loadGameFromFile(game_info.path);
     else
-        ret = loadGameFromMemory(game_info.path, game_info.rom_type);
+        ret = loadGameFromMemory(game_info.path);
 
     if (ret < 0)
     {

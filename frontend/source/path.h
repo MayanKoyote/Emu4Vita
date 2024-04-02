@@ -2,7 +2,6 @@
 #define __M_PATH_H__
 
 int CurrentPathIsGame();
-int GetCurrentRomType();
 
 int MakeCurrentGameName(char *name);
 int MakeCurrentGamePath(char *path);

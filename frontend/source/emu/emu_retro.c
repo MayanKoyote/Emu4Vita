@@ -34,6 +34,8 @@ GUI_PixelFormat core_video_pixel_format = GUI_PIXEL_FORMAT_U5U6U5_RGB;
 int core_input_supports_bitmasks = 0;
 int core_display_rotate = 0;
 
+static char **core_valid_extensions = NULL;
+static int n_core_valid_extensions = 0;
 static unsigned int emu_device_type = RETRO_DEVICE_JOYPAD;
 
 static int MakeCoreAssetsDir(char *path)
@@ -55,7 +57,8 @@ static void freeCoreValidExtensions()
         int i;
         for (i = 0; i < n_core_valid_extensions; i++)
         {
-            free(core_valid_extensions[i]);
+            if (core_valid_extensions[i])
+                free(core_valid_extensions[i]);
         }
         free(core_valid_extensions);
         core_valid_extensions = NULL;
@@ -114,6 +117,27 @@ static int creatCoreValidExtensions()
     //     printf("core_valid_extensions[%d]: %s\n", i, core_valid_extensions[i]);
 
     return ret;
+}
+
+int Emu_IsValidExtension(const char *ext)
+{
+    if (!ext)
+        return 0;
+
+    int i;
+    for (i = 0; i < n_core_valid_extensions; i++)
+    {
+        if (strcasecmp(ext, core_valid_extensions[i]) == 0)
+            return 1;
+    }
+
+    return 0;
+}
+
+int Emu_IsValidPath(const char *path)
+{
+    const char *ext = strrchr(path, '.');
+    return ext++ ? Emu_IsValidExtension(ext) : 0;
 }
 
 void Retro_SetCallbacks()

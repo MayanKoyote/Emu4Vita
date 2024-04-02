@@ -12,11 +12,11 @@
 #include "file.h"
 #include "config.h"
 
-#define STR_KEY_BOOT_MODE "boot_mode"
-#define STR_KEY_BOOT_GAME_PATH "game_path"
-#define STR_KEY_PRIVATE_ASSETS_DIR "core_assets_dir"
-#define STR_KEY_PUBLIC_ASSETS_DIR "common_assets_dir"
-#define STR_KEY_RESTORE_APP_PATH "restore_app_path"
+#define BOOT_KEY_BOOT_MODE "boot_mode"
+#define BOOT_KEY_GAME_PATH "game_path"
+#define BOOT_KEY_PRIVATE_ASSETS_DIR "core_assets_dir"
+#define BOOT_KEY_PUBLIC_ASSETS_DIR "common_assets_dir"
+#define BOOT_KEY_RESTORE_APP_PATH "restore_app_path"
 
 static int boot_mode = 0;
 static char *boot_game_path = NULL;
@@ -38,7 +38,6 @@ int BootLoadGame()
 
     EmuGameInfo info;
     strcpy(info.path, boot_game_path);
-    info.rom_type = GetRomType(boot_game_path);
     info.state_num = -2;
     Emu_StartGame(&info);
 
@@ -53,26 +52,26 @@ static int BootReadParam(const char *args)
     if (StringReadConfigLine(args, &name, &value) < 0)
         return -1;
 
-    if (strcasecmp(name, STR_KEY_BOOT_MODE) == 0)
+    if (strcasecmp(name, BOOT_KEY_BOOT_MODE) == 0)
     {
         boot_mode = StringToDecimal(value);
     }
-    else if (strcasecmp(name, STR_KEY_BOOT_GAME_PATH) == 0)
+    else if (strcasecmp(name, BOOT_KEY_GAME_PATH) == 0)
     {
         boot_game_path = value;
         value = NULL;
     }
-    else if (strcasecmp(name, STR_KEY_PRIVATE_ASSETS_DIR) == 0)
+    else if (strcasecmp(name, BOOT_KEY_PRIVATE_ASSETS_DIR) == 0)
     {
         private_assets_dir = value;
         value = NULL;
     }
-    else if (strcasecmp(name, STR_KEY_PUBLIC_ASSETS_DIR) == 0)
+    else if (strcasecmp(name, BOOT_KEY_PUBLIC_ASSETS_DIR) == 0)
     {
         public_assets_dir = value;
         value = NULL;
     }
-    else if (strcasecmp(name, STR_KEY_RESTORE_APP_PATH) == 0)
+    else if (strcasecmp(name, BOOT_KEY_RESTORE_APP_PATH) == 0)
     {
         restore_app_path = value;
         value = NULL;
@@ -139,16 +138,16 @@ int BootLoadExecForGame(const char *app_path, const char *game_path, const char 
         return -1;
 
     char boot_mode_param[MAX_CONFIG_LINE_LENGTH];
-    snprintf(boot_mode_param, MAX_CONFIG_LINE_LENGTH, "%s=%d", STR_KEY_BOOT_MODE, BOOT_MODE_GAME);
+    snprintf(boot_mode_param, MAX_CONFIG_LINE_LENGTH, "%s=%d", BOOT_KEY_BOOT_MODE, BOOT_MODE_GAME);
 
     char game_path_param[MAX_CONFIG_LINE_LENGTH];
-    snprintf(game_path_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", STR_KEY_BOOT_GAME_PATH, game_path);
+    snprintf(game_path_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", BOOT_KEY_GAME_PATH, game_path);
 
     char private_assets_param[MAX_CONFIG_LINE_LENGTH];
-    snprintf(private_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", STR_KEY_PRIVATE_ASSETS_DIR, assets_dir);
+    snprintf(private_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", BOOT_KEY_PRIVATE_ASSETS_DIR, assets_dir);
 
     char public_assets_param[MAX_CONFIG_LINE_LENGTH];
-    snprintf(public_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", STR_KEY_PUBLIC_ASSETS_DIR, APP_ASSETS_DIR);
+    snprintf(public_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", BOOT_KEY_PUBLIC_ASSETS_DIR, APP_ASSETS_DIR);
 
     char *argv[] = {
         boot_mode_param,
@@ -168,13 +167,13 @@ int BootLoadExecForCore(const char *app_path, const char *assets_dir)
         return -1;
 
     char boot_mode_param[MAX_CONFIG_LINE_LENGTH];
-    snprintf(boot_mode_param, MAX_CONFIG_LINE_LENGTH, "%s=%d", STR_KEY_BOOT_MODE, BOOT_MODE_ARCH);
+    snprintf(boot_mode_param, MAX_CONFIG_LINE_LENGTH, "%s=%d", BOOT_KEY_BOOT_MODE, BOOT_MODE_ARCH);
 
     char private_assets_param[MAX_CONFIG_LINE_LENGTH];
-    snprintf(private_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", STR_KEY_PRIVATE_ASSETS_DIR, assets_dir);
+    snprintf(private_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", BOOT_KEY_PRIVATE_ASSETS_DIR, assets_dir);
 
     char public_assets_param[MAX_CONFIG_LINE_LENGTH];
-    snprintf(public_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", STR_KEY_PUBLIC_ASSETS_DIR, APP_ASSETS_DIR);
+    snprintf(public_assets_param, MAX_CONFIG_LINE_LENGTH, "%s=\"%s\"", BOOT_KEY_PUBLIC_ASSETS_DIR, APP_ASSETS_DIR);
 
     char *argv[] = {
         boot_mode_param,

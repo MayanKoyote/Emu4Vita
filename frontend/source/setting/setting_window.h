@@ -5,16 +5,18 @@
 
 typedef struct SettingWindow SettingWindow;
 
-SettingWindow *Setting_CreateWindow();
-int Setting_DestroyWindow(SettingWindow *window);
+int SettingWindow_UpdateLayout(SettingWindow *window);
 
-int Setting_OpenWindow(SettingWindow *window);
-int Setting_CloseWindow(SettingWindow *window);
+SettingWindow *SettingWindow_Create();
+void SettingWindow_Destroy(SettingWindow *st_window);
 
-int Setting_SetWindowAutoFree(SettingWindow *window, int auto_free);
-int Setting_SetWindowContext(SettingWindow *window, SettingContext *context);
+int SettingWindow_Open(SettingWindow *st_window);
+int SettingWindow_Close(SettingWindow *st_window);
 
-int Setting_GetWindowMenuLayoutPosition(int *layout_x, int *layout_y);
-int Setting_GetWindowMenuAvailableSize(int *available_w, int *available_h);
+int SettingWindow_SetAutoFree(SettingWindow *st_window, int auto_free);
+int SettingWindow_SetContext(SettingWindow *st_window, SettingContext *context);
+
+int SettingWindow_GetMenuLayoutPosition(int *layout_x, int *layout_y);
+int SettingWindow_GetMenuAvailableSize(int *available_w, int *available_h);
 
 #endif

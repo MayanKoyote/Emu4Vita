@@ -187,7 +187,6 @@ int FileListGetDirectoryEntries(LinkedList *list, const char *path, int sort)
         if (res > 0)
         {
             int is_folder = SCE_S_ISDIR(dir.d_stat.st_mode);
-            int rom_type = -1;
 
             if (is_folder)
             {
@@ -196,9 +195,16 @@ int FileListGetDirectoryEntries(LinkedList *list, const char *path, int sort)
             }
             else
             {
-                rom_type = GetRomType(dir.d_name);
-                if (rom_type < 0)
+                const char *ext = strrchr(dir.d_name, '.');
+                if (!ext++ || !Emu_IsValidExtension(ext)) // 非原生格式游戏
+                {
+#if defined(WANT_ARCHIVE_ROM)
+                    if (!Archive_GetDriver(ext)) // 测试是否为支持的压缩包格式
+                        continue;
+#else
                     continue;
+#endif
+                }
             }
 
             FileListEntryData *e_data = calloc(1, sizeof(FileListEntryData));
@@ -206,7 +212,6 @@ int FileListGetDirectoryEntries(LinkedList *list, const char *path, int sort)
                 continue;
 
             e_data->is_folder = is_folder;
-            e_data->rom_type = rom_type;
 
             if (is_folder)
             {

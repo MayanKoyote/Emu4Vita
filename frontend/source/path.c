@@ -15,14 +15,6 @@ int CurrentPathIsGame()
     return Browser_CurrentPathIsGame();
 }
 
-int GetCurrentRomType()
-{
-    if (Emu_IsGameLoaded())
-        return Emu_GetCurrentRomType();
-
-    return Browser_GetCurrentRomType();
-}
-
 int MakeCurrentGameName(char *name)
 {
     if (Emu_IsGameLoaded())

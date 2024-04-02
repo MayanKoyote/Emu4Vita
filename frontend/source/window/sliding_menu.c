@@ -435,11 +435,10 @@ void SlidingMenu_Destroy(SlidingMenu *slidingMenu)
     if (!slidingMenu)
         return;
 
-    if (slidingMenu->window)
+    if (slidingMenu->window) // 如果已打开window，调用onCloseWindow执行destroy
     {
-        GUI_SetWindowData(slidingMenu->window, NULL); // 设置为NULL，防止onWindowClose时销毁slidingMenu
-        GUI_CloseWindow(slidingMenu->window);         // 关闭窗口
-        slidingMenu->window = NULL;
+        GUI_CloseWindow(slidingMenu->window);
+        return;
     }
 
     if (!slidingMenu->dont_free)
@@ -514,7 +513,7 @@ int SlidingMenu_Dismiss(SlidingMenu *slidingMenu)
         return 0;
 
     if (slidingMenu->status == TYPE_SLIDING_MENU_STATUS_SHOW)
-        slidingMenu->status = TYPE_SLIDING_MENU_STATUS_DISMISS; // 设置状态，通过onEventWindow关闭
+        slidingMenu->status = TYPE_SLIDING_MENU_STATUS_DISMISS; // 设置状态为关闭
     else
         SlidingMenu_Destroy(slidingMenu); // 直接销毁
 
@@ -535,8 +534,12 @@ int SlidingMenu_Close(SlidingMenu *slidingMenu)
     if (!slidingMenu)
         return -1;
 
-    slidingMenu->gradual_count = 0; // 取消渐变动画
-    return SlidingMenu_Dismiss(slidingMenu);
+    if (slidingMenu->window)
+        GUI_CloseWindow(slidingMenu->window);
+    else
+        SlidingMenu_Destroy(slidingMenu);
+
+    return 0;
 }
 
 int SlidingMenu_SetAutoFree(SlidingMenu *slidingMenu, int auto_free)

@@ -6,7 +6,6 @@
 extern GUI_Activity browser_activity;
 
 int Browser_CurrentPathIsGame();
-int Browser_GetCurrentRomType();
 int Browser_MakeCurrentFileName(char *name);
 int Browser_MakeCurrentFilePath(char *path);
 

@@ -17,53 +17,6 @@
 #define SCE_ERROR_ERRNO_EEXIST 0x80010011
 #define SCE_ERROR_ERRNO_ENODEV 0x80010013
 
-char **core_valid_extensions = NULL;
-int n_core_valid_extensions = 0;
-
-int IsValidFile(const char *path)
-{
-    if (!core_valid_extensions)
-        return 0;
-
-    char *ext = strrchr(path, '.');
-    if (!ext++)
-        return 0;
-
-    int i;
-    for (i = 0; i < n_core_valid_extensions; i++)
-    {
-        if (strcasecmp(ext, core_valid_extensions[i]) == 0)
-            return 1;
-    }
-
-    return 0;
-}
-
-int GetRomType(const char *filename)
-{
-    if (!core_valid_extensions)
-        return -1;
-
-    char *ext = strrchr(filename, '.');
-    if (!ext++)
-        return -1;
-
-    int i;
-    for (i = 0; i < n_core_valid_extensions; i++)
-    {
-        if (strcasecmp(ext, core_valid_extensions[i]) == 0)
-            return i;
-    }
-
-#if defined(WANT_EXT_ARCHIVE_ROM)
-    i = Archive_GetDriverIndex(ext);
-    if (i >= 0)
-        return i + n_core_valid_extensions;
-#endif
-
-    return -1;
-}
-
 int MakeParentDirEx(char *parent, int parent_size, const char *path, int path_len)
 {
     if (!parent || parent_size <= 0)

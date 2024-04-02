@@ -18,7 +18,7 @@
 
 #define MAIN_BG_COLOR 0x4F1F1F1F
 
-#define MAIN_TITLE APP_NAME_STR " " APP_VER_STR
+#define MAIN_TITLE APP_NAME " " APP_VER
 
 static SceKernelLwMutexWork gui_draw_mutex = {0};
 static vita2d_texture *wallpaper_texture = NULL;

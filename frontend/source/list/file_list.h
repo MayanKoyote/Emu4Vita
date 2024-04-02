@@ -17,7 +17,6 @@ typedef struct
     char *name;
     int name_length;
     int is_folder;
-    int rom_type;
 } FileListEntryData;
 
 typedef struct

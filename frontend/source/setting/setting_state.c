@@ -32,9 +32,8 @@
 #define STATE_ITEMVIEW_COLOR_DEF_BG COLOR_ALPHA(COLOR_DARKGRAY, 0xAF)
 #define STATE_ITEMVIEW_COLOR_FOCUS_BG GUI_DEF_COLOR_FOCUS
 
-#define STATE_LIST_LEN 30
+#define N_STATE_ENTRIES 30
 #define N_STATE_COUNTS_PER_LINE 2
-#define N_STATE_DRAW_LINES 4
 
 #define STATE_INFO_MARGIN_L 6
 #define STATE_INFO_LINE_SPACE 6
@@ -47,7 +46,7 @@ typedef struct
     GUI_Texture *tex;
     SceOff size;
     SceDateTime time;
-} StateListItem;
+} StateEntry;
 
 typedef struct
 {
@@ -63,28 +62,49 @@ static StateMenuItem state_menu[] = {
 };
 #define N_MENU_ITEMS (sizeof(state_menu) / sizeof(StateMenuItem))
 
-StateListItem *state_list = NULL;
+static StateEntry state_entries[N_STATE_ENTRIES] = {0};
 static SceUID state_thid = -1;
-static int state_thread_stop = 0;
+static int state_finish = 0;
 
 static int listview_wrap_h = 0;
-static int listview_scroll_y = 0;
-static int state_focus_pos = 0;
-static int option_open = 0;
-static int option_focus_pos = 0;
+static float listview_current_scroll_y = 0;
+static float listview_target_scroll_y = 0;
+static float listview_scroll_step = 0;
+static int entries_pos = 0;
+static int menu_open = 0;
+static int menu_pos = 0;
+
+static void updateStateSrcoll()
+{
+    if (listview_current_scroll_y != listview_target_scroll_y)
+    {
+        int scroll_y = listview_current_scroll_y + listview_scroll_step;
+        if (listview_current_scroll_y < listview_target_scroll_y)
+        {
+            if (scroll_y > listview_target_scroll_y)
+                scroll_y = listview_target_scroll_y;
+        }
+        else
+        {
+            if (scroll_y < listview_target_scroll_y)
+                scroll_y = listview_target_scroll_y;
+        }
+        listview_current_scroll_y = scroll_y;
+    }
+}
 
 static void updateStateLayout()
 {
     int layout_h = 0;
-    Setting_GetWindowMenuAvailableSize(NULL, &layout_h);
+    SettingWindow_GetMenuAvailableSize(NULL, &layout_h);
 
-    int n_line = (STATE_LIST_LEN + N_STATE_COUNTS_PER_LINE - 1) / N_STATE_COUNTS_PER_LINE;
+    int n_line = (N_STATE_ENTRIES + N_STATE_COUNTS_PER_LINE - 1) / N_STATE_COUNTS_PER_LINE;
     int itemview_h = STATE_ITEMVIEW_HEIGHT;
     int itemview_y_space = itemview_h + STATE_ITEMVIEW_MARGIN;
     int itemviews_h = layout_h - STATE_LISTVIEW_PADDING * 2;
     int itemviews_wrap_h = itemview_y_space * n_line - STATE_ITEMVIEW_MARGIN;
 
-    int scroll_y = 0 - (state_focus_pos / N_STATE_COUNTS_PER_LINE) * itemview_y_space;
+    int scroll_y = 0 - (entries_pos / N_STATE_COUNTS_PER_LINE) * itemview_y_space;
     scroll_y += (itemviews_h / 2 - itemview_h / 2);
 
     int max_srcoll_y = 0;
@@ -95,89 +115,58 @@ static void updateStateLayout()
     if (scroll_y > max_srcoll_y)
         scroll_y = max_srcoll_y;
 
-    listview_scroll_y = scroll_y;
+    listview_target_scroll_y = scroll_y;
+    listview_scroll_step = (listview_target_scroll_y - listview_current_scroll_y) / 10;
     listview_wrap_h = itemviews_wrap_h + STATE_LISTVIEW_PADDING * 2;
 }
 
-static void moveStateListPos(int type)
+static void cleanStateEntry(int num)
 {
-    int pos = state_focus_pos;
-
-    if ((type == TYPE_MOVE_UP))
-    {
-        if (pos >= N_STATE_COUNTS_PER_LINE)
-            pos -= N_STATE_COUNTS_PER_LINE;
-    }
-    else if ((type == TYPE_MOVE_DOWN))
-    {
-        if (pos < STATE_LIST_LEN - N_STATE_COUNTS_PER_LINE)
-            pos += N_STATE_COUNTS_PER_LINE;
-    }
-    else if (type == TYPE_MOVE_LEFT)
-    {
-        if (pos > 0)
-            pos--;
-    }
-    else if (type == TYPE_MOVE_RIGHT)
-    {
-        if (pos < STATE_LIST_LEN - 1)
-            pos++;
-    }
-
-    if (pos > STATE_LIST_LEN - 1)
-        pos = STATE_LIST_LEN - 1;
-    if (pos < 0)
-        pos = 0;
-
-    state_focus_pos = pos;
-    updateStateLayout();
-}
-
-static void cleanStateItem(int num)
-{
-    if (!state_list || num < 0 || num >= STATE_LIST_LEN)
+    if (num < 0 || num >= N_STATE_ENTRIES)
         return;
 
-    if (state_list[num].exist)
+    if (state_entries[num].exist)
     {
         GUI_LockDrawMutex();
-        state_list[num].exist = 0;
-        if (state_list[num].tex)
+        state_entries[num].exist = 0;
+        if (state_entries[num].tex)
         {
-            GUI_DestroyTexture(state_list[num].tex);
-            state_list[num].tex = NULL;
+            GUI_DestroyTexture(state_entries[num].tex);
+            state_entries[num].tex = NULL;
         }
         GUI_UnlockDrawMutex();
     }
 }
 
-static void freeStateList()
+static void cleanStateEntries()
 {
-    if (state_list)
+    GUI_LockDrawMutex();
+    int i;
+    for (i = 0; i < N_STATE_ENTRIES; i++)
     {
-        GUI_LockDrawMutex();
-        int i;
-        for (i = 0; i < STATE_LIST_LEN; i++)
+        if (state_entries[i].exist)
         {
-            if (state_list[i].tex)
-                GUI_DestroyTexture(state_list[i].tex);
+            state_entries[i].exist = 0;
+            if (state_entries[i].tex)
+            {
+                GUI_DestroyTexture(state_entries[i].tex);
+                state_entries[i].tex = NULL;
+            }
         }
-        free(state_list);
-        state_list = NULL;
-        GUI_UnlockDrawMutex();
     }
+    GUI_UnlockDrawMutex();
 }
 
-static void refreshStateItem(int num)
+static void refreshStateEntry(int num)
 {
     char path[MAX_PATH_LENGTH];
 
-    if (!state_list || num < 0 || num >= STATE_LIST_LEN)
+    if (num < 0 || num >= N_STATE_ENTRIES)
         return;
 
-    MakeSavestatePath(path, num);
-    cleanStateItem(num);
+    cleanStateEntry(num);
 
+    MakeSavestatePath(path, num);
     SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
     if (fd < 0)
         return;
@@ -194,11 +183,11 @@ static void refreshStateItem(int num)
     }
 
     // Read framebuffer
-    state_list[num].tex = GUI_CreateTextureFormat(header.preview_width, header.preview_height, SCEEENSHOT_PIXEL_FORMAT);
-    if (state_list[num].tex)
+    state_entries[num].tex = GUI_CreateTextureFormat(header.preview_width, header.preview_height, SCEEENSHOT_PIXEL_FORMAT);
+    if (state_entries[num].tex)
     {
         sceIoLseek(fd, header.preview_offset, SCE_SEEK_SET);
-        sceIoRead(fd, GUI_GetTextureDatap(state_list[num].tex), header.preview_size);
+        sceIoRead(fd, GUI_GetTextureDatap(state_entries[num].tex), header.preview_size);
     }
 
     // Set file stat
@@ -206,35 +195,14 @@ static void refreshStateItem(int num)
     memset(&stat, 0, sizeof(SceIoStat));
     if (sceIoGetstat(path, &stat) >= 0)
     {
-        state_list[num].size = stat.st_size;
-        state_list[num].time = stat.st_mtime;
+        state_entries[num].size = stat.st_size;
+        state_entries[num].time = stat.st_mtime;
     }
 
     // Set exist
-    state_list[num].exist = 1;
+    state_entries[num].exist = 1;
 
     sceIoClose(fd);
-}
-
-int Setting_GetStatePreviewSize(int *width, int *height)
-{
-    int h = STATE_PREVIEW_HEIGHT;
-    if (height)
-        *height = h;
-    if (width)
-        *width = STATE_PREVIEW_WIDTH(h);
-    return 0;
-}
-
-void Setting_SetStateSelectId(int id)
-{
-    state_focus_pos = id;
-    moveStateListPos(TYPE_MOVE_NONE);
-}
-
-int Setting_GetStateSelectId()
-{
-    return state_focus_pos;
 }
 
 int Setting_LoadState(int num)
@@ -243,7 +211,6 @@ int Setting_LoadState(int num)
     {
         EmuGameInfo info;
         MakeCurrentGamePath(info.path);
-        info.rom_type = GetCurrentRomType();
         info.state_num = num;
         return Emu_StartGame(&info);
     }
@@ -261,28 +228,27 @@ int Setting_SaveState(int num)
 
     Emu_SetGameEventAction(EMU_GAME_EVENT_ACTION_SAVE_STATE);
     Emu_WaitGameEventDone();
-    refreshStateItem(state_focus_pos);
+    refreshStateEntry(entries_pos);
     return 0;
 }
 
 int Setting_DeleteState(int num)
 {
     Emu_DeleteState(num);
-    cleanStateItem(num);
+    cleanStateEntry(num);
     return 0;
 }
 
 void Setting_DrawState()
 {
-    if (!state_list)
-        return;
-
     int layout_x = 0, layout_y = 0;
     int layout_w = 0, layout_h = 0;
     int preview_w = 0, preview_h = 0;
 
-    Setting_GetWindowMenuLayoutPosition(&layout_x, &layout_y);
-    Setting_GetWindowMenuAvailableSize(&layout_w, &layout_h);
+    updateStateSrcoll();
+
+    SettingWindow_GetMenuLayoutPosition(&layout_x, &layout_y);
+    SettingWindow_GetMenuAvailableSize(&layout_w, &layout_h);
     Setting_GetStatePreviewSize(&preview_w, &preview_h);
 
     GUI_SetClipping(layout_x, layout_y, layout_w, layout_h);
@@ -301,12 +267,12 @@ void Setting_DrawState()
     int itemview_y_space = itemview_h + STATE_ITEMVIEW_MARGIN;
 
     int itemview_x = itemviews_sx;
-    int itemview_y = itemviews_sy + listview_scroll_y;
+    int itemview_y = itemviews_sy + listview_current_scroll_y;
 
     GUI_SetClipping(itemviews_sx, itemviews_sy, itemviews_w, itemviews_h);
 
     int i;
-    for (i = 0; i < STATE_LIST_LEN; i++)
+    for (i = 0; i < N_STATE_ENTRIES; i++)
     {
         if (itemview_y + itemview_h <= itemviews_sy)
             goto NEXT;
@@ -315,7 +281,7 @@ void Setting_DrawState()
         if (itemview_y >= itemviews_dy)
             break;
 
-        uint32_t color = (i == state_focus_pos) ? STATE_ITEMVIEW_COLOR_FOCUS_BG : STATE_ITEMVIEW_COLOR_DEF_BG;
+        uint32_t color = (i == entries_pos) ? STATE_ITEMVIEW_COLOR_FOCUS_BG : STATE_ITEMVIEW_COLOR_DEF_BG;
         GUI_DrawFillRectangle(itemview_x, itemview_y, itemview_w, itemview_h, color);
 
         int preview_x = itemview_x + STATE_ITEMVIEW_PADDING;
@@ -323,23 +289,23 @@ void Setting_DrawState()
         int info_sx = preview_x + preview_w + STATE_INFO_MARGIN_L;
         int info_sy = preview_y + preview_h - GUI_GetLineHeight();
 
-        if (state_list[i].exist)
+        if (state_entries[i].exist)
         {
             // Preview
-            if (state_list[i].tex)
+            if (state_entries[i].tex)
             {
-                int tex_width = GUI_GetTextureWidth(state_list[i].tex);
-                int tex_height = GUI_GetTextureHeight(state_list[i].tex);
+                int tex_width = GUI_GetTextureWidth(state_entries[i].tex);
+                int tex_height = GUI_GetTextureHeight(state_entries[i].tex);
                 float x_scale = (float)preview_w / (float)tex_width;
                 float y_scale = (float)preview_h / (float)tex_height;
-                GUI_DrawTextureScale(state_list[i].tex, preview_x, preview_y, x_scale, y_scale);
+                GUI_DrawTextureScale(state_entries[i].tex, preview_x, preview_y, x_scale, y_scale);
             }
 
             // Date & time
             char date_string[24];
-            GetDateString(date_string, system_date_format, &state_list[i].time);
+            GetDateString(date_string, system_date_format, &state_entries[i].time);
             char time_string[16];
-            GetTimeString(time_string, system_time_format, &state_list[i].time);
+            GetTimeString(time_string, system_time_format, &state_entries[i].time);
             GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %s", date_string, time_string);
             info_sy -= (GUI_GetLineHeight() + STATE_INFO_LINE_SPACE);
             GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %d", cur_lang[LANG_STATE_EXISTENT_STATE], i);
@@ -352,7 +318,7 @@ void Setting_DrawState()
         }
 
         // If open menu
-        if (option_open && i == state_focus_pos)
+        if (menu_open && i == entries_pos)
         {
             int j;
             int menu_dx = itemview_x + itemview_w - STATE_ITEMVIEW_PADDING;
@@ -361,7 +327,7 @@ void Setting_DrawState()
             {
                 if (state_menu[j].enable)
                 {
-                    uint32_t color = (j == option_focus_pos) ? COLOR_GREEN : COLOR_WHITE;
+                    uint32_t color = (j == menu_pos) ? COLOR_GREEN : COLOR_WHITE;
                     char *name = cur_lang[state_menu[j].name];
                     GUI_DrawTextf(menu_dx - GUI_GetTextWidth(name), menu_sy, color, name);
                     menu_sy += (GUI_GetLineHeight() + OPTION_LINE_SPACE);
@@ -387,17 +353,51 @@ void Setting_DrawState()
     int track_x = layout_x + layout_w - GUI_DEF_SCROLLBAR_SIZE;
     int track_y = layout_y;
     int track_h = layout_h;
-    GUI_DrawVerticalScrollbar(track_x, track_y, track_h, itemviews_wrap_h, itemviews_h, 0 - listview_scroll_y, 0);
+    GUI_DrawVerticalScrollbar(track_x, track_y, track_h, itemviews_wrap_h, itemviews_h, 0 - listview_target_scroll_y, 0);
 
     GUI_UnsetClipping();
 }
 
-static void openMenu()
+static void moveStateEntriesPos(int type)
 {
-    option_open = 1;
-    option_focus_pos = 0;
+    int pos = entries_pos;
 
-    if (state_list[state_focus_pos].exist)
+    if ((type == TYPE_MOVE_UP))
+    {
+        if (pos >= N_STATE_COUNTS_PER_LINE)
+            pos -= N_STATE_COUNTS_PER_LINE;
+    }
+    else if ((type == TYPE_MOVE_DOWN))
+    {
+        if (pos < N_STATE_ENTRIES - N_STATE_COUNTS_PER_LINE)
+            pos += N_STATE_COUNTS_PER_LINE;
+    }
+    else if (type == TYPE_MOVE_LEFT)
+    {
+        if (pos > 0)
+            pos--;
+    }
+    else if (type == TYPE_MOVE_RIGHT)
+    {
+        if (pos < N_STATE_ENTRIES - 1)
+            pos++;
+    }
+
+    if (pos > N_STATE_ENTRIES - 1)
+        pos = N_STATE_ENTRIES - 1;
+    if (pos < 0)
+        pos = 0;
+
+    entries_pos = pos;
+    updateStateLayout();
+}
+
+static void openStateMenu()
+{
+    menu_open = 1;
+    menu_pos = 0;
+
+    if (state_entries[entries_pos].exist)
     {
         state_menu[0].enable = 1;
         state_menu[2].enable = 1;
@@ -418,33 +418,33 @@ static void openMenu()
     {
         if (state_menu[i].enable)
         {
-            option_focus_pos = i;
+            menu_pos = i;
             break;
         }
     }
 }
 
-static void ctrlStateList()
+static void ctrlStateEntries()
 {
     if (hold_pad[PAD_UP] || hold_pad[PAD_LEFT_ANALOG_UP])
     {
-        moveStateListPos(TYPE_MOVE_UP);
+        moveStateEntriesPos(TYPE_MOVE_UP);
     }
     else if (hold_pad[PAD_DOWN] || hold_pad[PAD_LEFT_ANALOG_DOWN])
     {
-        moveStateListPos(TYPE_MOVE_DOWN);
+        moveStateEntriesPos(TYPE_MOVE_DOWN);
     }
     else if (hold_pad[PAD_LEFT] || hold_pad[PAD_LEFT_ANALOG_LEFT])
     {
-        moveStateListPos(TYPE_MOVE_LEFT);
+        moveStateEntriesPos(TYPE_MOVE_LEFT);
     }
     else if (hold_pad[PAD_RIGHT] || hold_pad[PAD_LEFT_ANALOG_RIGHT])
     {
-        moveStateListPos(TYPE_MOVE_RIGHT);
+        moveStateEntriesPos(TYPE_MOVE_RIGHT);
     }
     else if (released_pad[PAD_ENTER])
     {
-        openMenu();
+        openStateMenu();
     }
     else if (released_pad[PAD_CANCEL])
     {
@@ -452,16 +452,16 @@ static void ctrlStateList()
     }
 }
 
-static void ctrlOption()
+static void ctrlStateMenu()
 {
     if (hold_pad[PAD_UP] || hold_pad[PAD_LEFT_ANALOG_UP])
     {
         int i;
-        for (i = option_focus_pos - 1; i >= 0; i--)
+        for (i = menu_pos - 1; i >= 0; i--)
         {
             if (state_menu[i].enable)
             {
-                option_focus_pos = i;
+                menu_pos = i;
                 break;
             }
         }
@@ -469,60 +469,57 @@ static void ctrlOption()
     else if (hold_pad[PAD_DOWN] || hold_pad[PAD_LEFT_ANALOG_DOWN])
     {
         int i;
-        for (i = option_focus_pos + 1; i <= N_MENU_ITEMS - 1; i++)
+        for (i = menu_pos + 1; i <= N_MENU_ITEMS - 1; i++)
         {
             if (state_menu[i].enable)
             {
-                option_focus_pos = i;
+                menu_pos = i;
                 break;
             }
         }
     }
     else if (released_pad[PAD_ENTER])
     {
-        switch (option_focus_pos)
+        switch (menu_pos)
         {
         case 0:
         {
-            option_open = 0;
-            Setting_LoadState(state_focus_pos);
+            menu_open = 0;
+            Setting_LoadState(entries_pos);
             Setting_CloseMenu();
             break;
         }
         case 1:
         {
-            option_open = 0;
-            Setting_SaveState(state_focus_pos);
+            menu_open = 0;
+            Setting_SaveState(entries_pos);
             break;
         }
         case 2:
         {
-            option_open = 0;
-            Setting_DeleteState(state_focus_pos);
+            menu_open = 0;
+            Setting_DeleteState(entries_pos);
             break;
         }
         case 3:
         {
-            option_open = 0;
+            menu_open = 0;
             break;
         }
         }
     }
     else if (released_pad[PAD_CANCEL])
     {
-        option_open = 0;
+        menu_open = 0;
     }
 }
 
 void Setting_CtrlState()
 {
-    if (!state_list)
-        return;
-
-    if (option_open)
-        ctrlOption();
+    if (menu_open)
+        ctrlStateMenu();
     else
-        ctrlStateList();
+        ctrlStateEntries();
 }
 
 static int StateThreadEntry(SceSize args, void *argp)
@@ -555,11 +552,11 @@ static int StateThreadEntry(SceSize args, void *argp)
                         num_str[1] >= '0' && num_str[1] <= '9')
                     {
                         int num = strtol(num_str, 0, 10);
-                        refreshStateItem(num);
+                        refreshStateEntry(num);
                     }
                 }
             }
-        } while (res > 0 && !state_thread_stop);
+        } while (res > 0 && !state_finish);
 
         sceIoDclose(dfd);
     }
@@ -577,7 +574,7 @@ static int startStateThread()
         ret = state_thid = sceKernelCreateThread("setting_state_thread", StateThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
     if (state_thid >= 0)
     {
-        state_thread_stop = 0;
+        state_finish = 0;
         ret = sceKernelStartThread(state_thid, 0, NULL);
     }
 
@@ -586,7 +583,7 @@ static int startStateThread()
 
 static void finishStateThread()
 {
-    state_thread_stop = 1;
+    state_finish = 1;
     if (state_thid >= 0)
     {
         sceKernelWaitThreadEnd(state_thid, NULL, NULL);
@@ -597,13 +594,8 @@ static void finishStateThread()
 
 int Setting_InitState()
 {
-    option_open = 0;
-
-    state_list = calloc(STATE_LIST_LEN, sizeof(StateListItem));
-    if (!state_list)
-        return -1;
-
-    moveStateListPos(TYPE_MOVE_NONE);
+    menu_open = 0;
+    moveStateEntriesPos(TYPE_MOVE_NONE);
     startStateThread();
 
     return 0;
@@ -612,7 +604,28 @@ int Setting_InitState()
 int Setting_DeinitState()
 {
     finishStateThread();
-    freeStateList();
+    cleanStateEntries();
 
     return 0;
+}
+
+int Setting_GetStatePreviewSize(int *width, int *height)
+{
+    int h = STATE_PREVIEW_HEIGHT;
+    if (height)
+        *height = h;
+    if (width)
+        *width = STATE_PREVIEW_WIDTH(h);
+    return 0;
+}
+
+void Setting_SetStateSelectId(int id)
+{
+    entries_pos = id;
+    moveStateEntriesPos(TYPE_MOVE_NONE);
+}
+
+int Setting_GetStateSelectId()
+{
+    return entries_pos;
 }

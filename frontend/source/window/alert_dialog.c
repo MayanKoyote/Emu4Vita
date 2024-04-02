@@ -569,11 +569,10 @@ void AlertDialog_Destroy(AlertDialog *dialog)
     if (!dialog)
         return;
 
-    if (dialog->window)
+    if (dialog->window) // 如果已打开window，调用onCloseWindow执行destroy
     {
-        GUI_SetWindowData(dialog->window, NULL); // 设置为NULL，防止onWindowClose时销毁dialog
-        GUI_CloseWindow(dialog->window);         // 关闭窗口
-        dialog->window = NULL;
+        GUI_CloseWindow(dialog->window);
+        return;
     }
 
     if (!dialog->dont_free)
@@ -644,7 +643,7 @@ int AlertDialog_Dismiss(AlertDialog *dialog)
         return 0;
 
     if (dialog->status == TYPE_ALERT_DIALOG_STATUS_SHOW)
-        dialog->status = TYPE_ALERT_DIALOG_STATUS_DISMISS; // 设置状态，通过onEventWindow关闭
+        dialog->status = TYPE_ALERT_DIALOG_STATUS_DISMISS; // 设置状态为关闭
     else
         AlertDialog_Destroy(dialog); // 直接销毁
 
@@ -665,8 +664,12 @@ int AlertDialog_Close(AlertDialog *dialog)
     if (!dialog)
         return -1;
 
-    dialog->gradual_count = 0;
-    return AlertDialog_Dismiss(dialog);
+    if (dialog)
+        GUI_CloseWindow(dialog->window);
+    else
+        AlertDialog_Destroy(dialog);
+
+    return 0;
 }
 
 int AlertDialog_OnClickDismiss(AlertDialog *dialog, int which)

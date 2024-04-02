@@ -235,6 +235,7 @@ int Setting_onCoreMenuOptionChanged(SettingMenu *menu, SettingMenuItem *menu_ite
 {
     Retro_UpdateCoreOptionsDisplay();
     Setting_UpdateMenu(menu);
+    Setting_UpdateMenuLayout();
     return 0;
 }
 
@@ -243,6 +244,7 @@ int Setting_onResetCoreConfigItemClick(SettingMenu *menu, SettingMenuItem *menu_
     ResetCoreConfig();
     Retro_UpdateCoreOptionsDisplay();
     Setting_UpdateMenu(menu);
+    Setting_UpdateMenuLayout();
     menu->option_changed = 1;
     return 0;
 }

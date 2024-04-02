@@ -4,7 +4,7 @@
 typedef struct AlertDialog AlertDialog;
 
 AlertDialog *AlertDialog_Create();
-void AlertDialog_Destroy(AlertDialog *dialog); // 和AlertDialog_Close没什么不同，但AlertDialog_Close可能安全一点
+void AlertDialog_Destroy(AlertDialog *dialog);
 
 int AlertDialog_Show(AlertDialog *dialog);
 int AlertDialog_Dismiss(AlertDialog *dialog);

@@ -8,8 +8,8 @@
 #include <archive.h>
 #include <archive_entry.h>
 
+#include "emu/emu.h"
 #include "archive_lib.h"
-#include "file.h"
 #include "utils.h"
 
 #define ARCHIVE_BLOCK_SIZE 10240
@@ -45,9 +45,11 @@ LibarchiveObj *Libarchive_OpenRom(const char *archive_path, int (*read_support_f
         if (!entry_name)
         {
             entry_name = archive_entry_pathname(obj->entry);
+            if (!entry_name)
+                continue;
         }
         APP_LOG("[ARCHIVE] Libarchive_OpenRom: entry_name = %s\n", entry_name);
-        if (entry_name && IsValidFile(entry_name))
+        if (Emu_IsValidPath(entry_name))
         {
             if (name)
                 strcpy(name, entry_name);

@@ -124,7 +124,7 @@ SRC_C += \
 	utils_string.c \
 	utils.c
 
-ifeq ($(WANT_EXT_ARCHIVE_ROM), 1)
+ifeq ($(WANT_ARCHIVE_ROM), 1)
 	SRC_C += \
 		emu/emu_archive.c \
 		archive/archive_lib.c \
@@ -165,7 +165,7 @@ LIBS := \
 	-lSceHid_stub \
 	-lSceFiber_stub
 
-ifeq ($(WANT_EXT_ARCHIVE_ROM), 1)
+ifeq ($(WANT_ARCHIVE_ROM), 1)
 	LIBS += \
 		-larchive \
 		-llzma \
@@ -202,8 +202,8 @@ ifeq ($(WANT_DISPLAY_ROTATE), 1)
 	DEFINES += -DWANT_DISPLAY_ROTATE
 endif
 
-ifeq ($(WANT_EXT_ARCHIVE_ROM), 1)
-	DEFINES += -DWANT_EXT_ARCHIVE_ROM
+ifeq ($(WANT_ARCHIVE_ROM), 1)
+	DEFINES += -DWANT_ARCHIVE_ROM
 endif
 
 CORE_MAKE_ARGS += platform=vita EXTERNAL_ZLIB=1

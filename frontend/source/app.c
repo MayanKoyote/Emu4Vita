@@ -7,14 +7,11 @@
 #include <psp2/kernel/modulemgr.h>
 #include <psp2/power.h>
 #include <psp2/apputil.h>
-#include <psp2/ctrl.h>
 #include <psp2/kernel/sysmem.h>
 #include <psp2/system_param.h>
-#include <psp2/appmgr.h>
 #include <psp2/shellutil.h>
 #include <psp2/io/fcntl.h>
 #include <psp2/io/devctl.h>
-#include <psp2/vshbridge.h>
 #include <psp2/touch.h>
 #include <psp2/common_dialog.h>
 
@@ -195,7 +192,7 @@ int AppInit(int argc, char *const argv[])
     Emu_Init();
     Setting_Init();
 
-#if defined(WANT_EXT_ARCHIVE_ROM)
+#if defined(WANT_ARCHIVE_ROM)
     Archive_LoadCacheConfig();
 #endif
 
@@ -220,10 +217,10 @@ int AppDeinit()
 {
     APP_LOG("[APP] App deinit...\n");
 
-    AppEventExit();
     Setting_Deinit();
     Emu_Deinit();
     GUI_Deinit();
+    AppEventExit();
     DeinitSceAppUtil();
 
     APP_LOG("[APP] App deinit OK!\n");

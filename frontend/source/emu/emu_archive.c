@@ -43,26 +43,22 @@ static void makeCacheRomName(const char *archive_path, const char *entry_name, c
         strcat(rom_name, ext);
 }
 
-int Archive_GetDriverIndex(const char *ext)
-{
-    int i;
-    for (i = 0; i < N_ARCHIVER_ROM_DRIVERS; i++)
-    {
-        if (strcasecmp(ext, archiver_rom_drivers[i]->extension) == 0)
-            return i;
-    }
-
-    return -1;
-}
-
-ArchiveRomDriver *Archive_GetDriver(int index)
+ArchiveRomDriver *Archive_GetDriver(const char *ext)
 {
     ArchiveRomDriver *driver = NULL;
 
-    if (index >= 0 && index < N_ARCHIVER_ROM_DRIVERS)
+    if (!ext)
+        return NULL;
+
+    int index;
+    for (index = 0; index < N_ARCHIVER_ROM_DRIVERS; index++)
     {
-        driver = archiver_rom_drivers[index];
+        if (strcasecmp(ext, archiver_rom_drivers[index]->extension) == 0)
+            break;
     }
+
+    if (index < N_ARCHIVER_ROM_DRIVERS)
+        driver = archiver_rom_drivers[index];
 
     return driver;
 }
@@ -85,14 +81,14 @@ int Archive_CleanCache(int index)
 
 int Archive_CleanCacheByPath(const char *path)
 {
-    int rom_type = GetRomType(path);
-    if (rom_type < n_core_valid_extensions)
+    const char *ext = strrchr(path, '.');
+    if (!ext++ || Emu_IsValidExtension(ext)) // 原生格式rom，非archive rom
         return 0;
 
     int n = 0;
     char entry_name[MAX_PATH_LENGTH];
 
-    ArchiveRomDriver *driver = Archive_GetDriver(rom_type - n_core_valid_extensions);
+    ArchiveRomDriver *driver = Archive_GetDriver(ext);
     if (!driver)
         return 0;
 

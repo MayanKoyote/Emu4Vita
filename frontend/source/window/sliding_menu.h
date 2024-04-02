@@ -19,7 +19,7 @@ typedef enum SlidingMenuChoiceType
 typedef struct SlidingMenu SlidingMenu;
 
 SlidingMenu *SlidingMenu_Create();
-void SlidingMenu_Destroy(SlidingMenu *slidingMenu); // 和SlidingMenu_Close没什么不同，但SlidingMenu_Close可能安全一点
+void SlidingMenu_Destroy(SlidingMenu *slidingMenu);
 
 int SlidingMenu_Show(SlidingMenu *slidingMenu);
 int SlidingMenu_Dismiss(SlidingMenu *slidingMenu);

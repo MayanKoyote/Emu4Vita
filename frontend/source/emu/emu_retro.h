@@ -25,6 +25,9 @@ extern GUI_PixelFormat core_video_pixel_format;
 extern int core_display_rotate;
 extern int core_input_supports_bitmasks;
 
+int Emu_IsValidExtension(const char *ext);
+int Emu_IsValidPath(const char *path);
+
 int Emu_InitRetro();
 int Emu_DeinitRetro();
 

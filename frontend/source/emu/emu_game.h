@@ -23,11 +23,9 @@ typedef enum EmuGameEventAction
 typedef struct EmuGameInfo
 {
     char path[MAX_PATH_LENGTH];
-    int rom_type;
     int state_num; // -1自动存档，-2自动判断，<-2禁用存档
 } EmuGameInfo;
 
-int Emu_GetCurrentRomType();
 int Emu_MakeCurrentGameName(char *name);
 int Emu_MakeCurrentGamePath(char *path);
 

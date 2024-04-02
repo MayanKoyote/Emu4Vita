@@ -60,6 +60,11 @@ static void updateVariables()
     setting_visibility_touch_to_button_item = !IsVitatvModel();
 }
 
+int Setting_UpdateMenuLayout()
+{
+    return SettingWindow_UpdateLayout(setting_window);
+}
+
 int Setting_UpdateMenu(SettingMenu *menu)
 {
     if (!menu)
@@ -83,23 +88,62 @@ int Setting_CleanMenu(SettingMenu *menu)
     if (!menu)
         return -1;
 
-    int i;
-    for (i = 0; i < menu->n_items; i++)
+    if (menu->items)
     {
-        if (menu->items[i].option_data && menu->items[i].onOptionClean)
+        int i;
+        for (i = 0; i < menu->n_items; i++)
         {
-            menu->items[i].onOptionClean(menu->items[i].option_data);
-            free(menu->items[i].option_data);
-            menu->items[i].option_data = NULL;
+            if (menu->items[i].option_data && menu->items[i].onOptionClean)
+            {
+                menu->items[i].onOptionClean(menu->items[i].option_data);
+                free(menu->items[i].option_data);
+                menu->items[i].option_data = NULL;
+            }
         }
+        menu->items = NULL;
+        menu->n_items = 0;
     }
-    menu->items = NULL;
-    menu->n_items = 0;
 
     if (menu->name.string)
     {
         free(menu->name.string);
         menu->name.string = NULL;
+    }
+
+    return 0;
+}
+
+int Setting_StartContext(SettingContext *context)
+{
+    if (!context)
+        return -1;
+
+    if (context->menus)
+    {
+        int i;
+        for (i = 0; i < context->n_menus; i++)
+        {
+            if (context->menus[i].onStart)
+                context->menus[i].onStart(&context->menus[i]);
+        }
+    }
+
+    return 0;
+}
+
+int Setting_FinishContext(SettingContext *context)
+{
+    if (!context)
+        return -1;
+
+    if (context->menus)
+    {
+        int i;
+        for (i = 0; i < context->n_menus; i++)
+        {
+            if (context->menus[i].onFinish)
+                context->menus[i].onFinish(&context->menus[i]);
+        }
     }
 
     return 0;
@@ -390,12 +434,12 @@ int Setting_Init()
     Setting_InitOverlay();                                           // Overlay的设置选项是从文本里获取的，需要初始化
     if (!setting_window)
     {
-        setting_window = Setting_CreateWindow(&setting_context);
+        setting_window = SettingWindow_Create(&setting_context);
         if (!setting_window)
             return -1;
+        SettingWindow_SetAutoFree(setting_window, 0);
+        SettingWindow_SetContext(setting_window, &setting_context);
     }
-    Setting_SetWindowAutoFree(setting_window, 0);
-    Setting_SetWindowContext(setting_window, &setting_context);
 
     return 0;
 }
@@ -404,8 +448,8 @@ int Setting_Deinit()
 {
     if (setting_window)
     {
-        Setting_SetWindowAutoFree(setting_window, 1);
-        Setting_CloseWindow(setting_window);
+        SettingWindow_SetAutoFree(setting_window, 1);
+        SettingWindow_Destroy(setting_window);
         setting_window = NULL;
     }
     Setting_DeinitOverlay();
@@ -416,14 +460,14 @@ int Setting_OpenMenu()
 {
     Setting_WaitOverlayInitEnd();
     updateVariables();
-    Setting_OpenWindow(setting_window);
+    SettingWindow_Open(setting_window);
 
     return 0;
 }
 
 int Setting_CloseMenu()
 {
-    Setting_CloseWindow(setting_window);
+    SettingWindow_Close(setting_window);
 
     return 0;
 }

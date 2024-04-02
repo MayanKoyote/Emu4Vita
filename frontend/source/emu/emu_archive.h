@@ -12,8 +12,7 @@ typedef struct
     int (*extractRom)(char *extract_path);
 } ArchiveRomDriver;
 
-int Archive_GetDriverIndex(const char *ext);
-ArchiveRomDriver *Archive_GetDriver(int index);
+ArchiveRomDriver *Archive_GetDriver(const char *ext);
 
 int Archive_CleanCache(int index);
 int Archive_CleanCacheByPath(const char *path);

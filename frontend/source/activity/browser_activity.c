@@ -263,17 +263,6 @@ int Browser_CurrentPathIsGame()
     return 0;
 }
 
-int Browser_GetCurrentRomType()
-{
-    int focus_pos = ListViewGetFocusPos(browser_listview);
-    LinkedListEntry *entry = LinkedListFindByNum(file_list, focus_pos);
-    FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
-    if (!data)
-        return -1;
-
-    return data->rom_type;
-}
-
 int Browser_MakeCurrentFileName(char *name)
 {
     int focus_pos = ListViewGetFocusPos(browser_listview);
@@ -581,7 +570,6 @@ static void startGame(LinkedListEntry *entry)
 
     EmuGameInfo info;
     snprintf(info.path, MAX_PATH_LENGTH, "%s%s", ls_data->path, e_data->name);
-    info.rom_type = e_data->rom_type;
     info.state_num = -2;
     Emu_StartGame(&info);
 }
@@ -644,7 +632,7 @@ static int onAlertDialogDeleteAutoSrm(AlertDialog *dialog, int which)
 
 static int onAlertDialogDeleteCacheFiles(AlertDialog *dialog, int which)
 {
-#if defined(WANT_EXT_ARCHIVE_ROM)
+#if defined(WANT_ARCHIVE_ROM)
     char path[MAX_PATH_LENGTH];
     MakeCurrentGamePath(path);
     Archive_CleanCacheByPath(path);

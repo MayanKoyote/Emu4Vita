@@ -60,9 +60,11 @@ struct SettingWindow
 #define MENU_ITEMVIEW_COLOR_FOCUS_BG GUI_DEF_COLOR_FOCUS
 
 extern int Setting_UpdateMenu(SettingMenu *menu);
+extern int Setting_StartContext(SettingContext *context);
+extern int Setting_FinishContext(SettingContext *context);
 extern int Setting_IsResumeGameEnabled();
 
-static int Setting_UpdateWindowLayout(SettingWindow *window)
+int SettingWindow_UpdateLayout(SettingWindow *window)
 {
     if (!window)
         return -1;
@@ -243,24 +245,11 @@ static int onOpenWindow(GUI_Window *window)
     if (!st_window)
         return -1;
 
+    Setting_StartContext(st_window->context);
+    moveTabBarPos(st_window->context, TYPE_MOVE_NONE);
+    SettingWindow_UpdateLayout(st_window);
+
     st_window->status = TYPE_SETTING_WINDOW_STATUS_SHOW;
-
-    SettingContext *context = st_window->context;
-    if (!context || !context->menus)
-        return -1;
-
-    SettingMenu *menus = context->menus;
-    int n_menus = context->n_menus;
-
-    int i;
-    for (i = 0; i < n_menus; i++)
-    {
-        if (SETTING_IS_VISIBLE(menus[i].visibility) && menus[i].onStart)
-            menus[i].onStart(&menus[i]);
-    }
-
-    moveTabBarPos(context, TYPE_MOVE_NONE);
-    Setting_UpdateWindowLayout(st_window);
 
     return 0;
 }
@@ -271,24 +260,11 @@ static int onCloseWindow(GUI_Window *window)
     if (!st_window)
         return -1;
 
-    SettingContext *context = st_window->context;
-    if (!context || !context->menus)
-        goto EXIT;
+    Setting_FinishContext(st_window->context);
 
-    SettingMenu *menus = context->menus;
-    int n_menus = context->n_menus;
-
-    int i;
-    for (i = 0; i < n_menus; i++)
-    {
-        if (SETTING_IS_VISIBLE(menus[i].visibility) && menus[i].onFinish)
-            menus[i].onFinish(&menus[i]);
-    }
-
-EXIT:
     st_window->window = NULL;
     GUI_SetWindowData(window, NULL);
-    Setting_DestroyWindow(st_window);
+    SettingWindow_Destroy(st_window);
 
     if (Emu_IsGameLoaded() && Setting_IsResumeGameEnabled())
         Emu_ResumeGame();
@@ -531,11 +507,13 @@ static int onDrawWindow(GUI_Window *window)
     y += h;
     h = WINDOW_DY - y;
     SettingMenu *menu = &context->menus[context->menus_pos];
-
-    if (menu->onDraw)
-        menu->onDraw(menu);
-    else
-        drawMenu(st_window, x, y, w, h);
+    if (menu)
+    {
+        if (menu->onDraw)
+            menu->onDraw(menu);
+        else
+            drawMenu(st_window, x, y, w, h);
+    }
 
     return 0;
 }
@@ -550,8 +528,6 @@ static int onCtrlWindow(GUI_Window *window)
     if (!context || !context->menus)
         return -1;
 
-    SettingMenu *menu = &context->menus[context->menus_pos];
-
     if (released_pad[PAD_HOME])
     {
         if (GUI_IsHomeKeyEnabled())
@@ -560,11 +536,11 @@ static int onCtrlWindow(GUI_Window *window)
             {
                 context->menus_pos = 0;
                 moveTabBarPos(context, TYPE_MOVE_NONE);
-                Setting_UpdateWindowLayout(st_window);
+                SettingWindow_UpdateLayout(st_window);
             }
             else
             {
-                Setting_CloseWindow(st_window);
+                SettingWindow_Close(st_window);
             }
         }
     }
@@ -582,87 +558,88 @@ static int onCtrlWindow(GUI_Window *window)
     else if (pressed_pad[PAD_L1])
     {
         moveTabBarPos(context, TYPE_MOVE_UP);
-        Setting_UpdateWindowLayout(st_window);
+        SettingWindow_UpdateLayout(st_window);
     }
     else if (pressed_pad[PAD_R1])
     {
         moveTabBarPos(context, TYPE_MOVE_DOWN);
-        Setting_UpdateWindowLayout(st_window);
-    }
-    else if (menu->onCtrl)
-    {
-        menu->onCtrl(menu);
+        SettingWindow_UpdateLayout(st_window);
     }
     else
     {
-        if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
-        {
-            moveMenuPos(menu, TYPE_MOVE_UP);
-            Setting_UpdateWindowLayout(st_window);
-        }
-        else if (hold_pad[PAD_DOWN] || hold2_pad[PAD_LEFT_ANALOG_DOWN])
-        {
-            moveMenuPos(menu, TYPE_MOVE_DOWN);
-            Setting_UpdateWindowLayout(st_window);
-        }
-        else if (released_pad[PAD_ENTER])
-        {
-            SettingMenuItem *menu_item = &menu->items[menu->menu_pos];
+        SettingMenu *menu = &context->menus[context->menus_pos];
 
-            if (menu_item->onItemClick)
-                menu_item->onItemClick(menu, menu_item, menu->menu_pos);
+        if (menu && menu->onCtrl)
+        {
+            menu->onCtrl(menu);
         }
         else if (released_pad[PAD_CANCEL])
         {
-            Setting_CloseWindow(st_window);
+            SettingWindow_Close(st_window);
+        }
+        else if (menu && menu->items)
+        {
+            if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
+            {
+                moveMenuPos(menu, TYPE_MOVE_UP);
+                SettingWindow_UpdateLayout(st_window);
+            }
+            else if (hold_pad[PAD_DOWN] || hold2_pad[PAD_LEFT_ANALOG_DOWN])
+            {
+                moveMenuPos(menu, TYPE_MOVE_DOWN);
+                SettingWindow_UpdateLayout(st_window);
+            }
+            else if (released_pad[PAD_ENTER])
+            {
+                SettingMenuItem *menu_item = &menu->items[menu->menu_pos];
+                if (menu_item && menu_item->onItemClick)
+                    menu_item->onItemClick(menu, menu_item, menu->menu_pos);
+            }
         }
     }
 
     return 0;
 }
 
-SettingWindow *Setting_CreateWindow()
+SettingWindow *SettingWindow_Create()
 {
     SettingWindow *st_window = (SettingWindow *)calloc(1, sizeof(SettingWindow));
     return st_window;
 }
 
-int Setting_DestroyWindow(SettingWindow *window)
+void SettingWindow_Destroy(SettingWindow *st_window)
 {
-    if (!window)
-        return -1;
+    if (!st_window)
+        return;
 
-    if (window->window)
+    if (st_window->window)
     {
-        GUI_SetWindowData(window->window, NULL);
-        GUI_CloseWindow(window->window);
-        window->window = NULL;
+        GUI_CloseWindow(st_window->window);
+        return;
     }
 
-    if (!window->dont_free)
+    if (!st_window->dont_free)
     {
-        free(window);
+        free(st_window);
     }
-
-    return 0;
 }
 
-int Setting_OpenWindow(SettingWindow *window)
+int SettingWindow_Open(SettingWindow *st_window)
 {
-    if (!window)
+    if (!st_window)
         return -1;
 
-    if (window->window)
+    if (st_window->window)
     {
-        GUI_SetWindowData(window->window, NULL);
-        GUI_CloseWindow(window->window);
-        window->window = NULL;
+        GUI_SetWindowData(st_window->window, NULL);
+        GUI_CloseWindow(st_window->window);
+        st_window->window = NULL;
     }
 
-    window->status = TYPE_SETTING_WINDOW_STATUS_HIDE;
+    st_window->status = TYPE_SETTING_WINDOW_STATUS_HIDE;
 
-    window->window = GUI_CreateWindow();
-    if (!window->window)
+    st_window->window = GUI_CreateWindow();
+    if (!st_window->window)
         return -1;
 
     GUI_WindowCallbacks callbacks;
@@ -672,57 +649,57 @@ int Setting_OpenWindow(SettingWindow *window)
     callbacks.onBeforeDraw = onBeforeDrawWindow;
     callbacks.onDraw = onDrawWindow;
     callbacks.onCtrl = onCtrlWindow;
-    GUI_SetWindowCallbacks(window->window, &callbacks);
-    GUI_SetWindowData(window->window, window);
+    GUI_SetWindowCallbacks(st_window->window, &callbacks);
+    GUI_SetWindowData(st_window->window, st_window);
 
-    if (GUI_OpenWindow(window->window) < 0)
+    if (GUI_OpenWindow(st_window->window) < 0)
     {
-        GUI_SetWindowData(window->window, NULL);
-        GUI_DestroyWindow(window->window);
-        window->window = NULL;
+        GUI_SetWindowData(st_window->window, NULL);
+        GUI_DestroyWindow(st_window->window);
+        st_window->window = NULL;
         return -1;
     }
 
     return 0;
 }
 
-int Setting_CloseWindow(SettingWindow *window)
+int SettingWindow_Close(SettingWindow *st_window)
 {
-    if (!window)
+    if (!st_window)
         return -1;
 
-    if (window->status == TYPE_SETTING_WINDOW_STATUS_DISMISS) // 已经在关闭中
+    if (st_window->status == TYPE_SETTING_WINDOW_STATUS_DISMISS) // 已经在关闭中
         return 0;
 
-    if (window->status == TYPE_SETTING_WINDOW_STATUS_SHOW)
-        window->status = TYPE_SETTING_WINDOW_STATUS_DISMISS; // 设置状态，通过onEventWindow关闭
+    if (st_window->status == TYPE_SETTING_WINDOW_STATUS_SHOW)
+        st_window->status = TYPE_SETTING_WINDOW_STATUS_DISMISS; // 设置状态为关闭
     else
-        Setting_DestroyWindow(window); // 直接销毁
+        SettingWindow_Destroy(st_window); // 直接销毁
 
     return 0;
 }
 
-int Setting_SetWindowAutoFree(SettingWindow *window, int auto_free)
+int SettingWindow_SetAutoFree(SettingWindow *st_window, int auto_free)
 {
-    if (!window)
+    if (!st_window)
         return -1;
 
-    window->dont_free = !auto_free;
+    st_window->dont_free = !auto_free;
 
     return 0;
 }
 
-int Setting_SetWindowContext(SettingWindow *window, SettingContext *context)
+int SettingWindow_SetContext(SettingWindow *st_window, SettingContext *context)
 {
-    if (!window)
+    if (!st_window)
         return -1;
 
-    window->context = context;
+    st_window->context = context;
 
     return 0;
 }
 
-int Setting_GetWindowMenuLayoutPosition(int *layout_x, int *layout_y)
+int SettingWindow_GetMenuLayoutPosition(int *layout_x, int *layout_y)
 {
     if (layout_x)
         *layout_x = WINDOW_SX;
@@ -731,7 +708,7 @@ int Setting_GetWindowMenuLayoutPosition(int *layout_x, int *layout_y)
     return 0;
 }
 
-int Setting_GetWindowMenuAvailableSize(int *available_w, int *available_h)
+int SettingWindow_GetMenuAvailableSize(int *available_w, int *available_h)
 {
     if (available_w)
         *available_w = WINDOW_WIDTH;
