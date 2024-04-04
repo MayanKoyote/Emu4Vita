@@ -30,7 +30,9 @@ struct SettingWindow
     SettingContext *context;
     int status;
     int listview_wrap_h;
-    int listview_scroll_y;
+    int scroll_step;
+    int current_scroll_y;
+    int target_scroll_y;
 };
 
 // Window
@@ -64,15 +66,70 @@ extern int Setting_StartContext(SettingContext *context);
 extern int Setting_FinishContext(SettingContext *context);
 extern int Setting_IsResumeGameEnabled();
 
-int SettingWindow_UpdateLayout(SettingWindow *window)
+static int updateMenuLayout(SettingWindow *st_window)
 {
-    if (!window)
+    if (!st_window)
         return -1;
 
-    window->listview_wrap_h = 0;
-    window->listview_scroll_y = 0;
+    SettingContext *context = st_window->context;
+    if (!context || !context->menus)
+        return -1;
 
-    SettingContext *context = window->context;
+    SettingMenu *menu = &context->menus[context->menus_pos];
+    if (!menu)
+        return -1;
+
+    SettingMenuItem *items = menu->items;
+    int n_items = menu->n_items;
+    if (!items || n_items <= 0)
+        return 0;
+
+    int itemviews_wrap_h = 0;
+    int itemview_h = MENU_ITEMVIEW_HEIGHT;
+
+    int i;
+    for (i = 0; i < n_items; i++)
+    {
+        if (SETTING_IS_VISIBLE(items[i].visibility))
+            itemviews_wrap_h += itemview_h;
+    }
+
+    st_window->listview_wrap_h = itemviews_wrap_h + MENU_LISTVIEW_PADDING_T * 2;
+
+    return 0;
+}
+
+static int updateCurrentScroll(SettingWindow *st_window)
+{
+    if (!st_window)
+        return -1;
+
+    if (st_window->current_scroll_y != st_window->target_scroll_y)
+    {
+        int scroll_y = st_window->current_scroll_y;
+        if (scroll_y < st_window->target_scroll_y)
+        {
+            scroll_y += st_window->scroll_step;
+            if (scroll_y > st_window->target_scroll_y)
+                scroll_y = st_window->target_scroll_y;
+        }
+        else if (scroll_y > st_window->target_scroll_y)
+        {
+            scroll_y -= st_window->scroll_step;
+            if (scroll_y < st_window->target_scroll_y)
+                scroll_y = st_window->target_scroll_y;
+        }
+        st_window->current_scroll_y = scroll_y;
+    }
+    return 0;
+}
+
+static int updateTargetSrcoll(SettingWindow *st_window)
+{
+    if (!st_window)
+        return -1;
+
+    SettingContext *context = st_window->context;
     if (!context || !context->menus)
         return -1;
 
@@ -86,17 +143,17 @@ int SettingWindow_UpdateLayout(SettingWindow *window)
         return 0;
 
     int itemviews_h = WINDOW_HEIGHT - MENU_TABVIEW_HEIGHT - MENU_LISTVIEW_PADDING_T * 2;
+    int itemviews_wrap_h = st_window->listview_wrap_h - MENU_LISTVIEW_PADDING_T * 2;
     int itemview_h = MENU_ITEMVIEW_HEIGHT;
-    int itemviews_wrap_h = 0;
     int scroll_y = 0;
 
     int i;
     for (i = 0; i < n_items; i++)
     {
         if (i == menu->menu_pos)
-            scroll_y = 0 - itemviews_wrap_h;
+            break;
         if (SETTING_IS_VISIBLE(items[i].visibility))
-            itemviews_wrap_h += itemview_h;
+            scroll_y -= itemview_h;
     }
 
     scroll_y += (itemviews_h / 2) - (itemview_h / 2);
@@ -109,25 +166,40 @@ int SettingWindow_UpdateLayout(SettingWindow *window)
     if (scroll_y > max_srcoll_y)
         scroll_y = max_srcoll_y;
 
-    window->listview_wrap_h = itemviews_wrap_h + MENU_LISTVIEW_PADDING_T * 2;
-    window->listview_scroll_y = scroll_y;
+    if (st_window->target_scroll_y != scroll_y)
+    {
+        st_window->target_scroll_y = scroll_y;
+        st_window->scroll_step = (st_window->target_scroll_y - st_window->current_scroll_y) / 10;
+        if (st_window->scroll_step < 0)
+            st_window->scroll_step = 0 - st_window->scroll_step;
+        if (st_window->scroll_step < 1)
+            st_window->scroll_step = 1;
+    }
 
     return 0;
 }
 
-static int moveMenuPos(SettingMenu *menu, int move_type)
+static int moveMenuPos(SettingWindow *st_window, int move_type)
 {
+    if (!st_window)
+        return -1;
+
+    SettingContext *context = st_window->context;
+    if (!context || !context->menus)
+        return -1;
+
+    SettingMenu *menu = &context->menus[context->menus_pos];
     if (!menu)
         return -1;
 
-    if (!menu->items || menu->n_items <= 0)
+    SettingMenuItem *items = menu->items;
+    int n_items = menu->n_items;
+    if (!items || n_items <= 0)
     {
         menu->menu_pos = 0;
         return -1;
     }
 
-    SettingMenuItem *items = menu->items;
-    int n_items = menu->n_items;
     int pos = menu->menu_pos;
 
     if (move_type == TYPE_MOVE_UP)
@@ -168,24 +240,28 @@ static int moveMenuPos(SettingMenu *menu, int move_type)
     }
 
     if (SETTING_IS_VISIBLE(items[pos].visibility))
+    {
         menu->menu_pos = pos;
+        updateTargetSrcoll(st_window);
+    }
 
     return 0;
 }
 
-static int moveTabBarPos(SettingContext *context, int move_type)
+static int moveTabBarPos(SettingWindow *st_window, int move_type)
 {
+    if (!st_window)
+        return -1;
+
+    SettingContext *context = st_window->context;
     if (!context)
         return -1;
 
-    if (!context->menus || context->n_menus <= 0)
-    {
-        context->menus_pos = 0;
-        return 0;
-    }
-
     SettingMenu *menus = context->menus;
     int n_menus = context->n_menus;
+    if (!menus || n_menus <= 0)
+        return -1;
+
     int pos = context->menus_pos;
 
     if (move_type == TYPE_MOVE_UP)
@@ -233,9 +309,20 @@ static int moveTabBarPos(SettingContext *context, int move_type)
     {
         context->menus_pos = pos;
         Setting_UpdateMenu(&context->menus[context->menus_pos]);
-        moveMenuPos(&context->menus[context->menus_pos], TYPE_MOVE_NONE);
+        SettingWindow_UpdateMenu(st_window);
     }
 
+    return 0;
+}
+
+int SettingWindow_UpdateMenu(SettingWindow *st_window)
+{
+    if (!st_window)
+        return -1;
+
+    updateMenuLayout(st_window);
+    moveMenuPos(st_window, TYPE_MOVE_NONE);
+    st_window->current_scroll_y = st_window->target_scroll_y;
     return 0;
 }
 
@@ -246,8 +333,7 @@ static int onOpenWindow(GUI_Window *window)
         return -1;
 
     Setting_StartContext(st_window->context);
-    moveTabBarPos(st_window->context, TYPE_MOVE_NONE);
-    SettingWindow_UpdateLayout(st_window);
+    moveTabBarPos(st_window, TYPE_MOVE_NONE);
 
     st_window->status = TYPE_SETTING_WINDOW_STATUS_SHOW;
 
@@ -283,6 +369,8 @@ static int onBeforeDrawWindow(GUI_Window *window)
         GUI_CloseWindow(window);
         return 0;
     }
+
+    updateCurrentScroll(st_window);
 
     return 0;
 }
@@ -423,7 +511,7 @@ static int drawMenu(SettingWindow *st_window, int x, int y, int w, int h)
     int itemview_h = MENU_ITEMVIEW_HEIGHT;
 
     int itemview_x = itemviews_sx;
-    int itemview_y = itemviews_sy + st_window->listview_scroll_y;
+    int itemview_y = itemviews_sy + st_window->current_scroll_y;
     int itemview_dx = itemviews_dx;
     int text_max_w = (itemviews_w - MENU_ITEMVIEW_PADDING_L * 3) / 2;
     int text_x = itemview_x + MENU_ITEMVIEW_PADDING_L;
@@ -478,7 +566,7 @@ static int drawMenu(SettingWindow *st_window, int x, int y, int w, int h)
         int track_x = layout_dx - GUI_DEF_SCROLLBAR_SIZE;
         int track_y = layout_sy;
         int track_h = layout_h;
-        GUI_DrawVerticalScrollbar(track_x, track_y, track_h, itemviews_wrap_h, itemviews_h, 0 - st_window->listview_scroll_y, 0);
+        GUI_DrawVerticalScrollbar(track_x, track_y, track_h, itemviews_wrap_h, itemviews_h, 0 - st_window->current_scroll_y, 0);
     }
 
     GUI_UnsetClipping(); // Unset layout clip
@@ -535,8 +623,7 @@ static int onCtrlWindow(GUI_Window *window)
             if (context->menus_pos != 0)
             {
                 context->menus_pos = 0;
-                moveTabBarPos(context, TYPE_MOVE_NONE);
-                SettingWindow_UpdateLayout(st_window);
+                moveTabBarPos(st_window, TYPE_MOVE_NONE);
             }
             else
             {
@@ -557,13 +644,11 @@ static int onCtrlWindow(GUI_Window *window)
     }
     else if (pressed_pad[PAD_L1])
     {
-        moveTabBarPos(context, TYPE_MOVE_UP);
-        SettingWindow_UpdateLayout(st_window);
+        moveTabBarPos(st_window, TYPE_MOVE_UP);
     }
     else if (pressed_pad[PAD_R1])
     {
-        moveTabBarPos(context, TYPE_MOVE_DOWN);
-        SettingWindow_UpdateLayout(st_window);
+        moveTabBarPos(st_window, TYPE_MOVE_DOWN);
     }
     else
     {
@@ -581,13 +666,11 @@ static int onCtrlWindow(GUI_Window *window)
         {
             if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
             {
-                moveMenuPos(menu, TYPE_MOVE_UP);
-                SettingWindow_UpdateLayout(st_window);
+                moveMenuPos(st_window, TYPE_MOVE_UP);
             }
             else if (hold_pad[PAD_DOWN] || hold2_pad[PAD_LEFT_ANALOG_DOWN])
             {
-                moveMenuPos(menu, TYPE_MOVE_DOWN);
-                SettingWindow_UpdateLayout(st_window);
+                moveMenuPos(st_window, TYPE_MOVE_DOWN);
             }
             else if (released_pad[PAD_ENTER])
             {

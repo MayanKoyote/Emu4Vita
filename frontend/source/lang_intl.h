@@ -661,7 +661,7 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     // LANG_DISPLAY_ROTATE
     "画面旋转",
     // LANG_GRAPHICS_SHADER
-    "图像滤境",
+    "图形着色器",
     // LANG_GRAPHICS_SMOOTH
     "平滑图像",
     // LANG_OVERLAY_SELECT
@@ -1061,7 +1061,7 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
     // LANG_DISPLAY_ROTATE
     "畫面旋轉",
     // LANG_GRAPHICS_SHADER
-    "圖像濾境",
+    "圖形著色器",
     // LANG_GRAPHICS_SMOOTH
     "平滑圖像",
     // LANG_OVERLAY_SELECT

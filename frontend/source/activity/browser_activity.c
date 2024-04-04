@@ -483,6 +483,7 @@ static int refreshFileList(int pos, int update_views)
         LayoutParamsUpdate(browser_listview);
         ListViewSetFocusPos(browser_listview, focus_pos);
         moveFileListPos(TYPE_MOVE_NONE);
+        ListViewSetCurrentScrollY(browser_listview, ListViewGetTargetScrollY(browser_listview));
     }
 
     return ret;

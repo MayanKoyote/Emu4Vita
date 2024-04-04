@@ -5,7 +5,7 @@
 
 typedef struct SettingWindow SettingWindow;
 
-int SettingWindow_UpdateLayout(SettingWindow *window);
+int SettingWindow_UpdateMenu(SettingWindow *window);
 
 SettingWindow *SettingWindow_Create();
 void SettingWindow_Destroy(SettingWindow *st_window);

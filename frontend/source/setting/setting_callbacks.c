@@ -22,6 +22,7 @@ extern int setting_disk_image_index;
 extern uint32_t setting_language_config_value;
 
 extern int Setting_UpdateMenu(SettingMenu *menu);
+extern int Setting_UpdateMenuLayout();
 
 //--------------------------------------------------------------------------------------------------------
 //                          Main menu callbacks

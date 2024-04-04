@@ -30,22 +30,23 @@ struct ListView
 
 static void ListViewUpdateScroll(ListView *listView)
 {
-    int current_scroll_y = listView->current_scroll_y;
-
-    if (current_scroll_y < listView->target_scroll_y)
+    if (listView->current_scroll_y != listView->target_scroll_y)
     {
-        current_scroll_y += listView->scroll_step;
-        if (current_scroll_y > listView->target_scroll_y)
-            current_scroll_y = listView->target_scroll_y;
+        int scroll_y = listView->current_scroll_y;
+        if (scroll_y < listView->target_scroll_y)
+        {
+            scroll_y += listView->scroll_step;
+            if (scroll_y > listView->target_scroll_y)
+                scroll_y = listView->target_scroll_y;
+        }
+        else if (scroll_y > listView->target_scroll_y)
+        {
+            scroll_y -= listView->scroll_step;
+            if (scroll_y < listView->target_scroll_y)
+                scroll_y = listView->target_scroll_y;
+        }
+        listView->current_scroll_y = scroll_y;
     }
-    else if (current_scroll_y > listView->target_scroll_y)
-    {
-        current_scroll_y -= listView->scroll_step;
-        if (current_scroll_y < listView->target_scroll_y)
-            current_scroll_y = listView->target_scroll_y;
-    }
-
-    listView->current_scroll_y = current_scroll_y;
 }
 
 static void ListViewDestroy(void *view)
@@ -465,6 +466,15 @@ int ListViewSetData(ListView *listView, void *data)
     return 0;
 }
 
+int ListViewSetCurrentScrollY(ListView *listView, int y)
+{
+    if (!listView)
+        return -1;
+
+    listView->current_scroll_y = y;
+    return 0;
+}
+
 int ListViewSetTargetScrollY(ListView *listView, int y)
 {
     if (!listView)
@@ -490,9 +500,6 @@ int ListViewSetTargetScrollY(ListView *listView, int y)
         if (listView->scroll_step < 1)
             listView->scroll_step = 1;
     }
-
-    // 自动滚动有bug，变更预览图时画面会有闪烁，原因未知，暂时设置current=target关闭自动滚动，可注释掉这行测试自动滚动功能
-    //listView->current_scroll_y = listView->target_scroll_y;
 
     return 0;
 }
@@ -557,6 +564,11 @@ void *ListViewGetData(ListView *listView)
 void *ListViewGetList(ListView *listView)
 {
     return listView ? listView->list : NULL;
+}
+
+int ListViewGetCurrentScrollY(ListView *listView)
+{
+    return listView ? listView->current_scroll_y : 0;
 }
 
 int ListViewGetTargetScrollY(ListView *listView)

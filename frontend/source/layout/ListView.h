@@ -43,12 +43,14 @@ int ListViewRefreshtList(ListView *listView);
 int ListViewSetBgColor(ListView *listView, uint32_t color);
 int ListViewSetData(ListView *listView, void *data);
 int ListViewSetList(ListView *listView, void *list, ListViewCallbacks *callbacks);
+int ListViewSetCurrentScrollY(ListView *listView, int y);
 int ListViewSetTargetScrollY(ListView *listView, int y);
 int ListViewSetTopPos(ListView *listView, int pos);
 int ListViewSetFocusPos(ListView *listView, int pos);
 
 void *ListViewGetData(ListView *listView);
 void *ListViewGetList(ListView *listView);
+int ListViewGetCurrentScrollY(ListView *listView);
 int ListViewGetTargetScrollY(ListView *listView);
 int ListViewGetTopPos(ListView *listView);
 int ListViewGetFocusPos(ListView *listView);

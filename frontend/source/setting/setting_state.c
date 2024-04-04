@@ -623,6 +623,7 @@ void Setting_SetStateSelectId(int id)
 {
     entries_pos = id;
     moveStateEntriesPos(TYPE_MOVE_NONE);
+    listview_current_scroll_y = listview_target_scroll_y;
 }
 
 int Setting_GetStateSelectId()

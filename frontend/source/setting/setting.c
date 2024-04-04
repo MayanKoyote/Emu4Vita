@@ -62,7 +62,7 @@ static void updateVariables()
 
 int Setting_UpdateMenuLayout()
 {
-    return SettingWindow_UpdateLayout(setting_window);
+    return SettingWindow_UpdateMenu(setting_window);
 }
 
 int Setting_UpdateMenu(SettingMenu *menu)
