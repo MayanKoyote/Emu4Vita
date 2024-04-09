@@ -756,7 +756,6 @@ int vita2d_fini()
 	sceGxmDisplayQueueFinish();
 
 	// clean up display queue
-	gpu_free(depthBufferUid);
 	for (i = 0; i < DISPLAY_BUFFER_COUNT; i++) {
 		// clear the buffer then deallocate
 		memset(displayBufferData[i], 0, DISPLAY_HEIGHT*DISPLAY_STRIDE_IN_PIXELS*4);
@@ -858,7 +857,6 @@ void vita2d_start_drawing()
 
 void vita2d_start_drawing_advanced(vita2d_texture *target, unsigned int flags)
 {
-
 	if (target == NULL) {
 		if (system_app_mode) {
 			sceSharedFbBegin(shared_fb, &shared_fb_info);

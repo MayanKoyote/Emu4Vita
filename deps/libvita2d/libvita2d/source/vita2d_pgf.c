@@ -50,7 +50,7 @@ static int vita2d_load_pgf_post(vita2d_pgf *font) {
 
 	sceFontGetFontInfo(font->font_handle_list->font_handle, &fontinfo);
 	font->font_size = fontinfo.maxGlyphHeight;
-	font->max_height = fontinfo.maxGlyphHeightF + 0.5f;
+	font->max_height = fontinfo.maxGlyphHeight;
 	font->max_ascender = fontinfo.maxGlyphAscenderF + 0.5f;
 	font->max_descender = fontinfo.maxGlyphDescenderF + 0.5f;
 	// printf("[VITA2D_PGF] font->font_size: %d, font->max_height: %d, font->max_ascender = %d, font->max_descender = %d\n",
@@ -309,7 +309,7 @@ static int generic_pgf_draw_text(vita2d_pgf *font, int draw, int *height,
 				continue;
 
 			if (!texture_atlas_get(font->atlas, character, &tex, &rect, &data))
-					continue;
+				continue;
 		}
 
 		scale = (float)size / (float)data.glyph_size;
