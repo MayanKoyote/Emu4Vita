@@ -53,8 +53,6 @@ static int vita2d_load_pgf_post(vita2d_pgf *font) {
 	font->max_height = fontinfo.maxGlyphHeight;
 	font->max_ascender = fontinfo.maxGlyphAscenderF + 0.5f;
 	font->max_descender = fontinfo.maxGlyphDescenderF + 0.5f;
-	// printf("[VITA2D_PGF] font->font_size: %d, font->max_height: %d, font->max_ascender = %d, font->max_descender = %d\n",
-	//		font->font_size, font->max_height, font->max_ascender, font->max_descender);
 
 	font->atlas = texture_atlas_create(ATLAS_DEFAULT_W, ATLAS_DEFAULT_H,
 		SCE_GXM_TEXTURE_FORMAT_U8_R111);

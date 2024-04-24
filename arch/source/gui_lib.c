@@ -14,21 +14,21 @@
 #define DEFAULT_FONT_SIZE 20
 #define DEFAULT_LINE_SPACE 2
 
-static vita2d_pgf *gui_font = NULL;
+static vita2d_pvf *gui_font = NULL;
 static int gui_font_size = DEFAULT_FONT_SIZE;
 static int gui_line_height = DEFAULT_FONT_SIZE;
 static int gui_line_space = DEFAULT_LINE_SPACE;
 
 int GUI_InitFont()
 {
-    gui_font = vita2d_load_custom_pgf(FONT_PGF_PATH);
+    gui_font = vita2d_load_custom_pvf(FONT_TTF_PATH, DEFAULT_FONT_SIZE);
     if (!gui_font)
-        gui_font = vita2d_load_default_pgf();
+        gui_font = vita2d_load_default_pvf(DEFAULT_FONT_SIZE);
     if (!gui_font)
         return -1;
 
-    GUI_SetFontSize(DEFAULT_FONT_SIZE);
     GUI_SetLineSpace(DEFAULT_LINE_SPACE);
+    gui_line_height = vita2d_pvf_get_lineheight(gui_font);
 
     return 0;
 }
@@ -44,15 +44,19 @@ void GUI_DeinitFont()
 
 int GUI_SetFontSize(int size)
 {
-    gui_font_size = size;
-    gui_line_height = vita2d_pgf_get_lineheight(gui_font, size);
+    if (gui_font_size != size)
+    {
+        vita2d_pvf_set_fontsize(gui_font, size);
+        gui_font_size = size;
+        gui_line_height = vita2d_pvf_get_lineheight(gui_font);
+    }
     return 0;
 }
 
 int GUI_SetLineSpace(int space)
 {
     gui_line_space = space;
-    vita2d_pgf_set_linespace(gui_font, space);
+    vita2d_pvf_set_linespace(gui_font, space);
     return 0;
 }
 
@@ -73,7 +77,7 @@ int GUI_GetLineHeight()
 
 int GUI_DrawText(int x, int y, unsigned int color, const char *text)
 {
-    return vita2d_pgf_draw_text(gui_font, x, y, color, gui_font_size, text);
+    return vita2d_pvf_draw_text(gui_font, x, y, color, text);
 }
 
 int GUI_DrawTextf(int x, int y, unsigned int color, const char *text, ...)
@@ -89,12 +93,12 @@ int GUI_DrawTextf(int x, int y, unsigned int color, const char *text, ...)
 
 int GUI_GetTextWidth(const char *text)
 {
-    return vita2d_pgf_text_width(gui_font, gui_font_size, text);
+    return vita2d_pvf_text_width(gui_font, text);
 }
 
 int GUI_GetTextHeight(const char *text)
 {
-    return vita2d_pgf_text_height(gui_font, gui_font_size, text);
+    return vita2d_pvf_text_height(gui_font, text);
 }
 
 void vita2d_draw_empty_rectangle(float x, float y, float w, float h, float size, unsigned int color)

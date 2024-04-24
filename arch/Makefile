@@ -80,6 +80,7 @@ LIBS := \
 	-lSceAudio_stub \
 	-lSceRtc_stub \
 	-lScePgf_stub \
+	-lScePvf_stub \
 	-lSceCommonDialog_stub \
 	-lSceSysmodule_stub \
 	-lSceAppUtil_stub \

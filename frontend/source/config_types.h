@@ -25,7 +25,7 @@
 #define CORE_ASSETS_DIR_NAME "assets"
 #define CORE_SYSTEM_DIR_NAME "system"
 
-#define FONT_PGF_NAME "font.pgf"
+#define FONT_TTF_NAME "font.ttf"
 #define WALLPAPER_PNG_NAME "bg.png"
 #define SPLASH_PNG_NAME "splash.png"
 #define CHECKBOX_ON_PNG_NAME "checkbox_on.png"

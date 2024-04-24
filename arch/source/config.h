@@ -9,7 +9,7 @@
 #define APP_ASSETS_DIR "app0:assets"
 #define CORE_DATA_DIR "app0:data"
 
-#define FONT_PGF_PATH APP_ASSETS_DIR "/font.pgf"
+#define FONT_TTF_PATH APP_ASSETS_DIR "/font.ttf"
 #define DEFAULT_WALLPAPER_PNG_PATH APP_ASSETS_DIR "/bg.png"
 
 #define WALLPAPER_DIR APP_ASSETS_DIR "/wallpapers"

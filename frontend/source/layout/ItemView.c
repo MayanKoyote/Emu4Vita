@@ -22,6 +22,7 @@ struct ItemView
     uint32_t icon_tint_color;
     uint32_t name_text_color;
     uint32_t info_text_color;
+    int text_scoll_enabled;
     void *data;
 };
 
@@ -212,6 +213,18 @@ int ItemViewSetInfoTextColor(ItemView *itemView, uint32_t color)
     itemView->info_text_color = color;
     if (itemView->infoView)
         TextViewSetTextColor(itemView->infoView, color);
+
+    return 0;
+}
+
+int ItemViewSetTextScollEnabled(ItemView *itemView, int enabled)
+{
+    if (!itemView)
+        return -1;
+
+    itemView->text_scoll_enabled = enabled;
+    if (itemView->nameView)
+        TextViewSetTextScollEnabled(itemView->nameView, enabled);
 
     return 0;
 }

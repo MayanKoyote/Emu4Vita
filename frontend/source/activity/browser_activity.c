@@ -152,9 +152,15 @@ static int onBeforeDrawItemView(ListView *listView, void *itemView, int id)
 
     int focus_pos = ListViewGetFocusPos(listView);
     if (focus_pos == id)
+    {
         ItemViewSetBgColor((ItemView *)itemView, ITEMVIEW_COLOR_FOCUS);
+        ItemViewSetTextScollEnabled((ItemView *)itemView, 1);
+    }
     else
+    {
         ItemViewSetBgColor((ItemView *)itemView, ITEMVIEW_COLOR_BG);
+        ItemViewSetTextScollEnabled((ItemView *)itemView, 0);
+    }
 
     return 0;
 }

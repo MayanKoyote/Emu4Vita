@@ -14,6 +14,7 @@ int ItemViewSetInfoText(ItemView *itemView, const char *text);
 int ItemViewSetIconTintColor(ItemView *itemView, uint32_t color);
 int ItemViewSetNameTextColor(ItemView *itemView, uint32_t color);
 int ItemViewSetInfoTextColor(ItemView *itemView, uint32_t color);
+int ItemViewSetTextScollEnabled(ItemView *itemView, int enabled);
 
 void *ItemViewGetData(ItemView *itemView);
 

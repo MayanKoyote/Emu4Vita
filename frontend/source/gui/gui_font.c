@@ -15,7 +15,7 @@
 
 typedef struct GUI_Font
 {
-    vita2d_pgf *font;
+    vita2d_pvf *font;
     int font_size;
     int line_space;
     int line_height;
@@ -41,20 +41,20 @@ int GUI_InitFont()
 
     if (private_assets_dir)
     {
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s", private_assets_dir, FONT_PGF_NAME);
-        gui_font->font = vita2d_load_custom_pgf(path);
+        snprintf(path, MAX_PATH_LENGTH, "%s/%s", private_assets_dir, FONT_TTF_NAME);
+        gui_font->font = vita2d_load_custom_pvf(path, DEFAULT_FONT_SIZE);
     }
     if (!gui_font->font && public_assets_dir)
     {
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s", public_assets_dir, FONT_PGF_NAME);
-        gui_font->font = vita2d_load_custom_pgf(path);
+        snprintf(path, MAX_PATH_LENGTH, "%s/%s", public_assets_dir, FONT_TTF_NAME);
+        gui_font->font = vita2d_load_custom_pvf(path, DEFAULT_FONT_SIZE);
     }
 
     if (!gui_font->font)
         goto FAILED;
 
-    GUI_SetFontSize(DEFAULT_FONT_SIZE);
     GUI_SetLineSpace(DEFAULT_LINE_SPACE);
+    gui_font->line_height = vita2d_pvf_get_lineheight(gui_font->font);
 
     APP_LOG("[GUI] Font init OK!\n");
     return 0;
@@ -72,7 +72,7 @@ void GUI_DeinitFont()
         APP_LOG("[GUI] Font deinit...\n");
 
         if (gui_font->font)
-            vita2d_free_pgf(gui_font->font);
+            vita2d_free_pvf(gui_font->font);
         free(gui_font);
         gui_font = NULL;
 
@@ -87,9 +87,12 @@ int GUI_GetFontSize()
 
 void GUI_SetFontSize(int size)
 {
-    gui_font->font_size = size;
-    gui_font->line_height = vita2d_pgf_get_lineheight(gui_font->font, size);
-    // APP_LOG("[GUI] font_size = %d, line_height = %d\n", gui_font->font_size, gui_font->line_height);
+    if (gui_font->font_size != size)
+    {
+        vita2d_pvf_set_fontsize(gui_font->font, size);
+        gui_font->font_size = size;
+        gui_font->line_height = vita2d_pvf_get_lineheight(gui_font->font);
+    }
 }
 
 int GUI_GetLineHeight()
@@ -105,12 +108,12 @@ int GUI_GetLineSpace()
 void GUI_SetLineSpace(int space)
 {
     gui_font->line_space = space;
-    vita2d_pgf_set_linespace(gui_font->font, space);
+    vita2d_pvf_set_linespace(gui_font->font, space);
 }
 
 int GUI_DrawText(int x, int y, unsigned int color, const char *text)
 {
-    return vita2d_pgf_draw_text(gui_font->font, x, y, color, gui_font->font_size, text);
+    return vita2d_pvf_draw_text(gui_font->font, x, y, color, text);
 }
 
 int GUI_DrawTextf(int x, int y, unsigned int color, const char *text, ...)
@@ -126,10 +129,10 @@ int GUI_DrawTextf(int x, int y, unsigned int color, const char *text, ...)
 
 int GUI_GetTextWidth(const char *text)
 {
-    return vita2d_pgf_text_width(gui_font->font, gui_font->font_size, text);
+    return vita2d_pvf_text_width(gui_font->font, text);
 }
 
 int GUI_GetTextHeight(const char *text)
 {
-    return vita2d_pgf_text_height(gui_font->font, gui_font->font_size, text);
+    return vita2d_pvf_text_height(gui_font->font, text);
 }
