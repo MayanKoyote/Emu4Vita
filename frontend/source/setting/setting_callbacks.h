@@ -24,39 +24,39 @@ int Setting_onStateMenuCtrl(SettingMenu *menu);
 //--------------------------------------------------------------------------------------------------------
 //                          Graphics menu callbacks
 //--------------------------------------------------------------------------------------------------------
-int Setting_onGraphicsMenuFinish(SettingMenu *menu);
+int Setting_onGraphicsMenuExit(SettingMenu *menu);
 int Setting_onGraphicsMenuOptionChanged(SettingMenu *menu, SettingMenuItem *menu_item, int id);
 int Setting_onResetGraphicsConfigItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id);
 
 //--------------------------------------------------------------------------------------------------------
 //                          Control menu callbacks
 //--------------------------------------------------------------------------------------------------------
-int Setting_onControlMenuFinish(SettingMenu *menu);
+int Setting_onControlMenuExit(SettingMenu *menu);
 int Setting_onResetControlConfigItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id);
 
 //--------------------------------------------------------------------------------------------------------
 //                          Hotkey menu callbacks
 //--------------------------------------------------------------------------------------------------------
-int Setting_onHotkeyMenuFinish(SettingMenu *menu);
+int Setting_onHotkeyMenuExit(SettingMenu *menu);
 int Setting_onResetHotkeyConfigItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id);
 
 //--------------------------------------------------------------------------------------------------------
 //                          Core menu callbacks
 //--------------------------------------------------------------------------------------------------------
-int Setting_onCoreMenuFinish(SettingMenu *menu);
+int Setting_onCoreMenuExit(SettingMenu *menu);
 int Setting_onCoreMenuOptionChanged(SettingMenu *menu, SettingMenuItem *menu_item, int id);
 int Setting_onResetCoreConfigItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id);
 
 //--------------------------------------------------------------------------------------------------------
 //                          Cheat menu callbacks
 //--------------------------------------------------------------------------------------------------------
-int Setting_onCheatMenuFinish(SettingMenu *menu);
+int Setting_onCheatMenuExit(SettingMenu *menu);
 int Setting_onResetCheatConfigItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id);
 
 //--------------------------------------------------------------------------------------------------------
 //                          Misc menu callbacks
 //--------------------------------------------------------------------------------------------------------
-int Setting_onMiscMenuFinish(SettingMenu *menu);
+int Setting_onMiscMenuExit(SettingMenu *menu);
 int Setting_onAutoSaveLoadOptionChanged(SettingMenu *menu, SettingMenuItem *menu_item, int id);
 int Setting_onRewindEnabledOptionChanged(SettingMenu *menu, SettingMenuItem *menu_item, int id);
 int Setting_onSaveScreenshotItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id);
@@ -66,7 +66,7 @@ int Setting_onResetMiscConfigItemClick(SettingMenu *menu, SettingMenuItem *menu_
 //--------------------------------------------------------------------------------------------------------
 //                          App menu callbacks
 //--------------------------------------------------------------------------------------------------------
-int Setting_onAppMenuFinish(SettingMenu *menu);
+int Setting_onAppMenuExit(SettingMenu *menu);
 int Setting_onPreviewOptionChanged(SettingMenu *menu, SettingMenuItem *menu_item, int id);
 int Setting_onLanguageOptionChanged(SettingMenu *menu, SettingMenuItem *menu_item, int id);
 int Setting_onResetAppConfigItemClick(SettingMenu *menu, SettingMenuItem *menu_item, int id);

@@ -57,7 +57,7 @@ static int GuiImagesThreadEntry(SceSize args, void *argp)
 
 static int GUI_InitImages()
 {
-    int ret = gui_images_thid = sceKernelCreateThread("gui_images_thread", GuiImagesThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
+    int ret = gui_images_thid = sceKernelCreateThread("gui_images_thread", GuiImagesThreadEntry, 0x10000100, SCE_KERNEL_CPU_MASK_USER_ALL, 0, 0, NULL);
     if (gui_images_thid >= 0)
         ret = sceKernelStartThread(gui_images_thid, 0, NULL);
     return ret;

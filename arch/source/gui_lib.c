@@ -37,7 +37,7 @@ void GUI_DeinitFont()
 {
     if (gui_font)
     {
-        vita2d_free_pgf(gui_font);
+        vita2d_free_pvf(gui_font);
         gui_font = NULL;
     }
 }

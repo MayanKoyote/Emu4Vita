@@ -331,7 +331,7 @@ static int AudioThreadStart()
     audio_state.pause = 1;
     audio_state.stop = 0;
 
-    audio_state.thread_id = sceKernelCreateThread("emu_audio_thread", AudioThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
+    audio_state.thread_id = sceKernelCreateThread("emu_audio_thread", AudioThreadEntry, 0x10000100, SCE_KERNEL_CPU_MASK_USER_0, 0, 0, NULL);
     if (audio_state.thread_id < 0)
         goto FAILED;
 

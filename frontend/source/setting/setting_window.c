@@ -782,6 +782,11 @@ int SettingWindow_SetContext(SettingWindow *st_window, SettingContext *context)
     return 0;
 }
 
+SettingContext *SettingWindow_GetContext(SettingWindow *st_window)
+{
+    return st_window ? st_window->context : NULL;
+}
+
 int SettingWindow_GetMenuLayoutPosition(int *layout_x, int *layout_y)
 {
     if (layout_x)

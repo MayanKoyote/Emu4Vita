@@ -51,7 +51,7 @@ static int OverlayThreadEntry(SceSize args, void *argp)
 
 int Setting_InitOverlay()
 {
-    int ret = overlay_thid = sceKernelCreateThread("setting_overlay_thread", OverlayThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
+    int ret = overlay_thid = sceKernelCreateThread("setting_overlay_thread", OverlayThreadEntry, 0x10000100, SCE_KERNEL_CPU_MASK_USER_ALL, 0, 0, NULL);
     if (overlay_thid >= 0)
         ret = sceKernelStartThread(overlay_thid, 0, NULL);
 

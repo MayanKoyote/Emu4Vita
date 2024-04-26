@@ -39,15 +39,17 @@ int GUI_InitFont()
     if (!gui_font)
         goto FAILED;
 
+    gui_font->font_size = DEFAULT_FONT_SIZE;
+
     if (private_assets_dir)
     {
         snprintf(path, MAX_PATH_LENGTH, "%s/%s", private_assets_dir, FONT_TTF_NAME);
-        gui_font->font = vita2d_load_custom_pvf(path, DEFAULT_FONT_SIZE);
+        gui_font->font = vita2d_load_custom_pvf(path, gui_font->font_size);
     }
     if (!gui_font->font && public_assets_dir)
     {
         snprintf(path, MAX_PATH_LENGTH, "%s/%s", public_assets_dir, FONT_TTF_NAME);
-        gui_font->font = vita2d_load_custom_pvf(path, DEFAULT_FONT_SIZE);
+        gui_font->font = vita2d_load_custom_pvf(path, gui_font->font_size);
     }
 
     if (!gui_font->font)

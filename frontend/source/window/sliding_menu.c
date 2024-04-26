@@ -311,6 +311,7 @@ static int onDrawWindow(GUI_Window *window)
                 {
                     float x_scale = (float)choicebox_w / (float)GUI_GetTextureWidth(choicebox_texture);
                     float y_scale = (float)choicebox_h / (float)GUI_GetTextureHeight(choicebox_texture);
+                    GUI_SetTextureFilter(choicebox_texture, SCE_GXM_TEXTURE_FILTER_LINEAR, SCE_GXM_TEXTURE_FILTER_LINEAR);
                     GUI_DrawTextureScale(choicebox_texture, choicebox_x, choicebox_y, x_scale, y_scale);
                 }
 

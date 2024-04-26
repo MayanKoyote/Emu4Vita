@@ -166,7 +166,7 @@ static int startCheatThread()
     int ret = 0;
 
     if (cheat_thid < 0)
-        ret = cheat_thid = sceKernelCreateThread("emu_cheat_thread", CheatThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
+        ret = cheat_thid = sceKernelCreateThread("emu_cheat_thread", CheatThreadEntry, 0x10000100, SCE_KERNEL_CPU_MASK_USER_0, 0, 0, NULL);
     if (cheat_thid >= 0)
     {
         cheat_run = 1;

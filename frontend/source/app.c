@@ -217,10 +217,10 @@ int AppDeinit()
 {
     APP_LOG("[APP] App deinit...\n");
 
+    AppEventExit();
     Setting_Deinit();
     Emu_Deinit();
     GUI_Deinit();
-    AppEventExit();
     DeinitSceAppUtil();
 
     APP_LOG("[APP] App deinit OK!\n");

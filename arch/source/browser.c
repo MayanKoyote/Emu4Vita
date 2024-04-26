@@ -674,6 +674,7 @@ static int iconsThreadEntry(SceSize args, void *argp)
     {
         makeIconPath(path, software_entries[i].short_name);
         texture = vita2d_load_PNG_file(path);
+        vita2d_texture_set_filters(texture, SCE_GXM_TEXTURE_FILTER_LINEAR, SCE_GXM_TEXTURE_FILTER_LINEAR);
         setIconTexture(&software_entries[i], texture);
     }
 

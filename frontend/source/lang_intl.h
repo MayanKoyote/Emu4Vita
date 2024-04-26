@@ -98,7 +98,7 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
 
     /**************  Button string 2  *****************/
     // LANG_BUTTON_CROSS
-    "×",
+    "╳",
     // LANG_BUTTON_CIRCLE
     "○",
     // LANG_BUTTON_SQUARE
@@ -498,7 +498,7 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
 
     /**************  Button string 2  *****************/
     // LANG_BUTTON_CROSS
-    "×",
+    "╳",
     // LANG_BUTTON_CIRCLE
     "○",
     // LANG_BUTTON_SQUARE
@@ -898,7 +898,7 @@ char *lang_cht[LANGUAGE_CONTAINER_SIZE] = {
 
     /**************  Button string 2  *****************/
     // LANG_BUTTON_CROSS
-    "×",
+    "╳",
     // LANG_BUTTON_CIRCLE
     "○",
     // LANG_BUTTON_SQUARE

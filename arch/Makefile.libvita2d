@@ -47,7 +47,7 @@ SRC_C := \
 	vita2d_font.c \
 	vita2d_pgf.c \
 	vita2d_pvf.c \
-	texture_atlas.c \
+	font_atlas.c \
 	int_htab.c
 
 OBJS := $(patsubst %.c,%.o, $(SRC_C))

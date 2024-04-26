@@ -149,6 +149,24 @@ int Setting_FinishContext(SettingContext *context)
     return 0;
 }
 
+int Setting_ExitContext(SettingContext *context)
+{
+    if (!context)
+        return -1;
+
+    if (context->menus)
+    {
+        int i;
+        for (i = 0; i < context->n_menus; i++)
+        {
+            if (context->menus[i].onExit)
+                context->menus[i].onExit(&context->menus[i]);
+        }
+    }
+
+    return 0;
+}
+
 int Setting_SetCoreMenu(LinkedList *list)
 {
     SettingMenu *menu = &setting_context.menus[ID_SETTING_MENU_CORE];
@@ -467,6 +485,7 @@ int Setting_OpenMenu()
 
 int Setting_CloseMenu()
 {
+    Setting_ExitContext(SettingWindow_GetContext(setting_window));
     SettingWindow_Close(setting_window);
 
     return 0;

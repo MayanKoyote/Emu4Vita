@@ -540,7 +540,7 @@ int Emu_StartGame(EmuGameInfo *info)
 
     // 游戏线程创建后不能删除，一些核心(如PCSX-ReARMed)如果运行过一次游戏后删除了该线程再重新创建，游戏将无法运行会崩溃，原因暂不明
     if (game_run_thid < 0)
-        ret = game_run_thid = sceKernelCreateThread("emu_game_run_thread", GameRunThreadEntry, 0x10000100, 0x40000, 0, 0, NULL);
+        ret = game_run_thid = sceKernelCreateThread("emu_game_run_thread", GameRunThreadEntry, 0x10000100, SCE_KERNEL_CPU_MASK_USER_2, 0, 0, NULL);
     if (game_run_thid >= 0)
         ret = sceKernelStartThread(game_run_thid, 0, NULL);
 

@@ -15,6 +15,7 @@ int SettingWindow_Close(SettingWindow *st_window);
 
 int SettingWindow_SetAutoFree(SettingWindow *st_window, int auto_free);
 int SettingWindow_SetContext(SettingWindow *st_window, SettingContext *context);
+SettingContext *SettingWindow_GetContext(SettingWindow *st_window);
 
 int SettingWindow_GetMenuLayoutPosition(int *layout_x, int *layout_y);
 int SettingWindow_GetMenuAvailableSize(int *available_w, int *available_h);
