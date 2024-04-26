@@ -402,7 +402,7 @@ static int startRewindThread()
     int ret = 0;
 
     if (rewind_thid < 0)
-        ret = rewind_thid = sceKernelCreateThread("emu_rewind_thread", RewindThreadEntry, 0x10000100, SCE_KERNEL_CPU_MASK_USER_1, 0, 0, NULL);
+        ret = rewind_thid = sceKernelCreateThread("emu_rewind_thread", RewindThreadEntry, 0x10000100, 0x40000, 0, 0, NULL);
     if (rewind_thid >= 0)
     {
         rewind_run = 1;

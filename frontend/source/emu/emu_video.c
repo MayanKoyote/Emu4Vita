@@ -303,6 +303,7 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
                                        video_width, video_height, x_scale, y_scale, rotate_rad);
     GUI_EndDrawing();
     GUI_WaitRenderingDone();
+    // sceDisplayWaitVblankStart();
     GUI_UnlockDrawMutex();
 
     // Alloc and copy screenshot data

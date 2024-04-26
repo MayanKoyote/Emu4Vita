@@ -382,7 +382,7 @@ static int PowerTickThreadEntry(SceSize args, void *argp)
 
 void InitPowerTickThread()
 {
-    SceUID thid = sceKernelCreateThread("power_tick_thread", PowerTickThreadEntry, 0x10000100, SCE_KERNEL_CPU_MASK_USER_1, 0, 0, NULL);
+    SceUID thid = sceKernelCreateThread("power_tick_thread", PowerTickThreadEntry, 0x10000100, 0x10000, 0, 0, NULL);
     if (thid >= 0)
         sceKernelStartThread(thid, 0, NULL);
 }

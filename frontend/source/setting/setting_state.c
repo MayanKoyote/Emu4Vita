@@ -571,7 +571,7 @@ static int startStateThread()
     int ret = 0;
 
     if (state_thid < 0)
-        ret = state_thid = sceKernelCreateThread("setting_state_thread", StateThreadEntry, 0x10000100, SCE_KERNEL_CPU_MASK_USER_0, 0, 0, NULL);
+        ret = state_thid = sceKernelCreateThread("setting_state_thread", StateThreadEntry, 0x10000100, 0x40000, 0, 0, NULL);
     if (state_thid >= 0)
     {
         state_finish = 0;
