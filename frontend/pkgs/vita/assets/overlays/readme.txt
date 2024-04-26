@@ -8,7 +8,7 @@ viewport_width=720
 viewport_height=480
 viewport_x=120
 viewport_y=20
-[4:3铺满屏幕 (永爱水原ありさ)]
+[4:3铺满屏幕 (水原ありさ)]
 image_name="full_4-3.png"
 viewport_width=726
 viewport_height=544

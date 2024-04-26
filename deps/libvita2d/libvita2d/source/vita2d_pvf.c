@@ -439,7 +439,7 @@ int vita2d_pvf_get_linespace(vita2d_pvf *font)
 
 int vita2d_pvf_get_lineheight(vita2d_pvf *font)
 {
-	return font->max_height;
+	return font->max_height + FONT_GLYPH_MARGIN * 2;
 }
 
 void vita2d_pvf_set_fontsize(vita2d_pvf *font, unsigned int size)

@@ -407,5 +407,5 @@ int vita2d_pgf_get_linespace(vita2d_pgf *font)
 
 int vita2d_pgf_get_lineheight(vita2d_pgf *font, int size)
 {
-	return size / (float)font->font_size * (float)font->max_height + 0.5f;
+	return size / (float)font->font_size * font->max_height + FONT_GLYPH_MARGIN * 2;
 }

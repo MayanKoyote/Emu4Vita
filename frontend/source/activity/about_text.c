@@ -57,7 +57,7 @@ char *about_texts[] = {
     " * TheFlow (vitaShell)",
     " * libretro (core)",
     " * frangarcj (vita shader)",
-    " * 永爱水原ありさ (美化素材)",
+    " * 水原ありさ (美化素材)",
     " * TearCrow (美化素材)",
     " * 百度psvita破解吧",
     " * ......",
