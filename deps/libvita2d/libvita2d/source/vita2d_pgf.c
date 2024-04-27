@@ -338,7 +338,7 @@ static int generic_pgf_draw_text(vita2d_pgf *font, int draw, int *height,
 				color);
 		}
 
-		pen_x += glyph.advance_x * scale;
+		pen_x += (glyph.advance_x + FONT_GLYPH_MARGIN) * scale;
 	}
 
 	if (pen_x > max_x)

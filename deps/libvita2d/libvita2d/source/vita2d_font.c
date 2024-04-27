@@ -257,7 +257,7 @@ static int generic_font_draw_text(vita2d_font *font, int draw, int *height,
 				color);
 		}
 
-		pen_x += glyph.advance_x;
+		pen_x += (glyph.advance_x + FONT_GLYPH_MARGIN);
 	}
 
 	if (pen_x > max_x)

@@ -39,7 +39,7 @@ GUI_Activity about_activity = {
 #define LISTVIEW_PADDING_L 6
 #define LISTVIEW_PADDING_T 6
 #define ITEMVIEW_PADDING_L 4
-#define ITEMVIEW_PADDING_T 4
+#define ITEMVIEW_PADDING_T 3
 
 #define TEXT_COLOR COLOR_ORANGE
 

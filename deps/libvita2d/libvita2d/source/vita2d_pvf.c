@@ -372,7 +372,7 @@ static int generic_pvf_draw_text(vita2d_pvf *font, int draw, int *height,
 				color);
 		}
 
-		pen_x += glyph.advance_x;
+		pen_x += (glyph.advance_x + FONT_GLYPH_MARGIN);
 		old_character = character;
 	}
 

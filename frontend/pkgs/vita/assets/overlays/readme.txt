@@ -8,14 +8,10 @@ viewport_width=720
 viewport_height=480
 viewport_x=120
 viewport_y=20
-[4:3铺满屏幕 (水原ありさ)]
-image_name="full_4-3.png"
-viewport_width=726
-viewport_height=544
 [SFC 4:3铺满屏幕]
 image_name="sfc_full_4-3.png"
-viewport_width=720
-viewport_height=520
+viewport_width=726
+viewport_height=544
 viewport_y=10
 
 配置文件说明:
