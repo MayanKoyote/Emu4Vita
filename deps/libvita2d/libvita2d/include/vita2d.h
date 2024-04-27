@@ -165,14 +165,15 @@ vita2d_pgf *vita2d_load_system_pgf(int numFonts, const vita2d_system_pgf_config 
 vita2d_pgf *vita2d_load_default_pgf();
 vita2d_pgf *vita2d_load_custom_pgf(const char *path);
 void vita2d_free_pgf(vita2d_pgf *font);
-int vita2d_pgf_draw_text(vita2d_pgf *font, int x, int y, unsigned int color, unsigned int size, const char *text);
-int vita2d_pgf_draw_textf(vita2d_pgf *font, int x, int y, unsigned int color, unsigned int size, const char *text, ...);
-void vita2d_pgf_text_dimensions(vita2d_pgf *font, unsigned int size, const char *text, int *width, int *height);
-int vita2d_pgf_text_width(vita2d_pgf *font, unsigned int size, const char *text);
-int vita2d_pgf_text_height(vita2d_pgf *font, unsigned int size, const char *text);
+int vita2d_pgf_draw_text(vita2d_pgf *font, int x, int y, unsigned int color, float scale, const char *text);
+int vita2d_pgf_draw_textf(vita2d_pgf *font, int x, int y, unsigned int color, float scale, const char *text, ...);
+void vita2d_pgf_text_dimensions(vita2d_pgf *font, float scale, const char *text, int *width, int *height);
+int vita2d_pgf_text_width(vita2d_pgf *font, float scale, const char *text);
+int vita2d_pgf_text_height(vita2d_pgf *font, float scale, const char *text);
 void vita2d_pgf_set_linespace(vita2d_pgf *font, int line_space);
 int vita2d_pgf_get_linespace(vita2d_pgf *font);
-int vita2d_pgf_get_lineheight(vita2d_pgf *font, int size);
+int vita2d_pgf_get_lineheight(vita2d_pgf *font, float scale);
+int vita2d_pgf_get_fontsize(vita2d_pgf *font, float scale);
 
 vita2d_pvf *vita2d_load_system_pvf(int numFonts, const vita2d_system_pvf_config *configs, unsigned int size);
 vita2d_pvf *vita2d_load_default_pvf(unsigned int size);

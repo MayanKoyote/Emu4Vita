@@ -285,8 +285,7 @@ static int atlas_add_glyph(vita2d_pgf *font, unsigned int character)
 
 static int generic_pgf_draw_text(vita2d_pgf *font, int draw, int *height,
 								 int x, int y, unsigned int color,
-								 unsigned int size,
-								 const char *text)
+								 float scale, const char *text)
 {
 	sceKernelLockLwMutex(&font->mutex, 1, NULL);
 
@@ -295,12 +294,11 @@ static int generic_pgf_draw_text(vita2d_pgf *font, int draw, int *height,
 	vita2d_position position;
 	font_glyph glyph;
 	vita2d_texture *tex = NULL;
-	float scale;
 	int start_x = x;
 	int max_x = x;
 	int pen_x = x;
 	int pen_y = y;
-	int line_height = vita2d_pgf_get_lineheight(font, size);
+	int line_height = vita2d_pgf_get_lineheight(font, scale);
 
 	for (i = 0; text[i];)
 	{
@@ -323,8 +321,6 @@ static int generic_pgf_draw_text(vita2d_pgf *font, int draw, int *height,
 			if (!font_atlas_get(font->atlas, character, &tex, &position, &glyph))
 				continue;
 		}
-
-		scale = (float)size / (float)glyph.font_size;
 
 		if (draw)
 		{
@@ -353,14 +349,14 @@ static int generic_pgf_draw_text(vita2d_pgf *font, int draw, int *height,
 }
 
 int vita2d_pgf_draw_text(vita2d_pgf *font, int x, int y,
-						 unsigned int color, unsigned int size,
+						 unsigned int color, float scale,
 						 const char *text)
 {
-	return generic_pgf_draw_text(font, 1, NULL, x, y, color, size, text);
+	return generic_pgf_draw_text(font, 1, NULL, x, y, color, scale, text);
 }
 
 int vita2d_pgf_draw_textf(vita2d_pgf *font, int x, int y,
-						  unsigned int color, unsigned int size,
+						  unsigned int color, float scale,
 						  const char *text, ...)
 {
 	char buf[1024];
@@ -368,30 +364,30 @@ int vita2d_pgf_draw_textf(vita2d_pgf *font, int x, int y,
 	va_start(argptr, text);
 	vsnprintf(buf, sizeof(buf), text, argptr);
 	va_end(argptr);
-	return vita2d_pgf_draw_text(font, x, y, color, size, buf);
+	return vita2d_pgf_draw_text(font, x, y, color, scale, buf);
 }
 
-void vita2d_pgf_text_dimensions(vita2d_pgf *font, unsigned int size,
+void vita2d_pgf_text_dimensions(vita2d_pgf *font, float scale, 
 								const char *text, int *width, int *height)
 {
 	int w;
-	w = generic_pgf_draw_text(font, 0, height, 0, 0, 0, size, text);
+	w = generic_pgf_draw_text(font, 0, height, 0, 0, 0, scale, text);
 
 	if (width)
 		*width = w;
 }
 
-int vita2d_pgf_text_width(vita2d_pgf *font, unsigned int size, const char *text)
+int vita2d_pgf_text_width(vita2d_pgf *font, float scale, const char *text)
 {
 	int width;
-	vita2d_pgf_text_dimensions(font, size, text, &width, NULL);
+	vita2d_pgf_text_dimensions(font, scale, text, &width, NULL);
 	return width;
 }
 
-int vita2d_pgf_text_height(vita2d_pgf *font, unsigned int size, const char *text)
+int vita2d_pgf_text_height(vita2d_pgf *font, float scale, const char *text)
 {
 	int height;
-	vita2d_pgf_text_dimensions(font, size, text, NULL, &height);
+	vita2d_pgf_text_dimensions(font, scale, text, NULL, &height);
 	return height;
 }
 
@@ -405,7 +401,12 @@ int vita2d_pgf_get_linespace(vita2d_pgf *font)
 	return font->line_space;
 }
 
-int vita2d_pgf_get_lineheight(vita2d_pgf *font, int size)
+int vita2d_pgf_get_lineheight(vita2d_pgf *font, float scale)
 {
-	return size / (float)font->font_size * font->max_height + FONT_GLYPH_MARGIN * 2;
+	return scale * font->max_height + FONT_GLYPH_MARGIN * 2;
+}
+
+int vita2d_pgf_get_fontsize(vita2d_pgf *font, float scale)
+{
+	return scale * font->font_size;
 }

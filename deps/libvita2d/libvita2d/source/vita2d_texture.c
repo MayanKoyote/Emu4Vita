@@ -6,7 +6,7 @@
 #include "utils.h"
 #include "shared.h"
 
-#define GXM_TEX_MAX_SIZE 4096
+#define GXM_TEX_MAX_SIZE 8092
 static SceKernelMemBlockType MemBlockType = SCE_KERNEL_MEMBLOCK_TYPE_USER_CDRAM_RW;
 
 static int tex_format_to_bytespp(SceGxmTextureFormat format)
