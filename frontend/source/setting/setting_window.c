@@ -64,6 +64,7 @@ struct SettingWindow
 extern int Setting_UpdateMenu(SettingMenu *menu);
 extern int Setting_StartContext(SettingContext *context);
 extern int Setting_FinishContext(SettingContext *context);
+extern int Setting_ExitContext(SettingContext *context);
 extern int Setting_IsResumeGameEnabled();
 
 static int updateMenuLayout(SettingWindow *st_window)
@@ -753,6 +754,8 @@ int SettingWindow_Close(SettingWindow *st_window)
 
     if (st_window->status == TYPE_SETTING_WINDOW_STATUS_DISMISS) // 已经在关闭中
         return 0;
+
+    Setting_ExitContext(st_window->context);
 
     if (st_window->status == TYPE_SETTING_WINDOW_STATUS_SHOW)
         st_window->status = TYPE_SETTING_WINDOW_STATUS_DISMISS; // 设置状态为关闭

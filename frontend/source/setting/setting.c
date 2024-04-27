@@ -485,7 +485,6 @@ int Setting_OpenMenu()
 
 int Setting_CloseMenu()
 {
-    Setting_ExitContext(SettingWindow_GetContext(setting_window));
     SettingWindow_Close(setting_window);
 
     return 0;
