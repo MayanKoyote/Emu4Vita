@@ -10,5 +10,7 @@ int AppInit(int argc, char *const argv[]);
 int AppDeinit();
 int AppExit();
 int AppExitToArch();
+void AppLockExit();
+void AppUnlockExit();
 
 #endif

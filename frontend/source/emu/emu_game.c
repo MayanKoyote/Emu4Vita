@@ -421,9 +421,10 @@ int Emu_LoadGame()
     GUI_SetControlEnabled(1);
     GUI_FinishActivity(&splash_activity);
 
-    APP_LOG("[GAME] Game load OK!\n");
     game_loading = 0;
     game_loaded = 1;
+    AppLockExit();
+    APP_LOG("[GAME] Game load OK!\n");
 
     return ret;
 }
@@ -479,9 +480,10 @@ int Emu_UnloadGame()
         Emu_UnlockRunGameMutex();
         sceKernelDeleteLwMutex(&game_run_mutex);
 
-        APP_LOG("[GAME] Game unload OK!\n");
         game_exiting = 0;
         game_loaded = 0;
+        AppUnlockExit();
+        APP_LOG("[GAME] Game unload OK!\n");
     }
 
     return 0;

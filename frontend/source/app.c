@@ -36,7 +36,7 @@ typedef enum AppExitEventAction
 unsigned int sceLibcHeapSize = SCE_LIBC_SIZE;
 #endif
 
-static int app_run = 0;
+static int app_exit = 0, app_exit_locked = 0;
 static AppExitEventAction app_exit_event_action = APP_EXIT_EVENT_ACTION_NONE;
 static int is_safe_mode = 0;
 static int is_vitatv_model = 0;
@@ -112,11 +112,12 @@ static void DeinitSceAppUtil()
 
 int AppStart()
 {
-    app_run = 1;
-
-    while (app_run || Emu_IsGameLoaded()) // 游戏已加载的话，需要等待游戏结束后再结束程序
+    for (;;)
     {
         GUI_RunMain();
+
+        if (app_exit && !app_exit_locked)
+            break;
     }
 
     return 0;
@@ -125,7 +126,7 @@ int AppStart()
 int AppExit()
 {
     GUI_FinishOtherActivities();
-    app_run = 0;
+    app_exit = 1;
     return 0;
 }
 
@@ -226,4 +227,15 @@ int AppDeinit()
     APP_LOG("[APP] App deinit OK!\n");
 
     return 0;
+}
+
+void AppLockExit()
+{
+    ++app_exit_locked;
+}
+
+void AppUnlockExit()
+{
+    if (app_exit_locked > 0)
+        --app_exit_locked;
 }

@@ -52,7 +52,6 @@ SRC_C := \
 
 OBJS := $(patsubst %.c,%.o, $(SRC_C))
 OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
-OBJS += $(SHADER_O)
 
 DEFINES := 
 
@@ -80,15 +79,15 @@ all: $(TARGET_PATH) install
 
 install:
 	@mkdir -p $(EXPORTS_INCLUDE_DIR)
-	@cp -u $(INCLUDE_DIR)/vita2d.h $(EXPORTS_INCLUDE_DIR)
+	cp -u $(INCLUDE_DIR)/vita2d.h $(EXPORTS_INCLUDE_DIR)
 	@mkdir -p $(EXPORTS_LIB_DIR)
-	@cp -u $(TARGET_PATH) $(EXPORTS_LIB_DIR)
+	cp -u $(TARGET_PATH) $(EXPORTS_LIB_DIR)
 
 uninstall:
-	@rm -f $(EXPORTS_INCLUDE_DIR)/vita2d.h
-	@rm -f $(EXPORTS_LIB_DIR)/$(TARGET).a
+	rm -f $(EXPORTS_INCLUDE_DIR)/vita2d.h
+	rm -f $(EXPORTS_LIB_DIR)/$(TARGET).a
 
-$(TARGET_PATH): $(OBJS)
+$(TARGET_PATH): $(OBJS) $(SHADER_O)
 	@mkdir -p $(dir $@)
 	$(AR) -rc $@ $^
 
